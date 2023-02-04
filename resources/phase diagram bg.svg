@@ -25,9 +25,9 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="3.959798"
-     inkscape:cx="83.958444"
-     inkscape:cy="93.385887"
+     inkscape:zoom="2.8"
+     inkscape:cx="163.83843"
+     inkscape:cy="26.365028"
      inkscape:document-units="mm"
      inkscape:current-layer="layer1"
      showgrid="false"
@@ -36,7 +36,16 @@
      inkscape:window-height="1057"
      inkscape:window-x="-8"
      inkscape:window-y="-8"
-     inkscape:window-maximized="1" />
+     inkscape:window-maximized="1"
+     inkscape:snap-text-baseline="true"
+     showguides="true"
+     inkscape:guide-bbox="true">
+    <sodipodi:guide
+       position="26.426274,56.260235"
+       orientation="1,0"
+       id="guide4552"
+       inkscape:locked="false" />
+  </sodipodi:namedview>
   <metadata
      id="metadata8727">
     <rdf:RDF>
@@ -45,7 +54,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -55,10 +64,82 @@
      id="layer1"
      transform="translate(0,-244.08331)">
     <circle
-       style="opacity:1;fill:none;fill-opacity:1;stroke:#000000;stroke-width:1;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       style="opacity:0.73699999;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.5;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       id="path4516"
+       cx="26.392868"
+       cy="247.35468"
+       r="3" />
+    <circle
+       style="opacity:0.73699999;fill:#fa0000;fill-opacity:1;stroke:none;stroke-width:0.5;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       id="path4518"
+       cx="46.337852"
+       cy="281.83243"
+       r="3" />
+    <circle
+       style="opacity:0.73699999;fill:#fa0000;fill-opacity:1;stroke:none;stroke-width:0.5;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       id="path4520"
+       cx="6.4478774"
+       cy="282.13315"
+       r="3" />
+    <circle
+       style="opacity:1;fill:#ffffff;fill-opacity:1;stroke:#494949;stroke-width:0.5;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
        id="path9275"
        cx="26.458334"
        cy="270.54166"
        r="22" />
+    <path
+       sodipodi:type="star"
+       style="opacity:0.73699999;fill:none;fill-opacity:1;stroke:#dadada;stroke-width:0.5;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       id="path4522"
+       sodipodi:sides="3"
+       sodipodi:cx="26.483389"
+       sodipodi:cy="270.56665"
+       sodipodi:r1="21.505916"
+       sodipodi:r2="10.844326"
+       sodipodi:arg1="2.6179623"
+       sodipodi:arg2="3.6651599"
+       inkscape:flatsided="true"
+       inkscape:rounded="0"
+       inkscape:randomized="0"
+       d="M 7.8590584,281.3202 26.48271,249.06073 45.108399,281.31902 Z" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:10.58333302px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458332"
+       x="29.800552"
+       y="247.95602"
+       id="text4526"><tspan
+         sodipodi:role="line"
+         id="tspan4524"
+         x="29.800552"
+         y="247.95602"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3.52777767px;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;stroke-width:0.26458332">Neutral</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:10.58333302px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458332"
+       x="44.777836"
+       y="287.83383"
+       id="text4530"><tspan
+         sodipodi:role="line"
+         id="tspan4528"
+         x="44.777836"
+         y="287.83383"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3.52777767px;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;stroke-width:0.26458332">R+</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:10.58333302px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458332"
+       x="3.9749074"
+       y="287.92914"
+       id="text4530-5"><tspan
+         sodipodi:role="line"
+         id="tspan4528-1"
+         x="3.9749074"
+         y="287.92914"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3.52777767px;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;stroke-width:0.26458332">L+</tspan></text>
+    <circle
+       style="opacity:0.73699999;fill:#dadada;fill-opacity:1;stroke:none;stroke-width:0.5;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       id="path4550"
+       cx="26.458334"
+       cy="270.54166"
+       r="0.80000001" />
   </g>
 </svg>

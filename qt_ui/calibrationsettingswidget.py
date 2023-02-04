@@ -16,7 +16,7 @@ class CalibrationSettingsWidget(QtWidgets.QWidget):
         frame.setFixedWidth(350)
         frame.setFixedHeight(300)
 
-        r = 120
+        r = 110
         widget_positions = [
             (0, 0, 0.44), # center
             (0 / 3 * np.pi, r / 2, 0.38),
@@ -37,7 +37,7 @@ class CalibrationSettingsWidget(QtWidgets.QWidget):
 
         for theta, r, init_value in widget_positions:
             spinbox = QtWidgets.QSpinBox(frame, value=100, minimum=0, maximum=100)
-            x, y = int(155 + np.cos(theta) * r), int(140 - np.sin(theta) * r)
+            x, y = int(155 - np.sin(theta) * r), int(140 - np.cos(theta) * r)
             spinbox.move(x, y)
             spinbox.setValue(int(init_value * 100))
             self.widgets.append(spinbox)
