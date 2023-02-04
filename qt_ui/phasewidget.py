@@ -23,6 +23,7 @@ class PhaseWidget(QtWidgets.QGraphicsView):
         self.setScene(scene)
         svg = QtSvg.QGraphicsSvgItem("resources/phase diagram bg.svg")
         svg.setPos(-svg.boundingRect().width()/2, -svg.boundingRect().height()/2)
+        svg.moveBy(0, 6)
         scene.addItem(svg)
 
         self.circle = QtWidgets.QGraphicsEllipseItem(0, 0, 10, 10)
@@ -37,18 +38,17 @@ class PhaseWidget(QtWidgets.QGraphicsView):
         self.updatePositionParameters(PositionParameters(0, 0))
 
     def xy_to_ab(self, x, y):
-        a = (y - 0) / -77
+        a = (y - 6) / -77
         b = (x - 0) / -77
         return a, b
 
     def ab_to_xy(self, a, b):
         x = (b * -77)
-        y = (a * -77)
+        y = (a * -77) + 6
         return x, y
 
     def updatePositionParameters(self, position_params: PositionParameters):
         x, y = self.ab_to_xy(position_params.alpha, position_params.beta)
-        # self.circle.setPos(position_params.alpha * 75 - 5, -position_params.beta * 75 - 5)
         self.circle.setPos(x - 5, y - 5)
         self.update()
 
