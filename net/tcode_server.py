@@ -32,6 +32,24 @@ class TCodeFunscriptEmulator:
             'C4': TCodeFunscriptAxis('C4', 1.0),
             'C5': TCodeFunscriptAxis('C5', 1.0),
             'C6': TCodeFunscriptAxis('C6', 1.0),
+
+            'D0': TCodeFunscriptAxis('D0', 1.0),
+            'D1': TCodeFunscriptAxis('D1', 1.0),
+            'D2': TCodeFunscriptAxis('D2', 1.0),
+            'D3': TCodeFunscriptAxis('D3', 1.0),
+            'D4': TCodeFunscriptAxis('D4', 1.0),
+            'D5': TCodeFunscriptAxis('D5', 1.0),
+
+
+
+            'M0': TCodeFunscriptAxis('M0', 0.9),
+
+            'M1': TCodeFunscriptAxis('M1', 1.0),
+            'M2': TCodeFunscriptAxis('M2', 0.0),
+
+            'M3': TCodeFunscriptAxis('M3', 1.0),
+            'M4': TCodeFunscriptAxis('M4', 0.0),
+
         }
 
     def parse_message(self, line):

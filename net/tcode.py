@@ -27,7 +27,7 @@ class TCodeCommand:
         return TCodeCommand(axis_identifier, value)
 
     def format_cmd(self):
-        return "{}{:03d}\r\n".format(self.axis_identifier, int(np.clip(self.value, 0.0, 1.0) * 999))
+        return "{}{:03d}".format(self.axis_identifier, int(np.clip(self.value, 0.0, 1.0) * 999))
 
     def __str__(self):
         return self.format_cmd()

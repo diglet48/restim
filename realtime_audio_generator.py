@@ -4,14 +4,14 @@ import time
 
 import numpy as np
 
-from stim_math import calibration, threephase, trig
+from stim_math import calibration, threephase, trig, amplitude_modulation
 from net import tcode_server
 
 AUDIO_DEVICE_NAME = 'MY AUDIO DEVICE NAME'
 
 tcode = tcode_server.TCodeWebsocketServer('localhost', 12346)
 
-frequency = 900.0  # hz
+# frequency = 900.0  # hz
 latency = .150
 
 
@@ -21,6 +21,10 @@ def generate_more(timeline):
     # TODO: use as volume?
     L2 = tcode.funscript_emulator.interpolate('L2', timeline)
 
+    frequency = tcode.funscript_emulator.last_value('M0') * 1000.0
+    # safety: clamp the carrier frequency
+    frequency = np.clip(frequency, 400.0, 1000.0)
+
     calib_params = [
         tcode.funscript_emulator.last_value('C0'),
         tcode.funscript_emulator.last_value('C1'),
@@ -28,9 +32,17 @@ def generate_more(timeline):
         tcode.funscript_emulator.last_value('C3'),
         tcode.funscript_emulator.last_value('C4'),
         tcode.funscript_emulator.last_value('C5'),
-        tcode.funscript_emulator.last_value('C6'),
+
+        tcode.funscript_emulator.last_value('D0'),
+        tcode.funscript_emulator.last_value('D1'),
+        tcode.funscript_emulator.last_value('D2'),
+        tcode.funscript_emulator.last_value('D3'),
+        tcode.funscript_emulator.last_value('D4'),
+        tcode.funscript_emulator.last_value('D5'),
+
+        tcode.funscript_emulator.last_value('C6'), # center
     ]
-    calib = calibration.SevenPointCalibration(calib_params)
+    calib = calibration.ThirteenPointCalibration(calib_params)
 
     # normalize (x, y) to be within the unit circle.
     norm = np.clip(trig.norm(x, y), 1.0, None)
@@ -40,6 +52,19 @@ def generate_more(timeline):
     volume = calib.get_scale(x, y)
 
     L, R = threephase.generate_3_dof(timeline, frequency, volume, x, y)
+
+    # modulation 1
+    modulation_hz = tcode.funscript_emulator.last_value('M1') * 150
+    modulation_strength = tcode.funscript_emulator.last_value('M2')
+    modulation = amplitude_modulation.SineModulation(modulation_hz, modulation_strength)
+    L, R = modulation.modulate(timeline, L, R)
+
+    # modulation 2
+    modulation_hz = tcode.funscript_emulator.last_value('M3') * 150
+    modulation_strength = tcode.funscript_emulator.last_value('M4')
+    modulation = amplitude_modulation.SineModulation(modulation_hz, modulation_strength)
+    L, R = modulation.modulate(timeline, L, R)
+
     return L, R
 
 
