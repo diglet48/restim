@@ -23,11 +23,12 @@ class Window(QMainWindow, Ui_MainWindow):
         self.motion_generator = qt_ui.motion_generation.MotionGenerator(self)
         self.ws_client = qt_ui.websocket_client.WebsocketClient(self)
 
-        self.tab_2.calibrationSettingsChanged.connect(self.ws_client.updateCalibrationParameters)
-        self.tab_3.modulationSettingsChanged.connect(self.ws_client.updateModulationParameters)
+        self.tab_calibration.calibrationSettingsChanged.connect(self.ws_client.updateCalibrationParameters)
+        self.tab_carrier.modulationSettingsChanged.connect(self.ws_client.updateModulationParameters)
         self.motion_generator.positionChanged.connect(self.ws_client.updatePositionParameters)
 
         self.motion_generator.positionChanged.connect(self.graphicsView.updatePositionParameters)
+        self.motion_generator.positionChanged.connect(self.tab_details.updatePositionParameters)
         self.graphicsView.mousePositionChanged.connect(self.motion_generator.updateMousePosition)
 
         self.comboBox.currentTextChanged.connect(self.motion_generator.patternChanged)
@@ -36,8 +37,8 @@ class Window(QMainWindow, Ui_MainWindow):
         self.motion_generator.velocityChanged(self.doubleSpinBox.value())
 
         # trigger updates
-        self.tab_2.settings_changed()
-        self.tab_3.settings_changed()
+        self.tab_calibration.settings_changed()
+        self.tab_carrier.settings_changed()
 
 
 

@@ -135,15 +135,21 @@
       <property name="currentIndex">
        <number>1</number>
       </property>
-      <widget class="CalibrationSettingsWidget" name="tab_2">
+      <widget class="CalibrationSettingsWidget" name="tab_calibration">
        <attribute name="title">
         <string>Calibration</string>
        </attribute>
       </widget>
-      <widget class="ModulationSettingsWidget" name="tab_3">
+      <widget class="ModulationSettingsWidget" name="tab_carrier">
        <attribute name="title">
         <string>Carrier and modulation</string>
        </attribute>
+      </widget>
+      <widget class="WaveformDetailsWidget" name="tab_details">
+       <attribute name="title">
+        <string>Details</string>
+       </attribute>
+       <layout class="QVBoxLayout" name="verticalLayout_3"/>
       </widget>
      </widget>
     </item>
@@ -173,6 +179,12 @@
    <class>PhaseWidget</class>
    <extends>QGraphicsView</extends>
    <header>qt_ui/phasewidget.h</header>
+  </customwidget>
+  <customwidget>
+   <class>WaveformDetailsWidget</class>
+   <extends>QWidget</extends>
+   <header>qt_ui/waveformdetailswidget.h</header>
+   <container>1</container>
   </customwidget>
  </customwidgets>
  <resources/>
