@@ -12,14 +12,18 @@ AUDIO_DEVICE_NAME = 'MY AUDIO DEVICE NAME'
 tcode = tcode_server.TCodeWebsocketServer('localhost', 12346)
 
 # frequency = 900.0  # hz
-latency = .150
+latency = .1
 
 
 def generate_more(timeline):
-    x = tcode.funscript_emulator.interpolate('L0', timeline) * 2 - 1
-    y = tcode.funscript_emulator.interpolate('L1', timeline) * 2 - 1
+    # todo: need better latency adjustment
+    command_timeline = timeline + (-timeline[-1] + time.time() - latency)
+
+    x = tcode.funscript_emulator.interpolate('L0', command_timeline) * 2 - 1
+    y = tcode.funscript_emulator.interpolate('L1', command_timeline) * 2 - 1
     # TODO: use as volume?
-    L2 = tcode.funscript_emulator.interpolate('L2', timeline)
+    # L2 = tcode.funscript_emulator.interpolate('L2', command_timeline)
+    # L2 = np.clip(L2, 0.0, 1.0)
 
     frequency = tcode.funscript_emulator.last_value('M0') * 1000.0
     # safety: clamp the carrier frequency
@@ -50,6 +54,7 @@ def generate_more(timeline):
     y /= norm
 
     volume = calib.get_scale(x, y)
+    # volume *= L2
 
     L, R = threephase.generate_3_dof(timeline, frequency, volume, x, y)
 
@@ -57,36 +62,40 @@ def generate_more(timeline):
     modulation_hz = tcode.funscript_emulator.last_value('M1') * 150
     modulation_strength = tcode.funscript_emulator.last_value('M2')
     modulation = amplitude_modulation.SineModulation(modulation_hz, modulation_strength)
-    L, R = modulation.modulate(timeline, L, R)
+    L, R = modulation.modulate(command_timeline, L, R)
 
     # modulation 2
     modulation_hz = tcode.funscript_emulator.last_value('M3') * 150
     modulation_strength = tcode.funscript_emulator.last_value('M4')
     modulation = amplitude_modulation.SineModulation(modulation_hz, modulation_strength)
-    L, R = modulation.modulate(timeline, L, R)
+    L, R = modulation.modulate(command_timeline, L, R)
 
     return L, R
 
 
-# todo: crap code
-t0 = [None, None]
+class Generator:
+    def __init__(self):
+        self.frame_number = 0
+        self.sample_rate = 44100
+        self.audio_latency = 0  # best guess of audio latency
 
-# Define callback for playback (1)
-def callback(in_data, frame_count, time_info, status):
-    current_dac_time = time_info['output_buffer_dac_time']
-    global t0
-    if t0[0] is None:
-        t0[0] = current_dac_time
-        t0[1] = time.time()
+    def callback(self, in_data, frame_count, time_info, status):
+        timeline = np.linspace(self.frame_number / self.sample_rate,
+                               (self.frame_number + frame_count) / self.sample_rate,
+                               frame_count, endpoint=False)
+        self.frame_number += frame_count
 
-    timeline = (current_dac_time - t0[0] + t0[1]) + np.arange(0, frame_count) * (1.0 / 44100) - latency
-    # timeline = timeline.astype(np.float32)
-    L, R = generate_more(timeline)
-    data = np.vstack((L, R)).transpose()
-    data = np.clip(data * 2**15, -32768, 32767).astype(np.int16)
-    data = data.tobytes()
+        new_audio_latency = time_info['output_buffer_dac_time'] - time_info['current_time']
+        self.audio_latency += 0.2 * (new_audio_latency - self.audio_latency)
 
-    return (data, pyaudio.paContinue)
+        # command_time_offset = time.time() - timeline[0] - .03
+
+        L, R = generate_more(timeline)
+        data = np.vstack((L, R)).transpose()
+        data = np.clip(data * 2**15, -32768, 32767).astype(np.int16)
+        data = data.tobytes()
+
+        return (data, pyaudio.paContinue)
 
 
 # Instantiate PyAudio and initialize PortAudio system resources (2)
@@ -105,15 +114,18 @@ if output_device_index is None:
     print("unable to find audio device, fallback to default output".format(AUDIO_DEVICE_NAME))
 
 
+g = Generator()
+
 # Open stream using callback (3)
 stream = p.open(format=p.get_format_from_width(2),
                 channels=2,
                 rate=44100,
                 output=True,
-                stream_callback=callback,
-                frames_per_buffer=5000, # 1000 ~= 20ms
-                output_device_index=output_device_index
+                stream_callback=g.callback,
+                frames_per_buffer=1000, # 1000 ~= 20ms
+                output_device_index=output_device_index,
                 )
+# note: audio latency = frames_per_buffer / 44100 * 2 + driver dependant latency
 
 print('audio stream started')
 
