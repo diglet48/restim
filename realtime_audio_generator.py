@@ -62,13 +62,13 @@ def generate_more(timeline):
     modulation_hz = tcode.funscript_emulator.last_value('M1') * 150
     modulation_strength = tcode.funscript_emulator.last_value('M2')
     modulation = amplitude_modulation.SineModulation(modulation_hz, modulation_strength)
-    L, R = modulation.modulate(command_timeline, L, R)
+    L, R = modulation.modulate(timeline, L, R)
 
     # modulation 2
     modulation_hz = tcode.funscript_emulator.last_value('M3') * 150
     modulation_strength = tcode.funscript_emulator.last_value('M4')
     modulation = amplitude_modulation.SineModulation(modulation_hz, modulation_strength)
-    L, R = modulation.modulate(command_timeline, L, R)
+    L, R = modulation.modulate(timeline, L, R)
 
     return L, R
 
