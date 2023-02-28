@@ -133,9 +133,9 @@
        <bool>true</bool>
       </property>
       <property name="currentIndex">
-       <number>1</number>
+       <number>0</number>
       </property>
-      <widget class="CalibrationSettingsWidget" name="tab_calibration">
+      <widget class="TransformCalibrationSettingsWidget" name="tab_transform_calibration">
        <attribute name="title">
         <string>Calibration</string>
        </attribute>
@@ -143,6 +143,11 @@
       <widget class="ModulationSettingsWidget" name="tab_carrier">
        <attribute name="title">
         <string>Carrier and modulation</string>
+       </attribute>
+      </widget>
+      <widget class="CalibrationSettingsWidget" name="tab_calibration">
+       <attribute name="title">
+        <string>Fine tuning</string>
        </attribute>
       </widget>
       <widget class="WaveformDetailsWidget" name="tab_details">
@@ -184,6 +189,12 @@
    <class>WaveformDetailsWidget</class>
    <extends>QWidget</extends>
    <header>qt_ui/waveformdetailswidget.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>TransformCalibrationSettingsWidget</class>
+   <extends>QWidget</extends>
+   <header>qt_ui/transformcalibrationsettingswidget.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

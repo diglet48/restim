@@ -4,14 +4,13 @@ import time
 
 import numpy as np
 
-from stim_math import calibration, threephase, trig, amplitude_modulation
+from stim_math import calibration, threephase, trig, amplitude_modulation, hardware_calibration
 from net import tcode_server
 
 AUDIO_DEVICE_NAME = 'MY AUDIO DEVICE NAME'
 
 tcode = tcode_server.TCodeWebsocketServer('localhost', 12346)
 
-# frequency = 900.0  # hz
 latency = .1
 
 
@@ -21,6 +20,7 @@ def generate_more(timeline):
 
     x = tcode.funscript_emulator.interpolate('L0', command_timeline) * 2 - 1
     y = tcode.funscript_emulator.interpolate('L1', command_timeline) * 2 - 1
+
     # TODO: use as volume?
     # L2 = tcode.funscript_emulator.interpolate('L2', command_timeline)
     # L2 = np.clip(L2, 0.0, 1.0)
@@ -69,6 +69,13 @@ def generate_more(timeline):
     modulation_strength = tcode.funscript_emulator.last_value('M4')
     modulation = amplitude_modulation.SineModulation(modulation_hz, modulation_strength)
     L, R = modulation.modulate(timeline, L, R)
+
+    # apply hardware calibration
+    u_d = (tcode.funscript_emulator.last_value('H0') - 0.5) * 30
+    l_r = (tcode.funscript_emulator.last_value('H1') - 0.5) * 30
+
+    hw = hardware_calibration.HardwareCalibration(u_d, l_r)
+    L, R = hw.apply_transform(L, R)
 
     return L, R
 

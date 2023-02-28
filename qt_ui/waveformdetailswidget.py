@@ -7,17 +7,34 @@ matplotlib.use('Qt5Agg')
 from PyQt5.QtGui import QTransform, QBrush, QColor, QPen, QMouseEvent
 from PyQt5 import QtCore, QtWidgets, QtSvg
 
-from qt_ui.stim_config import PositionParameters
+from qt_ui.stim_config import PositionParameters, CalibrationParameters
 from qt_ui.waveform_details_widget_ui import Ui_WaveformDetails
 
-from stim_math import threephase
+from stim_math import threephase, calibration
 
 class WaveformDetailsWidget(QtWidgets.QWidget, Ui_WaveformDetails):
     def __init__(self):
         QtWidgets.QWidget.__init__(self)
         self.setupUi(self)
+        self.calibration = None
 
         self.updatePositionParameters(PositionParameters(0, 0))
+
+    def updateCalibrationParameters(self, calibration_params: CalibrationParameters):
+        self.calibration = calibration.ThirteenPointCalibration([
+            calibration_params.edge_0_3pi,
+            calibration_params.edge_1_3pi,
+            calibration_params.edge_2_3pi,
+            calibration_params.edge_3_3pi,
+            calibration_params.edge_4_3pi,
+            calibration_params.edge_5_3pi,
+            calibration_params.mid_0_3pi,
+            calibration_params.mid_1_3pi,
+            calibration_params.mid_2_3pi,
+            calibration_params.mid_3_3pi,
+            calibration_params.mid_4_3pi,
+            calibration_params.mid_5_3pi,
+            calibration_params.center])
 
     def updatePositionParameters(self, position_params: PositionParameters):
         a, b, c, phase_shift = threephase.generate_3_dof_details(
@@ -27,6 +44,10 @@ class WaveformDetailsWidget(QtWidgets.QWidget, Ui_WaveformDetails):
         def format_amplitude(f): return "{:.2f}".format(f)
         def format_angle(f): return "{:.0f}°".format(f / np.pi * 180)
 
+        scale = 1
+        if self.calibration is not None:
+            scale = self.calibration.get_scale(position_params.alpha, position_params.beta)
+        self.scale_label.setText(format_amplitude(scale))
 
         self.left_amplitude_label.setText(format_amplitude(a[0]))
         self.right_amplitude_label.setText(format_amplitude(b[0]))
@@ -35,6 +56,20 @@ class WaveformDetailsWidget(QtWidgets.QWidget, Ui_WaveformDetails):
 
         self.alpha_label.setText(format_amplitude(position_params.alpha))
         self.beta_label.setText(format_amplitude(position_params.beta))
+
+        self.r_label.setText(format_amplitude((position_params.alpha**2 + position_params.beta**2)**.5))
+        self.theta_label.setText(format_angle(np.arctan2(position_params.beta, position_params.alpha)))
+
+        timeline = np.linspace(0, 2 * np.pi, 100)
+        A = np.sin(timeline) * a[0]
+        B = np.sin(timeline + np.pi + phase_shift[0]) * b[0]
+        C = -A  -B
+
+        a, b, c = np.max(A - B), np.max(A - C), np.max(B - C)
+        self.neutral_label.setText(format_amplitude(scale * a / 3**.5))
+        self.left_label.setText(format_amplitude(scale * b / 3**.5))
+        self.right_label.setText(format_amplitude(scale * c / 3**.5))
+
 
 
 

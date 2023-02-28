@@ -1,7 +1,7 @@
 from PyQt5 import QtCore, QtWebSockets, QtNetwork
 
 from net.tcode import TCodeCommand
-from qt_ui.stim_config import CalibrationParameters, ModulationParameters, PositionParameters
+from qt_ui.stim_config import CalibrationParameters, ModulationParameters, PositionParameters, TransformParameters
 
 
 class WebsocketClient(QtCore.QObject):
@@ -17,11 +17,13 @@ class WebsocketClient(QtCore.QObject):
         self.position_parameters = None
         self.calibration_parameters = None
         self.modulation_parameters = None
+        self.transform_parameters = None
 
         # send the calibration and modulation parameters once every second just in case the server restarts
         timer = QtCore.QTimer(self)
         timer.timeout.connect(self.sendCalibrationParameters)
         timer.timeout.connect(self.sendModulationParameters)
+        timer.timeout.connect(self.sendTransformParameters)
         timer.start(1000)
 
         timer = QtCore.QTimer(self)
@@ -98,6 +100,14 @@ class WebsocketClient(QtCore.QObject):
             self.client.sendTextMessage(cmd)
         pass
 
+    def sendTransformParameters(self):
+        if self.transform_parameters:
+            cmd = "\n".join([
+                TCodeCommand("H0", (self.transform_parameters.up_down / 30) + 0.5).format_cmd(),
+                TCodeCommand("H1", (self.transform_parameters.left_right / 30) + 0.5).format_cmd()])
+            self.client.sendTextMessage(cmd)
+
+
     def updatePositionParameters(self, position_params: PositionParameters):
         self.position_parameters = position_params
         self.sendPositionParameters()
@@ -109,3 +119,7 @@ class WebsocketClient(QtCore.QObject):
     def updateModulationParameters(self, modulation_params: ModulationParameters):
         self.modulation_parameters = modulation_params
         self.sendModulationParameters()
+
+    def updateTransformParameters(self, transform_parameters: TransformParameters):
+        self.transform_parameters = transform_parameters
+        self.sendTransformParameters()

@@ -3,7 +3,7 @@ import numpy as np
 from stim_math import ab_transform, trig
 
 # for numerical stability, no intended change on output
-regularization_parameter = 0.01
+regularization_parameter = 0.001
 
 
 def generate_3_dof(timeline, frequency: float, amplitude, alpha, beta):

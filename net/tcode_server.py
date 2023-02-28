@@ -50,6 +50,8 @@ class TCodeFunscriptEmulator:
             'M3': TCodeFunscriptAxis('M3', 1.0),
             'M4': TCodeFunscriptAxis('M4', 0.0),
 
+            'H0': TCodeFunscriptAxis('H0', 0.5),
+            'H1': TCodeFunscriptAxis('H1', 0.5),
         }
 
     def parse_message(self, line):

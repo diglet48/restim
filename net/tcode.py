@@ -23,11 +23,11 @@ class TCodeCommand:
 
         axis_identifier = buf[0:2]
         value = buf[2:]
-        value = float(value) / 10**len(value)
+        value = float(value) / (10**len(value) - 1)
         return TCodeCommand(axis_identifier, value)
 
     def format_cmd(self):
-        return "{}{:03d}".format(self.axis_identifier, int(np.clip(self.value, 0.0, 1.0) * 999))
+        return "{}{:04d}".format(self.axis_identifier, int(np.clip(self.value, 0.0, 1.0) * 9999))
 
     def __str__(self):
         return self.format_cmd()

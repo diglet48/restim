@@ -37,3 +37,9 @@ class PositionParameters:
     def __init__(self, alpha, beta):
         self.alpha = alpha
         self.beta = beta
+
+
+class TransformParameters:
+    def __init__(self, up_down, left_right):
+        self.up_down = up_down
+        self.left_right = left_right

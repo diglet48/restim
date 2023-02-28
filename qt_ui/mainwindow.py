@@ -1,16 +1,12 @@
 import sys
 
 from PyQt5.QtWidgets import (
-    QApplication, QDialog, QMainWindow, QMessageBox, QGraphicsScene, QGraphicsEllipseItem
+    QApplication, QMainWindow
 )
-from PyQt5 import QtCore
-from PyQt5.QtSvg import QGraphicsSvgItem
-from PyQt5.uic import loadUi
 
 from qt_ui.main_window_ui import Ui_MainWindow
 import qt_ui.websocket_client
 import qt_ui.motion_generation
-
 
 
 class Window(QMainWindow, Ui_MainWindow):
@@ -18,12 +14,12 @@ class Window(QMainWindow, Ui_MainWindow):
         super().__init__(parent)
         self.setupUi(self)
 
-        # self.connectSignalsSlots()
-
         self.motion_generator = qt_ui.motion_generation.MotionGenerator(self)
         self.ws_client = qt_ui.websocket_client.WebsocketClient(self)
 
         self.tab_calibration.calibrationSettingsChanged.connect(self.ws_client.updateCalibrationParameters)
+        self.tab_transform_calibration.transformCalibrationSettingsChanged.connect(self.ws_client.updateTransformParameters)
+        self.tab_calibration.calibrationSettingsChanged.connect(self.tab_details.updateCalibrationParameters)
         self.tab_carrier.modulationSettingsChanged.connect(self.ws_client.updateModulationParameters)
         self.motion_generator.positionChanged.connect(self.ws_client.updatePositionParameters)
 
@@ -39,35 +35,6 @@ class Window(QMainWindow, Ui_MainWindow):
         # trigger updates
         self.tab_calibration.settings_changed()
         self.tab_carrier.settings_changed()
-
-
-
-def connectSignalsSlots(self):
-    self.action_Exit.triggered.connect(self.close)
-    self.action_Find_Replace.triggered.connect(self.findAndReplace)
-    self.action_About.triggered.connect(self.about)
-
-
-def findAndReplace(self):
-    dialog = FindReplaceDialog(self)
-    dialog.exec()
-
-
-def about(self):
-    QMessageBox.about(
-        self,
-        "About Sample Editor",
-        "<p>A sample text editor app built with:</p>"
-        "<p>- PyQt</p>"
-        "<p>- Qt Designer</p>"
-        "<p>- Python</p>",
-    )
-
-
-class FindReplaceDialog(QDialog):
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        loadUi("ui/find_replace.ui", self)
 
 
 def run():

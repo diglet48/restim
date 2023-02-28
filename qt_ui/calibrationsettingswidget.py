@@ -18,19 +18,19 @@ class CalibrationSettingsWidget(QtWidgets.QWidget):
 
         r = 110
         widget_positions = [
-            (0, 0, 0.44), # center
-            (0 / 3 * np.pi, r / 2, 0.38),
-            (1 / 3 * np.pi, r / 2, 0.40),
-            (2 / 3 * np.pi, r / 2, 0.48),
-            (3 / 3 * np.pi, r / 2, 0.47),
-            (4 / 3 * np.pi, r / 2, 0.46),
-            (5 / 3 * np.pi, r / 2, 0.40),
-            (0/3 * np.pi, r, 0.32),
-            (1/3 * np.pi, r, 0.36),
-            (2/3 * np.pi, r, 0.50),
-            (3/3 * np.pi, r, 0.70),
-            (4/3 * np.pi, r, 0.47),
-            (5/3 * np.pi, r, 0.36),
+            (0, 0, 1.0), # center
+            (0 / 3 * np.pi, r / 2, 0.92),
+            (1 / 3 * np.pi, r / 2, 0.92),
+            (2 / 3 * np.pi, r / 2, 0.92),
+            (3 / 3 * np.pi, r / 2, 0.92),
+            (4 / 3 * np.pi, r / 2, 0.92),
+            (5 / 3 * np.pi, r / 2, 0.92),
+            (0/3 * np.pi, r, 0.84),
+            (1/3 * np.pi, r, 0.84),
+            (2/3 * np.pi, r, 0.84),
+            (3/3 * np.pi, r, 0.84),
+            (4/3 * np.pi, r, 0.84),
+            (5/3 * np.pi, r, 0.84),
         ]
 
         self.widgets = []

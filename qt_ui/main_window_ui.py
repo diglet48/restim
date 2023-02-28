@@ -66,12 +66,15 @@ class Ui_MainWindow(object):
         self.tabWidget = QtWidgets.QTabWidget(self.centralwidget)
         self.tabWidget.setEnabled(True)
         self.tabWidget.setObjectName("tabWidget")
-        self.tab_calibration = CalibrationSettingsWidget()
-        self.tab_calibration.setObjectName("tab_calibration")
-        self.tabWidget.addTab(self.tab_calibration, "")
+        self.tab_transform_calibration = TransformCalibrationSettingsWidget()
+        self.tab_transform_calibration.setObjectName("tab_transform_calibration")
+        self.tabWidget.addTab(self.tab_transform_calibration, "")
         self.tab_carrier = ModulationSettingsWidget()
         self.tab_carrier.setObjectName("tab_carrier")
         self.tabWidget.addTab(self.tab_carrier, "")
+        self.tab_calibration = CalibrationSettingsWidget()
+        self.tab_calibration.setObjectName("tab_calibration")
+        self.tabWidget.addTab(self.tab_calibration, "")
         self.tab_details = WaveformDetailsWidget()
         self.tab_details.setObjectName("tab_details")
         self.verticalLayout_3 = QtWidgets.QVBoxLayout(self.tab_details)
@@ -86,7 +89,7 @@ class Ui_MainWindow(object):
         self.actionSettings.setObjectName("actionSettings")
 
         self.retranslateUi(MainWindow)
-        self.tabWidget.setCurrentIndex(1)
+        self.tabWidget.setCurrentIndex(0)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
     def retranslateUi(self, MainWindow):
@@ -99,11 +102,13 @@ class Ui_MainWindow(object):
         self.comboBox.setItemText(3, _translate("MainWindow", "B"))
         self.comboBox.setItemText(4, _translate("MainWindow", "C"))
         self.comboBox.setItemText(5, _translate("MainWindow", "Mouse"))
-        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_calibration), _translate("MainWindow", "Calibration"))
+        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_transform_calibration), _translate("MainWindow", "Calibration"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_carrier), _translate("MainWindow", "Carrier and modulation"))
+        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_calibration), _translate("MainWindow", "Fine tuning"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_details), _translate("MainWindow", "Details"))
         self.actionSettings.setText(_translate("MainWindow", "Settings"))
 from qt_ui.calibrationsettingswidget import CalibrationSettingsWidget
 from qt_ui.modulationsettingswidget import ModulationSettingsWidget
 from qt_ui.phasewidget import PhaseWidget
+from qt_ui.transformcalibrationsettingswidget import TransformCalibrationSettingsWidget
 from qt_ui.waveformdetailswidget import WaveformDetailsWidget
