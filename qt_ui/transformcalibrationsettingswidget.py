@@ -54,9 +54,6 @@ class MyStaticMplCanvas(MyMplCanvas):
         t = t[:51] * 2
         alpha = np.cos(t) * r
         beta = np.sin(t) * r
-        maximum = np.max(r)
-        alpha /= maximum
-        beta /= maximum
         alpha *= 10
         beta *= 10
 
