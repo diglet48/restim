@@ -37,9 +37,13 @@ class WaveformDetailsWidget(QtWidgets.QWidget, Ui_WaveformDetails):
             calibration_params.center])
 
     def updatePositionParameters(self, position_params: PositionParameters):
-        a, b, c, phase_shift = threephase.generate_3_dof_details(
+        L, R, center, phase_shift = threephase.ContinuousSineWaveform.channel_amplitude(
             np.array([position_params.alpha]),
             np.array([position_params.beta]))
+
+        intensity = threephase.ContinuousSineWaveform.intensity(
+            np.array([position_params.alpha]),
+            np.array([position_params.beta]))[0]
 
         def format_amplitude(f): return "{:.2f}".format(f)
         def format_angle(f): return "{:.0f}°".format(f / np.pi * 180)
@@ -49,10 +53,10 @@ class WaveformDetailsWidget(QtWidgets.QWidget, Ui_WaveformDetails):
             scale = self.calibration.get_scale(position_params.alpha, position_params.beta)
         self.scale_label.setText(format_amplitude(scale))
 
-        self.left_amplitude_label.setText(format_amplitude(a[0]))
-        self.right_amplitude_label.setText(format_amplitude(b[0]))
+        self.left_amplitude_label.setText(format_amplitude(L[0] / intensity))
+        self.right_amplitude_label.setText(format_amplitude(R[0] / intensity))
+        self.center_amplitude_label.setText(format_amplitude(center[0] / intensity))
         self.phase_label.setText(format_angle(phase_shift[0]))
-        self.center_amplitude_label.setText(format_amplitude(c[0]))
 
         self.alpha_label.setText(format_amplitude(position_params.alpha))
         self.beta_label.setText(format_amplitude(position_params.beta))
@@ -60,15 +64,13 @@ class WaveformDetailsWidget(QtWidgets.QWidget, Ui_WaveformDetails):
         self.r_label.setText(format_amplitude((position_params.alpha**2 + position_params.beta**2)**.5))
         self.theta_label.setText(format_angle(np.arctan2(position_params.beta, position_params.alpha)))
 
-        timeline = np.linspace(0, 2 * np.pi, 100)
-        A = np.sin(timeline) * a[0]
-        B = np.sin(timeline + np.pi + phase_shift[0]) * b[0]
-        C = -A  -B
+        N, L, R = threephase.ContinuousSineWaveform.electrode_amplitude(
+            np.array([position_params.alpha]),
+            np.array([position_params.beta]))
 
-        a, b, c = np.max(A - B), np.max(A - C), np.max(B - C)
-        self.neutral_label.setText(format_amplitude(scale * a / 3**.5))
-        self.left_label.setText(format_amplitude(scale * b / 3**.5))
-        self.right_label.setText(format_amplitude(scale * c / 3**.5))
+        self.neutral_label.setText(format_amplitude(N[0] / intensity / (3**.5 / 3)))
+        self.left_label.setText(format_amplitude(L[0] / intensity / (3**.5 / 3)))
+        self.right_label.setText(format_amplitude(R[0] / intensity / (3**.5 / 3)))
 
 
 

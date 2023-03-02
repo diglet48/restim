@@ -18,7 +18,10 @@ def generate_more(timeline, frequency, alpha, beta):
     beta /= norm
     volume = calib.get_scale(alpha, beta)
 
-    L, R = threephase.generate_3_dof(timeline, frequency, volume, alpha, beta)
+    L, R = threephase.ContinuousSineWaveform.generate(timeline, frequency, volume, alpha, beta)
+    intensity = threephase.ContinuousSineWaveform.intensity(alpha, beta)
+    L /= intensity
+    R /= intensity
     return L, R
 
 

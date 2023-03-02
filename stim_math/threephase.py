@@ -1,138 +1,168 @@
 import numpy as np
 
-from stim_math import ab_transform, trig
 
-# for numerical stability, no intended change on output
-regularization_parameter = 0.001
-
-
-def generate_3_dof(timeline, frequency: float, amplitude, alpha, beta):
+class ContinuousSineWaveform:
     """
-    :param timeline: in seconds
-    :param frequency: in hz
-    :param amplitude: volume [0, 1] to avoid clipping output
-    :param alpha:
-    :param beta:
-    :return: The (left, right) audio channel
+    The idea is that:
+    [L, R, 0]^T = P @ ab_transform @ squeeze @ carrier
+
+    Where P is the electrode-to-channel projection:
+    [[1, -1,  0],
+     [1,  0, -1],
+     [-,  -,  -]
+
+    ab_transform is the alpha-beta transform, which converts a vector of 2 (alpha, beta, -) to
+    a vector of 3 (potentials at electrode N, L, R) with (N + L + R) = 0
+    [[1,     0,           -],   (represents electrode N)
+     [-0.5,  sin(2/3*pi), -],   (represents electrode L)
+     [-0.5, -sin(2/3*pi), -]]   (represents electrode R)
+
+    squeeze is a scale in arbitrary direction matrix:
+    [[1 + (k-1) * x^2, (k-1) * x * y],
+     [(k-1) * x * y,   1 + (k-1) * y^2]]
+    (k-1) and (x, y) are chosen dependent on input (alpha, beta)
+
+    carrier is:
+    [[cos(timeline * frequency * 2 * pi)],
+     [sin(timeline * frequency * 2 * pi)]]
     """
-    assert np.all(trig.norm(alpha, beta) <= 1.001)
+    @staticmethod
+    def intensity(alpha, beta):
+        """
+        defined as norm(electrode_amplitude) * c
+        with c such that intensity(r=1) = 1
+        """
+        r = np.clip(np.sqrt(alpha.astype(np.float32) ** 2 + beta.astype(np.float32) ** 2), None, 1.0)
 
-    def remap_xy(x, y):
-        # project (x, y) onto the imaginary plane with i >= 0
-        z = x + y * 1j
-        len = np.absolute(z)
-        z = np.sqrt(z) * len
-        return np.real(z), np.imag(z)
+        # for k_minus_1 = (1 - r) - 1
+        return np.sqrt(1 - r + 0.5 * r**2) * np.sqrt(2)
 
-    def rotate(x, y, angle):
-        x2 = x * np.cos(angle) - y * np.sin(angle)
-        y2 = x * np.sin(angle) + y * np.cos(angle)
-        return x2, y2
+        # for k_minus_1 = (1 - r**2) - 1
+        # return np.sqrt(1 - r**2 + 0.5 * r**4) * np.sqrt(2)
 
-    # use less mem
-    alpha = alpha.astype(np.float32)
-    beta = beta.astype(np.float32)
+    @staticmethod
+    def scale_in_arbitrary_direction_coefs(alpha, beta):
+        # faster and uses less mem
+        alpha = alpha.astype(np.float32)
+        beta = beta.astype(np.float32)
 
-    # transform into appropriate coordinate system.
-    alpha, beta = rotate(alpha, beta, -1.0 / 3 * np.pi)
-    alpha, beta = remap_xy(alpha, beta)
+        r = np.clip(np.sqrt(alpha ** 2 + beta ** 2), None, 1.0)
+        theta = np.arctan2(beta, alpha) / 2
 
-    # three channel amplitudes
-    a, b, c = ab_transform.inverse(alpha, beta)
-    alpha, beta = None, None  # clean mem
+        # scale by k = (1 - r) in direction of theta
+        # TODO: maybe 1 - r**2? Or other?
+        k_minus_1 = (1 - r) - 1
+        y = np.cos(theta)
+        x = np.sin(theta)
 
-    # might be able to optimize this away with smarter math?
-    a = np.abs(a)
-    b = np.abs(b)
-    c = np.abs(c)
+        # setup scale in arbitrary direction matrix
+        # [[1 + (k-1) * x^2, (k-1) * x * y  ],
+        #  [(k-1) * x * y,   1 + (k-1) * y^2]]
+        t11 = 1 + k_minus_1 * x ** 2
+        t12 = k_minus_1 * x * y
+        t21 = t12
+        t22 = 1 + k_minus_1 * y ** 2
+        return t11, t12, t21, t22
 
-    # prevents rounding errors, division-by-zero in later steps. No functional change intended
-    a = a * (1 - regularization_parameter) + regularization_parameter
-    b = b * (1 - regularization_parameter) + regularization_parameter
-    c = c * (1 - regularization_parameter) + regularization_parameter
+    @staticmethod
+    def carrier(timeline, frequency):
+        t = timeline * (frequency * 2 * np.pi)
+        carrier_x = np.cos(t).astype(np.float32)
+        carrier_y = np.sin(t).astype(np.float32)
+        return carrier_x, carrier_y
 
-    # Math so far only works at the edge of the unit circle, interpolate if (a, b) is near the center.
-    # At the edge we have a**2 + b**2 + c**2 = 1.5. This sounds like a really nice property to preserve.
-    # To interpolate we solve: (a + gamma)**2 + (b + gamma)**2 + (c + gamma)**2 = 1.5
-    gamma = trig.solve_quadratic_equation(3.0, 2 * (a + b + c), (a**2 + b**2 + c**2) - 1.5)
-    gamma = np.clip(gamma, 0, None)  # rounding error crap
-    a = a + gamma
-    b = b + gamma
-    c = c + gamma
+    @staticmethod
+    def generate(timeline, frequency: float, alpha, beta, chunksize=10000):
+        # split into chunks for better cache performance and lower peak memory usage
+        if len(timeline) > (2 * chunksize):
+            L = np.empty_like(timeline)
+            R = np.empty_like(timeline)
+            for start in np.arange(0, len(timeline), chunksize):
+                end = start + chunksize
+                l, r = ContinuousSineWaveform.generate(timeline[start:end],
+                                                       frequency,
+                                                       alpha[start:end],
+                                                       beta[start:end])
+                L[start:end] = l
+                R[start:end] = r
+            return L, R
 
-    # now we have our three channel amplitudes, solve this set of equations...
-    # A = a * sin(x)            (left channel)
-    # B = b * sin(x + delta)    (right channel)
-    # C = c * sin(x + phi)      (center channel)
-    # A + B + C = 0
-    angle_bc, angle_ac, angle_ab = trig.solve_with_law_of_cotangents(a, b, c)
-    delta = np.pi - angle_ab
-    # phi = np.pi - angle_ac
-    angle_bc, angle_ac, angle_ab, c, phi, gamma = None, None, None, None, None, None  # clean mem
+        ab_transform = np.array([[1, 0, 0],
+                                 [-0.5, np.sqrt(3)/2, 0],
+                                 [-0.5, -np.sqrt(3)/2, 0]], dtype=np.float32)
 
-    # all variables calculated! Now generate the final waveforms.
-    x = timeline * (frequency * 2 * np.pi)
-    A = a * np.sin(x).astype(np.float32)           # L, power between head and mid electrode
-    B = b * np.sin(x + delta).astype(np.float32)   # -R, power between head and bottom electrode
-    # C = c * np.sin(x + phi)                      # center, power between bottom and mid electrode
-    return amplitude * A, amplitude * -B  # (L, R)
+        potential_to_channel_matrix = np.array([
+            [1, -1, 0],
+            [1, 0, -1],
+            [1, 1, 1],
+        ], dtype=np.float32)
 
+        carrier_x, carrier_y = ContinuousSineWaveform.carrier(timeline, frequency)
 
-def generate_3_dof_details(alpha, beta):
-    """
-    :param timeline: in seconds
-    :param frequency: in hz
-    :param amplitude: volume [0, 1] to avoid clipping output
-    :param alpha:
-    :param beta:
-    :return: The amplitude of the three channels, and phase between the first two channels.
-    """
-    assert np.all(trig.norm(alpha, beta) <= 1.001)
+        # apply scale in arbitrary direction
+        t11, t12, t21, t22 = ContinuousSineWaveform.scale_in_arbitrary_direction_coefs(alpha, beta)
+        a = t11 * carrier_x + t12 * carrier_y
+        b = t21 * carrier_x + t22 * carrier_y
 
-    def remap_xy(x, y):
-        # project (x, y) onto the imaginary plane with i >= 0
-        z = x + y * 1j
-        len = np.absolute(z)
-        z = np.sqrt(z) * len
-        return np.real(z), np.imag(z)
+        T = (potential_to_channel_matrix @ ab_transform)[:2, :2] / np.sqrt(3)
+        L, R = T @ np.array([a, b])
+        return L, R
 
-    def rotate(x, y, angle):
-        x2 = x * np.cos(angle) - y * np.sin(angle)
-        y2 = x * np.sin(angle) + y * np.cos(angle)
-        return x2, y2
+    @staticmethod
+    def electrode_amplitude(alpha, beta):
+        """
+        Returns the amplitude of the electrodes.
 
-    # use less mem
-    alpha = alpha.astype(np.float32)
-    beta = beta.astype(np.float32)
+        [N, L, R] = ab_transform @ squeeze @ [cos, sin]
+        Therefore N = a * cos + b * sin
+        with (a, b) being the coefs in (ab_transform @ squeeze)
+        """
+        def add_sine(a, b, phase):
+            # amplitude of a * sin(x) + b * sin(x + phase)
+            return np.sqrt(a**2 + b**2 + 2 * a * b * np.cos(phase))
 
-    # transform into appropriate coordinate system.
-    alpha, beta = rotate(alpha, beta, -1.0 / 3 * np.pi)
-    alpha, beta = remap_xy(alpha, beta)
+        ab_transform = np.array([[1, 0],
+                                 [-0.5, np.sqrt(3)/2],
+                                 [-0.5, -np.sqrt(3)/2]]) / np.sqrt(3)
+        t11, t12, t21, t22 = ContinuousSineWaveform.scale_in_arbitrary_direction_coefs(alpha, beta)
+        squeeze = np.array([[t11, t12],
+                            [t21, t22]])
+        T = ab_transform @ squeeze
+        N = add_sine(T[0][0], T[1][0], np.pi/2)
+        L = add_sine(T[0][1], T[1][1], np.pi/2)
+        R = add_sine(T[0][2], T[1][2], np.pi/2)
+        return N, L, R
 
-    # three channel amplitudes
-    a, b, c = ab_transform.inverse(alpha, beta)
-    alpha, beta = None, None  # clean mem
+    @staticmethod
+    def channel_amplitude(alpha, beta):
+        """
+        Returns the amplitude of the channels.
 
-    # might be able to optimize this away with smarter math?
-    a = np.abs(a)
-    b = np.abs(b)
-    c = np.abs(c)
+        [L, R, -] = P @ ab_transform @ squeeze @ [cos, sin]
+        Therefore L = a * cos + b * sin
+        with (a, b) being the coefs in (P @ ab_transform @ squeeze)
+        """
+        def add_sine(a, b, phase):
+            # amplitude of a * sin(x) + b * sin(x + phase)
+            return np.sqrt(a**2 + b**2 + 2 * a * b * np.cos(phase))
 
-    # prevents rounding errors, division-by-zero in later steps. No functional change intended
-    a = a * (1 - regularization_parameter) + regularization_parameter
-    b = b * (1 - regularization_parameter) + regularization_parameter
-    c = c * (1 - regularization_parameter) + regularization_parameter
+        def find_phase(a, b, phase):
+            # phase of a * sin(x) + b * sin(x + phase)
+            return np.arctan2(a * np.sin(0) + b * np.sin(phase), a * np.cos(0) + b * np.cos(phase))
 
-    # Math so far only works at the edge of the unit circle, interpolate if (a, b) is near the center.
-    # At the edge we have a**2 + b**2 + c**2 = 1.5. This sounds like a really nice property to preserve.
-    # To interpolate we solve: (a + gamma)**2 + (b + gamma)**2 + (c + gamma)**2 = 1.5
-    gamma = trig.solve_quadratic_equation(3.0, 2 * (a + b + c), (a**2 + b**2 + c**2) - 1.5)
-    gamma = np.clip(gamma, 0, None)  # rounding error crap
-    a = a + gamma
-    b = b + gamma
-    c = c + gamma
-
-    angle_bc, angle_ac, angle_ab = trig.solve_with_law_of_cotangents(a, b, c)
-    delta = np.pi - angle_ab
-
-    return a, b, c, np.pi - delta
+        P = np.array([[1, -1, 0],
+                      [1, 0, -1],
+                      [0, 1, -1]])
+        ab_transform = np.array([[1, 0],
+                                 [-0.5, np.sqrt(3)/2],
+                                 [-0.5, -np.sqrt(3)/2]]) / np.sqrt(3)
+        t11, t12, t21, t22 = ContinuousSineWaveform.scale_in_arbitrary_direction_coefs(alpha, beta)
+        squeeze = np.array([[t11, t12],
+                            [t21, t22]])
+        T = P @ ab_transform @ squeeze
+        L = add_sine(T[0][0], T[1][0], np.pi/2)
+        R = add_sine(T[0][1], T[1][1], np.pi/2)
+        center = add_sine(T[0][2], T[1][2], np.pi/2)
+        phase_L = find_phase(T[0][0], T[1][0], np.pi/2)
+        phase_R = find_phase(T[0][1], T[1][1], np.pi/2)
+        return L, R, center, np.abs(phase_L - phase_R)

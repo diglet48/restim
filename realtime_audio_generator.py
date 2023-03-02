@@ -56,7 +56,10 @@ def generate_more(timeline):
     volume = calib.get_scale(x, y)
     # volume *= L2
 
-    L, R = threephase.generate_3_dof(timeline, frequency, volume, x, y)
+    L, R = threephase.ContinuousSineWaveform.generate(timeline, frequency, x, y)
+    intensity = threephase.ContinuousSineWaveform.intensity(x, y)
+    L /= intensity
+    R /= intensity
 
     # modulation 1
     modulation_hz = tcode.funscript_emulator.last_value('M1') * 150
