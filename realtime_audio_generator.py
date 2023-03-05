@@ -4,7 +4,7 @@ import time
 
 import numpy as np
 
-from stim_math import point_calibration, threephase, trig, amplitude_modulation, hardware_calibration
+from stim_math import point_calibration, trig, amplitude_modulation, hardware_calibration, generate
 from net import tcode_server
 
 AUDIO_DEVICE_NAME = 'MY AUDIO DEVICE NAME'
@@ -34,11 +34,6 @@ def generate_more(timeline):
     x /= norm
     y /= norm
 
-    L, R = threephase.ContinuousSineWaveform.generate(timeline, frequency, x, y)
-    # intensity = threephase.ContinuousSineWaveform.intensity(x, y)
-    # L /= intensity
-    # R /= intensity
-
     # calibration (fine tuning)
     calib_params = [
         tcode.funscript_emulator.last_value('C0'),
@@ -57,37 +52,33 @@ def generate_more(timeline):
 
         tcode.funscript_emulator.last_value('C6'), # center
     ]
-    calib = point_calibration.ThirteenPointCalibration(calib_params)
-    volume = calib.get_scale(x, y)
-    L *= volume
-    R *= volume
+    point_calib = point_calibration.ThirteenPointCalibration(calib_params)
 
     # modulation 1
     modulation_hz = tcode.funscript_emulator.last_value('M1') * 150
     modulation_strength = tcode.funscript_emulator.last_value('M2')
-    modulation = amplitude_modulation.SineModulation(modulation_hz, modulation_strength)
-    L, R = modulation.modulate(timeline, L, R)
+    modulation_1 = amplitude_modulation.SineModulation(modulation_hz, modulation_strength)
 
     # modulation 2
     modulation_hz = tcode.funscript_emulator.last_value('M3') * 150
     modulation_strength = tcode.funscript_emulator.last_value('M4')
-    modulation = amplitude_modulation.SineModulation(modulation_hz, modulation_strength)
-    L, R = modulation.modulate(timeline, L, R)
+    modulation_2 = amplitude_modulation.SineModulation(modulation_hz, modulation_strength)
 
     # center scaling
     center_db = (tcode.funscript_emulator.last_value('H2') - 0.5) * 30
-    center_calibration = point_calibration.CenterCalibration(center_db)
-    scale = center_calibration.get_scale(x, y)
-    L *= scale
-    R *= scale
+    center_calib = point_calibration.CenterCalibration(center_db)
 
-    # apply hardware calibration
+    # hardware calibration
     u_d = (tcode.funscript_emulator.last_value('H0') - 0.5) * 30
     l_r = (tcode.funscript_emulator.last_value('H1') - 0.5) * 30
-
     hw = hardware_calibration.HardwareCalibration(u_d, l_r)
-    L, R = hw.apply_transform(L, R)
 
+    L, R = generate.generate_audio(timeline, x, y, frequency,
+                                   modulation_1=modulation_1,
+                                   modulation_2=modulation_2,
+                                   point_calibration=point_calib,
+                                   point_calibration_2=center_calib,
+                                   hardware_calibration=hw)
     return L, R
 
 

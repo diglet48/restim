@@ -4,24 +4,18 @@ import scipy
 import json
 import time
 
-from stim_math import point_calibration, threephase, trig
+from stim_math import point_calibration, generate, hardware_calibration
 import funscript_1d_to_2d
 
 
 def generate_more(timeline, frequency, alpha, beta):
     # TODO: choose your own calibration parameters
-    calib = point_calibration.SevenPointCalibration([1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0])
+    center_calibration = point_calibration.CenterCalibration(-0.7)
+    hw_calibration = hardware_calibration.HardwareCalibration(-5.3, -0.7)
 
-    # normalize (a, b) to be within the unit circle.
-    norm = np.clip(trig.norm(alpha, beta), 1.0, None)
-    alpha /= norm
-    beta /= norm
-    volume = calib.get_scale(alpha, beta)
-
-    L, R = threephase.ContinuousSineWaveform.generate(timeline, frequency, volume, alpha, beta)
-    intensity = threephase.ContinuousSineWaveform.intensity(alpha, beta)
-    L /= intensity
-    R /= intensity
+    L, R = generate.generate_audio(timeline, alpha, beta, frequency,
+                                   point_calibration=center_calibration,
+                                   hardware_calibration=hw_calibration)
     return L, R
 
 
