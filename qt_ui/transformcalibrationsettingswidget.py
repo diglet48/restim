@@ -89,14 +89,22 @@ class TransformCalibrationSettingsWidget(QtWidgets.QWidget):
         right_power_slider.setValue(0)
         right_power_label = QtWidgets.QLabel("Right power [dB]")
         gbc_l.addRow(right_power_label, right_power_slider)
+
+        center_power_slider = QtWidgets.QDoubleSpinBox(minimum=-15, maximum=15)
+        center_power_slider.setSingleStep(0.1)
+        center_power_slider.setValue(-0.7)
+        center_power_label = QtWidgets.QLabel("Center power [dB]")
+        gbc_l.addRow(center_power_label, center_power_slider)
         gbc.setLayout(gbc_l)
         l.addWidget(gbc)
 
         neutral_power_slider.valueChanged.connect(self.settings_changed)
         right_power_slider.valueChanged.connect(self.settings_changed)
+        center_power_slider.valueChanged.connect(self.settings_changed)
 
         self.neutral = neutral_power_slider
         self.right = right_power_slider
+        self.center = center_power_slider
 
         self.transformCalibrationSettingsChanged.connect(self.sc.updateParams)
         self.settings_changed()
@@ -106,6 +114,7 @@ class TransformCalibrationSettingsWidget(QtWidgets.QWidget):
     def settings_changed(self):
         params = TransformParameters(
             self.neutral.value(),
-            self.right.value()
+            self.right.value(),
+            self.center.value()
         )
         self.transformCalibrationSettingsChanged.emit(params)

@@ -40,6 +40,7 @@ class PositionParameters:
 
 
 class TransformParameters:
-    def __init__(self, up_down, left_right):
+    def __init__(self, up_down, left_right, center):
         self.up_down = up_down
         self.left_right = left_right
+        self.center = center

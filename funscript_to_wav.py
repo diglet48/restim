@@ -4,13 +4,13 @@ import scipy
 import json
 import time
 
-from stim_math import calibration, threephase, trig
+from stim_math import point_calibration, threephase, trig
 import funscript_1d_to_2d
 
 
 def generate_more(timeline, frequency, alpha, beta):
     # TODO: choose your own calibration parameters
-    calib = calibration.SevenPointCalibration([1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0])
+    calib = point_calibration.SevenPointCalibration([1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0])
 
     # normalize (a, b) to be within the unit circle.
     norm = np.clip(trig.norm(alpha, beta), 1.0, None)

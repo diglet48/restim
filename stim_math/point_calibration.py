@@ -25,6 +25,7 @@ class SevenPointCalibration:
         angle = np.arctan2(y, x)
         return (1 - norm) * self.center_param + norm * self.interpolator(angle).astype(np.float32)
 
+
 class ThirteenPointCalibration:
     def __init__(self, params):
         """
@@ -62,3 +63,21 @@ class ThirteenPointCalibration:
         b = 1 - a - c
 
         return a * self.center_param + b * self.half_interpolator(angle) + c * self.edge_interpolator(angle)
+
+
+class CenterCalibration:
+    def __init__(self, db_in_center):
+        self.db_in_center = db_in_center
+
+    def get_scale(self, x, y):
+        ratio = 10 ** (self.db_in_center / 10)
+        norm = trig.norm(x, y).clip(min=None, max=1)
+
+        if ratio <= 1:
+            edge = 1
+            center = ratio
+        else:
+            edge = 1/ratio
+            center = 1
+
+        return center + norm * (edge - center)

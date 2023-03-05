@@ -25,6 +25,15 @@ def scale_in_arbitrary_direction(a, b, scale):
 
 
 class HardwareCalibration:
+    """
+    Attempt to reverse the effects of hardware bias by first transforming the (L, R) audio channel
+    into (alpha, beta), and then scaling before transforming back to (L, R)
+
+    method:
+    [alpha, beta, 0] = P^-1 @ ab_transform^-1 @ [L, R, 0]
+    [alpha, beta, 0] = inverse_hardware_transform @ [alpha, beta, 0]
+    [L, R, 0] = P @ ab_transform @ [alpha, beta, 0]
+    """
     def __init__(self, up_down, left_right):
         self.up_down = up_down  # in dB
         self.left_right = left_right  # in dB

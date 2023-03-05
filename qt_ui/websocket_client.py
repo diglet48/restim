@@ -104,7 +104,8 @@ class WebsocketClient(QtCore.QObject):
         if self.transform_parameters:
             cmd = "\n".join([
                 TCodeCommand("H0", (self.transform_parameters.up_down / 30) + 0.5).format_cmd(),
-                TCodeCommand("H1", (self.transform_parameters.left_right / 30) + 0.5).format_cmd()])
+                TCodeCommand("H1", (self.transform_parameters.left_right / 30) + 0.5).format_cmd(),
+                TCodeCommand("H2", (self.transform_parameters.center / 30) + 0.5).format_cmd()])
             self.client.sendTextMessage(cmd)
 
 
