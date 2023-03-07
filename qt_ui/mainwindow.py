@@ -7,6 +7,7 @@ from PyQt5.QtWidgets import (
 from qt_ui.main_window_ui import Ui_MainWindow
 import qt_ui.websocket_client
 import qt_ui.motion_generation
+import qt_ui.audiogenerationwidget
 
 
 class Window(QMainWindow, Ui_MainWindow):
@@ -32,9 +33,24 @@ class Window(QMainWindow, Ui_MainWindow):
         self.doubleSpinBox.valueChanged.connect(self.motion_generator.velocityChanged)
         self.motion_generator.velocityChanged(self.doubleSpinBox.value())
 
+
+        self.audio_gen = qt_ui.audiogenerationwidget.AudioGenerationWidget(self)
+        self.motion_generator.positionChanged.connect(self.audio_gen.updatePositionParameters)
+        self.tab_carrier.modulationSettingsChanged.connect(self.audio_gen.updateModulationParameters)
+        self.tab_transform_calibration.transformCalibrationSettingsChanged.connect(self.audio_gen.updateTransformParameters)
+        self.tab_calibration.calibrationSettingsChanged.connect(self.audio_gen.updateCalibrationParameters)
+
         # trigger updates
         self.tab_calibration.settings_changed()
         self.tab_carrier.settings_changed()
+        self.tab_transform_calibration.settings_changed()
+
+        self.audio_gen.start()
+
+    def closeEvent(self, event):
+        print('closeEvent')
+        self.audio_gen.stop()
+        event.accept()
 
 
 def run():
