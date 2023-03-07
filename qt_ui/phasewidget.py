@@ -47,7 +47,16 @@ class PhaseWidget(QtWidgets.QGraphicsView):
         y = (a * -77) + 6
         return x, y
 
+    def updateAlphaPosition(self, value):
+        self.position_params.alpha = value
+        self.updatePositionParameters(self.position_params)
+
+    def updateBetaPosition(self, value):
+        self.position_params.beta = value
+        self.updatePositionParameters(self.position_params)
+
     def updatePositionParameters(self, position_params: PositionParameters):
+        self.position_params = position_params
         x, y = self.ab_to_xy(position_params.alpha, position_params.beta)
         self.circle.setPos(x - 5, y - 5)
         self.update()

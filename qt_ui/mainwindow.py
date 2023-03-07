@@ -8,6 +8,7 @@ from qt_ui.main_window_ui import Ui_MainWindow
 import qt_ui.websocket_client
 import qt_ui.motion_generation
 import qt_ui.audiogenerationwidget
+import qt_ui.websocketserver
 
 
 class Window(QMainWindow, Ui_MainWindow):
@@ -16,13 +17,13 @@ class Window(QMainWindow, Ui_MainWindow):
         self.setupUi(self)
 
         self.motion_generator = qt_ui.motion_generation.MotionGenerator(self)
-        self.ws_client = qt_ui.websocket_client.WebsocketClient(self)
+        # self.ws_client = qt_ui.websocket_client.WebsocketClient(self)
 
-        self.tab_calibration.calibrationSettingsChanged.connect(self.ws_client.updateCalibrationParameters)
-        self.tab_transform_calibration.transformCalibrationSettingsChanged.connect(self.ws_client.updateTransformParameters)
+        # self.tab_calibration.calibrationSettingsChanged.connect(self.ws_client.updateCalibrationParameters)
+        # self.tab_transform_calibration.transformCalibrationSettingsChanged.connect(self.ws_client.updateTransformParameters)
         self.tab_calibration.calibrationSettingsChanged.connect(self.tab_details.updateCalibrationParameters)
-        self.tab_carrier.modulationSettingsChanged.connect(self.ws_client.updateModulationParameters)
-        self.motion_generator.positionChanged.connect(self.ws_client.updatePositionParameters)
+        # self.tab_carrier.modulationSettingsChanged.connect(self.ws_client.updateModulationParameters)
+        # self.motion_generator.positionChanged.connect(self.ws_client.updatePositionParameters)
 
         self.motion_generator.positionChanged.connect(self.graphicsView.updatePositionParameters)
         self.motion_generator.positionChanged.connect(self.tab_details.updatePositionParameters)
@@ -38,6 +39,13 @@ class Window(QMainWindow, Ui_MainWindow):
         self.tab_carrier.modulationSettingsChanged.connect(self.audio_gen.updateModulationParameters)
         self.tab_transform_calibration.transformCalibrationSettingsChanged.connect(self.audio_gen.updateTransformParameters)
         self.tab_calibration.calibrationSettingsChanged.connect(self.audio_gen.updateCalibrationParameters)
+
+        self.websocket_server = qt_ui.websocketserver.WebSocketServer(self)
+        self.websocket_server.alphaChanged.connect(self.graphicsView.updateAlphaPosition)
+        self.websocket_server.betaChanged.connect(self.graphicsView.updateBetaPosition)
+        self.websocket_server.alphaChanged.connect(self.audio_gen.updateAlpha)
+        self.websocket_server.betaChanged.connect(self.audio_gen.updateBeta)
+        # self.websocket_server.volumeChanged.connect(self.audio_gen.updateVolume)
 
         # trigger updates
         self.tab_calibration.settings_changed()
