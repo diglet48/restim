@@ -35,7 +35,8 @@ def convert_funscript_radial(funscript):
         start_t, end_t = at[i:i+2]
         start_p, end_p = pos[i:i+2]
 
-        n = int(np.clip(float((end_t - start_t) / .05), 1, None))  # 10 points per second
+        points_per_second = 25
+        n = int(np.clip(float((end_t - start_t) * points_per_second), 1, None))
         t = np.linspace(0.0, end_t - start_t, n, endpoint=False)
         theta = np.linspace(0, np.pi, n, endpoint=False)
         center = (end_p + start_p) / 2
