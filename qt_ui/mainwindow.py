@@ -5,7 +5,6 @@ from PyQt5.QtWidgets import (
 )
 
 from qt_ui.main_window_ui import Ui_MainWindow
-import qt_ui.websocket_client
 import qt_ui.motion_generation
 import qt_ui.audiogenerationwidget
 import qt_ui.websocketserver
@@ -17,13 +16,8 @@ class Window(QMainWindow, Ui_MainWindow):
         self.setupUi(self)
 
         self.motion_generator = qt_ui.motion_generation.MotionGenerator(self)
-        # self.ws_client = qt_ui.websocket_client.WebsocketClient(self)
 
-        # self.tab_calibration.calibrationSettingsChanged.connect(self.ws_client.updateCalibrationParameters)
-        # self.tab_transform_calibration.transformCalibrationSettingsChanged.connect(self.ws_client.updateTransformParameters)
         self.tab_calibration.calibrationSettingsChanged.connect(self.tab_details.updateCalibrationParameters)
-        # self.tab_carrier.modulationSettingsChanged.connect(self.ws_client.updateModulationParameters)
-        # self.motion_generator.positionChanged.connect(self.ws_client.updatePositionParameters)
 
         self.motion_generator.positionChanged.connect(self.graphicsView.updatePositionParameters)
         self.motion_generator.positionChanged.connect(self.tab_details.updatePositionParameters)
