@@ -33,7 +33,6 @@ class Window(QMainWindow, Ui_MainWindow):
         self.doubleSpinBox.valueChanged.connect(self.motion_generator.velocityChanged)
         self.motion_generator.velocityChanged(self.doubleSpinBox.value())
 
-
         self.audio_gen = qt_ui.audiogenerationwidget.AudioGenerationWidget(self)
         self.motion_generator.positionChanged.connect(self.audio_gen.updatePositionParameters)
         self.tab_carrier.modulationSettingsChanged.connect(self.audio_gen.updateModulationParameters)
@@ -45,7 +44,23 @@ class Window(QMainWindow, Ui_MainWindow):
         self.tab_carrier.settings_changed()
         self.tab_transform_calibration.settings_changed()
 
-        self.audio_gen.start()
+        self.startStopAudioButton.clicked.connect(self.audioStartStop)
+
+        for device in self.audio_gen.list_devices():
+            self.comboBoxAudioDevice.addItem(device.device_name, device)
+        self.comboBoxAudioDevice.setStyleSheet("QComboBox QAbstractItemView {min-width: 400px;}"),
+        self.comboBoxAudioDevice.currentIndexChanged.connect(self.audioDeviceSelectionChanged)
+
+    def audioStartStop(self):
+        if self.audio_gen.stream is None:
+            self.startStopAudioButton.setText("Stop audio")
+            self.audio_gen.start()
+        else:
+            self.startStopAudioButton.setText("Start audio")
+            self.audio_gen.stop()
+
+    def audioDeviceSelectionChanged(self, index):
+        self.audio_gen.select_device_index(self.comboBoxAudioDevice.currentData().device_index)
 
     def closeEvent(self, event):
         print('closeEvent')
