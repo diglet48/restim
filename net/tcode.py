@@ -23,7 +23,11 @@ class TCodeCommand:
 
         axis_identifier = buf[0:2]
         value = buf[2:]
-        value = float(value) / (10**len(value) - 1)
+        value = value[:value.find('I')]
+        try:
+            value = float(value) / (10**len(value) - 1)
+        except ValueError:
+            raise InvalidTCodeException()
         return TCodeCommand(axis_identifier, value)
 
     def format_cmd(self):
