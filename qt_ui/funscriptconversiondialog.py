@@ -24,7 +24,6 @@ class FunscriptConversionDialog(QDialog, Ui_FunscriptConversionDialog):
         self.pushButton.clicked.connect(self.convert)
 
     def file_selected(self, filename):
-        print(filename)
         self.lineEdit_funscript.setText(filename)
         self.lineEdit_alpha.setText(re.sub("\.funscript$", ".alpha.funscript", filename))
         self.lineEdit_beta.setText(re.sub("\.funscript$", ".beta.funscript", filename))
@@ -42,5 +41,4 @@ class FunscriptConversionDialog(QDialog, Ui_FunscriptConversionDialog):
             self.textEdit.append("conversion completed")
         except Exception as e:
             traceback.print_exception(e)
-            print(traceback.format_exception(e))
             self.textEdit.setText(''.join(traceback.format_exception(e)))
