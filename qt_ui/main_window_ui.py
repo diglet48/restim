@@ -96,8 +96,16 @@ class Ui_MainWindow(object):
         self.statusbar = QtWidgets.QStatusBar(MainWindow)
         self.statusbar.setObjectName("statusbar")
         MainWindow.setStatusBar(self.statusbar)
-        self.actionSettings = QtWidgets.QAction(MainWindow)
-        self.actionSettings.setObjectName("actionSettings")
+        self.menuBar = QtWidgets.QMenuBar(MainWindow)
+        self.menuBar.setGeometry(QtCore.QRect(0, 0, 716, 21))
+        self.menuBar.setObjectName("menuBar")
+        self.menuTools = QtWidgets.QMenu(self.menuBar)
+        self.menuTools.setObjectName("menuTools")
+        MainWindow.setMenuBar(self.menuBar)
+        self.actionFunscript_conversion_2 = QtWidgets.QAction(MainWindow)
+        self.actionFunscript_conversion_2.setObjectName("actionFunscript_conversion_2")
+        self.menuTools.addAction(self.actionFunscript_conversion_2)
+        self.menuBar.addAction(self.menuTools.menuAction())
 
         self.retranslateUi(MainWindow)
         self.tabWidget.setCurrentIndex(0)
@@ -105,7 +113,7 @@ class Ui_MainWindow(object):
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
-        MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow"))
+        MainWindow.setWindowTitle(_translate("MainWindow", "restim"))
         self.groupBox.setTitle(_translate("MainWindow", "Pattern generator"))
         self.comboBox.setItemText(0, _translate("MainWindow", "None"))
         self.comboBox.setItemText(1, _translate("MainWindow", "Circle"))
@@ -119,7 +127,8 @@ class Ui_MainWindow(object):
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_carrier), _translate("MainWindow", "Carrier and modulation"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_calibration), _translate("MainWindow", "Fine tuning"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_details), _translate("MainWindow", "Details"))
-        self.actionSettings.setText(_translate("MainWindow", "Settings"))
+        self.menuTools.setTitle(_translate("MainWindow", "Tools"))
+        self.actionFunscript_conversion_2.setText(_translate("MainWindow", "Funscript conversion"))
 from qt_ui.calibrationsettingswidget import CalibrationSettingsWidget
 from qt_ui.modulationsettingswidget import ModulationSettingsWidget
 from qt_ui.phasewidget import PhaseWidget

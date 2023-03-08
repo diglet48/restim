@@ -8,6 +8,7 @@ from qt_ui.main_window_ui import Ui_MainWindow
 import qt_ui.motion_generation
 import qt_ui.audiogenerationwidget
 import qt_ui.websocketserver
+import qt_ui.funscriptconversiondialog
 
 
 class Window(QMainWindow, Ui_MainWindow):
@@ -28,7 +29,7 @@ class Window(QMainWindow, Ui_MainWindow):
         self.doubleSpinBox.valueChanged.connect(self.motion_generator.velocityChanged)
         self.motion_generator.velocityChanged(self.doubleSpinBox.value())
 
-        self.audio_gen = qt_ui.audiogenerationwidget.AudioGenerationWidget(self)
+        self.audio_gen = qt_ui.audiogenerationwidget.AudioGenerationWidget(None)
         self.motion_generator.positionChanged.connect(self.audio_gen.updatePositionParameters)
         self.tab_carrier.modulationSettingsChanged.connect(self.audio_gen.updateModulationParameters)
         self.tab_transform_calibration.transformCalibrationSettingsChanged.connect(self.audio_gen.updateTransformParameters)
@@ -53,6 +54,12 @@ class Window(QMainWindow, Ui_MainWindow):
         self.comboBoxAudioDevice.setStyleSheet("QComboBox QAbstractItemView {min-width: 400px;}"),
         self.comboBoxAudioDevice.currentIndexChanged.connect(self.audioDeviceSelectionChanged)
 
+
+        dialog = qt_ui.funscriptconversiondialog.FunscriptConversionDialog()
+        self.dialog = dialog
+
+        self.actionFunscript_conversion_2.triggered.connect(self.openFunscriptConversionDialog)
+
     def audioStartStop(self):
         if self.audio_gen.stream is None:
             self.startStopAudioButton.setText("Stop audio")
@@ -60,6 +67,15 @@ class Window(QMainWindow, Ui_MainWindow):
         else:
             self.startStopAudioButton.setText("Start audio")
             self.audio_gen.stop()
+
+    def audioStop(self):
+        if self.audio_gen.stream is not None:
+            self.startStopAudioButton.setText("Start audio")
+            self.audio_gen.stop()
+
+    def openFunscriptConversionDialog(self):
+        self.audioStop()
+        self.dialog.exec()
 
     def audioDeviceSelectionChanged(self, index):
         self.audio_gen.select_device_index(self.comboBoxAudioDevice.currentData().device_index)

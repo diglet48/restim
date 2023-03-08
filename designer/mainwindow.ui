@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>MainWindow</string>
+   <string>restim</string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QHBoxLayout" name="horizontalLayout">
@@ -180,9 +180,26 @@
    </layout>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
-  <action name="actionSettings">
+  <widget class="QMenuBar" name="menuBar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>716</width>
+     <height>21</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menuTools">
+    <property name="title">
+     <string>Tools</string>
+    </property>
+    <addaction name="actionFunscript_conversion_2"/>
+   </widget>
+   <addaction name="menuTools"/>
+  </widget>
+  <action name="actionFunscript_conversion_2">
    <property name="text">
-    <string>Settings</string>
+    <string>Funscript conversion</string>
    </property>
   </action>
  </widget>
