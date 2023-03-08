@@ -162,7 +162,7 @@ class AudioGenerationWidget(QtWidgets.QWidget):
 
         frequency = self.modulation_parameters.carrier_frequency
         # safety: clamp the carrier frequency
-        frequency = np.clip(frequency, 400.0, 1000.0)
+        frequency = np.clip(frequency, 400.0, 1500.0)
 
         # normalize (x, y) to be within the unit circle.
         norm = np.clip(trig.norm(x, y), 1.0, None)

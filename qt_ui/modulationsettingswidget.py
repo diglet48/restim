@@ -78,13 +78,12 @@ class ModulationSettingsWidget(QtWidgets.QWidget):
 
         gbc = QtWidgets.QGroupBox("Carrier", self)
         gbc_l = QtWidgets.QFormLayout(gbc)
-        carrier_slider = QtWidgets.QDoubleSpinBox(minimum=300, maximum=1000)
-        carrier_slider.setValue(900)
+        carrier_slider = QtWidgets.QDoubleSpinBox(minimum=300, maximum=1500)
+        carrier_slider.setValue(700)
         carrier_slider_label = QtWidgets.QLabel("carrier frequency [Hz]")
         gbc_l.addRow(carrier_slider_label, carrier_slider)
         gbc.setLayout(gbc_l)
         l.addWidget(gbc)
-
 
         gb1 = QtWidgets.QGroupBox("Modulation 1", self, checkable=True)
         gb1_l = QtWidgets.QFormLayout(gb1)
