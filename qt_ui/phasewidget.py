@@ -1,4 +1,5 @@
-from __future__ import unicode_literals
+import sys
+import os
 import matplotlib
 import numpy as np
 
@@ -8,6 +9,12 @@ from PyQt5.QtGui import QTransform, QBrush, QColor, QPen, QMouseEvent
 from PyQt5 import QtCore, QtWidgets, QtSvg
 
 from qt_ui.stim_config import PositionParameters
+
+
+def resource_path(relative_path):
+    """ Get absolute path to resource, works for dev and for PyInstaller """
+    base_path = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
+    return os.path.join(base_path, relative_path)
 
 
 class PhaseWidget(QtWidgets.QGraphicsView):
@@ -21,7 +28,7 @@ class PhaseWidget(QtWidgets.QGraphicsView):
 
         scene = QtWidgets.QGraphicsScene()
         self.setScene(scene)
-        svg = QtSvg.QGraphicsSvgItem("resources/phase diagram bg.svg")
+        svg = QtSvg.QGraphicsSvgItem(resource_path("resources/phase diagram bg.svg"))
         svg.setPos(-svg.boundingRect().width()/2, -svg.boundingRect().height()/2)
         svg.moveBy(0, 6)
         scene.addItem(svg)
