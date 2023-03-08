@@ -1,5 +1,4 @@
 import numpy as np
-import scipy
 
 from stim_math import trig
 
@@ -14,16 +13,14 @@ class SevenPointCalibration:
         radial_params = params[:6]
         radial_angles = np.linspace(0, 2*np.pi, 6, endpoint=False)
 
-        x = np.hstack((radial_angles - 2 * np.pi, radial_angles, radial_angles + 2 * np.pi)).astype(np.float32)
-        y = np.hstack((radial_params, radial_params, radial_params)).astype(np.float32)
-
-        self.interpolator = scipy.interpolate.PchipInterpolator(x, y)
+        self.xp = radial_angles
+        self.yp = radial_params
 
     def get_scale(self, x, y):
         norm = trig.norm(x, y)
         norm = np.clip(norm, 0, 1)
         angle = np.arctan2(y, x)
-        return (1 - norm) * self.center_param + norm * self.interpolator(angle).astype(np.float32)
+        return (1 - norm) * self.center_param + norm * np.interp(angle, self.xp, self.yp, period=np.pi * 2).astype(np.float32)
 
 
 class ThirteenPointCalibration:
@@ -39,19 +36,13 @@ class ThirteenPointCalibration:
 
         radial_params = params[:6]
         radial_angles = np.linspace(0, 2 * np.pi, 6, endpoint=False)
-
-        x = np.hstack((radial_angles - 2 * np.pi, radial_angles, radial_angles + 2 * np.pi)).astype(np.float32)
-        y = np.hstack((radial_params, radial_params, radial_params)).astype(np.float32)
-
-        self.edge_interpolator = scipy.interpolate.PchipInterpolator(x, y)
+        self.xp_edge = radial_angles
+        self.yp_edge = radial_params
 
         radial_params = params[6:12]
         radial_angles = np.linspace(0, 2 * np.pi, 6, endpoint=False)
-
-        x = np.hstack((radial_angles - 2 * np.pi, radial_angles, radial_angles + 2 * np.pi)).astype(np.float32)
-        y = np.hstack((radial_params, radial_params, radial_params)).astype(np.float32)
-
-        self.half_interpolator = scipy.interpolate.PchipInterpolator(x, y)
+        self.xp_half = radial_angles
+        self.yp_half = radial_params
 
     def get_scale(self, x, y):
         norm = trig.norm(x, y)
@@ -62,7 +53,9 @@ class ThirteenPointCalibration:
         c = np.clip(norm * 2 - 1, 0, 1)
         b = 1 - a - c
 
-        return a * self.center_param + b * self.half_interpolator(angle) + c * self.edge_interpolator(angle)
+        return a * self.center_param + \
+               b * np.interp(angle, self.xp_half, self.yp_half, period=np.pi * 2) + \
+               c * np.interp(angle, self.xp_half, self.yp_edge, period=np.pi * 2)
 
 
 class CenterCalibration:
