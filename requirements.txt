@@ -1,5 +1,4 @@
 numpy
-scipy
 websockets
 pyaudio
 matplotlib
