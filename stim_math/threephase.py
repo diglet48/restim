@@ -1,4 +1,5 @@
 import numpy as np
+from stim_math.transforms import ab_transform, potential_to_channel_matrix
 
 
 class ContinuousSineWaveform:
@@ -86,16 +87,6 @@ class ContinuousSineWaveform:
                 L[start:end] = l
                 R[start:end] = r
             return L, R
-
-        ab_transform = np.array([[1, 0, 0],
-                                 [-0.5, np.sqrt(3)/2, 0],
-                                 [-0.5, -np.sqrt(3)/2, 0]], dtype=np.float32)
-
-        potential_to_channel_matrix = np.array([
-            [1, -1, 0],
-            [1, 0, -1],
-            [1, 1, 1],
-        ], dtype=np.float32)
 
         carrier_x, carrier_y = ContinuousSineWaveform.carrier(timeline, frequency)
 

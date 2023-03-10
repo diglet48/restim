@@ -1,18 +1,7 @@
 import numpy as np
-
-potential_to_channel_matrix = np.array([
-    [1, -1, 0],
-    [1, 0, -1],
-    [1, 1, 1],
-])
-
-potential_to_channel_matrix_inv = np.linalg.inv(potential_to_channel_matrix)
-
-ab_transform = np.array([[1, 0, 1],
-                         [-0.5, np.sqrt(3)/2, 1],
-                         [-0.5, -np.sqrt(3)/2, 1]])
-
-ab_transform_inv = np.linalg.inv(ab_transform)
+from stim_math.transforms import (
+    potential_to_channel_matrix, potential_to_channel_matrix_inv,
+    ab_transform, ab_transform_inv)
 
 
 def scale_in_arbitrary_direction(a, b, scale):
