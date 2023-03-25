@@ -100,6 +100,34 @@ class ContinuousSineWaveform:
         return L, R
 
     @staticmethod
+    def alpha_beta_amplitude(alpha, beta):
+        """
+        Returns the amplitude of alpha and beta axis
+
+        [alpha, beta] = squeeze @ [cos, sin]
+        Therefore N = a * cos + b * sin
+        with (a, b) being the coefs in (squeeze)
+        """
+
+        def add_sine(a, b, phase):
+            # amplitude of a * sin(x) + b * sin(x + phase)
+            return np.sqrt(a ** 2 + b ** 2 + 2 * a * b * np.cos(phase))
+
+        def find_phase(a, b, phase):
+            # phase of a * sin(x) + b * sin(x + phase)
+            return np.arctan2(a * np.sin(0) + b * np.sin(phase), a * np.cos(0) + b * np.cos(phase))
+
+        t11, t12, t21, t22 = ContinuousSineWaveform.scale_in_arbitrary_direction_coefs(alpha, beta)
+        squeeze = np.array([[t11, t12],
+                            [t21, t22]])
+        T = squeeze
+        A = add_sine(T[0][0], T[1][0], np.pi / 2)
+        B = add_sine(T[0][1], T[1][1], np.pi / 2)
+        phase_A = find_phase(T[0][0], T[1][0], np.pi / 2)
+        phase_B = find_phase(T[0][1], T[1][1], np.pi / 2)
+        return A, B, np.abs(phase_A - phase_B)
+
+    @staticmethod
     def electrode_amplitude(alpha, beta):
         """
         Returns the amplitude of the electrodes.
