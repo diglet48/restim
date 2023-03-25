@@ -21,8 +21,6 @@ class MyMplCanvas(FigureCanvas):
         fig = Figure(figsize=(width, height), dpi=dpi)
         self.axes = fig.add_subplot(111)
 
-        self.compute_initial_figure()
-
         FigureCanvas.__init__(self, fig)
         self.setParent(parent)
 
@@ -31,37 +29,54 @@ class MyMplCanvas(FigureCanvas):
                                    QtWidgets.QSizePolicy.Expanding)
         FigureCanvas.updateGeometry(self)
 
+        self.compute_initial_figure()
+
     def compute_initial_figure(self):
         pass
 
 
 class MyStaticMplCanvas(MyMplCanvas):
-    def compute_initial_figure(self):
-        pass
+    def __init__(self, *args, **kwargs):
+        self.scatter = None
+        self.line = None
+        super(MyStaticMplCanvas, self).__init__(*args, **kwargs)
 
-    def updateParams(self, parameters: TransformParameters):
+    def compute_initial_figure(self):
         self.axes.cla()
+
         self.axes.set_title("Calibration")
         self.axes.set_xlim((-15, 15))
         self.axes.set_ylim((-15, 15))
-        self.axes.scatter([parameters.left_right], [parameters.up_down])
+        self.scatter = self.axes.scatter([0], [0])
 
+        alpha, beta = self.compute_line(TransformParameters(0, 0, 0))
+
+        t = np.linspace(0, 2 * np.pi, 101)
+        self.axes.plot(np.cos(t) * 10, np.sin(t)*10, color='gray')
+        self.line = self.axes.plot(beta, alpha)[0]
+
+        self.axes.grid(True)
+        self.axes.set_box_aspect(1)
+        self.draw()
+
+    def compute_line(self, parameters: TransformParameters):
         t = np.linspace(0, 2 * np.pi, 101)
         hw = HardwareCalibration(parameters.up_down, parameters.left_right)
         alpha, beta = hw.contour_in_ab(t)
 
-        r = np.sqrt(alpha**2 + beta**2)[:51]
+        r = np.sqrt(alpha ** 2 + beta ** 2)[:51]
         t = t[:51] * 2
         alpha = np.cos(t) * r
         beta = np.sin(t) * r
         alpha *= 10
         beta *= 10
 
-        self.axes.plot(np.cos(t) * 10, np.sin(t)*10, color='gray')
-        self.axes.plot(beta, alpha)
+        return alpha, beta
 
-        self.axes.grid(True)
-        self.axes.set_box_aspect(1)
+    def updateParams(self, parameters: TransformParameters):
+        alpha, beta = self.compute_line(parameters)
+        self.line.set_data(beta, alpha)
+        self.scatter.set_offsets(np.c_ [parameters.left_right, parameters.up_down])
         self.draw()
 
 
