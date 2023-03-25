@@ -101,7 +101,7 @@ class AudioGenerationWidget(QtWidgets.QWidget):
                 callback=self.callback,
                 latency=PREFERRED_LATENCY
             )
-            print(self.stream.start())
+            self.stream.start()
         except Exception as e:
             import traceback
             traceback.print_exception(e)
