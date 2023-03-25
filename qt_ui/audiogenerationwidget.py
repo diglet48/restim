@@ -2,7 +2,7 @@ from dataclasses import dataclass
 import time
 
 import numpy as np
-import pyaudio
+import sounddevice as sd
 from qt_ui.stim_config import ModulationParameters, TransformParameters, CalibrationParameters, PositionParameters
 
 from PyQt5 import QtCore, QtWidgets
@@ -10,17 +10,38 @@ from PyQt5 import QtCore, QtWidgets
 from stim_math import hardware_calibration, point_calibration, generate, amplitude_modulation, trig
 
 
+MME = 'MME'
+DIRECTSOUND = 'Windows DirectSound'
+ASIO = 'ASIO'
+WASAPI = 'Windows WASAPI'
+WDMKS = 'Windows WDM-KS'
+
+
+# MME and directsound with high latency seems most stable.
+# wdm-ks 'low' has lowest latency
+PREFERRED_HOST_API = DIRECTSOUND
+PREFERRED_LATENCY = 'high'     # 'low', 'high' or a float
+
+TCODE_LATENCY = 0.04  # delay tcode command. Worst-case command interval from multifunplayer
+
+# measured latency on my machine, excluding tcode latency
+# wdm-ks,
+# latency='low'     50ms      frames: 441 or 7
+# latency='high'   100ms      frames: 1764 or 28
+# latency=0.1, 160-180ms
+# wasapi:
+# latency='low'  70-90ms      frames: 448
+# latency='high' 220-240ms    frames: 448
+# mme:
+# latency='low'    130ms      frames: 576
+# latency='high' 220-240ms    frames: 1136
+
+
 @dataclass
 class AudioDevice:
     device_index: int
     device_name: str
     is_default: bool
-
-
-def audio_to_bytes(L, R):
-    data = np.vstack((L, R)).transpose()
-    data = np.clip(data * 2 ** 15, -32768, 32767).astype(np.int16)
-    return data.tobytes()
 
 
 class ContinuousParameter:
@@ -44,17 +65,16 @@ class AudioGenerationWidget(QtWidgets.QWidget):
     def __init__(self, parent):
         QtWidgets.QWidget.__init__(self, parent)
 
-        self.p = pyaudio.PyAudio()
         self.sample_rate = 44100
         self.frame_number = 0
         self.audio_latency = 0
 
-        self.preferred_host_api = self.p.get_default_host_api_info()['index']
-        # prefer windows directsound
-        for i in range(self.p.get_host_api_count()):
-            if self.p.get_host_api_info_by_index(i)['name'].lower() == 'windows directsound':
+        self.preferred_host_api = sd.default.hostapi
+        self.device_index = sd.default.device[1]
+        for i, hostapi in enumerate(sd.query_hostapis()):
+            if hostapi['name'] == PREFERRED_HOST_API:
                 self.preferred_host_api = i
-        self.device_index = self.p.get_host_api_info_by_index(self.preferred_host_api)['defaultOutputDevice']
+                self.device_index = hostapi['default_output_device']
 
         self.stream = None
 
@@ -70,29 +90,35 @@ class AudioGenerationWidget(QtWidgets.QWidget):
         self.last_dac_time = 0
 
     def start(self):
-        self.stream = self.p.open(
-            format=self.p.get_format_from_width(2),
-            channels=2,
-            rate=self.sample_rate,
-            output=True,
-            stream_callback=self.callback,
-            frames_per_buffer=1000,  # 1000 ~= 20ms
-            output_device_index=self.device_index,
-        )
+        try:
+            samplerate = sd.query_devices(self.device_index)['default_samplerate']
+            self.sample_rate = int(samplerate)
+            self.stream = sd.OutputStream(
+                samplerate=samplerate,
+                device=self.device_index,
+                channels=2,
+                dtype=np.int16,
+                callback=self.callback,
+                latency=PREFERRED_LATENCY
+            )
+            print(self.stream.start())
+        except Exception as e:
+            import traceback
+            traceback.print_exception(e)
 
     def stop(self):
         if self.stream is not None:
+            self.stream.stop()
             self.stream.close()
         self.stream = None
 
     def list_devices(self):
         devices = []
-        default_index = self.p.get_host_api_info_by_index(self.preferred_host_api)['defaultOutputDevice']
-        for device_index in range(self.p.get_device_count()):
-            device = self.p.get_device_info_by_index(device_index)
-            if device['hostApi'] != self.preferred_host_api:
+        default_index = self.device_index
+        for device in sd.query_devices():
+            if device['hostapi'] != self.preferred_host_api:
                 continue
-            if device['maxOutputChannels'] == 0:
+            if device['max_output_channels'] <= 1:
                 continue
             devices.append(
                 AudioDevice(device['index'], device['name'], device['index'] == default_index)
@@ -107,17 +133,21 @@ class AudioGenerationWidget(QtWidgets.QWidget):
             api = self.p.get_host_api_info_by_index(api_index)
             print(api)
 
-    def callback(self, in_data, frame_count, time_info, status):
-        timeline = np.linspace(self.frame_number / self.sample_rate,
-                               (self.frame_number + frame_count) / self.sample_rate,
-                               frame_count, endpoint=False)
-        self.frame_number += frame_count
+    def callback(self, outdata: np.ndarray, frames: int, time, status: sd.CallbackFlags):
+        outdata.fill(0)
+        current_time = time.currentTime
+        output_dac_time = time.outputBufferDacTime
 
-        new_audio_latency = time_info['output_buffer_dac_time'] - time_info['current_time']
+        timeline = np.linspace(self.frame_number / self.sample_rate,
+                               (self.frame_number + frames) / self.sample_rate,
+                               frames, endpoint=False)
+        self.frame_number += frames
+        new_audio_latency = output_dac_time - current_time
         self.audio_latency += 0.2 * (new_audio_latency - self.audio_latency)
 
-        L, R = self.generate_audio(timeline, time_info['output_buffer_dac_time'])
-        return audio_to_bytes(L, R), pyaudio.paContinue
+        L, R = self.generate_audio(timeline, output_dac_time)
+        outdata[:, 0] = np.clip(L * 2 ** 15, -32768, 32767).astype(np.int16)
+        outdata[:, 1] = np.clip(R * 2 ** 15, -32768, 32767).astype(np.int16)
 
     def updatePositionParameters(self, position_params: PositionParameters):
         self.updateAlpha(position_params.alpha)
@@ -139,9 +169,8 @@ class AudioGenerationWidget(QtWidgets.QWidget):
         self.transform_parameters = transform_parameters
 
     def generate_audio(self, timeline, dac_time):
-        latency = 0.04
         system_time = time.time()
-        offset = system_time - timeline[-1] - latency
+        offset = system_time - timeline[-1] - TCODE_LATENCY
 
         if abs(self.offset - offset) > 1:
             self.offset = offset

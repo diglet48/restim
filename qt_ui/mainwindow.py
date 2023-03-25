@@ -51,9 +51,11 @@ class Window(QMainWindow, Ui_MainWindow):
 
         for device in self.audio_gen.list_devices():
             self.comboBoxAudioDevice.addItem(device.device_name, device)
+            if device.is_default:
+                self.comboBoxAudioDevice.setCurrentIndex(self.comboBoxAudioDevice.count()-1)
+
         self.comboBoxAudioDevice.setStyleSheet("QComboBox QAbstractItemView {min-width: 400px;}"),
         self.comboBoxAudioDevice.currentIndexChanged.connect(self.audioDeviceSelectionChanged)
-
 
         dialog = qt_ui.funscriptconversiondialog.FunscriptConversionDialog()
         self.dialog = dialog
