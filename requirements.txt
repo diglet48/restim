@@ -3,3 +3,4 @@ websockets
 sounddevice
 matplotlib
 PyQt5
+pydub
