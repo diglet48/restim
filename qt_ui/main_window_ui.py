@@ -82,6 +82,20 @@ class Ui_MainWindow(object):
         self.tab_carrier = ModulationSettingsWidget()
         self.tab_carrier.setObjectName("tab_carrier")
         self.tabWidget.addTab(self.tab_carrier, "")
+        self.tab_volume = QtWidgets.QWidget()
+        self.tab_volume.setObjectName("tab_volume")
+        self.verticalLayout_6 = QtWidgets.QVBoxLayout(self.tab_volume)
+        self.verticalLayout_6.setContentsMargins(0, 0, 0, 6)
+        self.verticalLayout_6.setSpacing(0)
+        self.verticalLayout_6.setObjectName("verticalLayout_6")
+        self.volumeWidget = VolumeControlWidget(self.tab_volume)
+        self.volumeWidget.setObjectName("volumeWidget")
+        self.verticalLayout_5 = QtWidgets.QVBoxLayout(self.volumeWidget)
+        self.verticalLayout_5.setObjectName("verticalLayout_5")
+        self.verticalLayout_6.addWidget(self.volumeWidget)
+        spacerItem1 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
+        self.verticalLayout_6.addItem(spacerItem1)
+        self.tabWidget.addTab(self.tab_volume, "")
         self.tab_calibration = CalibrationSettingsWidget()
         self.tab_calibration.setObjectName("tab_calibration")
         self.tabWidget.addTab(self.tab_calibration, "")
@@ -123,6 +137,7 @@ class Ui_MainWindow(object):
         self.startStopAudioButton.setText(_translate("MainWindow", "Start audio"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_transform_calibration), _translate("MainWindow", "Calibration"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_carrier), _translate("MainWindow", "Carrier and modulation"))
+        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_volume), _translate("MainWindow", "Volume"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_calibration), _translate("MainWindow", "Fine tuning"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_details), _translate("MainWindow", "Details"))
         self.menuTools.setTitle(_translate("MainWindow", "Tools"))
@@ -131,4 +146,5 @@ from qt_ui.calibrationsettingswidget import CalibrationSettingsWidget
 from qt_ui.modulationsettingswidget import ModulationSettingsWidget
 from qt_ui.phasewidget import PhaseWidget
 from qt_ui.transformcalibrationsettingswidget import TransformCalibrationSettingsWidget
+from qt_ui.volumecontrolwidget import VolumeControlWidget
 from qt_ui.waveformdetailswidget import WaveformDetailsWidget

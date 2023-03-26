@@ -85,6 +85,7 @@ class AudioGenerationWidget(QtWidgets.QWidget):
 
         self.alpha = ContinuousParameter(0)
         self.beta = ContinuousParameter(0)
+        self.volume = None
 
         self.offset = 0
         self.last_dac_time = 0
@@ -158,6 +159,9 @@ class AudioGenerationWidget(QtWidgets.QWidget):
 
     def updateBeta(self, value):
         self.beta.add(value)
+
+    def updateGuiVolume(self, volume):
+        self.volume = np.clip(volume, 0, 1)
 
     def updateCalibrationParameters(self, calibration_params: CalibrationParameters):
         self.calibration_parameters = calibration_params
@@ -241,4 +245,6 @@ class AudioGenerationWidget(QtWidgets.QWidget):
                                        point_calibration=point_calib,
                                        point_calibration_2=center_calib,
                                        hardware_calibration=hw)
+        L *= self.volume
+        R *= self.volume
         return L, R

@@ -42,10 +42,15 @@ class Window(QMainWindow, Ui_MainWindow):
         self.websocket_server.betaChanged.connect(self.audio_gen.updateBeta)
         # self.websocket_server.volumeChanged.connect(self.audio_gen.updateVolume)
 
+        self.volumeWidget.volumeChanged.connect(self.audio_gen.updateGuiVolume)
+
+
         # trigger updates
         self.tab_calibration.settings_changed()
         self.tab_carrier.settings_changed()
         self.tab_transform_calibration.settings_changed()
+        self.volumeWidget.updateVolume()
+
 
         self.startStopAudioButton.clicked.connect(self.audioStartStop)
 
