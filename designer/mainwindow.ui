@@ -68,7 +68,7 @@
            <widget class="QComboBox" name="comboBox">
             <item>
              <property name="text">
-              <string>None</string>
+              <string>Mouse</string>
              </property>
             </item>
             <item>
@@ -89,11 +89,6 @@
             <item>
              <property name="text">
               <string>C</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>Mouse</string>
              </property>
             </item>
            </widget>

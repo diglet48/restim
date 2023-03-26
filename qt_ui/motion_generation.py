@@ -6,12 +6,12 @@ from qt_ui.stim_config import CalibrationParameters, ModulationParameters, Posit
 
 
 class Pattern:
-    NONE = 0
+    MOUSE = 0
     A = 1
     B = 2
     C = 3
     LARGE_CIRCLE = 4
-    MOUSE = 5
+
 
 
 class MotionGenerator(QtCore.QObject):
@@ -20,7 +20,7 @@ class MotionGenerator(QtCore.QObject):
 
         self.theta = 0
         self.velocity = 1.0
-        self.pattern = Pattern.LARGE_CIRCLE
+        self.pattern = Pattern.MOUSE
         self.last_update_time = time.time()
 
         timer = QtCore.QTimer(self)
@@ -29,12 +29,11 @@ class MotionGenerator(QtCore.QObject):
 
     def patternChanged(self, pattern):
         new_pattern = {
-            'None': Pattern.NONE,
+            'Mouse': Pattern.MOUSE,
             'Circle': Pattern.LARGE_CIRCLE,
             'A': Pattern.A,
             'B': Pattern.B,
             'C': Pattern.C,
-            'Mouse': Pattern.MOUSE,
         }
         self.pattern = new_pattern[pattern]
         pass
@@ -48,9 +47,7 @@ class MotionGenerator(QtCore.QObject):
 
         xy = None
 
-        if self.pattern == Pattern.NONE:
-            return
-        elif self.pattern == Pattern.A:
+        if self.pattern == Pattern.A:
             self.theta += elapsed * self.velocity
             xy = (np.cos(self.theta), 0)
         elif self.pattern == Pattern.B:
