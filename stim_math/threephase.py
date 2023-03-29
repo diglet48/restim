@@ -105,7 +105,7 @@ class ContinuousSineWaveform:
         Returns the amplitude of alpha and beta axis
 
         [alpha, beta] = squeeze @ [cos, sin]
-        Therefore N = a * cos + b * sin
+        Therefore alpha = a * cos + b * sin
         with (a, b) being the coefs in (squeeze)
         """
 

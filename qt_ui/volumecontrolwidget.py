@@ -16,6 +16,7 @@ class VolumeControlWidget(QtWidgets.QWidget, Ui_VolumeControlForm):
         timer.timeout.connect(self.timeout)
         timer.start(int(1000 / 10.0))
         self.last_update_time = time.time()
+        self.remainder = 0
 
         self.doubleSpinBox_volume.valueChanged.connect(self.updateVolume)
 
@@ -24,24 +25,26 @@ class VolumeControlWidget(QtWidgets.QWidget, Ui_VolumeControlForm):
     def timeout(self):
         t = time.time()
         dt = max(0.0, t - self.last_update_time)
+        self.last_update_time = t
 
         if not self.radioButton_enabled.isChecked():
-            self.last_update_time = t
+            self.remainder = 0
             return
 
-        max_change = self.doubleSpinBox_rate.value() * dt / 60
+        change = self.doubleSpinBox_rate.value() * dt / 60
         value = self.doubleSpinBox_volume.value()
         target = self.doubleSpinBox_target_volume.value()
-        self.doubleSpinBox_volume.setValue(
-            np.clip(
-                target,
-                value - max_change,
-                value + max_change,
-            )
-        )
+        if target < value:
+            change *= -1
 
-        if value != self.doubleSpinBox_volume.value():
-            self.last_update_time = t
+        change += self.remainder
+        if change > 0:
+            change = np.clip(change, 0, target - value)
+        else:
+            change = np.clip(change, target - value, 0)
+
+        self.doubleSpinBox_volume.setValue(value + change)
+        self.remainder = change - (self.doubleSpinBox_volume.value() - value)
 
     def updateVolume(self, _=None):
         self.volumeChanged.emit(
