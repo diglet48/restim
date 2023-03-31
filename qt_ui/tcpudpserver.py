@@ -71,7 +71,6 @@ class TcpUdpServer(QtCore.QObject):
             self.volumeChanged.emit(cmd.value)
 
     def clientDisconnected(self):
-        print('disconnected')
         self.tcp_connections = [con for con in self.tcp_connections if con.state() == QtNetwork.QAbstractSocket.UnconnectedState]
 
     alphaChanged = QtCore.pyqtSignal(float)
