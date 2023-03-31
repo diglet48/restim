@@ -12,8 +12,11 @@ class WebSocketServer(QtCore.QObject):
         self.connections = []
 
         self.server = QtWebSockets.QWebSocketServer("restim t-code server", 1)  #not secure
-        if not self.server.listen(QHostAddress.Any, 12346):
-            print('websocket listen failed...', print(self.server.error()))
+        b = self.server.listen(QHostAddress.Any, 12346)
+        if b:
+            print("websocket server active at localhost:12346")
+        else:
+            print("Unable to start websocket server:", self.server.errorString())
 
         self.server.newConnection.connect(self.new_connection)
 

@@ -8,6 +8,7 @@ from qt_ui.main_window_ui import Ui_MainWindow
 import qt_ui.motion_generation
 import qt_ui.audiogenerationwidget
 import qt_ui.websocketserver
+import qt_ui.tcpudpserver
 import qt_ui.funscriptconversiondialog
 
 
@@ -41,6 +42,13 @@ class Window(QMainWindow, Ui_MainWindow):
         self.websocket_server.alphaChanged.connect(self.audio_gen.updateAlpha)
         self.websocket_server.betaChanged.connect(self.audio_gen.updateBeta)
         # self.websocket_server.volumeChanged.connect(self.audio_gen.updateVolume)
+
+        self.tcpudp_server = qt_ui.tcpudpserver.TcpUdpServer(self)
+        self.tcpudp_server.alphaChanged.connect(self.graphicsView.updateAlphaPosition)
+        self.tcpudp_server.betaChanged.connect(self.graphicsView.updateBetaPosition)
+        self.tcpudp_server.alphaChanged.connect(self.audio_gen.updateAlpha)
+        self.tcpudp_server.betaChanged.connect(self.audio_gen.updateBeta)
+        # self.tcpudp_server.volumeChanged.connect(self.audio_gen.updateVolume)
 
         self.volumeWidget.volumeChanged.connect(self.audio_gen.updateGuiVolume)
 
