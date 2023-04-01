@@ -5,6 +5,7 @@ import numpy as np
 # Make sure that we are using QT5
 matplotlib.use('Qt5Agg')
 from PyQt5 import QtCore, QtWidgets
+from PyQt5.QtCore import QSettings
 
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
@@ -12,6 +13,11 @@ from matplotlib.figure import Figure
 from qt_ui.stim_config import TransformParameters
 
 from stim_math.hardware_calibration import HardwareCalibration
+
+
+SETTING_CALIBRATION_NEUTRAL = 'hw_calibration/neutral'
+SETTING_CALIBRATION_RIGHT = 'hw_calibration/right'
+SETTING_CALIBRATION_CENTER = 'hw_calibration/center'
 
 
 class MyMplCanvas(FigureCanvas):
@@ -83,8 +89,7 @@ class MyStaticMplCanvas(MyMplCanvas):
 class TransformCalibrationSettingsWidget(QtWidgets.QWidget):
     def __init__(self):
         QtWidgets.QWidget.__init__(self)
-
-        # self.main_widget = QtWidgets.QWidget(self)
+        self.settings = QSettings()
 
         l = QtWidgets.QFormLayout(self)
         sc = MyStaticMplCanvas(self, width=7, height=3, dpi=100)
@@ -95,19 +100,19 @@ class TransformCalibrationSettingsWidget(QtWidgets.QWidget):
         gbc_l = QtWidgets.QFormLayout(gbc)
         neutral_power_slider = QtWidgets.QDoubleSpinBox(minimum=-15, maximum=15)
         neutral_power_slider.setSingleStep(0.1)
-        neutral_power_slider.setValue(0)
+        neutral_power_slider.setValue(self.settings.value(SETTING_CALIBRATION_NEUTRAL, 0.0, float))
         neutral_power_label = QtWidgets.QLabel("Neutral power [dB]")
         gbc_l.addRow(neutral_power_label, neutral_power_slider)
 
         right_power_slider = QtWidgets.QDoubleSpinBox(minimum=-15, maximum=15)
         right_power_slider.setSingleStep(0.1)
-        right_power_slider.setValue(0)
+        right_power_slider.setValue(self.settings.value(SETTING_CALIBRATION_RIGHT, 0.0, float))
         right_power_label = QtWidgets.QLabel("Right power [dB]")
         gbc_l.addRow(right_power_label, right_power_slider)
 
         center_power_slider = QtWidgets.QDoubleSpinBox(minimum=-15, maximum=15)
         center_power_slider.setSingleStep(0.1)
-        center_power_slider.setValue(-0.7)
+        center_power_slider.setValue(self.settings.value(SETTING_CALIBRATION_CENTER, -0.7, float))
         center_power_label = QtWidgets.QLabel("Center power [dB]")
         gbc_l.addRow(center_power_label, center_power_slider)
         gbc.setLayout(gbc_l)
@@ -133,3 +138,7 @@ class TransformCalibrationSettingsWidget(QtWidgets.QWidget):
             self.center.value()
         )
         self.transformCalibrationSettingsChanged.emit(params)
+
+        self.settings.setValue(SETTING_CALIBRATION_NEUTRAL, self.neutral.value())
+        self.settings.setValue(SETTING_CALIBRATION_RIGHT, self.right.value())
+        self.settings.setValue(SETTING_CALIBRATION_CENTER, self.center.value())

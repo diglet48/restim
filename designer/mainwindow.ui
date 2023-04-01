@@ -109,12 +109,9 @@
        <item>
         <widget class="QGroupBox" name="groupBox_2">
          <property name="title">
-          <string>Audio device</string>
+          <string>Audio</string>
          </property>
          <layout class="QVBoxLayout" name="verticalLayout_4">
-          <item>
-           <widget class="QComboBox" name="comboBoxAudioDevice"/>
-          </item>
           <item>
            <widget class="QCommandLinkButton" name="startStopAudioButton">
             <property name="text">
@@ -229,12 +226,18 @@
      <string>Tools</string>
     </property>
     <addaction name="actionFunscript_conversion_2"/>
+    <addaction name="actionPreferences"/>
    </widget>
    <addaction name="menuTools"/>
   </widget>
   <action name="actionFunscript_conversion_2">
    <property name="text">
     <string>Funscript conversion</string>
+   </property>
+  </action>
+  <action name="actionPreferences">
+   <property name="text">
+    <string>Preferences</string>
    </property>
   </action>
  </widget>

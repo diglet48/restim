@@ -1,8 +1,10 @@
 import sys
 
+from PyQt5.QtCore import QSettings
 from PyQt5.QtWidgets import (
-    QApplication, QMainWindow
+    QApplication, QMainWindow, QStyle
 )
+
 
 from qt_ui.main_window_ui import Ui_MainWindow
 import qt_ui.motion_generation
@@ -10,6 +12,10 @@ import qt_ui.audiogenerationwidget
 import qt_ui.websocketserver
 import qt_ui.tcpudpserver
 import qt_ui.funscriptconversiondialog
+import qt_ui.preferencesdialog
+
+from qt_ui.preferencesdialog import KEY_AUDIO_API, KEY_AUDIO_DEVICE, KEY_AUDIO_LATENCY
+import sounddevice as sd
 
 
 class Window(QMainWindow, Ui_MainWindow):
@@ -52,45 +58,57 @@ class Window(QMainWindow, Ui_MainWindow):
 
         self.volumeWidget.volumeChanged.connect(self.audio_gen.updateGuiVolume)
 
-
         # trigger updates
         self.tab_calibration.settings_changed()
         self.tab_carrier.settings_changed()
         self.tab_transform_calibration.settings_changed()
         self.volumeWidget.updateVolume()
 
-
         self.startStopAudioButton.clicked.connect(self.audioStartStop)
+        self.audioStop() # update button icon/label
 
-        for device in self.audio_gen.list_devices():
-            self.comboBoxAudioDevice.addItem(device.device_name, device)
-            if device.is_default:
-                self.comboBoxAudioDevice.setCurrentIndex(self.comboBoxAudioDevice.count()-1)
-
-        self.comboBoxAudioDevice.setStyleSheet("QComboBox QAbstractItemView {min-width: 400px;}"),
-        self.comboBoxAudioDevice.currentIndexChanged.connect(self.audioDeviceSelectionChanged)
-
-        dialog = qt_ui.funscriptconversiondialog.FunscriptConversionDialog()
-        self.dialog = dialog
-
+        self.dialog = qt_ui.funscriptconversiondialog.FunscriptConversionDialog()
         self.actionFunscript_conversion_2.triggered.connect(self.openFunscriptConversionDialog)
+
+        self.settings_dialog = qt_ui.preferencesdialog.PreferencesDialog()
+        self.actionPreferences.triggered.connect(self.openPreferencesDialog)
 
     def audioStartStop(self):
         if self.audio_gen.stream is None:
-            self.startStopAudioButton.setText("Stop audio")
-            self.audio_gen.start()
+            self.audioStart()
         else:
-            self.startStopAudioButton.setText("Start audio")
-            self.audio_gen.stop()
+            self.audioStop()
+
+    def audioStart(self):
+        settings = QSettings()
+        api_name = settings.value(KEY_AUDIO_API, sd.query_hostapis(sd.default.hostapi)['name'])
+        device_name = settings.value(KEY_AUDIO_DEVICE, sd.query_devices(sd.default.device[1])['name'])
+        latency = settings.value(KEY_AUDIO_LATENCY, 'high')
+        try:
+            latency = float(latency)
+        except ValueError:
+            pass
+        self.audio_gen.start(api_name, device_name, latency)
+        if self.audio_gen.stream is not None:
+            pixmapi = getattr(QStyle, 'SP_MediaStop')
+            icon = self.style().standardIcon(pixmapi)
+            self.startStopAudioButton.setIcon(icon)
+            self.startStopAudioButton.setText("Stop audio")
 
     def audioStop(self):
-        if self.audio_gen.stream is not None:
-            self.startStopAudioButton.setText("Start audio")
-            self.audio_gen.stop()
+        self.audio_gen.stop()
+        pixmapi = getattr(QStyle, 'SP_MediaPlay')
+        icon = self.style().standardIcon(pixmapi)
+        self.startStopAudioButton.setIcon(icon)
+        self.startStopAudioButton.setText("Start audio")
 
     def openFunscriptConversionDialog(self):
         self.audioStop()
         self.dialog.exec()
+
+    def openPreferencesDialog(self):
+        self.audioStop()
+        self.settings_dialog.exec()
 
     def audioDeviceSelectionChanged(self, index):
         self.audio_gen.select_device_index(self.comboBoxAudioDevice.currentData().device_index)
@@ -102,6 +120,10 @@ class Window(QMainWindow, Ui_MainWindow):
 
 
 def run():
+    QApplication.setApplicationName("restim")
+    QApplication.setOrganizationName("restim")
+    QSettings.setDefaultFormat(QSettings.IniFormat)
+
     app = QApplication(sys.argv)
     win = Window()
     win.show()

@@ -3,24 +3,14 @@ import time
 
 import numpy as np
 import sounddevice as sd
+from PyQt5.QtCore import QSettings
+
+from qt_ui.preferencesdialog import KEY_AUDIO_DEVICE, KEY_AUDIO_API, KEY_AUDIO_LATENCY
 from qt_ui.stim_config import ModulationParameters, TransformParameters, CalibrationParameters, PositionParameters
 
 from PyQt5 import QtCore, QtWidgets
 
 from stim_math import hardware_calibration, point_calibration, generate, amplitude_modulation, trig
-
-
-MME = 'MME'
-DIRECTSOUND = 'Windows DirectSound'
-ASIO = 'ASIO'
-WASAPI = 'Windows WASAPI'
-WDMKS = 'Windows WDM-KS'
-
-
-# MME and directsound with high latency seems most stable.
-# wdm-ks 'low' has lowest latency
-PREFERRED_HOST_API = DIRECTSOUND
-PREFERRED_LATENCY = 'high'     # 'low', 'high' or a float
 
 TCODE_LATENCY = 0.04  # delay tcode command. Worst-case command interval from multifunplayer
 
@@ -35,13 +25,6 @@ TCODE_LATENCY = 0.04  # delay tcode command. Worst-case command interval from mu
 # mme:
 # latency='low'    130ms      frames: 576
 # latency='high' 220-240ms    frames: 1136
-
-
-@dataclass
-class AudioDevice:
-    device_index: int
-    device_name: str
-    is_default: bool
 
 
 class ContinuousParameter:
@@ -69,13 +52,6 @@ class AudioGenerationWidget(QtWidgets.QWidget):
         self.frame_number = 0
         self.audio_latency = 0
 
-        self.preferred_host_api = sd.default.hostapi
-        self.device_index = sd.default.device[1]
-        for i, hostapi in enumerate(sd.query_hostapis()):
-            if hostapi['name'] == PREFERRED_HOST_API:
-                self.preferred_host_api = i
-                self.device_index = hostapi['default_output_device']
-
         self.stream = None
 
         self.modulation_parameters: ModulationParameters = None
@@ -90,20 +66,28 @@ class AudioGenerationWidget(QtWidgets.QWidget):
         self.offset = 0
         self.last_dac_time = 0
 
-    def start(self):
+    def start(self, host_api_name, audio_device_name, latency):
         try:
-            samplerate = sd.query_devices(self.device_index)['default_samplerate']
+            device_index = sd.default.device[1]
+            for device in sd.query_devices():
+                if sd.query_hostapis(device['hostapi'])['name'] == host_api_name:
+                    if device['name'] == audio_device_name:
+                        device_index = device['index']
+
+            samplerate = sd.query_devices(device_index)['default_samplerate']
+            print('start audio:', host_api_name, audio_device_name, latency, samplerate)
             self.sample_rate = int(samplerate)
             self.stream = sd.OutputStream(
                 samplerate=samplerate,
-                device=self.device_index,
+                device=device_index,
                 channels=2,
                 dtype=np.int16,
                 callback=self.callback,
-                latency=PREFERRED_LATENCY
+                latency=latency,
             )
             self.stream.start()
         except Exception as e:
+            self.stream = None
             import traceback
             traceback.print_exception(e)
 
@@ -112,27 +96,6 @@ class AudioGenerationWidget(QtWidgets.QWidget):
             self.stream.stop()
             self.stream.close()
         self.stream = None
-
-    def list_devices(self):
-        devices = []
-        default_index = self.device_index
-        for device in sd.query_devices():
-            if device['hostapi'] != self.preferred_host_api:
-                continue
-            if device['max_output_channels'] <= 1:
-                continue
-            devices.append(
-                AudioDevice(device['index'], device['name'], device['index'] == default_index)
-            )
-        return devices
-
-    def select_device_index(self, index):
-        self.device_index = index
-
-    def list_host_api(self):
-        for api_index in range(self.p.get_host_api_count()):
-            api = self.p.get_host_api_info_by_index(api_index)
-            print(api)
 
     def callback(self, outdata: np.ndarray, frames: int, time, status: sd.CallbackFlags):
         outdata.fill(0)

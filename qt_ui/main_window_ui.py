@@ -63,9 +63,6 @@ class Ui_MainWindow(object):
         self.groupBox_2.setObjectName("groupBox_2")
         self.verticalLayout_4 = QtWidgets.QVBoxLayout(self.groupBox_2)
         self.verticalLayout_4.setObjectName("verticalLayout_4")
-        self.comboBoxAudioDevice = QtWidgets.QComboBox(self.groupBox_2)
-        self.comboBoxAudioDevice.setObjectName("comboBoxAudioDevice")
-        self.verticalLayout_4.addWidget(self.comboBoxAudioDevice)
         self.startStopAudioButton = QtWidgets.QCommandLinkButton(self.groupBox_2)
         self.startStopAudioButton.setObjectName("startStopAudioButton")
         self.verticalLayout_4.addWidget(self.startStopAudioButton)
@@ -117,7 +114,10 @@ class Ui_MainWindow(object):
         MainWindow.setMenuBar(self.menuBar)
         self.actionFunscript_conversion_2 = QtWidgets.QAction(MainWindow)
         self.actionFunscript_conversion_2.setObjectName("actionFunscript_conversion_2")
+        self.actionPreferences = QtWidgets.QAction(MainWindow)
+        self.actionPreferences.setObjectName("actionPreferences")
         self.menuTools.addAction(self.actionFunscript_conversion_2)
+        self.menuTools.addAction(self.actionPreferences)
         self.menuBar.addAction(self.menuTools.menuAction())
 
         self.retranslateUi(MainWindow)
@@ -133,7 +133,7 @@ class Ui_MainWindow(object):
         self.comboBox.setItemText(2, _translate("MainWindow", "A"))
         self.comboBox.setItemText(3, _translate("MainWindow", "B"))
         self.comboBox.setItemText(4, _translate("MainWindow", "C"))
-        self.groupBox_2.setTitle(_translate("MainWindow", "Audio device"))
+        self.groupBox_2.setTitle(_translate("MainWindow", "Audio"))
         self.startStopAudioButton.setText(_translate("MainWindow", "Start audio"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_transform_calibration), _translate("MainWindow", "Calibration"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_carrier), _translate("MainWindow", "Carrier and modulation"))
@@ -142,6 +142,7 @@ class Ui_MainWindow(object):
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_details), _translate("MainWindow", "Details"))
         self.menuTools.setTitle(_translate("MainWindow", "Tools"))
         self.actionFunscript_conversion_2.setText(_translate("MainWindow", "Funscript conversion"))
+        self.actionPreferences.setText(_translate("MainWindow", "Preferences"))
 from qt_ui.calibrationsettingswidget import CalibrationSettingsWidget
 from qt_ui.modulationsettingswidget import ModulationSettingsWidget
 from qt_ui.phasewidget import PhaseWidget
