@@ -3,6 +3,8 @@ import matplotlib
 import numpy as np
 
 # Make sure that we are using QT5
+from stim_math.threephase_parameter_manager import ThreephaseParameterManager
+
 matplotlib.use('Qt5Agg')
 from PyQt5.QtGui import QTransform, QBrush, QColor, QPen, QMouseEvent
 from PyQt5 import QtCore, QtWidgets, QtSvg
@@ -17,52 +19,54 @@ class WaveformDetailsWidget(QtWidgets.QWidget, Ui_WaveformDetails):
         QtWidgets.QWidget.__init__(self)
         self.setupUi(self)
         self.calibration = None
+        self.config = None
 
-        self.updatePositionParameters(PositionParameters(0, 0))
+        self.timer = QtCore.QTimer(self)
+        self.timer.timeout.connect(self.refresh)
+        self.timer.start(int(1000 / 10.0))
 
-    def updateCalibrationParameters(self, calibration_params: CalibrationParameters):
-        self.calibration = point_calibration.ThirteenPointCalibration([
-            calibration_params.edge_0_3pi,
-            calibration_params.edge_1_3pi,
-            calibration_params.edge_2_3pi,
-            calibration_params.edge_3_3pi,
-            calibration_params.edge_4_3pi,
-            calibration_params.edge_5_3pi,
-            calibration_params.mid_0_3pi,
-            calibration_params.mid_1_3pi,
-            calibration_params.mid_2_3pi,
-            calibration_params.mid_3_3pi,
-            calibration_params.mid_4_3pi,
-            calibration_params.mid_5_3pi,
-            calibration_params.center])
+        self.last_params = (None, None)
 
-    def updatePositionParameters(self, position_params: PositionParameters):
+    def set_config_manager(self, config: ThreephaseParameterManager):
+        self.config = config
+
+    def refresh(self):
+        if self.config is None:
+            return
+
+        if self.isVisible():
+            self.timer.setInterval(1000 // 20)
+        else:
+            self.timer.setInterval(1000 // 5)
+            return
+
+        alpha = self.config.alpha.last_value()
+        beta = self.config.beta.last_value()
+        if self.last_params == (alpha, beta):
+            return
+        self.last_params = (alpha, beta)
+
         L, R, center, phase_shift = threephase.ContinuousSineWaveform.channel_amplitude(
-            np.array([position_params.alpha]),
-            np.array([position_params.beta]))
+            np.array([alpha]),
+            np.array([beta]))
 
         def format_amplitude(f): return "{:.2f}".format(f)
         def format_angle(f): return "{:.0f}°".format(f / np.pi * 180)
-
-        scale = 1
-        if self.calibration is not None:
-            scale = self.calibration.get_scale(position_params.alpha, position_params.beta)
-        self.scale_label.setText(format_amplitude(scale))
 
         self.left_amplitude_label.setText(format_amplitude(L[0]))
         self.right_amplitude_label.setText(format_amplitude(R[0]))
         self.center_amplitude_label.setText(format_amplitude(center[0]))
         self.phase_label.setText(format_angle(phase_shift[0]))
 
-        self.alpha_label.setText(format_amplitude(position_params.alpha))
-        self.beta_label.setText(format_amplitude(position_params.beta))
+        self.alpha_label.setText(format_amplitude(alpha))
+        self.beta_label.setText(format_amplitude(beta))
 
-        self.r_label.setText(format_amplitude((position_params.alpha**2 + position_params.beta**2)**.5))
-        self.theta_label.setText(format_angle(np.arctan2(position_params.beta, position_params.alpha)))
+        self.r_label.setText(format_amplitude((alpha**2 + beta**2)**.5))
+        self.theta_label.setText(format_angle(np.arctan2(beta, alpha)))
 
         N, L, R = threephase.ContinuousSineWaveform.electrode_amplitude(
-            np.array([position_params.alpha]),
-            np.array([position_params.beta]))
+            np.array([alpha]),
+            np.array([beta]))
 
         self.neutral_label.setText(format_amplitude(N[0] / (3**.5 / 3)))
         self.left_label.setText(format_amplitude(L[0] / (3**.5 / 3)))

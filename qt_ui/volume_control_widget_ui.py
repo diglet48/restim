@@ -25,6 +25,7 @@ class Ui_VolumeControlForm(object):
         self.label_volume.setObjectName("label_volume")
         self.formLayout_2.setWidget(0, QtWidgets.QFormLayout.LabelRole, self.label_volume)
         self.doubleSpinBox_volume = QtWidgets.QDoubleSpinBox(self.groupBox)
+        self.doubleSpinBox_volume.setDecimals(2)
         self.doubleSpinBox_volume.setMaximum(100.0)
         self.doubleSpinBox_volume.setSingleStep(0.1)
         self.doubleSpinBox_volume.setProperty("value", 100.0)

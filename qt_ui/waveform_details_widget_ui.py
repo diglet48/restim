@@ -14,7 +14,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_WaveformDetails(object):
     def setupUi(self, WaveformDetails):
         WaveformDetails.setObjectName("WaveformDetails")
-        WaveformDetails.resize(553, 333)
+        WaveformDetails.resize(553, 528)
         self.verticalLayout = QtWidgets.QVBoxLayout(WaveformDetails)
         self.verticalLayout.setObjectName("verticalLayout")
         self.groupBox_2 = QtWidgets.QGroupBox(WaveformDetails)
@@ -103,17 +103,6 @@ class Ui_WaveformDetails(object):
         self.left_label.setObjectName("left_label")
         self.formLayout_3.setWidget(1, QtWidgets.QFormLayout.FieldRole, self.left_label)
         self.verticalLayout.addWidget(self.groupBox)
-        self.groupBox_4 = QtWidgets.QGroupBox(WaveformDetails)
-        self.groupBox_4.setObjectName("groupBox_4")
-        self.formLayout_4 = QtWidgets.QFormLayout(self.groupBox_4)
-        self.formLayout_4.setObjectName("formLayout_4")
-        self.label_4 = QtWidgets.QLabel(self.groupBox_4)
-        self.label_4.setObjectName("label_4")
-        self.formLayout_4.setWidget(0, QtWidgets.QFormLayout.LabelRole, self.label_4)
-        self.scale_label = QtWidgets.QLabel(self.groupBox_4)
-        self.scale_label.setObjectName("scale_label")
-        self.formLayout_4.setWidget(0, QtWidgets.QFormLayout.FieldRole, self.scale_label)
-        self.verticalLayout.addWidget(self.groupBox_4)
         spacerItem = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
         self.verticalLayout.addItem(spacerItem)
 
@@ -149,6 +138,3 @@ class Ui_WaveformDetails(object):
         self.right_label.setText(_translate("WaveformDetails", "TextLabel"))
         self.label_10.setText(_translate("WaveformDetails", "L+"))
         self.left_label.setText(_translate("WaveformDetails", "TextLabel"))
-        self.groupBox_4.setTitle(_translate("WaveformDetails", "Calibration"))
-        self.label_4.setText(_translate("WaveformDetails", "Scale"))
-        self.scale_label.setText(_translate("WaveformDetails", "TextLabel"))

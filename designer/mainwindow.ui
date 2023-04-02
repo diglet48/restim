@@ -196,11 +196,6 @@
         </item>
        </layout>
       </widget>
-      <widget class="CalibrationSettingsWidget" name="tab_calibration">
-       <attribute name="title">
-        <string>Fine tuning</string>
-       </attribute>
-      </widget>
       <widget class="WaveformDetailsWidget" name="tab_details">
        <attribute name="title">
         <string>Details</string>
@@ -246,12 +241,6 @@
    <class>ModulationSettingsWidget</class>
    <extends>QWidget</extends>
    <header>qt_ui/modulationsettingswidget.h</header>
-   <container>1</container>
-  </customwidget>
-  <customwidget>
-   <class>CalibrationSettingsWidget</class>
-   <extends>QWidget</extends>
-   <header>qt_ui/calibrationsettingswidget.h</header>
    <container>1</container>
   </customwidget>
   <customwidget>

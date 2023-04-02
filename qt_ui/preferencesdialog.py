@@ -2,6 +2,7 @@ from PyQt5.QtCore import QSettings
 from PyQt5.QtWidgets import QDialog, QAbstractButton, QDialogButtonBox
 
 from qt_ui.preferences_dialog_ui import Ui_PreferencesDialog
+from qt_ui.threephase_configuration import ThreephaseConfiguration
 
 import sounddevice as sd
 
@@ -19,18 +20,23 @@ KEY_AUDIO_API = "audio/api-name"
 KEY_AUDIO_DEVICE = "audio/device-name"
 KEY_AUDIO_LATENCY = "audio/latency"
 
+KEY_DISPLAY_FPS = "display/fps"
+KEY_DISPLAY_LATENCY = "display/latency"
+
 
 class PreferencesDialog(QDialog, Ui_PreferencesDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setupUi(self)
 
+        self.threephase = ThreephaseConfiguration()
+
         self.settings = QSettings()
         self.loadSettings()
 
         self.audio_api.currentIndexChanged.connect(self.repopulate_audio_devices)
         self.buttonBox.clicked.connect(self.buttonClicked)
-        
+
     def exec(self):
         self.loadSettings()
         return super(PreferencesDialog, self).exec()
@@ -72,6 +78,34 @@ class PreferencesDialog(QDialog, Ui_PreferencesDialog):
         self.audio_latency.setCurrentText(self.settings.value(KEY_AUDIO_LATENCY, 'high'))
 
         # display settings
+        self.display_fps.setValue(int(self.settings.value(KEY_DISPLAY_FPS, 60, float)))
+        self.display_latency_ms.setValue(self.settings.value(KEY_DISPLAY_LATENCY, 200, float))
+
+        # threephase settings
+        self.threephase_alpha_axis.setText(self.threephase.alpha.axis)
+        self.threephase_alpha_min.setValue(self.threephase.alpha.left)
+        self.threephase_alpha_max.setValue(self.threephase.alpha.right)
+        self.threephase_alpha_enabled.setChecked(self.threephase.alpha.enabled)
+
+        self.threephase_beta_axis.setText(self.threephase.beta.axis)
+        self.threephase_beta_min.setValue(self.threephase.beta.left)
+        self.threephase_beta_max.setValue(self.threephase.beta.right)
+        self.threephase_beta_enabled.setChecked(self.threephase.beta.enabled)
+
+        self.threephase_volume_axis.setText(self.threephase.volume.axis)
+        self.threephase_volume_min.setValue(self.threephase.volume.left)
+        self.threephase_volume_max.setValue(self.threephase.volume.right)
+        self.threephase_volume_enabled.setChecked(self.threephase.volume.enabled)
+
+        self.threephase_carrier_axis.setText(self.threephase.carrier.axis)
+        self.threephase_carrier_min.setValue(self.threephase.carrier.left)
+        self.threephase_carrier_max.setValue(self.threephase.carrier.right)
+        self.threephase_carrier_enabled.setChecked(self.threephase.carrier.enabled)
+
+        self.threephase_modulation_frequency_axis.setText(self.threephase.modulation_1_frequency.axis)
+        self.threephase_modulation_frequency_min.setValue(self.threephase.modulation_1_frequency.left)
+        self.threephase_modulation_frequency_max.setValue(self.threephase.modulation_1_frequency.right)
+        self.threephase_modulation_frequency_enabled.setChecked(self.threephase.modulation_1_frequency.enabled)
 
     def repopulate_audio_devices(self):
         self.audio_device.clear()
@@ -105,6 +139,36 @@ class PreferencesDialog(QDialog, Ui_PreferencesDialog):
         self.settings.setValue(KEY_AUDIO_DEVICE, self.audio_device.currentText())
         self.settings.setValue(KEY_AUDIO_LATENCY, self.audio_latency.currentText())
 
+        # display
+        self.settings.setValue(KEY_DISPLAY_FPS, self.display_fps.value())
+        self.settings.setValue(KEY_DISPLAY_LATENCY, self.display_latency_ms.value())
 
+        # threephase
+        self.threephase.alpha.axis = self.threephase_alpha_axis.text()
+        self.threephase.alpha.left = self.threephase_alpha_min.value()
+        self.threephase.alpha.right = self.threephase_alpha_max.value()
+        self.threephase.alpha.enabled = self.threephase_alpha_enabled.isChecked()
+
+        self.threephase.beta.axis = self.threephase_beta_axis.text()
+        self.threephase.beta.left = self.threephase_beta_min.value()
+        self.threephase.beta.right = self.threephase_beta_max.value()
+        self.threephase.beta.enabled = self.threephase_beta_enabled.isChecked()
+
+        self.threephase.volume.axis = self.threephase_volume_axis.text()
+        self.threephase.volume.left = self.threephase_volume_min.value()
+        self.threephase.volume.right = self.threephase_volume_max.value()
+        self.threephase.volume.enabled = self.threephase_volume_enabled.isChecked()
+
+        self.threephase.carrier.axis = self.threephase_carrier_axis.text()
+        self.threephase.carrier.left = self.threephase_carrier_min.value()
+        self.threephase.carrier.right = self.threephase_carrier_max.value()
+        self.threephase.carrier.enabled = self.threephase_carrier_enabled.isChecked()
+
+        self.threephase.modulation_1_frequency.axis = self.threephase_modulation_frequency_axis.text()
+        self.threephase.modulation_1_frequency.left = self.threephase_modulation_frequency_min.value()
+        self.threephase.modulation_1_frequency.right = self.threephase_modulation_frequency_max.value()
+        self.threephase.modulation_1_frequency.enabled = self.threephase_modulation_frequency_enabled.isChecked()
+
+        self.threephase.save()
 
 

@@ -65,7 +65,7 @@ class TcpUdpServer(QtCore.QObject):
                     continue
                 try:
                     tcode = TCodeCommand.parse_command(cmd)
-                    self.add_cmd(tcode)
+                    self.new_tcode_command.emit(tcode)
                 except InvalidTCodeException as e:
                     pass
 
@@ -79,21 +79,11 @@ class TcpUdpServer(QtCore.QObject):
                     continue
                 try:
                     tcode = TCodeCommand.parse_command(cmd)
-                    self.add_cmd(tcode)
+                    self.new_tcode_command.emit(tcode)
                 except InvalidTCodeException as e:
                     pass
-
-    def add_cmd(self, cmd: TCodeCommand):
-        if cmd.axis_identifier == 'L0':
-            self.alphaChanged.emit(cmd.value * 2 - 1)
-        if cmd.axis_identifier == 'L1':
-            self.betaChanged.emit(cmd.value * 2 - 1)
-        if cmd.axis_identifier == 'L2':
-            self.volumeChanged.emit(cmd.value)
 
     def clientDisconnected(self):
         self.tcp_connections = [con for con in self.tcp_connections if con.state() == QtNetwork.QAbstractSocket.UnconnectedState]
 
-    alphaChanged = QtCore.pyqtSignal(float)
-    betaChanged = QtCore.pyqtSignal(float)
-    volumeChanged = QtCore.pyqtSignal(float)
+    new_tcode_command = QtCore.pyqtSignal(TCodeCommand)

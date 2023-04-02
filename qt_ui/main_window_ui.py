@@ -93,9 +93,6 @@ class Ui_MainWindow(object):
         spacerItem1 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
         self.verticalLayout_6.addItem(spacerItem1)
         self.tabWidget.addTab(self.tab_volume, "")
-        self.tab_calibration = CalibrationSettingsWidget()
-        self.tab_calibration.setObjectName("tab_calibration")
-        self.tabWidget.addTab(self.tab_calibration, "")
         self.tab_details = WaveformDetailsWidget()
         self.tab_details.setObjectName("tab_details")
         self.verticalLayout_3 = QtWidgets.QVBoxLayout(self.tab_details)
@@ -138,12 +135,10 @@ class Ui_MainWindow(object):
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_transform_calibration), _translate("MainWindow", "Calibration"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_carrier), _translate("MainWindow", "Carrier and modulation"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_volume), _translate("MainWindow", "Volume"))
-        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_calibration), _translate("MainWindow", "Fine tuning"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_details), _translate("MainWindow", "Details"))
         self.menuTools.setTitle(_translate("MainWindow", "Tools"))
         self.actionFunscript_conversion_2.setText(_translate("MainWindow", "Funscript conversion"))
         self.actionPreferences.setText(_translate("MainWindow", "Preferences"))
-from qt_ui.calibrationsettingswidget import CalibrationSettingsWidget
 from qt_ui.modulationsettingswidget import ModulationSettingsWidget
 from qt_ui.phasewidget import PhaseWidget
 from qt_ui.transformcalibrationsettingswidget import TransformCalibrationSettingsWidget

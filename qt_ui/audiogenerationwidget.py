@@ -3,14 +3,12 @@ import time
 
 import numpy as np
 import sounddevice as sd
-from PyQt5.QtCore import QSettings
-
-from qt_ui.preferencesdialog import KEY_AUDIO_DEVICE, KEY_AUDIO_API, KEY_AUDIO_LATENCY
-from qt_ui.stim_config import ModulationParameters, TransformParameters, CalibrationParameters, PositionParameters
 
 from PyQt5 import QtCore, QtWidgets
 
-from stim_math import hardware_calibration, point_calibration, generate, amplitude_modulation, trig
+from stim_math import hardware_calibration, point_calibration, generate, amplitude_modulation, trig, limits
+from stim_math.threephase_parameter_manager import ThreephaseParameterManager
+from stim_math.sine_generator import SineGenerator1D, SineGenerator2D
 
 TCODE_LATENCY = 0.04  # delay tcode command. Worst-case command interval from multifunplayer
 
@@ -27,26 +25,10 @@ TCODE_LATENCY = 0.04  # delay tcode command. Worst-case command interval from mu
 # latency='high' 220-240ms    frames: 1136
 
 
-class ContinuousParameter:
-    def __init__(self, init_value):
-        self.data = np.array([[0, init_value]])
-
-    def add(self, value):
-        ts = time.time()
-        self.data = np.vstack((self.data, [ts, value]))
-
-        # regularly cleanup stale data
-        if self.data.shape[0] > 100 and self.data[0][0] < (time.time() - 10):
-            cutoff = time.time() - 2
-            self.data = self.data[self.data[:, 0] > cutoff]
-
-    def interpolate(self, timeline):
-        return np.interp(timeline, self.data[:, 0], self.data[:, 1])
-
-
 class AudioGenerationWidget(QtWidgets.QWidget):
-    def __init__(self, parent):
+    def __init__(self, parent, threephase_parameters: ThreephaseParameterManager):
         QtWidgets.QWidget.__init__(self, parent)
+        self.threephase_parameters = threephase_parameters
 
         self.sample_rate = 44100
         self.frame_number = 0
@@ -54,14 +36,9 @@ class AudioGenerationWidget(QtWidgets.QWidget):
 
         self.stream = None
 
-        self.modulation_parameters: ModulationParameters = None
-        self.calibration_parameters: CalibrationParameters = None
-        self.transform_parameters: TransformParameters = None
-        self.position_parameters: PositionParameters = PositionParameters(0, 0)
-
-        self.alpha = ContinuousParameter(0)
-        self.beta = ContinuousParameter(0)
-        self.volume = None
+        self.carrier = SineGenerator2D()
+        self.modulation_1 = SineGenerator1D()
+        self.modulation_2 = SineGenerator1D()
 
         self.offset = 0
         self.last_dac_time = 0
@@ -113,28 +90,6 @@ class AudioGenerationWidget(QtWidgets.QWidget):
         outdata[:, 0] = np.clip(L * 2 ** 15, -32768, 32767).astype(np.int16)
         outdata[:, 1] = np.clip(R * 2 ** 15, -32768, 32767).astype(np.int16)
 
-    def updatePositionParameters(self, position_params: PositionParameters):
-        self.updateAlpha(position_params.alpha)
-        self.updateBeta(position_params.beta)
-
-    def updateAlpha(self, value):
-        self.alpha.add(value)
-
-    def updateBeta(self, value):
-        self.beta.add(value)
-
-    def updateGuiVolume(self, volume):
-        self.volume = np.clip(volume, 0, 1)
-
-    def updateCalibrationParameters(self, calibration_params: CalibrationParameters):
-        self.calibration_parameters = calibration_params
-
-    def updateModulationParameters(self, modulation_params: ModulationParameters):
-        self.modulation_parameters = modulation_params
-
-    def updateTransformParameters(self, transform_parameters: TransformParameters):
-        self.transform_parameters = transform_parameters
-
     def generate_audio(self, timeline, dac_time):
         system_time = time.time()
         offset = system_time - timeline[-1] - TCODE_LATENCY
@@ -151,63 +106,53 @@ class AudioGenerationWidget(QtWidgets.QWidget):
         # newest_cmd_ts = command_timeline[-1]
         # print('ahead by:', newest_data_ts - newest_cmd_ts)
 
-        x = self.alpha.interpolate(command_timeline)
-        y = self.beta.interpolate(command_timeline)
+        alpha = self.threephase_parameters.alpha.interpolate(command_timeline)
+        beta = self.threephase_parameters.beta.interpolate(command_timeline)
 
-        # TODO: volume control
-
-        frequency = self.modulation_parameters.carrier_frequency
-        # safety: clamp the carrier frequency
-        frequency = np.clip(frequency, 400.0, 1500.0)
-
-        # normalize (x, y) to be within the unit circle.
-        norm = np.clip(trig.norm(x, y), 1.0, None)
-        x /= norm
-        y /= norm
-
-        point_calib = point_calibration.ThirteenPointCalibration([
-            self.calibration_parameters.edge_0_3pi,
-            self.calibration_parameters.edge_1_3pi,
-            self.calibration_parameters.edge_2_3pi,
-            self.calibration_parameters.edge_3_3pi,
-            self.calibration_parameters.edge_4_3pi,
-            self.calibration_parameters.edge_5_3pi,
-            self.calibration_parameters.mid_0_3pi,
-            self.calibration_parameters.mid_1_3pi,
-            self.calibration_parameters.mid_2_3pi,
-            self.calibration_parameters.mid_3_3pi,
-            self.calibration_parameters.mid_4_3pi,
-            self.calibration_parameters.mid_5_3pi,
-            self.calibration_parameters.center,
-        ])
+        # normalize (alpha, beta) to be within the unit circle.
+        norm = np.clip(trig.norm(alpha, beta), 1.0, None)
+        alpha /= norm
+        beta /= norm
 
         # modulation 1
         modulation_1 = None
-        if self.modulation_parameters.modulation_1_enabled:
+        if self.threephase_parameters.modulation_1_enabled.last_value():
+            frequency = self.threephase_parameters.modulation_1_frequency.last_value()
+            frequency = np.clip(frequency, limits.ModulationFrequency.min, limits.ModulationFrequency.max)
+            modulation_signal = self.modulation_1.generate(len(timeline), frequency, self.sample_rate)
             modulation_1 = amplitude_modulation.SineModulation(
-                self.modulation_parameters.modulation_1_freq,
-                self.modulation_parameters.modulation_1_modulation)
+                modulation_signal,
+                self.threephase_parameters.modulation_1_strength.last_value())
 
         # modulation 2
         modulation_2 = None
-        if self.modulation_parameters.modulation_2_enabled:
+        if self.threephase_parameters.modulation_2_enabled.last_value():
+            frequency = self.threephase_parameters.modulation_2_frequency.last_value()
+            frequency = np.clip(frequency, limits.ModulationFrequency.min, limits.ModulationFrequency.max)
+            modulation_signal = self.modulation_2.generate(len(timeline), frequency, self.sample_rate)
             modulation_2 = amplitude_modulation.SineModulation(
-                self.modulation_parameters.modulation_2_freq,
-                self.modulation_parameters.modulation_2_modulation)
+                modulation_signal,
+                self.threephase_parameters.modulation_2_strength.last_value())
 
         # center scaling
-        center_calib = point_calibration.CenterCalibration(self.transform_parameters.center)
+        center_calib = point_calibration.CenterCalibration(self.threephase_parameters.calibration_center.last_value())
 
         # hardware calibration
-        hw = hardware_calibration.HardwareCalibration(self.transform_parameters.up_down,
-                                                      self.transform_parameters.left_right)
+        hw = hardware_calibration.HardwareCalibration(self.threephase_parameters.calibration_neutral.last_value(),
+                                                      self.threephase_parameters.calibration_right.last_value())
 
-        L, R = generate.generate_audio(timeline, x, y, frequency,
+        frequency = self.threephase_parameters.carrier_frequency.last_value()
+        frequency = np.clip(frequency, limits.Carrier.min, limits.Carrier.max)
+        carrier_x, carrier_y = self.carrier.generate(len(timeline), frequency, self.sample_rate)
+        L, R = generate.generate_audio(alpha, beta, carrier_x, carrier_y,
                                        modulation_1=modulation_1,
                                        modulation_2=modulation_2,
-                                       point_calibration=point_calib,
-                                       point_calibration_2=center_calib,
+                                       point_calibration=center_calib,
                                        hardware_calibration=hw)
-        L *= self.volume
-        R *= self.volume
+
+        volume = \
+            np.clip(self.threephase_parameters.ramp_volume.last_value(), 0, 1) * \
+            np.clip(self.threephase_parameters.volume.last_value(), 0, 1)
+        L *= volume
+        R *= volume
         return L, R

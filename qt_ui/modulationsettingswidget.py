@@ -12,6 +12,7 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 
 from qt_ui.stim_config import ModulationParameters
+import stim_math.limits
 
 
 SETTING_CARRIER_FREQUENCY = 'carrier/carrier_frequency'
@@ -88,7 +89,8 @@ class ModulationSettingsWidget(QtWidgets.QWidget):
 
         gbc = QtWidgets.QGroupBox("Carrier", self)
         gbc_l = QtWidgets.QFormLayout(gbc)
-        carrier_slider = QtWidgets.QDoubleSpinBox(minimum=300, maximum=1500)
+        carrier_slider = QtWidgets.QDoubleSpinBox(minimum=stim_math.limits.Carrier.min,
+                                                  maximum=stim_math.limits.Carrier.max)
         carrier_slider.setValue(self.settings.value(SETTING_CARRIER_FREQUENCY, 700, float))
         carrier_slider_label = QtWidgets.QLabel("carrier frequency [Hz]")
         gbc_l.addRow(carrier_slider_label, carrier_slider)
@@ -98,7 +100,8 @@ class ModulationSettingsWidget(QtWidgets.QWidget):
         gb1 = QtWidgets.QGroupBox("Modulation 1", self, checkable=True)
         gb1.setChecked(self.settings.value(SETTING_MOD1_ENABLED, True, bool))
         gb1_l = QtWidgets.QFormLayout(gb1)
-        freq1_slider = QtWidgets.QDoubleSpinBox(minimum=0, maximum=100)
+        freq1_slider = QtWidgets.QDoubleSpinBox(minimum=stim_math.limits.ModulationFrequency.min,
+                                                maximum=stim_math.limits.ModulationFrequency.max)
         freq1_slider.setValue(self.settings.value(SETTING_MOD1_FREQUENCY, 0, float))
         freq1_slider_label = QtWidgets.QLabel("frequency [Hz]")
         gb1_l.addRow(freq1_slider_label, freq1_slider)
@@ -112,7 +115,8 @@ class ModulationSettingsWidget(QtWidgets.QWidget):
         gb2 = QtWidgets.QGroupBox("Modulation 2", self, checkable=True)
         gb2.setChecked(self.settings.value(SETTING_MOD2_ENABLED, True, bool))
         gb2_l = QtWidgets.QFormLayout(self)
-        freq2_slider = QtWidgets.QDoubleSpinBox(minimum=0, maximum=100)
+        freq2_slider = QtWidgets.QDoubleSpinBox(minimum=stim_math.limits.ModulationFrequency.min,
+                                                maximum=stim_math.limits.ModulationFrequency.max)
         freq2_slider.setValue(self.settings.value(SETTING_MOD2_FREQUENCY, 0, float))
         freq2_slider_label = QtWidgets.QLabel("frequency [Hz]")
         gb2_l.addRow(freq2_slider_label, freq2_slider)

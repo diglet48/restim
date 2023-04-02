@@ -73,22 +73,20 @@ class ContinuousSineWaveform:
         return carrier_x, carrier_y
 
     @staticmethod
-    def generate(timeline, frequency: float, alpha, beta, chunksize=10000):
+    def generate(carrier_x, carrier_y, alpha, beta, chunksize=10000):
         # split into chunks for better cache performance and lower peak memory usage
-        if len(timeline) > (2 * chunksize):
-            L = np.empty_like(timeline)
-            R = np.empty_like(timeline)
-            for start in np.arange(0, len(timeline), chunksize):
+        if len(carrier_x) > (2 * chunksize):
+            L = np.empty_like(carrier_x)
+            R = np.empty_like(carrier_x)
+            for start in np.arange(0, len(carrier_x), chunksize):
                 end = start + chunksize
-                l, r = ContinuousSineWaveform.generate(timeline[start:end],
-                                                       frequency,
+                l, r = ContinuousSineWaveform.generate(carrier_x[start:end],
+                                                       carrier_y[start:end],
                                                        alpha[start:end],
                                                        beta[start:end])
                 L[start:end] = l
                 R[start:end] = r
             return L, R
-
-        carrier_x, carrier_y = ContinuousSineWaveform.carrier(timeline, frequency)
 
         # apply scale in arbitrary direction
         t11, t12, t21, t22 = ContinuousSineWaveform.scale_in_arbitrary_direction_coefs(alpha, beta)
