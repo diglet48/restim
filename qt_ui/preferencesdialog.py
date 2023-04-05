@@ -15,6 +15,9 @@ KEY_TCP_LOCALHOST_ONLY = "network/tcp-localhost-only"
 KEY_UDP_ENABLED = "network/udp-enabled"
 KEY_UDP_PORT = "network/udp-port"
 KEY_UDP_LOCALHOST_ONLY = "network/udp-localhost-only"
+KEY_SERIAL_ENABLED = "network/serial-enabled"
+KEY_SERIAL_PORT = "network/serial-port"
+KEY_SERIAL_AUTO_EXPAND = "network/serial-auto-expand"
 
 KEY_AUDIO_API = "audio/api-name"
 KEY_AUDIO_DEVICE = "audio/device-name"
@@ -64,6 +67,10 @@ class PreferencesDialog(QDialog, Ui_PreferencesDialog):
         self.gb_udp_server.setChecked(self.settings.value(KEY_UDP_ENABLED, True, bool))
         self.udp_port.setValue(self.settings.value(KEY_UDP_PORT, 12347, int))
         self.udp_localhost_only.setChecked(self.settings.value(KEY_UDP_LOCALHOST_ONLY, False, bool))
+
+        self.gb_serial.setChecked(self.settings.value(KEY_SERIAL_ENABLED, False, bool))
+        self.serial_port.setText(self.settings.value(KEY_SERIAL_PORT, "COM20", str))
+        self.serial_auto_expand.setChecked(self.settings.value(KEY_SERIAL_AUTO_EXPAND, True, bool))
 
         # audio settings
         hostapi_name = self.settings.value(KEY_AUDIO_API, sd.query_hostapis(sd.default.hostapi)['name'])
@@ -133,6 +140,10 @@ class PreferencesDialog(QDialog, Ui_PreferencesDialog):
         self.settings.setValue(KEY_UDP_ENABLED, self.gb_udp_server.isChecked())
         self.settings.setValue(KEY_UDP_PORT, self.udp_port.value())
         self.settings.setValue(KEY_UDP_LOCALHOST_ONLY, self.udp_localhost_only.isChecked())
+
+        self.settings.setValue(KEY_SERIAL_ENABLED, self.gb_serial.isChecked())
+        self.settings.setValue(KEY_SERIAL_PORT, self.serial_port.text())
+        self.settings.setValue(KEY_SERIAL_AUTO_EXPAND, self.serial_auto_expand.isChecked())
 
         # audio devices
         self.settings.setValue(KEY_AUDIO_API, self.audio_api.currentText())

@@ -20,6 +20,12 @@ class TCodeCommand:
 
     @staticmethod
     def parse_command(buf):
+        if isinstance(buf, bytes):
+            try:
+                buf = buf.decode('ascii')
+            except UnicodeDecodeError:
+                raise InvalidTCodeException()
+
         buf = buf.strip()
         if len(buf) < 3:
             raise InvalidTCodeException()

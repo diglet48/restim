@@ -13,6 +13,7 @@ import qt_ui.websocketserver
 import qt_ui.tcpudpserver
 import qt_ui.funscriptconversiondialog
 import qt_ui.preferencesdialog
+import qt_ui.serialproxy
 
 from stim_math.threephase_parameter_manager import ThreephaseParameterManager
 from qt_ui.threephase_configuration import ThreephaseConfiguration
@@ -50,6 +51,9 @@ class Window(QMainWindow, Ui_MainWindow):
 
         self.tcpudp_server = qt_ui.tcpudpserver.TcpUdpServer(self)
         self.tcpudp_server.new_tcode_command.connect(self.threephase_parameters.parse_tcode_command)
+
+        self.serial_proxt = qt_ui.serialproxy.SerialProxy(self)
+        self.serial_proxt.new_tcode_command.connect(self.threephase_parameters.parse_tcode_command)
 
         self.volumeWidget.volumeChanged.connect(self.threephase_parameters.set_ramp_volume)
 
