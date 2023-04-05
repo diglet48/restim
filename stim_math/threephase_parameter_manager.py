@@ -12,9 +12,25 @@ class ContinuousParameter:
     def __init__(self, init_value):
         self.data = np.array([[0, init_value]])
 
-    def add(self, value):
-        ts = time.time()
-        self.data = np.vstack((self.data, [ts, value]))
+    def add(self, value, interval=0.0):
+        ts = time.time() + interval
+
+        # make sure data stays sorted
+        if len(self.data[-1]) > 0:
+            if self.data[-1, 0] == ts:
+                # overwrite last value
+                self.data[-1, 1] = value
+            elif self.data[-1, 0] > ts:
+                # delete any values >= interval
+                i = np.searchsorted(self.data[:, 0], ts)
+                self.data = self.data[:i]
+                self.data = np.vstack((self.data, [ts, value]))
+            else:
+                # just insert
+                self.data = np.vstack((self.data, [ts, value]))
+        else:
+            # just insert
+            self.data = np.vstack((self.data, [ts, value]))
 
         # regularly cleanup stale data
         if self.data.shape[0] > 100 and self.data[0][0] < (time.time() - 10):
@@ -68,16 +84,18 @@ class ThreephaseParameterManager(QObject):
         self.config = config
 
     def parse_tcode_command(self, cmd: TCodeCommand):
-        for target, fn in [
-            (self.config.alpha, self.set_alpha),
-            (self.config.beta, self.set_beta),
-            (self.config.volume, self.set_volume),
-            (self.config.carrier, self.set_carrier_frequency),
-            (self.config.modulation_1_frequency, self.set_modulation_1_frequency)
+        for target, param in [
+            (self.config.alpha, self.alpha),
+            (self.config.beta, self.beta),
+            (self.config.volume, self.volume),
+            (self.config.carrier, self.carrier_frequency),
+            (self.config.modulation_1_frequency, self.modulation_1_frequency)
         ]:
             if target.axis == cmd.axis_identifier:
                 if target.enabled:
-                    fn(target.left + cmd.value * (target.right - target.left))
+
+                    param.add(target.left + cmd.value * (target.right - target.left),
+                              cmd.interval / 1000.0)
                     return
 
     def set_alpha(self, value):
