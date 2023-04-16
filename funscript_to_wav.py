@@ -5,16 +5,16 @@ import pydub
 import json
 import time
 
-from stim_math import point_calibration, generate, hardware_calibration
+from stim_math import point_calibration, generate, hardware_calibration, sine_generator
 import funscript_1d_to_2d
 
 
-def generate_more(timeline, frequency, alpha, beta):
+def generate_more(theta, alpha, beta):
     # TODO: choose your own calibration parameters
     center_calibration = point_calibration.CenterCalibration(-0.7)
     hw_calibration = hardware_calibration.HardwareCalibration(-5.3, -0.7)
 
-    L, R = generate.generate_audio(timeline, alpha, beta, frequency,
+    L, R = generate.generate_audio(alpha, beta, theta,
                                    point_calibration=center_calibration,
                                    hardware_calibration=hw_calibration)
     return L, R
@@ -97,7 +97,9 @@ if __name__ == '__main__':
     beta = (beta - 0.5) * 2
 
     print('generate audio (may take a while)')
-    L, R = generate_more(timeline, args.frequency, alpha, beta)
+    angle_generator = sine_generator.AngleGenerator()
+    theta = angle_generator.generate(len(timeline), args.frequency, args.sample_rate)
+    L, R = generate_more(theta, alpha, beta)
 
     print('export {}'.format(output))
     export_audio_to_file(output, args.sample_rate, L, R, format=format)

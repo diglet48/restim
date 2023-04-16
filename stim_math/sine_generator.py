@@ -25,3 +25,15 @@ class SineGenerator2D:
 
         t = np.linspace(begin, end, n, endpoint=False)
         return np.sin(t).astype(np.float32), np.cos(t).astype(np.float32)
+
+
+class AngleGenerator:
+    def __init__(self):
+        self.theta = 0
+
+    def generate(self, n, frequency: float, samplerate: float):
+        begin = self.theta
+        end = self.theta + 2 * np.pi * frequency * (n / samplerate)
+        self.theta = end
+
+        return np.linspace(begin, end, n, endpoint=False)

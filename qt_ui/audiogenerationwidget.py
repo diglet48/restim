@@ -8,7 +8,7 @@ from PyQt5 import QtCore, QtWidgets
 
 from stim_math import hardware_calibration, point_calibration, generate, amplitude_modulation, trig, limits
 from stim_math.threephase_parameter_manager import ThreephaseParameterManager
-from stim_math.sine_generator import SineGenerator1D, SineGenerator2D
+from stim_math.sine_generator import SineGenerator1D, AngleGenerator
 
 TCODE_LATENCY = 0.04  # delay tcode command. Worst-case command interval from multifunplayer
 
@@ -36,7 +36,7 @@ class AudioGenerationWidget(QtWidgets.QWidget):
 
         self.stream = None
 
-        self.carrier = SineGenerator2D()
+        self.carrier_angle = AngleGenerator()
         self.modulation_1 = SineGenerator1D()
         self.modulation_2 = SineGenerator1D()
 
@@ -143,8 +143,8 @@ class AudioGenerationWidget(QtWidgets.QWidget):
 
         frequency = self.threephase_parameters.carrier_frequency.last_value()
         frequency = np.clip(frequency, limits.Carrier.min, limits.Carrier.max)
-        carrier_x, carrier_y = self.carrier.generate(len(timeline), frequency, self.sample_rate)
-        L, R = generate.generate_audio(alpha, beta, carrier_x, carrier_y,
+        theta_frequency = self.carrier_angle.generate(len(timeline), frequency, self.sample_rate)
+        L, R = generate.generate_audio(alpha, beta, theta_frequency,
                                        modulation_1=modulation_1,
                                        modulation_2=modulation_2,
                                        point_calibration=center_calib,

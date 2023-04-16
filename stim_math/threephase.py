@@ -65,28 +65,33 @@ class ContinuousSineWaveform:
         t22 = 1 + k_minus_1 * y ** 2
         return t11, t12, t21, t22
 
+        # alternative implementation. Don't forget to clip
+        # r = np.linalg.norm((alpha, beta))
+        # return np.eye(2) + 0.5 * np.array([[alpha - r, -beta], [-beta, -alpha - r]])
+        # return 1 + (alpha - r)/2, -beta/2, -beta/2, 1 + (-alpha - r)/2
+
     @staticmethod
-    def carrier(timeline, frequency):
-        t = timeline * (frequency * 2 * np.pi)
-        carrier_x = np.cos(t).astype(np.float32)
-        carrier_y = np.sin(t).astype(np.float32)
+    def carrier(theta):
+        carrier_x = np.cos(theta).astype(np.float32)
+        carrier_y = np.sin(theta).astype(np.float32)
         return carrier_x, carrier_y
 
     @staticmethod
-    def generate(carrier_x, carrier_y, alpha, beta, chunksize=10000):
+    def generate(theta, alpha, beta, chunksize=10000):
         # split into chunks for better cache performance and lower peak memory usage
-        if len(carrier_x) > (2 * chunksize):
-            L = np.empty_like(carrier_x)
-            R = np.empty_like(carrier_x)
-            for start in np.arange(0, len(carrier_x), chunksize):
+        if len(theta) > (2 * chunksize):
+            L = np.empty_like(theta)
+            R = np.empty_like(theta)
+            for start in np.arange(0, len(theta), chunksize):
                 end = start + chunksize
-                l, r = ContinuousSineWaveform.generate(carrier_x[start:end],
-                                                       carrier_y[start:end],
+                l, r = ContinuousSineWaveform.generate(theta[start:end],
                                                        alpha[start:end],
                                                        beta[start:end])
                 L[start:end] = l
                 R[start:end] = r
             return L, R
+
+        carrier_x, carrier_y = ContinuousSineWaveform.carrier(theta)
 
         # apply scale in arbitrary direction
         t11, t12, t21, t22 = ContinuousSineWaveform.scale_in_arbitrary_direction_coefs(alpha, beta)

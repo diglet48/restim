@@ -1,7 +1,7 @@
 from stim_math import threephase
 
 
-def generate_audio(alpha, beta, carrier_x, carrier_y,
+def generate_audio(alpha, beta, theta_frequency,
                    point_calibration=None,
                    point_calibration_2=None,
                    modulation_1=None,
@@ -9,7 +9,7 @@ def generate_audio(alpha, beta, carrier_x, carrier_y,
                    hardware_calibration=None):
     # TODO: normalize norm(alpha, beta) <= 1
 
-    L, R = threephase.ContinuousSineWaveform.generate(carrier_x, carrier_y, alpha, beta)
+    L, R = threephase.ContinuousSineWaveform.generate(theta_frequency, alpha, beta)
     # intensity = threephase.ContinuousSineWaveform.intensity(x, y)
     # L /= intensity
     # R /= intensity
