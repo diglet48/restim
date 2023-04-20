@@ -52,6 +52,7 @@ if __name__ == '__main__':
 
     parser.add_argument('-a', '--alpha', help='input funscript (alpha axis)', required=True)
     parser.add_argument('-b', '--beta', help='input funsciript (beta axis, optional)')
+    parser.add_argument('-v', '--volume', help='input funsciript (volume axis, optional)')
 
     parser.add_argument('-o', '--out', help='output sound file, default same as funscript')
     parser.add_argument('--format', help='mp3 (default) or wav')
@@ -96,10 +97,18 @@ if __name__ == '__main__':
     alpha = (alpha - 0.5) * 2
     beta = (beta - 0.5) * 2
 
+    volume = 1
+    if args.volume:
+        print('parsing volume')
+        x3, y3 = parse_funscript(args.volume)
+        volume = np.interp(timeline, x3, y3).astype(np.float32)
+
     print('generate audio (may take a while)')
     angle_generator = sine_generator.AngleGenerator()
     theta = angle_generator.generate(len(timeline), args.frequency, args.sample_rate)
     L, R = generate_more(theta, alpha, beta)
+    L *= volume
+    R *= volume
 
     print('export {}'.format(output))
     export_audio_to_file(output, args.sample_rate, L, R, format=format)
