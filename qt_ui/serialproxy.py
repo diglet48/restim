@@ -50,7 +50,11 @@ class SerialProxy(QtCore.QObject):
         self.port.setBaudRate(115200)
         self.port.readyRead.connect(self.new_serial_data)
         if settings.value(KEY_SERIAL_ENABLED, False, bool):
-            self.port.open(QIODevice.ReadOnly)
+            b = self.port.open(QIODevice.ReadOnly)
+            if b:
+                print(f"Serial listener active on port: {self.port.portName()}")
+            else:
+                print("Unable to listen to serial post:", self.port.errorString())
 
         self.data = b''
 
