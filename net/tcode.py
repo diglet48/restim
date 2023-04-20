@@ -33,7 +33,6 @@ class TCodeCommand:
         axis_identifier = buf[0:2]
         value = buf[2:]
         value, _, interval = value.partition('I')
-        value = value[:value.find('I')]
         try:
             value = float(value) / (10**len(value) - 1)
         except ValueError:
