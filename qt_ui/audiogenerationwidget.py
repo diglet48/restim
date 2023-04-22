@@ -120,8 +120,9 @@ class AudioGenerationWidget(QtWidgets.QWidget):
             frequency = self.threephase_parameters.modulation_1_frequency.last_value()
             frequency = np.clip(frequency, limits.ModulationFrequency.min, limits.ModulationFrequency.max)
             theta = self.modulation_1_angle.generate(len(timeline), frequency, self.sample_rate)
-            # safety: every modulation cycle must have at least 3 cycles 'on' and 'off'
-            maximum_on_off_time = np.clip(1 - 3 / (self.threephase_parameters.carrier_frequency.last_value() / frequency), 0, None)
+            # safety: every modulation cycle must have at least X cycles 'on' and 'off'
+            maximum_on_off_time = np.clip(1 - limits.minimum_amplitude_modulation_feature_length /
+                                          (self.threephase_parameters.carrier_frequency.last_value() / frequency), 0, None)
             modulation_1 = amplitude_modulation.SineModulation(
                 theta,
                 self.threephase_parameters.modulation_1_strength.last_value(),
@@ -135,8 +136,9 @@ class AudioGenerationWidget(QtWidgets.QWidget):
             frequency = self.threephase_parameters.modulation_2_frequency.last_value()
             frequency = np.clip(frequency, limits.ModulationFrequency.min, limits.ModulationFrequency.max)
             theta = self.modulation_2_angle.generate(len(timeline), frequency, self.sample_rate)
-            # safety: every modulation cycle must have at least 3 cycles 'on' or 'off'
-            maximum_on_off_time = np.clip(1 - 3 / (self.threephase_parameters.carrier_frequency.last_value() / frequency), 0, None)
+            # safety: every modulation cycle must have at least X cycles 'on' or 'off'
+            maximum_on_off_time = np.clip(1 - limits.minimum_amplitude_modulation_feature_length /
+                                          (self.threephase_parameters.carrier_frequency.last_value() / frequency), 0, None)
             modulation_2 = amplitude_modulation.SineModulation(
                 theta,
                 self.threephase_parameters.modulation_2_strength.last_value(),

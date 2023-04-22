@@ -11,3 +11,6 @@ class ModulationFrequency:
 class ModulationBias:
     min = -.999
     max = .999
+
+# the minimum 'on' or 'off' time for amplitude modulation
+minimum_amplitude_modulation_feature_length = 3
