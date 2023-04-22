@@ -6,3 +6,8 @@ class Carrier:
 class ModulationFrequency:
     min = 0
     max = 100
+
+
+class ModulationBias:
+    min = -.999
+    max = .999

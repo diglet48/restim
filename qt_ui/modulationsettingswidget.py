@@ -13,15 +13,20 @@ from matplotlib.figure import Figure
 
 from qt_ui.stim_config import ModulationParameters
 import stim_math.limits
+from stim_math.amplitude_modulation import SineModulation
 
 
 SETTING_CARRIER_FREQUENCY = 'carrier/carrier_frequency'
 SETTING_MOD1_ENABLED = 'carrier/modulation_1_enabled'
 SETTING_MOD1_FREQUENCY = 'carrier/modulation_1_frequency'
 SETTING_MOD1_MODULATION = 'carrier/modulation_1_strength'
+SETTING_MOD1_LR_BIAS = 'carrier/modulation_1_high_low_bias'
+SETTING_MOD1_HL_BIAS = 'carrier/modulation_1_left_right_bias'
 SETTING_MOD2_ENABLED = 'carrier/modulation_2_enabled'
 SETTING_MOD2_FREQUENCY = 'carrier/modulation_2_frequency'
 SETTING_MOD2_MODULATION = 'carrier/modulation_2_strength'
+SETTING_MOD2_LR_BIAS = 'carrier/modulation_2_high_low_bias'
+SETTING_MOD2_HL_BIAS = 'carrier/modulation_2_left_right_bias'
 
 
 class MyMplCanvas(FigureCanvas):
@@ -58,15 +63,19 @@ class MyStaticMplCanvas(MyMplCanvas):
     def updateParams(self, parameters: ModulationParameters):
         t = np.linspace(0, 1, 10000)
 
-        def create_modulation_signal(timeline, frequency, modulation):
-            return (np.cos(timeline * (2 * np.pi * frequency)) - 1) * 0.5 * modulation + 1.0
+        def create_modulation_signal(timeline, frequency, modulation, l_r_bias, h_l_bias):
+            theta = timeline * 2 * np.pi * frequency
+            m = SineModulation(theta, modulation, l_r_bias, h_l_bias)
+            return m.envelope()
+
+            # return (np.cos(timeline * (2 * np.pi * frequency)) - 1) * 0.5 * modulation + 1.0
 
         # y = np.cos(t * 2 * np.pi * parameters.carrier_frequency)
         y = np.full_like(t, 1.0)
         if parameters.modulation_1_enabled:
-            y *= create_modulation_signal(t, parameters.modulation_1_freq, parameters.modulation_1_modulation)
+            y *= create_modulation_signal(t, parameters.modulation_1_freq, parameters.modulation_1_modulation, parameters.modulation_1_left_right_bias, parameters.modulation_1_high_low_bias)
         if parameters.modulation_2_enabled:
-            y *= create_modulation_signal(t, parameters.modulation_2_freq, parameters.modulation_2_modulation)
+            y *= create_modulation_signal(t, parameters.modulation_2_freq, parameters.modulation_2_modulation, parameters.modulation_2_left_right_bias, parameters.modulation_2_high_low_bias)
 
         self.axes.cla()
         self.axes.set_title("Amplitude modulation")
@@ -109,6 +118,14 @@ class ModulationSettingsWidget(QtWidgets.QWidget):
         mod1_slider.setValue(self.settings.value(SETTING_MOD1_MODULATION, 0, float))
         mod1_slider_label = QtWidgets.QLabel("modulation [%]")
         gb1_l.addRow(mod1_slider_label, mod1_slider)
+        bias1_left_right_slider = QtWidgets.QDoubleSpinBox(minimum=-100, maximum=100)
+        bias1_left_right_slider.setValue(self.settings.value(SETTING_MOD1_LR_BIAS, 0, float))
+        bias1_left_right_slider_label = QtWidgets.QLabel("bias left-right [%]")
+        gb1_l.addRow(bias1_left_right_slider_label, bias1_left_right_slider)
+        bias1_high_low_slider = QtWidgets.QDoubleSpinBox(minimum=-100, maximum=100)
+        bias1_high_low_slider.setValue(self.settings.value(SETTING_MOD1_HL_BIAS, 0, float))
+        bias1_high_low_slider_label = QtWidgets.QLabel("bias high-low [%]")
+        gb1_l.addRow(bias1_high_low_slider_label, bias1_high_low_slider)
         gb1.setLayout(gb1_l)
         l.addWidget(gb1)
 
@@ -124,6 +141,14 @@ class ModulationSettingsWidget(QtWidgets.QWidget):
         mod2_slider.setValue(self.settings.value(SETTING_MOD2_MODULATION, 0, float))
         mod2_slider_label = QtWidgets.QLabel("modulation [%]")
         gb2_l.addRow(mod2_slider_label, mod2_slider)
+        bias2_left_right_slider = QtWidgets.QDoubleSpinBox(minimum=-100, maximum=100)
+        bias2_left_right_slider.setValue(self.settings.value(SETTING_MOD2_LR_BIAS, 0, float))
+        bias2_left_right_slider_label = QtWidgets.QLabel("bias left-right [%]")
+        gb2_l.addRow(bias2_left_right_slider_label, bias2_left_right_slider)
+        bias2_high_low_slider = QtWidgets.QDoubleSpinBox(minimum=-100, maximum=100)
+        bias2_high_low_slider.setValue(self.settings.value(SETTING_MOD2_HL_BIAS, 0, float))
+        bias2_high_low_slider_label = QtWidgets.QLabel("bias high-low [%]")
+        gb2_l.addRow(bias2_high_low_slider_label, bias2_high_low_slider)
         gb2.setLayout(gb2_l)
         l.addWidget(gb2)
 
@@ -132,17 +157,25 @@ class ModulationSettingsWidget(QtWidgets.QWidget):
         gb1.toggled.connect(self.settings_changed)
         freq1_slider.valueChanged.connect(self.settings_changed)
         mod1_slider.valueChanged.connect(self.settings_changed)
+        bias1_left_right_slider.valueChanged.connect(self.settings_changed)
+        bias1_high_low_slider.valueChanged.connect(self.settings_changed)
         gb2.toggled.connect(self.settings_changed)
         freq2_slider.valueChanged.connect(self.settings_changed)
         mod2_slider.valueChanged.connect(self.settings_changed)
+        bias2_left_right_slider.valueChanged.connect(self.settings_changed)
+        bias2_high_low_slider.valueChanged.connect(self.settings_changed)
 
         self.carrier = carrier_slider
         self.gb1 = gb1
         self.freq1_slider = freq1_slider
         self.mod1_slider = mod1_slider
+        self.bias1_left_right_slider = bias1_left_right_slider
+        self.bias1_high_low_slider = bias1_high_low_slider
         self.gb2 = gb2
         self.freq2_slider = freq2_slider
         self.mod2_slider = mod2_slider
+        self.bias2_left_right_slider = bias2_left_right_slider
+        self.bias2_high_low_slider = bias2_high_low_slider
 
         self.modulationSettingsChanged.connect(self.sc.updateParams)
         self.settings_changed()
@@ -155,9 +188,13 @@ class ModulationSettingsWidget(QtWidgets.QWidget):
             self.gb1.isChecked(),
             self.freq1_slider.value(),
             self.mod1_slider.value() / 100.0,
+            self.bias1_left_right_slider.value() / 100.0,
+            self.bias1_high_low_slider.value() / 100.0,
             self.gb2.isChecked(),
             self.freq2_slider.value(),
             self.mod2_slider.value() / 100.0,
+            self.bias2_left_right_slider.value() / 100.0,
+            self.bias2_high_low_slider.value() / 100.0,
         )
         self.modulationSettingsChanged.emit(params)
 
@@ -165,6 +202,10 @@ class ModulationSettingsWidget(QtWidgets.QWidget):
         self.settings.setValue(SETTING_MOD1_ENABLED, self.gb1.isChecked())
         self.settings.setValue(SETTING_MOD1_FREQUENCY, self.freq1_slider.value())
         self.settings.setValue(SETTING_MOD1_MODULATION, self.mod1_slider.value())
+        self.settings.setValue(SETTING_MOD1_LR_BIAS, self.bias1_left_right_slider.value())
+        self.settings.setValue(SETTING_MOD1_HL_BIAS, self.bias1_high_low_slider.value())
         self.settings.setValue(SETTING_MOD2_ENABLED, self.gb2.isChecked())
         self.settings.setValue(SETTING_MOD2_FREQUENCY, self.freq2_slider.value())
         self.settings.setValue(SETTING_MOD2_MODULATION, self.mod2_slider.value())
+        self.settings.setValue(SETTING_MOD2_LR_BIAS, self.bias2_left_right_slider.value())
+        self.settings.setValue(SETTING_MOD2_HL_BIAS, self.bias2_high_low_slider.value())

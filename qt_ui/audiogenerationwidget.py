@@ -37,8 +37,8 @@ class AudioGenerationWidget(QtWidgets.QWidget):
         self.stream = None
 
         self.carrier_angle = AngleGenerator()
-        self.modulation_1 = SineGenerator1D()
-        self.modulation_2 = SineGenerator1D()
+        self.modulation_1_angle = AngleGenerator()
+        self.modulation_2_angle = AngleGenerator()
 
         self.offset = 0
         self.last_dac_time = 0
@@ -119,20 +119,30 @@ class AudioGenerationWidget(QtWidgets.QWidget):
         if self.threephase_parameters.modulation_1_enabled.last_value():
             frequency = self.threephase_parameters.modulation_1_frequency.last_value()
             frequency = np.clip(frequency, limits.ModulationFrequency.min, limits.ModulationFrequency.max)
-            modulation_signal = self.modulation_1.generate(len(timeline), frequency, self.sample_rate)
+            theta = self.modulation_1_angle.generate(len(timeline), frequency, self.sample_rate)
+            # safety: every modulation cycle must have at least 3 cycles 'on' and 'off'
+            maximum_on_off_time = np.clip(1 - 3 / (self.threephase_parameters.carrier_frequency.last_value() / frequency), 0, None)
             modulation_1 = amplitude_modulation.SineModulation(
-                modulation_signal,
-                self.threephase_parameters.modulation_1_strength.last_value())
+                theta,
+                self.threephase_parameters.modulation_1_strength.last_value(),
+                self.threephase_parameters.modulation_1_left_right_bias.last_value(),
+                np.clip(self.threephase_parameters.modulation_1_high_low_bias.last_value(), -maximum_on_off_time, maximum_on_off_time)
+            )
 
         # modulation 2
         modulation_2 = None
         if self.threephase_parameters.modulation_2_enabled.last_value():
             frequency = self.threephase_parameters.modulation_2_frequency.last_value()
             frequency = np.clip(frequency, limits.ModulationFrequency.min, limits.ModulationFrequency.max)
-            modulation_signal = self.modulation_2.generate(len(timeline), frequency, self.sample_rate)
+            theta = self.modulation_2_angle.generate(len(timeline), frequency, self.sample_rate)
+            # safety: every modulation cycle must have at least 3 cycles 'on' or 'off'
+            maximum_on_off_time = np.clip(1 - 3 / (self.threephase_parameters.carrier_frequency.last_value() / frequency), 0, None)
             modulation_2 = amplitude_modulation.SineModulation(
-                modulation_signal,
-                self.threephase_parameters.modulation_2_strength.last_value())
+                theta,
+                self.threephase_parameters.modulation_2_strength.last_value(),
+                self.threephase_parameters.modulation_2_left_right_bias.last_value(),
+                np.clip(self.threephase_parameters.modulation_2_high_low_bias.last_value(), -maximum_on_off_time, maximum_on_off_time)
+            )
 
         # center scaling
         center_calib = point_calibration.CenterCalibration(self.threephase_parameters.calibration_center.last_value())
@@ -143,8 +153,8 @@ class AudioGenerationWidget(QtWidgets.QWidget):
 
         frequency = self.threephase_parameters.carrier_frequency.last_value()
         frequency = np.clip(frequency, limits.Carrier.min, limits.Carrier.max)
-        theta_frequency = self.carrier_angle.generate(len(timeline), frequency, self.sample_rate)
-        L, R = generate.generate_audio(alpha, beta, theta_frequency,
+        theta_carrier = self.carrier_angle.generate(len(timeline), frequency, self.sample_rate)
+        L, R = generate.generate_audio(alpha, beta, theta_carrier,
                                        modulation_1=modulation_1,
                                        modulation_2=modulation_2,
                                        point_calibration=center_calib,
