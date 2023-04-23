@@ -9,11 +9,12 @@ from PyQt5.QtWidgets import (
 from qt_ui.main_window_ui import Ui_MainWindow
 import qt_ui.motion_generation
 import qt_ui.audiogenerationwidget
-import qt_ui.websocketserver
-import qt_ui.tcpudpserver
+import net.websocketserver
+import net.tcpudpserver
 import qt_ui.funscriptconversiondialog
 import qt_ui.preferencesdialog
-import qt_ui.serialproxy
+import net.serialproxy
+import net.buttplug_wsdm_client
 
 from stim_math.threephase_parameter_manager import ThreephaseParameterManager
 from qt_ui.threephase_configuration import ThreephaseConfiguration
@@ -46,14 +47,17 @@ class Window(QMainWindow, Ui_MainWindow):
         self.tab_carrier.modulationSettingsChanged.connect(self.threephase_parameters.set_modulation_parameters)
         self.tab_transform_calibration.transformCalibrationSettingsChanged.connect(self.threephase_parameters.set_calibration_parameters)
 
-        self.websocket_server = qt_ui.websocketserver.WebSocketServer(self)
+        self.websocket_server = net.websocketserver.WebSocketServer(self)
         self.websocket_server.new_tcode_command.connect(self.threephase_parameters.parse_tcode_command)
 
-        self.tcpudp_server = qt_ui.tcpudpserver.TcpUdpServer(self)
+        self.tcpudp_server = net.tcpudpserver.TcpUdpServer(self)
         self.tcpudp_server.new_tcode_command.connect(self.threephase_parameters.parse_tcode_command)
 
-        self.serial_proxt = qt_ui.serialproxy.SerialProxy(self)
-        self.serial_proxt.new_tcode_command.connect(self.threephase_parameters.parse_tcode_command)
+        self.serial_proxy = net.serialproxy.SerialProxy(self)
+        self.serial_proxy.new_tcode_command.connect(self.threephase_parameters.parse_tcode_command)
+
+        self.buttplug_wsdm_client = net.buttplug_wsdm_client.ButtplugWsdmClient(self)
+        self.buttplug_wsdm_client.new_tcode_command.connect(self.threephase_parameters.parse_tcode_command)
 
         self.volumeWidget.volumeChanged.connect(self.threephase_parameters.set_ramp_volume)
 

@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>466</width>
-    <height>429</height>
+    <width>514</width>
+    <height>507</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -172,7 +172,7 @@
           <item row="1" column="0">
            <widget class="QLabel" name="label_24">
             <property name="text">
-             <string>Auto-expand L0</string>
+             <string>generate beta axis</string>
             </property>
            </widget>
           </item>
@@ -185,6 +185,42 @@
           </item>
           <item row="0" column="1">
            <widget class="QLineEdit" name="serial_port"/>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <widget class="QGroupBox" name="gb_buttplug_wsdm">
+         <property name="title">
+          <string>Buttplug (WSDM)</string>
+         </property>
+         <property name="checkable">
+          <bool>true</bool>
+         </property>
+         <layout class="QFormLayout" name="formLayout_7">
+          <item row="0" column="0">
+           <widget class="QLabel" name="label_25">
+            <property name="text">
+             <string>address</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="1">
+           <widget class="QLineEdit" name="buttplug_wsdm_address"/>
+          </item>
+          <item row="1" column="0">
+           <widget class="QLabel" name="label_26">
+            <property name="text">
+             <string>generate beta axis</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="1">
+           <widget class="QCheckBox" name="buttplug_wsdm_auto_expand">
+            <property name="text">
+             <string/>
+            </property>
+           </widget>
           </item>
          </layout>
         </widget>

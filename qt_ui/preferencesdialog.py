@@ -18,6 +18,9 @@ KEY_UDP_LOCALHOST_ONLY = "network/udp-localhost-only"
 KEY_SERIAL_ENABLED = "network/serial-enabled"
 KEY_SERIAL_PORT = "network/serial-port"
 KEY_SERIAL_AUTO_EXPAND = "network/serial-auto-expand"
+KEY_BUTTPLUG_WSDM_ENABLED = "network/buttplug-wsdm-enabled"
+KEY_BUTTPLUG_WSDM_ADDRESS = "network/buttplug-wsdm-address"
+KEY_BUTTPLUG_WSDM_AUTO_EXPAND = "network/buttplug-wsdm-auto-expand"
 
 KEY_AUDIO_API = "audio/api-name"
 KEY_AUDIO_DEVICE = "audio/device-name"
@@ -71,6 +74,10 @@ class PreferencesDialog(QDialog, Ui_PreferencesDialog):
         self.gb_serial.setChecked(self.settings.value(KEY_SERIAL_ENABLED, False, bool))
         self.serial_port.setText(self.settings.value(KEY_SERIAL_PORT, "COM20", str))
         self.serial_auto_expand.setChecked(self.settings.value(KEY_SERIAL_AUTO_EXPAND, True, bool))
+
+        self.gb_buttplug_wsdm.setChecked(self.settings.value(KEY_BUTTPLUG_WSDM_ENABLED, False, bool))
+        self.buttplug_wsdm_address.setText(self.settings.value(KEY_BUTTPLUG_WSDM_ADDRESS, "ws://127.0.0.1:54817", str))
+        self.buttplug_wsdm_auto_expand.setChecked(self.settings.value(KEY_BUTTPLUG_WSDM_AUTO_EXPAND, True, bool))
 
         # audio settings
         hostapi_name = self.settings.value(KEY_AUDIO_API, sd.query_hostapis(sd.default.hostapi)['name'])
@@ -144,6 +151,10 @@ class PreferencesDialog(QDialog, Ui_PreferencesDialog):
         self.settings.setValue(KEY_SERIAL_ENABLED, self.gb_serial.isChecked())
         self.settings.setValue(KEY_SERIAL_PORT, self.serial_port.text())
         self.settings.setValue(KEY_SERIAL_AUTO_EXPAND, self.serial_auto_expand.isChecked())
+
+        self.settings.setValue(KEY_BUTTPLUG_WSDM_ENABLED, self.gb_buttplug_wsdm.isChecked())
+        self.settings.setValue(KEY_BUTTPLUG_WSDM_ADDRESS, self.buttplug_wsdm_address.text())
+        self.settings.setValue(KEY_BUTTPLUG_WSDM_AUTO_EXPAND, self.buttplug_wsdm_auto_expand.isChecked())
 
         # audio devices
         self.settings.setValue(KEY_AUDIO_API, self.audio_api.currentText())
