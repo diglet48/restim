@@ -6,18 +6,18 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>400</width>
-    <height>300</height>
+    <width>556</width>
+    <height>450</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Form</string>
   </property>
-  <layout class="QHBoxLayout" name="horizontalLayout">
+  <layout class="QVBoxLayout" name="verticalLayout">
    <item>
     <widget class="QGroupBox" name="groupBox">
      <property name="title">
-      <string>Volume control and ramp</string>
+      <string>Volume ramp</string>
      </property>
      <layout class="QFormLayout" name="formLayout_2">
       <item row="0" column="0">
@@ -91,7 +91,7 @@
        </widget>
       </item>
       <item row="3" column="1">
-       <widget class="QRadioButton" name="radioButton_enabled">
+       <widget class="QCheckBox" name="checkBox_ramp_enabled">
         <property name="text">
          <string/>
         </property>
@@ -100,8 +100,77 @@
      </layout>
     </widget>
    </item>
+   <item>
+    <widget class="QGroupBox" name="groupBox_2">
+     <property name="title">
+      <string>Lower volume during pauses</string>
+     </property>
+     <layout class="QFormLayout" name="formLayout">
+      <item row="0" column="0">
+       <widget class="QLabel" name="label_2">
+        <property name="text">
+         <string>Inactivity threshold [seconds]</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="1">
+       <widget class="QDoubleSpinBox" name="doubleSpinBox_inactivity_threshold">
+        <property name="maximum">
+         <double>100.000000000000000</double>
+        </property>
+        <property name="singleStep">
+         <double>0.100000000000000</double>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="0">
+       <widget class="QLabel" name="label_3">
+        <property name="text">
+         <string>Reduce volume by [%]</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="1">
+       <widget class="QDoubleSpinBox" name="doubleSpinBox_inactivity_volume">
+        <property name="maximum">
+         <double>100.000000000000000</double>
+        </property>
+        <property name="singleStep">
+         <double>0.100000000000000</double>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QLabel" name="label_4">
+        <property name="text">
+         <string>Ramp time [seconds]</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="QDoubleSpinBox" name="doubleSpinBox_inactivity_ramp_time">
+        <property name="maximum">
+         <double>100.000000000000000</double>
+        </property>
+        <property name="singleStep">
+         <double>0.100000000000000</double>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
   </layout>
  </widget>
+ <tabstops>
+  <tabstop>doubleSpinBox_volume</tabstop>
+  <tabstop>doubleSpinBox_target_volume</tabstop>
+  <tabstop>doubleSpinBox_rate</tabstop>
+  <tabstop>checkBox_ramp_enabled</tabstop>
+  <tabstop>doubleSpinBox_inactivity_threshold</tabstop>
+  <tabstop>doubleSpinBox_inactivity_ramp_time</tabstop>
+  <tabstop>doubleSpinBox_inactivity_volume</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>

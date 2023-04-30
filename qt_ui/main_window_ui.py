@@ -41,6 +41,15 @@ class Ui_MainWindow(object):
         self.graphicsView.setMaximumSize(QtCore.QSize(200, 200))
         self.graphicsView.setObjectName("graphicsView")
         self.verticalLayout.addWidget(self.graphicsView)
+        self.groupBox_3 = QtWidgets.QGroupBox(self.frame)
+        self.groupBox_3.setObjectName("groupBox_3")
+        self.verticalLayout_7 = QtWidgets.QVBoxLayout(self.groupBox_3)
+        self.verticalLayout_7.setObjectName("verticalLayout_7")
+        self.progressBar_volume = VolumeWidget(self.groupBox_3)
+        self.progressBar_volume.setProperty("value", 24)
+        self.progressBar_volume.setObjectName("progressBar_volume")
+        self.verticalLayout_7.addWidget(self.progressBar_volume)
+        self.verticalLayout.addWidget(self.groupBox_3)
         self.groupBox = QtWidgets.QGroupBox(self.frame)
         self.groupBox.setObjectName("groupBox")
         self.verticalLayout_2 = QtWidgets.QVBoxLayout(self.groupBox)
@@ -124,6 +133,7 @@ class Ui_MainWindow(object):
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", "restim"))
+        self.groupBox_3.setTitle(_translate("MainWindow", "volume"))
         self.groupBox.setTitle(_translate("MainWindow", "Pattern generator"))
         self.comboBox.setItemText(0, _translate("MainWindow", "Mouse"))
         self.comboBox.setItemText(1, _translate("MainWindow", "Circle"))
@@ -143,4 +153,5 @@ from qt_ui.modulationsettingswidget import ModulationSettingsWidget
 from qt_ui.phasewidget import PhaseWidget
 from qt_ui.transformcalibrationsettingswidget import TransformCalibrationSettingsWidget
 from qt_ui.volumecontrolwidget import VolumeControlWidget
+from qt_ui.volumewidget import VolumeWidget
 from qt_ui.waveformdetailswidget import WaveformDetailsWidget

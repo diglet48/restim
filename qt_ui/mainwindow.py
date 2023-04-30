@@ -36,6 +36,7 @@ class Window(QMainWindow, Ui_MainWindow):
         self.graphicsView.set_config_manager(self.threephase_parameters)
         self.graphicsView.mousePositionChanged.connect(self.motion_generator.updateMousePosition)
         self.tab_details.set_config_manager(self.threephase_parameters)
+        self.progressBar_volume.set_config_manager(self.threephase_parameters)
 
         self.comboBox.currentTextChanged.connect(self.motion_generator.patternChanged)
         self.motion_generator.patternChanged(self.comboBox.currentText())
@@ -59,7 +60,9 @@ class Window(QMainWindow, Ui_MainWindow):
         self.buttplug_wsdm_client = net.buttplug_wsdm_client.ButtplugWsdmClient(self)
         self.buttplug_wsdm_client.new_tcode_command.connect(self.threephase_parameters.parse_tcode_command)
 
-        self.volumeWidget.volumeChanged.connect(self.threephase_parameters.set_ramp_volume)
+        self.volumeWidget.rampVolumeChanged.connect(self.threephase_parameters.set_ramp_volume)
+        self.volumeWidget.inactivityVolumeChanged.connect(self.threephase_parameters.set_inactivity_volume)
+        self.volumeWidget.set_config_manager(self.threephase_parameters)
 
         # trigger updates
         self.tab_carrier.settings_changed()
@@ -113,6 +116,7 @@ class Window(QMainWindow, Ui_MainWindow):
         self.settings_dialog.exec()
         self.threephase_parameters.set_configuration(ThreephaseConfiguration())
         self.graphicsView.refreshSettings()
+        self.progressBar_volume.refreshSettings()
 
     def closeEvent(self, event):
         print('closeEvent')

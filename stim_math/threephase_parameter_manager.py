@@ -67,6 +67,7 @@ class ThreephaseParameterManager(QObject):
         self.beta = ContinuousParameter(0.0)
         self.volume = ContinuousParameter(1.0)
         self.ramp_volume = ContinuousParameter(1.0)
+        self.inactivity_volume = ContinuousParameter(1.0)
 
         self.carrier_frequency = InstantParameter(0.0)
         self.modulation_1_enabled = InstantParameter(True)
@@ -112,6 +113,9 @@ class ThreephaseParameterManager(QObject):
 
     def set_ramp_volume(self, value):
         self.ramp_volume.add(value)
+
+    def set_inactivity_volume(self, value):
+        self.inactivity_volume.add(value)
 
     def set_carrier_frequency(self, value):
         self.carrier_frequency.add(value)

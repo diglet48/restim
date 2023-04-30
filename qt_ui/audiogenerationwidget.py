@@ -164,7 +164,8 @@ class AudioGenerationWidget(QtWidgets.QWidget):
 
         volume = \
             np.clip(self.threephase_parameters.ramp_volume.last_value(), 0, 1) * \
-            np.clip(self.threephase_parameters.volume.last_value(), 0, 1)
+            np.clip(self.threephase_parameters.volume.last_value(), 0, 1) * \
+            np.clip(self.threephase_parameters.inactivity_volume.last_value(), 0, 1)
         L *= volume
         R *= volume
         return L, R

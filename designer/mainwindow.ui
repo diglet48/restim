@@ -59,6 +59,22 @@
         </widget>
        </item>
        <item>
+        <widget class="QGroupBox" name="groupBox_3">
+         <property name="title">
+          <string>volume</string>
+         </property>
+         <layout class="QVBoxLayout" name="verticalLayout_7">
+          <item>
+           <widget class="VolumeWidget" name="progressBar_volume">
+            <property name="value">
+             <number>24</number>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
         <widget class="QGroupBox" name="groupBox">
          <property name="title">
           <string>Pattern generator</string>
@@ -265,6 +281,11 @@
    <extends>QWidget</extends>
    <header>qt_ui/volumecontrolwidget.h</header>
    <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>VolumeWidget</class>
+   <extends>QProgressBar</extends>
+   <header>qt_ui/volumewidget.h</header>
   </customwidget>
  </customwidgets>
  <resources/>
