@@ -48,7 +48,7 @@ class InstantParameter:
     def __init__(self, init_value):
         self.value = init_value
 
-    def add(self, value):
+    def add(self, value, interval=0.0):
         self.value = value
 
     def interpolate(self, timeline):
@@ -97,7 +97,6 @@ class ThreephaseParameterManager(QObject):
         ]:
             if target.axis == cmd.axis_identifier:
                 if target.enabled:
-
                     param.add(target.left + cmd.value * (target.right - target.left),
                               cmd.interval / 1000.0)
                     return
