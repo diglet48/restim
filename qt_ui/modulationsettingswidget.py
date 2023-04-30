@@ -92,12 +92,13 @@ class ModulationSettingsWidget(QtWidgets.QWidget):
         self.settings = QSettings()
 
         l = QtWidgets.QFormLayout(self)
-        sc = MyStaticMplCanvas(self, width=7, height=3, dpi=100)
-        self.sc = sc
-        l.addWidget(sc)
+        l.setObjectName("FormLayout")
+        self.mpl_canvas = MyStaticMplCanvas(self, width=7, height=3, dpi=100)
+        l.addWidget(self.mpl_canvas)
 
         gbc = QtWidgets.QGroupBox("Carrier", self)
         gbc_l = QtWidgets.QFormLayout(gbc)
+        gbc_l.setObjectName("FormLayout carrier groupbox")
         carrier_slider = QtWidgets.QDoubleSpinBox(minimum=stim_math.limits.Carrier.min,
                                                   maximum=stim_math.limits.Carrier.max)
         carrier_slider.setValue(self.settings.value(SETTING_CARRIER_FREQUENCY, 700, float))
@@ -109,6 +110,7 @@ class ModulationSettingsWidget(QtWidgets.QWidget):
         gb1 = QtWidgets.QGroupBox("Modulation 1", self, checkable=True)
         gb1.setChecked(self.settings.value(SETTING_MOD1_ENABLED, True, bool))
         gb1_l = QtWidgets.QFormLayout(gb1)
+        gb1_l.setObjectName("FormLayout modulation 1")
         freq1_slider = QtWidgets.QDoubleSpinBox(minimum=stim_math.limits.ModulationFrequency.min,
                                                 maximum=stim_math.limits.ModulationFrequency.max)
         freq1_slider.setValue(self.settings.value(SETTING_MOD1_FREQUENCY, 0, float))
@@ -131,7 +133,8 @@ class ModulationSettingsWidget(QtWidgets.QWidget):
 
         gb2 = QtWidgets.QGroupBox("Modulation 2", self, checkable=True)
         gb2.setChecked(self.settings.value(SETTING_MOD2_ENABLED, True, bool))
-        gb2_l = QtWidgets.QFormLayout(self)
+        gb2_l = QtWidgets.QFormLayout(gb2)
+        gb2_l.setObjectName("FormLayout modulation 2")
         freq2_slider = QtWidgets.QDoubleSpinBox(minimum=stim_math.limits.ModulationFrequency.min,
                                                 maximum=stim_math.limits.ModulationFrequency.max)
         freq2_slider.setValue(self.settings.value(SETTING_MOD2_FREQUENCY, 0, float))
@@ -151,7 +154,6 @@ class ModulationSettingsWidget(QtWidgets.QWidget):
         gb2_l.addRow(bias2_high_low_slider_label, bias2_high_low_slider)
         gb2.setLayout(gb2_l)
         l.addWidget(gb2)
-
 
         carrier_slider.valueChanged.connect(self.settings_changed)
         gb1.toggled.connect(self.settings_changed)
@@ -177,7 +179,7 @@ class ModulationSettingsWidget(QtWidgets.QWidget):
         self.bias2_left_right_slider = bias2_left_right_slider
         self.bias2_high_low_slider = bias2_high_low_slider
 
-        self.modulationSettingsChanged.connect(self.sc.updateParams)
+        self.modulationSettingsChanged.connect(self.mpl_canvas.updateParams)
         self.settings_changed()
 
     modulationSettingsChanged = QtCore.pyqtSignal(ModulationParameters)
