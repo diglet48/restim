@@ -116,7 +116,7 @@ class AudioGenerationWidget(QtWidgets.QWidget):
 
         # modulation 1
         modulation_1 = None
-        if self.threephase_parameters.modulation_1_enabled.last_value():
+        if self.threephase_parameters.modulation_1_enabled.last_value() and self.threephase_parameters.modulation_1_frequency.last_value() > 0:
             frequency = self.threephase_parameters.modulation_1_frequency.last_value()
             frequency = np.clip(frequency, limits.ModulationFrequency.min, limits.ModulationFrequency.max)
             theta = self.modulation_1_angle.generate(len(timeline), frequency, self.sample_rate)
@@ -132,7 +132,7 @@ class AudioGenerationWidget(QtWidgets.QWidget):
 
         # modulation 2
         modulation_2 = None
-        if self.threephase_parameters.modulation_2_enabled.last_value():
+        if self.threephase_parameters.modulation_2_enabled.last_value() and self.threephase_parameters.modulation_2_frequency.last_value() > 0:
             frequency = self.threephase_parameters.modulation_2_frequency.last_value()
             frequency = np.clip(frequency, limits.ModulationFrequency.min, limits.ModulationFrequency.max)
             theta = self.modulation_2_angle.generate(len(timeline), frequency, self.sample_rate)
