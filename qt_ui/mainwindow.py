@@ -1,5 +1,6 @@
 import sys
 
+from PyQt5 import QtGui
 from PyQt5.QtCore import QSettings
 from PyQt5.QtWidgets import (
     QApplication, QMainWindow, QStyle
@@ -15,6 +16,7 @@ import qt_ui.funscriptconversiondialog
 import qt_ui.preferencesdialog
 import net.serialproxy
 import net.buttplug_wsdm_client
+from qt_ui import resources
 
 from stim_math.threephase_parameter_manager import ThreephaseParameterManager
 from qt_ui.threephase_configuration import ThreephaseConfiguration
@@ -27,6 +29,11 @@ class Window(QMainWindow, Ui_MainWindow):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setupUi(self)
+
+        icon = QtGui.QIcon()
+        icon.addPixmap(QtGui.QPixmap(resources.favicon), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        self.setWindowIcon(icon)
+
 
         self.threephase_parameters = ThreephaseParameterManager(self, ThreephaseConfiguration())
 

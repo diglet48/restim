@@ -1,5 +1,3 @@
-import sys
-import os
 import matplotlib
 import numpy as np
 import time
@@ -8,6 +6,7 @@ from PyQt5.QtCore import QSettings
 from PyQt5.QtWidgets import QGraphicsView
 
 from qt_ui.preferencesdialog import KEY_DISPLAY_FPS, KEY_DISPLAY_LATENCY
+from qt_ui import resources
 from stim_math.threephase_parameter_manager import ThreephaseParameterManager
 
 # Make sure that we are using QT5
@@ -17,11 +16,6 @@ from PyQt5 import QtCore, QtWidgets, QtSvg, QtGui
 
 from qt_ui.stim_config import PositionParameters
 
-
-def resource_path(relative_path):
-    """ Get absolute path to resource, works for dev and for PyInstaller """
-    base_path = getattr(sys, '_MEIPASS', os.path.join(os.path.dirname(os.path.abspath(__file__)), os.path.pardir))
-    return os.path.join(base_path, relative_path)
 
 
 class Mode:
@@ -44,7 +38,7 @@ class PhaseWidget(QtWidgets.QGraphicsView):
 
         scene = QtWidgets.QGraphicsScene()
         self.setScene(scene)
-        svg = QtSvg.QGraphicsSvgItem(resource_path("resources/phase diagram bg.svg"))
+        svg = QtSvg.QGraphicsSvgItem(resources.phase_diagram_bg)
         svg.setPos(-svg.boundingRect().width()/2, -svg.boundingRect().height()/2)
         svg.moveBy(0, 6)
         scene.addItem(svg)
