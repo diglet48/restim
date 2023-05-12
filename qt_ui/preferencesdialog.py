@@ -41,6 +41,7 @@ class PreferencesDialog(QDialog, Ui_PreferencesDialog):
         self.loadSettings()
 
         self.audio_api.currentIndexChanged.connect(self.repopulate_audio_devices)
+        self.audio_device.currentIndexChanged.connect(self.refresh_audio_device_info)
         self.buttonBox.clicked.connect(self.buttonClicked)
 
     def exec(self):
@@ -133,6 +134,15 @@ class PreferencesDialog(QDialog, Ui_PreferencesDialog):
                 self.audio_device.addItem(device['name'])
                 if device['name'] == default_audio_device_name:
                     self.audio_device.setCurrentIndex(self.audio_device.count() - 1)
+
+    def refresh_audio_device_info(self):
+        api_index = self.audio_api.currentIndex()
+        device_name = self.audio_device.currentText()
+        for device in sd.query_devices():
+            if device['hostapi'] == api_index and device['name'] == device_name:
+                out_channels = device['max_output_channels']
+                samplerate = device['default_samplerate']
+                self.audio_info.setText(f"channels: {out_channels}, samplerate: {samplerate}")
 
     def saveSettings(self):
         # network
