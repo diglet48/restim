@@ -13,6 +13,10 @@
   <property name="windowTitle">
    <string>restim</string>
   </property>
+  <property name="windowIcon">
+   <iconset>
+    <normaloff>../resources/favicon.png</normaloff>../resources/favicon.png</iconset>
+  </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QHBoxLayout" name="horizontalLayout">
     <item>
@@ -135,6 +139,9 @@
             </property>
            </widget>
           </item>
+          <item>
+           <widget class="QComboBox" name="comboBox_phase_selection"/>
+          </item>
          </layout>
         </widget>
        </item>
@@ -164,8 +171,14 @@
       </property>
       <widget class="TransformCalibrationSettingsWidget" name="tab_transform_calibration">
        <attribute name="title">
-        <string>Calibration</string>
+        <string>3-phase</string>
        </attribute>
+      </widget>
+      <widget class="FivePhaseSettingsWidget" name="tab_fivephase">
+       <attribute name="title">
+        <string>4/5-phase</string>
+       </attribute>
+       <layout class="QVBoxLayout" name="verticalLayout_3"/>
       </widget>
       <widget class="ModulationSettingsWidget" name="tab_carrier">
        <attribute name="title">
@@ -283,6 +296,12 @@
    <class>VolumeWidget</class>
    <extends>QProgressBar</extends>
    <header>qt_ui/volumewidget.h</header>
+  </customwidget>
+  <customwidget>
+   <class>FivePhaseSettingsWidget</class>
+   <extends>QWidget</extends>
+   <header>qt_ui/fivephasesettingswidget.h</header>
+   <container>1</container>
   </customwidget>
  </customwidgets>
  <resources/>

@@ -372,6 +372,42 @@
         </widget>
        </item>
        <item>
+        <widget class="QGroupBox" name="groupBox_4">
+         <property name="title">
+          <string>4 and 5-phase device configuration</string>
+         </property>
+         <layout class="QFormLayout" name="formLayout_8">
+          <item row="0" column="0">
+           <widget class="QLabel" name="label_28">
+            <property name="text">
+             <string>Channel count</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="1">
+           <widget class="QSpinBox" name="channel_count"/>
+          </item>
+          <item row="1" column="0">
+           <widget class="QLabel" name="label_29">
+            <property name="text">
+             <string>Channel map</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="1">
+           <widget class="QLineEdit" name="channel_map"/>
+          </item>
+          <item row="2" column="1">
+           <widget class="QCommandLinkButton" name="commandLinkButton">
+            <property name="text">
+             <string>Test this device</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
         <spacer name="verticalSpacer">
          <property name="orientation">
           <enum>Qt::Vertical</enum>

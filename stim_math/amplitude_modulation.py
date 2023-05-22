@@ -14,6 +14,9 @@ class SineModulation:
         e = self.envelope()
         return L * e, R * e
 
+    def get_modulation_signal(self):
+        return self.envelope()
+
     def envelope(self):
         # clip to safety limits
         strength = np.clip(self.modulation, 0.0, 1.0)

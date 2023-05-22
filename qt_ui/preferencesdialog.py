@@ -3,6 +3,7 @@ from PyQt5.QtWidgets import QDialog, QAbstractButton, QDialogButtonBox
 
 from qt_ui.preferences_dialog_ui import Ui_PreferencesDialog
 from qt_ui.threephase_configuration import ThreephaseConfiguration
+from qt_ui.audiotestdialog import AudioTestDialog
 
 import sounddevice as sd
 
@@ -26,6 +27,9 @@ KEY_AUDIO_API = "audio/api-name"
 KEY_AUDIO_DEVICE = "audio/device-name"
 KEY_AUDIO_LATENCY = "audio/latency"
 
+KEY_AUDIO_CHANNEL_COUNT = "audio/channel-count"
+KEY_AUDIO_CHANNEL_MAP = "audio/channel-map"
+
 KEY_DISPLAY_FPS = "display/fps"
 KEY_DISPLAY_LATENCY = "display/latency"
 
@@ -43,6 +47,7 @@ class PreferencesDialog(QDialog, Ui_PreferencesDialog):
         self.audio_api.currentIndexChanged.connect(self.repopulate_audio_devices)
         self.audio_device.currentIndexChanged.connect(self.refresh_audio_device_info)
         self.buttonBox.clicked.connect(self.buttonClicked)
+        self.commandLinkButton.clicked.connect(self.open_test_audio_dialog)
 
     def exec(self):
         self.loadSettings()
@@ -91,6 +96,8 @@ class PreferencesDialog(QDialog, Ui_PreferencesDialog):
         self.repopulate_audio_devices()
 
         self.audio_latency.setCurrentText(self.settings.value(KEY_AUDIO_LATENCY, 'high'))
+        self.channel_count.setValue(self.settings.value(KEY_AUDIO_CHANNEL_COUNT, 8, int))
+        self.channel_map.setText(self.settings.value(KEY_AUDIO_CHANNEL_MAP, '0,1,2,3', str))
 
         # display settings
         self.display_fps.setValue(int(self.settings.value(KEY_DISPLAY_FPS, 60, float)))
@@ -170,6 +177,8 @@ class PreferencesDialog(QDialog, Ui_PreferencesDialog):
         self.settings.setValue(KEY_AUDIO_API, self.audio_api.currentText())
         self.settings.setValue(KEY_AUDIO_DEVICE, self.audio_device.currentText())
         self.settings.setValue(KEY_AUDIO_LATENCY, self.audio_latency.currentText())
+        self.settings.setValue(KEY_AUDIO_CHANNEL_COUNT, self.channel_count.value())
+        self.settings.setValue(KEY_AUDIO_CHANNEL_MAP, self.channel_map.text())
 
         # display
         self.settings.setValue(KEY_DISPLAY_FPS, self.display_fps.value())
@@ -203,4 +212,13 @@ class PreferencesDialog(QDialog, Ui_PreferencesDialog):
 
         self.threephase.save()
 
+    def open_test_audio_dialog(self):
+        api_index = self.audio_api.currentIndex()
+        device_name = self.audio_device.currentText()
+        device_index = -1
+        for device in sd.query_devices():
+            if device['hostapi'] == api_index and device['name'] == device_name:
+                device_index = device['index']
 
+        dialog = AudioTestDialog(self, device_index)
+        dialog.exec()

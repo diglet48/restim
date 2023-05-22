@@ -69,6 +69,19 @@ class ThreephaseParameterManager(QObject):
         self.ramp_volume = ContinuousParameter(1.0)
         self.inactivity_volume = ContinuousParameter(1.0)
 
+        self.e1 = ContinuousParameter(0.0)
+        self.e2 = ContinuousParameter(0.0)
+        self.e3 = ContinuousParameter(0.0)
+        self.e4 = ContinuousParameter(0.0)
+        self.e5 = ContinuousParameter(0.0)
+
+        self.resistance_t = InstantParameter(1.0)
+        self.resistance_s1 = InstantParameter(1.0)
+        self.resistance_s2 = InstantParameter(1.0)
+        self.resistance_s3 = InstantParameter(1.0)
+        self.resistance_s4 = InstantParameter(1.0)
+        self.resistance_s5 = InstantParameter(1.0)
+
         self.carrier_frequency = InstantParameter(0.0)
         self.modulation_1_enabled = InstantParameter(True)
         self.modulation_1_frequency = InstantParameter(0.0)
@@ -100,7 +113,16 @@ class ThreephaseParameterManager(QObject):
                 if target.enabled:
                     param.add(target.left + cmd.value * (target.right - target.left),
                               cmd.interval / 1000.0)
-                    return
+
+        for target, param in [
+            ('E0', self.e1),
+            ('E1', self.e2),
+            ('E2', self.e3),
+            ('E3', self.e4),
+            ('E4', self.e5),
+        ]:
+            if target == cmd.axis_identifier:
+                param.add(cmd.value, cmd.interval / 1000.0)
 
     def set_alpha(self, value):
         self.alpha.add(value)
@@ -160,3 +182,17 @@ class ThreephaseParameterManager(QObject):
         self.modulation_2_left_right_bias.add(modulation_parameters.modulation_2_left_right_bias)
         self.modulation_2_high_low_bias.add(modulation_parameters.modulation_2_high_low_bias)
 
+    def set_five_phase_resistance_parameters(self, resistance_parameters: stim_config.FivePhaseResistanceParameters):
+        self.resistance_t.add(resistance_parameters.t)
+        self.resistance_s1.add(resistance_parameters.s1)
+        self.resistance_s2.add(resistance_parameters.s2)
+        self.resistance_s3.add(resistance_parameters.s3)
+        self.resistance_s4.add(resistance_parameters.s4)
+        self.resistance_s5.add(resistance_parameters.s5)
+
+    def set_five_phase_current_parameters(self, current_parameters: stim_config.FivePhaseCurrentParameters):
+        self.e1.add(current_parameters.i1)
+        self.e2.add(current_parameters.i2)
+        self.e3.add(current_parameters.i3)
+        self.e4.add(current_parameters.i4)
+        self.e5.add(current_parameters.i5)

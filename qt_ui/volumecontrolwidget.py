@@ -78,7 +78,13 @@ class VolumeControlWidget(QtWidgets.QWidget, Ui_VolumeControlForm):
             return
 
         axis_values = (self.config.alpha.interpolate(time.time()),
-                       self.config.beta.interpolate(time.time()))
+                       self.config.beta.interpolate(time.time()),
+                       self.config.e1.interpolate(time.time()),
+                       self.config.e2.interpolate(time.time()),
+                       self.config.e3.interpolate(time.time()),
+                       self.config.e4.interpolate(time.time()),
+                       self.config.e5.interpolate(time.time()),
+                       )
 
         if axis_values != self.last_axis_values:
             self.last_axis_update_time = time.time()

@@ -1,4 +1,5 @@
 import sys
+import traceback
 
 from PyQt5 import QtGui
 from PyQt5.QtCore import QSettings
@@ -23,6 +24,7 @@ from qt_ui.threephase_configuration import ThreephaseConfiguration
 
 from qt_ui.preferencesdialog import KEY_AUDIO_API, KEY_AUDIO_DEVICE, KEY_AUDIO_LATENCY
 import sounddevice as sd
+import stim_math.generate
 
 
 class Window(QMainWindow, Ui_MainWindow):
@@ -34,6 +36,9 @@ class Window(QMainWindow, Ui_MainWindow):
         icon.addPixmap(QtGui.QPixmap(resources.favicon), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.setWindowIcon(icon)
 
+        self.comboBox_phase_selection.addItem("Three-phase", 3)
+        self.comboBox_phase_selection.addItem("Four-phase", 4)
+        self.comboBox_phase_selection.addItem("Five-phase", 5)
 
         self.threephase_parameters = ThreephaseParameterManager(self, ThreephaseConfiguration())
 
@@ -50,10 +55,13 @@ class Window(QMainWindow, Ui_MainWindow):
         self.doubleSpinBox.valueChanged.connect(self.motion_generator.velocityChanged)
         self.motion_generator.velocityChanged(self.doubleSpinBox.value())
 
-        self.audio_gen = qt_ui.audiogenerationwidget.AudioGenerationWidget(None, self.threephase_parameters)
+        self.audio_gen = qt_ui.audiogenerationwidget.AudioGenerationWidget(None)
         self.motion_generator.positionChanged.connect(self.threephase_parameters.set_position_parameters)
         self.tab_carrier.modulationSettingsChanged.connect(self.threephase_parameters.set_modulation_parameters)
         self.tab_transform_calibration.transformCalibrationSettingsChanged.connect(self.threephase_parameters.set_calibration_parameters)
+
+        self.tab_fivephase.fivePhaseCurrentChanged.connect(self.threephase_parameters.set_five_phase_current_parameters)
+        self.tab_fivephase.fivePhaseResistanceChanged.connect(self.threephase_parameters.set_five_phase_resistance_parameters)
 
         self.websocket_server = net.websocketserver.WebSocketServer(self)
         self.websocket_server.new_tcode_command.connect(self.threephase_parameters.parse_tcode_command)
@@ -75,6 +83,8 @@ class Window(QMainWindow, Ui_MainWindow):
         self.tab_carrier.settings_changed()
         self.tab_transform_calibration.settings_changed()
         self.volumeWidget.updateVolume()
+        self.tab_fivephase.power_changed()
+        self.tab_fivephase.resistance_changed()
 
         self.startStopAudioButton.clicked.connect(self.audioStartStop)
         self.audioStop() # update button icon/label
@@ -100,7 +110,15 @@ class Window(QMainWindow, Ui_MainWindow):
             latency = float(latency)
         except ValueError:
             pass
-        self.audio_gen.start(api_name, device_name, latency)
+        phases = int(self.comboBox_phase_selection.currentData())
+        if phases == 3:
+            algorithm = stim_math.generate.ThreePhaseAlgorithm(self.threephase_parameters)
+        elif phases == 4:
+            algorithm = stim_math.generate.FourPhaseAlgorithm(self.threephase_parameters)
+        else:
+            algorithm = stim_math.generate.FivePhaseAlgorithm(self.threephase_parameters)
+
+        self.audio_gen.start(api_name, device_name, latency, algorithm)
         if self.audio_gen.stream is not None:
             pixmapi = getattr(QStyle, 'SP_MediaStop')
             icon = self.style().standardIcon(pixmapi)

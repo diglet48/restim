@@ -15,6 +15,9 @@ class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
         MainWindow.resize(713, 666)
+        icon = QtGui.QIcon()
+        icon.addPixmap(QtGui.QPixmap(".\\designer\\../resources/favicon.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        MainWindow.setWindowIcon(icon)
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
         self.horizontalLayout = QtWidgets.QHBoxLayout(self.centralwidget)
@@ -75,6 +78,9 @@ class Ui_MainWindow(object):
         self.startStopAudioButton = QtWidgets.QCommandLinkButton(self.groupBox_2)
         self.startStopAudioButton.setObjectName("startStopAudioButton")
         self.verticalLayout_4.addWidget(self.startStopAudioButton)
+        self.comboBox_phase_selection = QtWidgets.QComboBox(self.groupBox_2)
+        self.comboBox_phase_selection.setObjectName("comboBox_phase_selection")
+        self.verticalLayout_4.addWidget(self.comboBox_phase_selection)
         self.verticalLayout.addWidget(self.groupBox_2)
         spacerItem = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
         self.verticalLayout.addItem(spacerItem)
@@ -85,6 +91,11 @@ class Ui_MainWindow(object):
         self.tab_transform_calibration = TransformCalibrationSettingsWidget()
         self.tab_transform_calibration.setObjectName("tab_transform_calibration")
         self.tabWidget.addTab(self.tab_transform_calibration, "")
+        self.tab_fivephase = FivePhaseSettingsWidget()
+        self.tab_fivephase.setObjectName("tab_fivephase")
+        self.verticalLayout_3 = QtWidgets.QVBoxLayout(self.tab_fivephase)
+        self.verticalLayout_3.setObjectName("verticalLayout_3")
+        self.tabWidget.addTab(self.tab_fivephase, "")
         self.tab_carrier = ModulationSettingsWidget()
         self.tab_carrier.setObjectName("tab_carrier")
         self.tabWidget.addTab(self.tab_carrier, "")
@@ -138,13 +149,15 @@ class Ui_MainWindow(object):
         self.comboBox.setItemText(4, _translate("MainWindow", "C"))
         self.groupBox_2.setTitle(_translate("MainWindow", "Audio"))
         self.startStopAudioButton.setText(_translate("MainWindow", "Start audio"))
-        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_transform_calibration), _translate("MainWindow", "Calibration"))
+        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_transform_calibration), _translate("MainWindow", "3-phase"))
+        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_fivephase), _translate("MainWindow", "4/5-phase"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_carrier), _translate("MainWindow", "Carrier and modulation"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_volume), _translate("MainWindow", "Volume"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_details), _translate("MainWindow", "Details"))
         self.menuTools.setTitle(_translate("MainWindow", "Tools"))
         self.actionFunscript_conversion_2.setText(_translate("MainWindow", "Funscript conversion"))
         self.actionPreferences.setText(_translate("MainWindow", "Preferences"))
+from qt_ui.fivephasesettingswidget import FivePhaseSettingsWidget
 from qt_ui.modulationsettingswidget import ModulationSettingsWidget
 from qt_ui.phasewidget import PhaseWidget
 from qt_ui.transformcalibrationsettingswidget import TransformCalibrationSettingsWidget
