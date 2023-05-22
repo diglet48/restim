@@ -1,8 +1,5 @@
 import numpy as np
 
-from stim_math import transforms_4
-
-
 
 def split_point(m, a, b):
     """
