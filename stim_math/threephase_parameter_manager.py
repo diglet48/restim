@@ -1,7 +1,6 @@
 import time
 import numpy as np
-from PyQt5 import QtCore
-from PyQt5.QtCore import QObject
+# from PyQt5.QtCore import QObject
 
 from net.tcode import TCodeCommand
 from qt_ui.threephase_configuration import ThreephaseConfiguration
@@ -58,9 +57,8 @@ class InstantParameter:
         return self.value
 
 
-class ThreephaseParameterManager(QObject):
-    def __init__(self, parent, config: ThreephaseConfiguration):
-        super(ThreephaseParameterManager, self).__init__(parent)
+class ThreephaseParameterManager():
+    def __init__(self, config: ThreephaseConfiguration):
         self.config = config
 
         self.alpha = ContinuousParameter(0.0)

@@ -1,5 +1,4 @@
 import sys
-import traceback
 
 from PyQt5 import QtGui
 from PyQt5.QtCore import QSettings
@@ -40,7 +39,7 @@ class Window(QMainWindow, Ui_MainWindow):
         self.comboBox_phase_selection.addItem("Four-phase", 4)
         self.comboBox_phase_selection.addItem("Five-phase", 5)
 
-        self.threephase_parameters = ThreephaseParameterManager(self, ThreephaseConfiguration())
+        self.threephase_parameters = ThreephaseParameterManager(ThreephaseConfiguration())
 
         self.motion_generator = qt_ui.motion_generation.MotionGenerator(self)
 

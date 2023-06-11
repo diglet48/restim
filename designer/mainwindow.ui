@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>713</width>
-    <height>666</height>
+    <width>692</width>
+    <height>696</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -22,16 +22,10 @@
     <item>
      <widget class="QFrame" name="frame">
       <property name="sizePolicy">
-       <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+       <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
         <horstretch>0</horstretch>
         <verstretch>0</verstretch>
        </sizepolicy>
-      </property>
-      <property name="maximumSize">
-       <size>
-        <width>230</width>
-        <height>16777215</height>
-       </size>
       </property>
       <property name="frameShape">
        <enum>QFrame::StyledPanel</enum>
@@ -238,7 +232,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>713</width>
+     <width>692</width>
      <height>21</height>
     </rect>
    </property>

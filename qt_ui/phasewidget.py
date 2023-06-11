@@ -1,8 +1,7 @@
 import matplotlib
-import numpy as np
 import time
 
-from PyQt5.QtCore import QSettings
+from PyQt5.QtCore import QSettings, QPoint
 from PyQt5.QtWidgets import QGraphicsView
 
 from qt_ui.preferencesdialog import KEY_DISPLAY_FPS, KEY_DISPLAY_LATENCY
@@ -11,16 +10,24 @@ from stim_math.threephase_parameter_manager import ThreephaseParameterManager
 
 # Make sure that we are using QT5
 matplotlib.use('Qt5Agg')
-from PyQt5.QtGui import QTransform, QBrush, QColor, QPen, QMouseEvent
+from PyQt5.QtGui import QColor, QMouseEvent
 from PyQt5 import QtCore, QtWidgets, QtSvg, QtGui
+from PyQt5.QtCore import Qt
 
 from qt_ui.stim_config import PositionParameters
-
 
 
 class Mode:
     MouseMode = 1
     TCodeMode = 2
+
+
+def item_pos_to_ab(x, y):
+    return y / -77, x / -77
+
+
+def ab_to_item_pos(a, b):
+    return b * -77, a * -77
 
 
 class PhaseWidget(QtWidgets.QGraphicsView):
@@ -31,17 +38,16 @@ class PhaseWidget(QtWidgets.QGraphicsView):
         self.mode = Mode.TCodeMode
         self.stored_tcode_position = PositionParameters(0, 0)
 
+        self.setAlignment(Qt.AlignCenter)
         self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        self.setSceneRect(-100, -100, 200, 200)
-        self.centerOn(0, 0)
 
         scene = QtWidgets.QGraphicsScene()
         self.setScene(scene)
         svg = QtSvg.QGraphicsSvgItem(resources.phase_diagram_bg)
-        svg.setPos(-svg.boundingRect().width()/2, -svg.boundingRect().height()/2)
-        svg.moveBy(0, 6)
         scene.addItem(svg)
+        svg.setPos(-svg.boundingRect().width()/2, -svg.boundingRect().height()/2)
+        self.svg = svg
 
         self.circle = QtWidgets.QGraphicsEllipseItem(0, 0, 10, 10)
         self.circle.setBrush(QColor.fromRgb(62, 201, 65))
@@ -59,6 +65,9 @@ class PhaseWidget(QtWidgets.QGraphicsView):
         self.timer.start(int(1000 / 60.0))
         self.refreshSettings()
 
+    def resizeEvent(self, event: QtGui.QResizeEvent) -> None:
+        self.fitInView(-100, -100, 200, 200, Qt.KeepAspectRatio)
+
     def refreshSettings(self):
         settings = QSettings()
         self.timer.setInterval(int(1000 // settings.value(KEY_DISPLAY_FPS, 60.0, float)))
@@ -66,16 +75,6 @@ class PhaseWidget(QtWidgets.QGraphicsView):
 
     def set_config_manager(self, config: ThreephaseParameterManager):
         self.config = config
-
-    def xy_to_ab(self, x, y):
-        a = (y - 6) / -77
-        b = (x - 0) / -77
-        return a, b
-
-    def ab_to_xy(self, a, b):
-        x = (b * -77)
-        y = (a * -77) + 6
-        return x, y
 
     def mousePressEvent(self, event: QMouseEvent):
         self.buttonPressed = True
@@ -93,7 +92,11 @@ class PhaseWidget(QtWidgets.QGraphicsView):
             self.updateMousePosition(event.x(), event.y())
 
     def updateMousePosition(self, mouse_x, mouse_y):
-        a, b = self.xy_to_ab(mouse_x - 100, mouse_y - 100)
+        view_pos = QPoint(mouse_x, mouse_y)
+        scene_pos = self.mapToScene(view_pos)
+        item_pos = self.svg.mapToItem(self.svg, scene_pos)
+        a, b = item_pos_to_ab(item_pos.x(), item_pos.y())
+
         norm = (a**2 + b**2)**.5
         if norm >= 1:
             a /= norm
@@ -119,7 +122,7 @@ class PhaseWidget(QtWidgets.QGraphicsView):
             a = self.config.alpha.last_value()
             b = self.config.beta.last_value()
 
-        x, y = self.ab_to_xy(a, b)
+        x, y = ab_to_item_pos(a, b)
         self.circle.setPos(x - 5, y - 5)
 
     mousePositionChanged = QtCore.pyqtSignal(float, float)
