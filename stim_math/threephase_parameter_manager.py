@@ -96,6 +96,9 @@ class ThreephaseParameterManager():
         self.calibration_right = InstantParameter(0.0)
         self.calibration_center = InstantParameter(0.0)
 
+        self.focus_alpha = ContinuousParameter(0.0)
+        self.focus_beta = ContinuousParameter(0.0)
+
     def set_configuration(self, config: ThreephaseConfiguration):
         self.config = config
 
@@ -161,6 +164,10 @@ class ThreephaseParameterManager():
     def set_position_parameters(self, position_params: stim_config.PositionParameters):
         self.alpha.add(position_params.alpha)
         self.beta.add(position_params.beta)
+
+    def set_focus_parameters(self, alpha: float, beta: float):
+        self.focus_alpha.add(alpha)
+        self.focus_beta.add(beta)
 
     def set_calibration_parameters(self, calibration_params: stim_config.TransformParameters):
         self.calibration_neutral.add(calibration_params.up_down)

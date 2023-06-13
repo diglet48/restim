@@ -46,6 +46,9 @@ class Window(QMainWindow, Ui_MainWindow):
         self.motion_generator.positionChanged.connect(self.threephase_parameters.set_position_parameters)
         self.graphicsView.set_config_manager(self.threephase_parameters)
         self.graphicsView.mousePositionChanged.connect(self.motion_generator.updateMousePosition)
+        self.graphicsView_2.set_config_manager(self.threephase_parameters)
+        self.graphicsView_2.mousePositionChanged.connect(self.threephase_parameters.set_focus_parameters)
+
         self.tab_details.set_config_manager(self.threephase_parameters)
         self.progressBar_volume.set_config_manager(self.threephase_parameters)
 

@@ -30,7 +30,7 @@ def ab_to_item_pos(a, b):
     return b * -77, a * -77
 
 
-class PhaseWidget(QtWidgets.QGraphicsView):
+class PhaseWidgetBase(QtWidgets.QGraphicsView):
     def __init__(self, parent):
         QtWidgets.QWidget.__init__(self, parent)
 
@@ -106,6 +106,13 @@ class PhaseWidget(QtWidgets.QGraphicsView):
         self.stored_tcode_position.beta = b
         self.mousePositionChanged.emit(a, b)
 
+    mousePositionChanged = QtCore.pyqtSignal(float, float)
+
+
+class PhaseWidget(PhaseWidgetBase):
+    def __init__(self, parent):
+        super(PhaseWidget, self).__init__(parent)
+
     def refresh(self):
         # if position has changed since last mouse event, transition to TCodeMode
         if self.mode == Mode.MouseMode:
@@ -125,4 +132,29 @@ class PhaseWidget(QtWidgets.QGraphicsView):
         x, y = ab_to_item_pos(a, b)
         self.circle.setPos(x - 5, y - 5)
 
-    mousePositionChanged = QtCore.pyqtSignal(float, float)
+
+class PhaseWidgetFocus(PhaseWidgetBase):
+    def __init__(self, parent):
+        super(PhaseWidgetFocus, self).__init__(parent)
+
+        self.circle.setBrush(QColor.fromRgb(201, 62, 65))
+        self.circle.setPen(QColor.fromRgb(201, 62, 65))
+
+    def refresh(self):
+        # if position has changed since last mouse event, transition to TCodeMode
+        if self.mode == Mode.MouseMode:
+            if (self.stored_tcode_position.alpha != self.config.focus_alpha.last_value() or
+                    self.stored_tcode_position.beta != self.config.focus_beta.last_value()):
+                self.mode = Mode.TCodeMode
+
+        if self.mode == Mode.TCodeMode:
+            # delay visualization in tcode mode
+            a = self.config.focus_alpha.interpolate(time.time() - self.latency)
+            b = self.config.focus_beta.interpolate(time.time() - self.latency)
+        else:
+            # display immediately in mouse mode
+            a = self.config.focus_alpha.last_value()
+            b = self.config.focus_beta.last_value()
+
+        x, y = ab_to_item_pos(a, b)
+        self.circle.setPos(x - 5, y - 5)

@@ -139,6 +139,19 @@ class ThreePhaseAlgorithm(VolumeManagementAlgorithm):
         alpha /= norm
         beta /= norm
 
+
+        # mobius transform...
+        z = alpha + beta * 1j
+        a = self.params.focus_alpha.last_value() + self.params.focus_beta.last_value() * 1j
+        z = (z - a) / (1 - np.conj(a) * z)
+        alpha = z.real
+        beta = z.imag
+
+        # normalize (alpha, beta) to be within the unit circle.
+        norm = np.clip(trig.norm(alpha, beta), 1.0, None)
+        alpha /= norm
+        beta /= norm
+
         # center scaling
         center_calib = point_calibration.CenterCalibration(self.params.calibration_center.last_value())
         volume *= center_calib.get_scale(alpha, beta)

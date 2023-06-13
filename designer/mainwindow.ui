@@ -168,6 +168,21 @@
         <string>3-phase</string>
        </attribute>
       </widget>
+      <widget class="QWidget" name="tabFocus">
+       <attribute name="title">
+        <string>Focus</string>
+       </attribute>
+       <widget class="PhaseWidget" name="graphicsView_2">
+        <property name="geometry">
+         <rect>
+          <x>60</x>
+          <y>50</y>
+          <width>256</width>
+          <height>192</height>
+         </rect>
+        </property>
+       </widget>
+      </widget>
       <widget class="FivePhaseSettingsWidget" name="tab_fivephase">
        <attribute name="title">
         <string>4/5-phase</string>
