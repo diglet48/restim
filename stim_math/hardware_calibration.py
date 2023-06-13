@@ -41,8 +41,20 @@ class HardwareCalibration:
         alpha, beta, _ = transform @ [np.cos(theta), np.sin(theta), np.zeros_like(theta)]
         return alpha, beta
 
+    def scaling_contant(self, transform_in_ab):
+        # ab-to-channel matrix.
+        qq = potential_to_channel_matrix @ ab_transform @ transform_in_ab
+        # we have qq = [[a, b], [c, d]] and norm(alpha, beta) <= 1.
+        # we want [L, R] = qq @ [alpha, beta] to result in L <=1 and R <=1
+        # therefore we also want norm(a, b) <= 1 and norm(c, d) <= 1
+        k1 = np.linalg.norm([qq[0, 0], qq[0, 1]])
+        k2 = np.linalg.norm([qq[1, 0], qq[1, 1]])
+        k = 1 / np.max((k1, k2))
+        return k * 3**.5
+
     def apply_transform(self, L, R):
         transform = self.generate_transform_in_ab()
         corrective_matrix = potential_to_channel_matrix @ ab_transform @ transform @ ab_transform_inv @ potential_to_channel_matrix_inv
+        corrective_matrix = corrective_matrix * self.scaling_contant(transform)
         L, R, _ = corrective_matrix @ np.vstack((L, R, np.zeros_like(L)))
         return L, R
