@@ -132,7 +132,6 @@ class FourPhaseHardwareCalibration:
     """
     def __init__(self, t, s1, s2, s3, s4):
         self.t = t
-        # self.t = 5
 
         self.s1 = s1
         self.s2 = s2
@@ -141,7 +140,7 @@ class FourPhaseHardwareCalibration:
 
     def scaling_constant(self):
         """
-        find a constant such that c * (st @ v) never results in clipping.
+        find a constant such that C * (st @ currents) never results in clipping.
         """
         return 1 / np.max([
             self.s1 + self.s2 + self.t,

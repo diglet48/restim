@@ -118,7 +118,7 @@ class FivePhaseHardwareCalibration:
 
     def scaling_constant(self):
         """
-        find a constant such that c * (st @ v) never results in clipping.
+        find a constant such that C * (st @ currents) never results in clipping.
         """
         return 1 / np.max([
             self.s1 + self.s2 + self.t,
