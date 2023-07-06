@@ -96,6 +96,14 @@ class ThreephaseParameterManager():
         self.calibration_right = InstantParameter(0.0)
         self.calibration_center = InstantParameter(0.0)
 
+        self.transform_enabled = InstantParameter(0.0)
+        self.transform_rotation_degrees = InstantParameter(50.0)
+        self.transform_mirror = InstantParameter(0.0)
+        self.transform_top_limit = InstantParameter(1.0)
+        self.transform_bottom_limit = InstantParameter(-1.0)
+        self.transform_left_limit = InstantParameter(-1.0)
+        self.transform_right_limit = InstantParameter(1.0)
+
         self.focus_alpha = ContinuousParameter(0.0)
         self.focus_beta = ContinuousParameter(0.0)
 
@@ -169,10 +177,19 @@ class ThreephaseParameterManager():
         self.focus_alpha.add(alpha)
         self.focus_beta.add(beta)
 
-    def set_calibration_parameters(self, calibration_params: stim_config.TransformParameters):
+    def set_calibration_parameters(self, calibration_params: stim_config.ThreePhaseCalibrationParameters):
         self.calibration_neutral.add(calibration_params.up_down)
         self.calibration_right.add(calibration_params.left_right)
         self.calibration_center.add(calibration_params.center)
+
+    def set_three_phase_transform_parameters(self, transform_params: stim_config.ThreePhaseTransformParameters):
+        self.transform_enabled.add(transform_params.enabled)
+        self.transform_rotation_degrees.add(transform_params.rotation_degrees)
+        self.transform_mirror.add(transform_params.mirror)
+        self.transform_top_limit.add(transform_params.top)
+        self.transform_bottom_limit.add(transform_params.bottom)
+        self.transform_left_limit.add(transform_params.left)
+        self.transform_right_limit.add(transform_params.right)
 
     def set_modulation_parameters(self, modulation_parameters: stim_config.ModulationParameters):
         self.carrier_frequency.add(modulation_parameters.carrier_frequency)

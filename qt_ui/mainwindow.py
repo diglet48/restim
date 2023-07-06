@@ -31,6 +31,11 @@ class Window(QMainWindow, Ui_MainWindow):
         super().__init__(parent)
         self.setupUi(self)
 
+        # set the first tab as active tab, in case we forgot to set it in designer
+        self.tabWidget.setCurrentIndex(0)
+        # hide the focus tab
+        self.tabWidget.setTabVisible(1, False)
+
         icon = QtGui.QIcon()
         icon.addPixmap(QtGui.QPixmap(resources.favicon), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.setWindowIcon(icon)
@@ -60,7 +65,9 @@ class Window(QMainWindow, Ui_MainWindow):
         self.audio_gen = qt_ui.audiogenerationwidget.AudioGenerationWidget(None)
         self.motion_generator.positionChanged.connect(self.threephase_parameters.set_position_parameters)
         self.tab_carrier.modulationSettingsChanged.connect(self.threephase_parameters.set_modulation_parameters)
-        self.tab_transform_calibration.transformCalibrationSettingsChanged.connect(self.threephase_parameters.set_calibration_parameters)
+        self.tab_threephase.threePhaseSettingsChanged.connect(self.threephase_parameters.set_calibration_parameters)
+        self.tab_threephase.threePhaseTransformChanged.connect(self.threephase_parameters.set_three_phase_transform_parameters)
+        self.tab_threephase.set_config_manager(self.threephase_parameters)
 
         self.tab_fivephase.fivePhaseCurrentChanged.connect(self.threephase_parameters.set_five_phase_current_parameters)
         self.tab_fivephase.fivePhaseResistanceChanged.connect(self.threephase_parameters.set_five_phase_resistance_parameters)
@@ -83,7 +90,7 @@ class Window(QMainWindow, Ui_MainWindow):
 
         # trigger updates
         self.tab_carrier.settings_changed()
-        self.tab_transform_calibration.settings_changed()
+        self.tab_threephase.settings_changed()
         self.volumeWidget.updateVolume()
         self.tab_fivephase.power_changed()
         self.tab_fivephase.resistance_changed()

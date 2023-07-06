@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>692</width>
+    <width>881</width>
     <height>696</height>
    </rect>
   </property>
@@ -35,7 +35,7 @@
       </property>
       <layout class="QVBoxLayout" name="verticalLayout">
        <item>
-        <widget class="PhaseWidget" name="graphicsView">
+        <widget class="PhaseWidgetAlphaBeta" name="graphicsView">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
            <horstretch>0</horstretch>
@@ -161,18 +161,21 @@
        <bool>true</bool>
       </property>
       <property name="currentIndex">
-       <number>0</number>
+       <number>1</number>
       </property>
-      <widget class="TransformCalibrationSettingsWidget" name="tab_transform_calibration">
+      <widget class="ThreePhaseSettingsWidget" name="tab_threephase">
        <attribute name="title">
         <string>3-phase</string>
        </attribute>
       </widget>
-      <widget class="QWidget" name="tabFocus">
+      <widget class="QWidget" name="tab_focus">
+       <property name="enabled">
+        <bool>true</bool>
+       </property>
        <attribute name="title">
         <string>Focus</string>
        </attribute>
-       <widget class="PhaseWidget" name="graphicsView_2">
+       <widget class="PhaseWidgetFocus" name="graphicsView_2">
         <property name="geometry">
          <rect>
           <x>60</x>
@@ -182,12 +185,6 @@
          </rect>
         </property>
        </widget>
-      </widget>
-      <widget class="FivePhaseSettingsWidget" name="tab_fivephase">
-       <attribute name="title">
-        <string>4/5-phase</string>
-       </attribute>
-       <layout class="QVBoxLayout" name="verticalLayout_3"/>
       </widget>
       <widget class="ModulationSettingsWidget" name="tab_carrier">
        <attribute name="title">
@@ -237,6 +234,12 @@
         <string>Details</string>
        </attribute>
       </widget>
+      <widget class="FivePhaseSettingsWidget" name="tab_fivephase">
+       <attribute name="title">
+        <string>4/5-phase</string>
+       </attribute>
+       <layout class="QVBoxLayout" name="verticalLayout_3"/>
+      </widget>
      </widget>
     </item>
    </layout>
@@ -247,7 +250,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>692</width>
+     <width>881</width>
      <height>21</height>
     </rect>
    </property>
@@ -279,7 +282,7 @@
    <container>1</container>
   </customwidget>
   <customwidget>
-   <class>PhaseWidget</class>
+   <class>PhaseWidgetAlphaBeta</class>
    <extends>QGraphicsView</extends>
    <header>qt_ui/phasewidget.h</header>
   </customwidget>
@@ -287,12 +290,6 @@
    <class>WaveformDetailsWidget</class>
    <extends>QWidget</extends>
    <header>qt_ui/waveformdetailswidget.h</header>
-   <container>1</container>
-  </customwidget>
-  <customwidget>
-   <class>TransformCalibrationSettingsWidget</class>
-   <extends>QWidget</extends>
-   <header>qt_ui/transformcalibrationsettingswidget.h</header>
    <container>1</container>
   </customwidget>
   <customwidget>
@@ -310,6 +307,17 @@
    <class>FivePhaseSettingsWidget</class>
    <extends>QWidget</extends>
    <header>qt_ui/fivephasesettingswidget.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>PhaseWidgetFocus</class>
+   <extends>QGraphicsView</extends>
+   <header>qt_ui/phasewidget.h</header>
+  </customwidget>
+  <customwidget>
+   <class>ThreePhaseSettingsWidget</class>
+   <extends>QWidget</extends>
+   <header>qt_ui/threephasesettingswidget.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

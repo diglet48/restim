@@ -1,16 +1,18 @@
 import matplotlib
 import time
+import math
 
-from PyQt5.QtCore import QSettings, QPoint
-from PyQt5.QtWidgets import QGraphicsView
+from PyQt5.QtCore import QSettings, QPoint, QPointF
+from PyQt5.QtWidgets import QGraphicsView, QGraphicsEllipseItem
 
 from qt_ui.preferencesdialog import KEY_DISPLAY_FPS, KEY_DISPLAY_LATENCY
 from qt_ui import resources
 from stim_math.threephase_parameter_manager import ThreephaseParameterManager
+from stim_math.threephase_coordinate_transform import ThreePhaseCoordinateTransform
 
 # Make sure that we are using QT5
 matplotlib.use('Qt5Agg')
-from PyQt5.QtGui import QColor, QMouseEvent
+from PyQt5.QtGui import QColor, QMouseEvent, QPainterPath
 from PyQt5 import QtCore, QtWidgets, QtSvg, QtGui
 from PyQt5.QtCore import Qt
 
@@ -23,20 +25,19 @@ class Mode:
 
 
 def item_pos_to_ab(x, y):
-    return y / -77, x / -77
+    return y / -83, x / -83
 
 
 def ab_to_item_pos(a, b):
-    return b * -77, a * -77
+    return b * -83, a * -83
 
 
 class PhaseWidgetBase(QtWidgets.QGraphicsView):
+    """
+    A QGraphicsView that displays an SVG of the phase diagram in the background, with mouse support.
+    """
     def __init__(self, parent):
         QtWidgets.QWidget.__init__(self, parent)
-
-        self.config: ThreephaseParameterManager = None
-        self.mode = Mode.TCodeMode
-        self.stored_tcode_position = PositionParameters(0, 0)
 
         self.setAlignment(Qt.AlignCenter)
         self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
@@ -48,15 +49,10 @@ class PhaseWidgetBase(QtWidgets.QGraphicsView):
         scene.addItem(svg)
         svg.setPos(-svg.boundingRect().width()/2, -svg.boundingRect().height()/2)
         self.svg = svg
-
-        self.circle = QtWidgets.QGraphicsEllipseItem(0, 0, 10, 10)
-        self.circle.setBrush(QColor.fromRgb(62, 201, 65))
-        self.circle.setPen(QColor.fromRgb(62, 201, 65))
-        scene.addItem(self.circle)
+        self.scene = scene
 
         #mouse tracking
         self.setMouseTracking(True)
-        self.buttonPressed = False
 
         self.setViewportUpdateMode(QGraphicsView.FullViewportUpdate)
 
@@ -68,6 +64,45 @@ class PhaseWidgetBase(QtWidgets.QGraphicsView):
     def resizeEvent(self, event: QtGui.QResizeEvent) -> None:
         self.fitInView(-100, -100, 200, 200, Qt.KeepAspectRatio)
 
+    def mousePressEvent(self, event: QMouseEvent):
+        self.mouse_event_screen_pos(event.x(), event.y(), event.buttons())
+
+    def mouseDoubleClickEvent(self, event: QtGui.QMouseEvent) -> None:
+        self.mouse_event_screen_pos(event.x(), event.y(), event.buttons())
+
+    def mouseReleaseEvent(self, event: QMouseEvent):
+        self.mouse_event_screen_pos(event.x(), event.y(), event.buttons())
+
+    def mouseMoveEvent(self, event: QMouseEvent):
+        self.mouse_event_screen_pos(event.x(), event.y(), event.buttons())
+
+    def mouse_event_screen_pos(self, mouse_x, mouse_y, buttons: QtCore.Qt.MouseButtons):
+        view_pos = QPoint(mouse_x, mouse_y)
+        scene_pos = self.mapToScene(view_pos)
+        item_pos = self.svg.mapToItem(self.svg, scene_pos)
+        a, b = item_pos_to_ab(item_pos.x(), item_pos.y())
+        return self.mouse_event(a, b, buttons)
+
+    def mouse_event(self, alpha, beta, buttons: QtCore.Qt.MouseButtons):
+        # overload me
+        # if buttons & QtCore.Qt.MouseButton.LeftButton:
+        #     do stuff
+        pass
+
+
+class PhaseWidgetWithPoint(PhaseWidgetBase):
+    def __init__(self, parent):
+        super(PhaseWidgetWithPoint, self).__init__(parent)
+
+        self.config: ThreephaseParameterManager = None
+        self.mode = Mode.TCodeMode
+        self.stored_tcode_position = PositionParameters(0, 0)
+
+        self.dot = QtWidgets.QGraphicsEllipseItem(0, 0, 10, 10)
+        self.dot.setBrush(QColor.fromRgb(62, 201, 65))
+        self.dot.setPen(QColor.fromRgb(62, 201, 65))
+        self.scene.addItem(self.dot)
+
     def refreshSettings(self):
         settings = QSettings()
         self.timer.setInterval(int(1000 // settings.value(KEY_DISPLAY_FPS, 60.0, float)))
@@ -76,42 +111,71 @@ class PhaseWidgetBase(QtWidgets.QGraphicsView):
     def set_config_manager(self, config: ThreephaseParameterManager):
         self.config = config
 
-    def mousePressEvent(self, event: QMouseEvent):
-        self.buttonPressed = True
-        self.updateMousePosition(event.x(), event.y())
+    def mouse_event(self, alpha, beta, buttons: QtCore.Qt.MouseButtons):
+        if buttons & QtCore.Qt.MouseButton.LeftButton:
+            pass
+        else:
+            return
 
-    def mouseReleaseEvent(self, event: QMouseEvent):
-        self.buttonPressed = False
-
-    def mouseMoveEvent(self, event: QMouseEvent):
-        buttons: QtCore.Qt.MouseButtons = event.buttons()
-        if not buttons == QtCore.Qt.MouseButton.LeftButton: # sanity check
-            self.buttonPressed = False
-
-        if self.buttonPressed:
-            self.updateMousePosition(event.x(), event.y())
-
-    def updateMousePosition(self, mouse_x, mouse_y):
-        view_pos = QPoint(mouse_x, mouse_y)
-        scene_pos = self.mapToScene(view_pos)
-        item_pos = self.svg.mapToItem(self.svg, scene_pos)
-        a, b = item_pos_to_ab(item_pos.x(), item_pos.y())
-
-        norm = (a**2 + b**2)**.5
+        norm = (alpha ** 2 + beta ** 2) ** .5
         if norm >= 1:
-            a /= norm
-            b /= norm
+            alpha /= norm
+            beta /= norm
         self.mode = Mode.MouseMode
-        self.stored_tcode_position.alpha = a
-        self.stored_tcode_position.beta = b
-        self.mousePositionChanged.emit(a, b)
+        self.stored_tcode_position.alpha = alpha
+        self.stored_tcode_position.beta = beta
+        self.mousePositionChanged.emit(alpha, beta)
 
     mousePositionChanged = QtCore.pyqtSignal(float, float)
 
 
-class PhaseWidget(PhaseWidgetBase):
+class PhaseWidgetAlphaBeta(PhaseWidgetWithPoint):
     def __init__(self, parent):
-        super(PhaseWidget, self).__init__(parent)
+        super(PhaseWidgetAlphaBeta, self).__init__(parent)
+
+        a, b = (1, 0)
+        x, y = ab_to_item_pos(a, b)
+        self.arrow = Path(source=QtCore.QPointF(x, y),
+                          destination=QtCore.QPointF(0, 0))
+        self.scene.addItem(self.arrow)
+
+        self.border = QGraphicsEllipseItem(0, 0, 83, 83)
+        self.border.setPen(QColor.fromRgb(0, 0, 0))
+        self.scene.addItem(self.border)
+
+        self.setRenderHint(QtGui.QPainter.Antialiasing)
+
+        self.dot.setZValue(10)
+
+    def mouse_event(self, alpha, beta, buttons: QtCore.Qt.MouseButtons):
+        if buttons & QtCore.Qt.MouseButton.LeftButton:
+            pass
+        else:
+            return
+
+        norm = (alpha ** 2 + beta ** 2) ** .5
+        if norm >= 1:
+            alpha /= norm
+            beta /= norm
+
+        transform = ThreePhaseCoordinateTransform(
+            self.config.transform_rotation_degrees.last_value(),
+            self.config.transform_mirror.last_value(),
+            self.config.transform_top_limit.last_value(),
+            self.config.transform_bottom_limit.last_value(),
+            self.config.transform_left_limit.last_value(),
+            self.config.transform_right_limit.last_value(),
+        )
+        alpha, beta = transform.inverse_transform(alpha, beta)
+        norm = (alpha ** 2 + beta ** 2) ** .5
+        if norm >= 1:
+            alpha /= norm
+            beta /= norm
+
+        self.mode = Mode.MouseMode
+        self.stored_tcode_position.alpha = alpha
+        self.stored_tcode_position.beta = beta
+        self.mousePositionChanged.emit(alpha, beta)
 
     def refresh(self):
         # if position has changed since last mouse event, transition to TCodeMode
@@ -129,16 +193,53 @@ class PhaseWidget(PhaseWidgetBase):
             a = self.config.alpha.last_value()
             b = self.config.beta.last_value()
 
+        if self.config.transform_enabled.last_value():
+            transform = ThreePhaseCoordinateTransform(
+                self.config.transform_rotation_degrees.last_value(),
+                self.config.transform_mirror.last_value(),
+                self.config.transform_top_limit.last_value(),
+                self.config.transform_bottom_limit.last_value(),
+                self.config.transform_left_limit.last_value(),
+                self.config.transform_right_limit.last_value(),
+            )
+        else:
+            transform = ThreePhaseCoordinateTransform(0, 0, 1, -1, -1, 1)
+
+        a, b = transform.transform(a, b)
+        norm = (a ** 2 + b ** 2) ** .5
+        if norm >= 1:
+            a /= norm
+            b /= norm
+
+        # draw dot
         x, y = ab_to_item_pos(a, b)
-        self.circle.setPos(x - 5, y - 5)
+        self.dot.setPos(x - 5, y - 5)
+
+        # draw arrow
+        self.arrow.setEnabled(self.config.transform_enabled.last_value() and self.config.transform_rotation_degrees.last_value())
+        tip_a, tip_b = transform.transform(1, 0)
+        base_a, base_b = transform.transform(0, 0)
+        base_a = base_a + (tip_a - base_a) * 0.7
+        base_b = base_b + (tip_b - base_b) * 0.7
+        self.arrow.setSource(QPointF(*ab_to_item_pos(tip_a, tip_b)))
+        self.arrow.setDestination(QPointF(*ab_to_item_pos(base_a, base_b)))
+
+        # draw circle
+        self.border.setRect(
+            self.config.transform_left_limit.last_value() * 83,
+            -self.config.transform_bottom_limit.last_value() * 83,
+            (self.config.transform_right_limit.last_value() - self.config.transform_left_limit.last_value()) * 83,
+            (self.config.transform_bottom_limit.last_value() - self.config.transform_top_limit.last_value()) * 83,
+        )
+        self.border.setVisible(bool(self.config.transform_enabled.last_value()))
 
 
-class PhaseWidgetFocus(PhaseWidgetBase):
+class PhaseWidgetFocus(PhaseWidgetWithPoint):
     def __init__(self, parent):
         super(PhaseWidgetFocus, self).__init__(parent)
 
-        self.circle.setBrush(QColor.fromRgb(201, 62, 65))
-        self.circle.setPen(QColor.fromRgb(201, 62, 65))
+        self.dot.setBrush(QColor.fromRgb(201, 62, 65))
+        self.dot.setPen(QColor.fromRgb(201, 62, 65))
 
     def refresh(self):
         # if position has changed since last mouse event, transition to TCodeMode
@@ -157,4 +258,146 @@ class PhaseWidgetFocus(PhaseWidgetBase):
             b = self.config.focus_beta.last_value()
 
         x, y = ab_to_item_pos(a, b)
-        self.circle.setPos(x - 5, y - 5)
+        self.dot.setPos(x - 5, y - 5)
+
+
+class Path(QtWidgets.QGraphicsPathItem):
+    """
+    https://stackoverflow.com/questions/44246283/how-to-add-a-arrow-head-to-my-line-in-pyqt4
+    """
+    def __init__(self, source: QtCore.QPointF = None, destination: QtCore.QPointF = None, *args, **kwargs):
+        super(Path, self).__init__(*args, **kwargs)
+
+        self._sourcePoint = source
+        self._destinationPoint = destination
+
+        self._arrow_height = 5
+        self._arrow_width = 4
+
+        self._enabled = True
+
+    def setSource(self, point: QtCore.QPointF):
+        self._sourcePoint = point
+        self.update()
+
+    def setDestination(self, point: QtCore.QPointF):
+        self._destinationPoint = point
+        self.update()
+
+    def directPath(self):
+        path = QtGui.QPainterPath(self._sourcePoint)
+        path.lineTo(self._destinationPoint)
+        return path
+
+    def setEnabled(self, enabled):
+        self._enabled = enabled
+
+    def arrowCalc(self, start_point=None, end_point=None):  # calculates the point where the arrow should be drawn
+        try:
+            startPoint, endPoint = start_point, end_point
+
+            if start_point is None:
+                startPoint = self._sourcePoint
+
+            if endPoint is None:
+                endPoint = self._destinationPoint
+
+            dx, dy = startPoint.x() - endPoint.x(), startPoint.y() - endPoint.y()
+
+            leng = math.sqrt(dx ** 2 + dy ** 2)
+            normX, normY = dx / leng, dy / leng  # normalize
+
+            # perpendicular vector
+            perpX = -normY
+            perpY = normX
+
+            leftX = endPoint.x() + self._arrow_height * normX + self._arrow_width * perpX
+            leftY = endPoint.y() + self._arrow_height * normY + self._arrow_width * perpY
+
+            rightX = endPoint.x() + self._arrow_height * normX - self._arrow_width * perpX
+            rightY = endPoint.y() + self._arrow_height * normY - self._arrow_width * perpY
+
+            point2 = QtCore.QPointF(leftX, leftY)
+            point3 = QtCore.QPointF(rightX, rightY)
+
+            return QtGui.QPolygonF([point2, endPoint, point3])
+
+        except (ZeroDivisionError, Exception):
+            return None
+
+    def paint(self, painter: QtGui.QPainter, option, widget=None) -> None:
+        if not self._enabled:
+            return
+
+        painter.setRenderHint(painter.Antialiasing)
+
+        painter.pen().setWidth(2)
+        painter.setBrush(QtCore.Qt.NoBrush)
+
+        path = self.directPath()
+        painter.drawPath(path)
+        self.setPath(path)
+
+        triangle_source = self.arrowCalc(path.pointAtPercent(0.1), self._sourcePoint)  # change path.PointAtPercent() value to move arrow on the line
+
+        if triangle_source is not None:
+            painter.drawPolyline(triangle_source)
+
+
+class PhaseWidgetCalibration(PhaseWidgetBase):
+    def __init__(self, parent):
+        super(PhaseWidgetCalibration, self).__init__(parent)
+
+        self.config: ThreephaseParameterManager = None
+        self.path = Path(source=QtCore.QPointF(1, 0),
+                         destination=QtCore.QPointF(0, 0))
+
+        self.scene.addItem(self.path)
+
+    def refreshSettings(self):
+        settings = QSettings()
+        self.timer.setInterval(int(1000 // settings.value(KEY_DISPLAY_FPS, 60.0, float)))
+        self.latency = settings.value(KEY_DISPLAY_LATENCY, 200.0, float) / 1000.0
+
+    def set_config_manager(self, config: ThreephaseParameterManager):
+        self.config = config
+
+    def mouse_event(self, alpha, beta, buttons: QtCore.Qt.MouseButtons):
+        if buttons & QtCore.Qt.MouseButton.LeftButton:
+            pass
+        else:
+            return
+
+        norm = (alpha ** 2 + beta ** 2) ** .5
+        if norm > 0:
+            alpha /= norm
+            beta /= norm
+
+        old_neutral = self.config.calibration_neutral.last_value()
+        old_right = self.config.calibration_right.last_value()
+
+        neutral_adj = alpha * 0.1
+        right_adj = -beta * 0.1
+
+        neutral = old_neutral + neutral_adj
+        right = old_right + right_adj
+
+        self.calibrationParametersChanged.emit(neutral, right)
+
+    def refresh(self):
+        a = self.config.calibration_neutral.last_value()
+        b = -self.config.calibration_right.last_value()
+
+        norm = (a ** 2 + b ** 2) ** .5
+        if norm > 0:
+            a /= norm
+            b /= norm
+
+        arrow_length = min((norm / 5) ** 1, 1)
+        a *= arrow_length
+        b *= arrow_length
+
+        x, y = ab_to_item_pos(a, b)
+        self.path.setSource(QtCore.QPointF(x, y))
+
+    calibrationParametersChanged = QtCore.pyqtSignal(float, float)

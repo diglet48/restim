@@ -43,11 +43,22 @@ class PositionParameters:
         self.beta = beta
 
 
-class TransformParameters:
+class ThreePhaseCalibrationParameters:
     def __init__(self, up_down, left_right, center):
         self.up_down = up_down
         self.left_right = left_right
         self.center = center
+
+
+class ThreePhaseTransformParameters:
+    def __init__(self, enabled, rotation_degrees, mirror, top, bottom, left, right):
+        self.enabled = enabled
+        self.rotation_degrees = rotation_degrees
+        self.mirror = mirror
+        self.top = top
+        self.bottom = bottom
+        self.left = left
+        self.right = right
 
 
 class FivePhaseCurrentParameters:

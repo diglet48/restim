@@ -5,6 +5,7 @@ import numpy as np
 from stim_math import amplitude_modulation, limits, trig, point_calibration, fourphase, fivephase
 from stim_math.sine_generator import AngleGenerator
 from stim_math import threephase, hardware_calibration
+from stim_math.threephase_coordinate_transform import ThreePhaseCoordinateTransform
 from stim_math.threephase_parameter_manager import ThreephaseParameterManager
 from qt_ui.preferencesdialog import KEY_AUDIO_CHANNEL_COUNT, KEY_AUDIO_CHANNEL_MAP
 
@@ -139,18 +140,26 @@ class ThreePhaseAlgorithm(VolumeManagementAlgorithm):
         alpha /= norm
         beta /= norm
 
+        # # mobius transform...
+        # z = alpha + beta * 1j
+        # a = self.params.focus_alpha.last_value() + self.params.focus_beta.last_value() * 1j
+        # z = (z - a) / (1 - np.conj(a) * z)
+        # alpha = z.real
+        # beta = z.imag
 
-        # mobius transform...
-        z = alpha + beta * 1j
-        a = self.params.focus_alpha.last_value() + self.params.focus_beta.last_value() * 1j
-        z = (z - a) / (1 - np.conj(a) * z)
-        alpha = z.real
-        beta = z.imag
-
-        # normalize (alpha, beta) to be within the unit circle.
-        norm = np.clip(trig.norm(alpha, beta), 1.0, None)
-        alpha /= norm
-        beta /= norm
+        if self.params.transform_enabled.last_value():
+            transform = ThreePhaseCoordinateTransform(
+                self.params.transform_rotation_degrees.last_value(),
+                self.params.transform_mirror.last_value(),
+                self.params.transform_top_limit.last_value(),
+                self.params.transform_bottom_limit.last_value(),
+                self.params.transform_left_limit.last_value(),
+                self.params.transform_right_limit.last_value(),
+            )
+            alpha, beta = transform.transform(alpha, beta)
+            norm = np.clip(trig.norm(alpha, beta), 1.0, None)
+            alpha /= norm
+            beta /= norm
 
         # center scaling
         center_calib = point_calibration.CenterCalibration(self.params.calibration_center.last_value())

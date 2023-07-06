@@ -33,7 +33,7 @@ class Ui_MainWindow(object):
         self.frame.setObjectName("frame")
         self.verticalLayout = QtWidgets.QVBoxLayout(self.frame)
         self.verticalLayout.setObjectName("verticalLayout")
-        self.graphicsView = PhaseWidget(self.frame)
+        self.graphicsView = PhaseWidgetAlphaBeta(self.frame)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -87,12 +87,12 @@ class Ui_MainWindow(object):
         self.tabWidget = QtWidgets.QTabWidget(self.centralwidget)
         self.tabWidget.setEnabled(True)
         self.tabWidget.setObjectName("tabWidget")
-        self.tab_transform_calibration = TransformCalibrationSettingsWidget()
-        self.tab_transform_calibration.setObjectName("tab_transform_calibration")
-        self.tabWidget.addTab(self.tab_transform_calibration, "")
+        self.tab_threephase = ThreePhaseSettingsWidget()
+        self.tab_threephase.setObjectName("tab_threephase")
+        self.tabWidget.addTab(self.tab_threephase, "")
         self.tabFocus = QtWidgets.QWidget()
         self.tabFocus.setObjectName("tabFocus")
-        self.graphicsView_2 = PhaseWidget(self.tabFocus)
+        self.graphicsView_2 = PhaseWidgetFocus(self.tabFocus)
         self.graphicsView_2.setGeometry(QtCore.QRect(60, 50, 256, 192))
         self.graphicsView_2.setObjectName("graphicsView_2")
         self.tabWidget.addTab(self.tabFocus, "")
@@ -154,7 +154,7 @@ class Ui_MainWindow(object):
         self.comboBox.setItemText(4, _translate("MainWindow", "C"))
         self.groupBox_2.setTitle(_translate("MainWindow", "Audio"))
         self.startStopAudioButton.setText(_translate("MainWindow", "Start audio"))
-        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_transform_calibration), _translate("MainWindow", "3-phase"))
+        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_threephase), _translate("MainWindow", "3-phase"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tabFocus), _translate("MainWindow", "Focus"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_fivephase), _translate("MainWindow", "4/5-phase"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_carrier), _translate("MainWindow", "Carrier and modulation"))
@@ -165,8 +165,8 @@ class Ui_MainWindow(object):
         self.actionPreferences.setText(_translate("MainWindow", "Preferences"))
 from qt_ui.fivephasesettingswidget import FivePhaseSettingsWidget
 from qt_ui.modulationsettingswidget import ModulationSettingsWidget
-from qt_ui.phasewidget import PhaseWidget
-from qt_ui.transformcalibrationsettingswidget import TransformCalibrationSettingsWidget
+from qt_ui.phasewidget import PhaseWidgetAlphaBeta, PhaseWidgetFocus
+from qt_ui.threephasesettingswidget import ThreePhaseSettingsWidget
 from qt_ui.volumecontrolwidget import VolumeControlWidget
 from qt_ui.volumewidget import VolumeWidget
 from qt_ui.waveformdetailswidget import WaveformDetailsWidget
