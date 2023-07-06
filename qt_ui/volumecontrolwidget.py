@@ -76,11 +76,11 @@ class VolumeControlWidget(QtWidgets.QWidget, Ui_VolumeControlForm):
 
         if target >= value:
             change += self.remainder
-            change = np.clip(change, 0, target - value)  # don't overshoot
+            change = np.clip(change, None, target - value)  # don't overshoot
         else:
             change *= -1
             change += self.remainder
-            change = np.clip(change, target - value, 0)  # don't overshoot
+            change = np.clip(change, target - value, None)  # don't overshoot
 
         self.doubleSpinBox_volume.setValue(value + change)
         self.remainder = change - (self.doubleSpinBox_volume.value() - value)
