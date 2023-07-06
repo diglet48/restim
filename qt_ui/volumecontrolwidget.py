@@ -2,6 +2,7 @@ from __future__ import unicode_literals
 
 import time
 import numpy as np
+import math
 from PyQt5 import QtCore, QtWidgets
 from PyQt5.QtCore import QSettings
 
@@ -27,6 +28,7 @@ class VolumeControlWidget(QtWidgets.QWidget, Ui_VolumeControlForm):
         self.remainder = 0
 
         self.doubleSpinBox_volume.valueChanged.connect(self.updateVolume)
+        self.doubleSpinBox_volume.valueChanged.connect(self.refresh_message)
 
         self.last_axis_update_time = time.time()
         self.last_axis_values = (0, 0)
@@ -41,6 +43,9 @@ class VolumeControlWidget(QtWidgets.QWidget, Ui_VolumeControlForm):
 
         self.doubleSpinBox_inactivity_threshold.valueChanged.connect(self.settings_changed)
         self.doubleSpinBox_inactivity_ramp_time.valueChanged.connect(self.settings_changed)
+
+        self.doubleSpinBox_target_volume.valueChanged.connect(self.refresh_message)
+        self.doubleSpinBox_rate.valueChanged.connect(self.refresh_message)
 
     def set_config_manager(self, config: ThreephaseParameterManager):
         self.config = config
@@ -58,20 +63,29 @@ class VolumeControlWidget(QtWidgets.QWidget, Ui_VolumeControlForm):
             self.remainder = 0
             return
 
-        change = self.doubleSpinBox_rate.value() * dt / 60
+        rate_per_second = self.doubleSpinBox_rate.value() / 60
+
+        # linear. volume = v0 + r * t
+        # change = rate_per_second * dt
+
+        # exponential. volume = v0 * exp(r * t)
+        change = self.doubleSpinBox_volume.value() * rate_per_second * dt / 100
+
         value = self.doubleSpinBox_volume.value()
         target = self.doubleSpinBox_target_volume.value()
-        if target < value:
-            change *= -1
 
-        change += self.remainder
-        if change > 0:
-            change = np.clip(change, 0, target - value)
+        if target >= value:
+            change += self.remainder
+            change = np.clip(change, 0, target - value)  # don't overshoot
         else:
-            change = np.clip(change, target - value, 0)
+            change *= -1
+            change += self.remainder
+            change = np.clip(change, target - value, 0)  # don't overshoot
 
         self.doubleSpinBox_volume.setValue(value + change)
         self.remainder = change - (self.doubleSpinBox_volume.value() - value)
+
+        self.refresh_message()
 
     def timeout_inactivity(self, dt: float):
         if not self.config:
@@ -114,10 +128,28 @@ class VolumeControlWidget(QtWidgets.QWidget, Ui_VolumeControlForm):
         self.rampVolumeChanged.emit(
             np.clip(self.doubleSpinBox_volume.value() / 100, 0.0, 1.0)
         )
+        self.refresh_message()
+
+    def refresh_message(self, _=None):
+        try:
+            target = self.doubleSpinBox_target_volume.value()
+            volume = self.doubleSpinBox_volume.value()
+            rate_per_second = self.doubleSpinBox_rate.value() / 60
+            if target / volume:
+                time_left = math.log(target / volume) / rate_per_second * 100
+            else:
+                time_left = np.inf
+            time_left = np.abs(time_left)
+            time_left = np.min((time_left, 9001 * 60))
+            message = f"time until target: {np.round(time_left / 60, 1)} minutes."
+        except (ZeroDivisionError, ValueError):
+            message = f"time until target: never."
+        self.checkBox_ramp_enabled.setText(message)
 
     def settings_changed(self):
         self.settings.setValue(SETTING_INACTIVITY_INACTIVE_THRESHOLD, self.doubleSpinBox_inactivity_threshold.value())
         self.settings.setValue(SETTING_INACTIVITY_RAMP_TIME, self.doubleSpinBox_inactivity_ramp_time.value())
+        self.refresh_message()
 
     rampVolumeChanged = QtCore.pyqtSignal(float)
     inactivityVolumeChanged = QtCore.pyqtSignal(float)
