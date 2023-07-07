@@ -46,7 +46,7 @@ class Ui_VolumeControlForm(object):
         self.doubleSpinBox_rate = QtWidgets.QDoubleSpinBox(self.groupBox)
         self.doubleSpinBox_rate.setMaximum(10000.0)
         self.doubleSpinBox_rate.setSingleStep(0.1)
-        self.doubleSpinBox_rate.setProperty("value", 5.0)
+        self.doubleSpinBox_rate.setProperty("value", 1.0)
         self.doubleSpinBox_rate.setObjectName("doubleSpinBox_rate")
         self.formLayout_2.setWidget(2, QtWidgets.QFormLayout.FieldRole, self.doubleSpinBox_rate)
         self.label = QtWidgets.QLabel(self.groupBox)
