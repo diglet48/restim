@@ -147,6 +147,8 @@ class PhaseWidgetAlphaBeta(PhaseWidgetWithPoint):
 
         self.dot.setZValue(10)
 
+        self.last_state = None
+
     def mouse_event(self, alpha, beta, buttons: QtCore.Qt.MouseButtons):
         if buttons & QtCore.Qt.MouseButton.LeftButton:
             pass
@@ -205,6 +207,11 @@ class PhaseWidgetAlphaBeta(PhaseWidgetWithPoint):
         else:
             transform = ThreePhaseCoordinateTransform(0, 0, 1, -1, -1, 1)
 
+        state = (a, b, transform)
+        if state == self.last_state:
+            return  # skip drawing to save cpu cycles
+        self.last_state = state
+
         a, b = transform.transform(a, b)
         norm = (a ** 2 + b ** 2) ** .5
         if norm >= 1:
@@ -241,21 +248,16 @@ class PhaseWidgetFocus(PhaseWidgetWithPoint):
         self.dot.setBrush(QColor.fromRgb(201, 62, 65))
         self.dot.setPen(QColor.fromRgb(201, 62, 65))
 
-    def refresh(self):
-        # if position has changed since last mouse event, transition to TCodeMode
-        if self.mode == Mode.MouseMode:
-            if (self.stored_tcode_position.alpha != self.config.focus_alpha.last_value() or
-                    self.stored_tcode_position.beta != self.config.focus_beta.last_value()):
-                self.mode = Mode.TCodeMode
+        self.last_state = None
 
-        if self.mode == Mode.TCodeMode:
-            # delay visualization in tcode mode
-            a = self.config.focus_alpha.interpolate(time.time() - self.latency)
-            b = self.config.focus_beta.interpolate(time.time() - self.latency)
-        else:
-            # display immediately in mouse mode
-            a = self.config.focus_alpha.last_value()
-            b = self.config.focus_beta.last_value()
+    def refresh(self):
+        a = self.config.focus_alpha.last_value()
+        b = self.config.focus_beta.last_value()
+
+        state = (a, b)
+        if state == self.last_state:
+            return  # skip drawing to save cpu cycles
+        self.last_state = state
 
         x, y = ab_to_item_pos(a, b)
         self.dot.setPos(x - 5, y - 5)
@@ -354,6 +356,8 @@ class PhaseWidgetCalibration(PhaseWidgetBase):
 
         self.scene.addItem(self.path)
 
+        self.last_state = None
+
     def refreshSettings(self):
         settings = QSettings()
         self.timer.setInterval(int(1000 // settings.value(KEY_DISPLAY_FPS, 60.0, float)))
@@ -387,6 +391,11 @@ class PhaseWidgetCalibration(PhaseWidgetBase):
     def refresh(self):
         a = self.config.calibration_neutral.last_value()
         b = -self.config.calibration_right.last_value()
+
+        state = (a, b)
+        if state == self.last_state:
+            return  # skip drawing to save cpu cycles
+        self.last_state = state
 
         norm = (a ** 2 + b ** 2) ** .5
         if norm > 0:

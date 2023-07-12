@@ -16,12 +16,12 @@ class VolumeWidget(QtWidgets.QProgressBar):
 
         self.timer = QtCore.QTimer(self)
         self.timer.timeout.connect(self.refresh)
-        self.timer.start(int(1000 / 60.0))
+        self.timer.start(int(1000 / 10.0))
         self.refreshSettings()
 
     def refreshSettings(self):
         settings = QSettings()
-        self.timer.setInterval(int(1000 // settings.value(KEY_DISPLAY_FPS, 60.0, float)))
+        # self.timer.setInterval(int(1000 // settings.value(KEY_DISPLAY_FPS, 10.0, float)))
         self.latency = settings.value(KEY_DISPLAY_LATENCY, 200.0, float) / 1000.0
 
     def set_config_manager(self, config: ThreephaseParameterManager):

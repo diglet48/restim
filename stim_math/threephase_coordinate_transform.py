@@ -13,8 +13,8 @@ class ThreePhaseCoordinateTransform:
         cos, sin = np.cos(rotation_in_rad), np.sin(rotation_in_rad)
         rotation_matrix = np.array([[cos, -sin, 0], [sin, cos, 0], [0, 0, 1]])
 
-        alpha_center = np.average((top, bottom))
-        beta_center = -np.average((left, right))
+        alpha_center = (top + bottom) / 2
+        beta_center = -(left + right) / 2
         alpha_scale = (top - bottom) / 2
         beta_scale = (right - left) / 2
         limits_matrix = np.array([

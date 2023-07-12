@@ -91,6 +91,7 @@ class VolumeControlWidget(QtWidgets.QWidget, Ui_VolumeControlForm):
         if not self.config:
             return
 
+        # TODO: this is not very efficient. Maybe there's a better way to check for changes?
         axis_values = (self.config.alpha.interpolate(time.time()),
                        self.config.beta.interpolate(time.time()),
                        self.config.e1.interpolate(time.time()),
