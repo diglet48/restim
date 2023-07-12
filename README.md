@@ -1,15 +1,14 @@
 # Restim
 
-Restim is an e-stim signal generator with MultiFunPlayer integration,
-specialized for three-phase electrode arrangements.
+Restim is a realtime e-stim signal generator, for DIY stereostim boxes in three-phase electrode arrangements.
 
 Refer to the [wiki](https://github.com/diglet48/restim/wiki) for help.
 
 ## Main features
 
-* Control amplitude/phase with mouse movement, pattern or synchronize to
-  video with [MultiFunPlayer](https://github.com/Yoooi0/MultiFunPlayer) integration.
-* Calibrate funscript for your specific hardware and electrode arrangement.
+* Control signal amplitude/phase with mouse movement or synchronize to
+  video with [MultiFunPlayer](https://github.com/Yoooi0/MultiFunPlayer) or [Intiface Central](https://intiface.com/central/).
+* Calibrate signal characteristics for your specific hardware and electrode arrangement.
 * Modify carrier frequency and amplitude modulation.
 
 ## Setup
