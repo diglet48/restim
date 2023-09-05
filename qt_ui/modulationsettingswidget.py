@@ -22,11 +22,13 @@ SETTING_MOD1_FREQUENCY = 'carrier/modulation_1_frequency'
 SETTING_MOD1_MODULATION = 'carrier/modulation_1_strength'
 SETTING_MOD1_LR_BIAS = 'carrier/modulation_1_high_low_bias'
 SETTING_MOD1_HL_BIAS = 'carrier/modulation_1_left_right_bias'
+SETTING_MOD1_RANDOM = 'carrier/modulation_1_random'
 SETTING_MOD2_ENABLED = 'carrier/modulation_2_enabled'
 SETTING_MOD2_FREQUENCY = 'carrier/modulation_2_frequency'
 SETTING_MOD2_MODULATION = 'carrier/modulation_2_strength'
 SETTING_MOD2_LR_BIAS = 'carrier/modulation_2_high_low_bias'
 SETTING_MOD2_HL_BIAS = 'carrier/modulation_2_left_right_bias'
+SETTING_MOD2_RANDOM = 'carrier/modulation_2_random'
 
 
 class MyMplCanvas(FigureCanvas):
@@ -128,6 +130,10 @@ class ModulationSettingsWidget(QtWidgets.QWidget):
         bias1_high_low_slider.setValue(self.settings.value(SETTING_MOD1_HL_BIAS, 0, float))
         bias1_high_low_slider_label = QtWidgets.QLabel("bias high-low [%]")
         gb1_l.addRow(bias1_high_low_slider_label, bias1_high_low_slider)
+        random1_slider = QtWidgets.QDoubleSpinBox(minimum=0, maximum=100)
+        random1_slider.setValue(self.settings.value(SETTING_MOD1_RANDOM, 0, float))
+        random1_slider_label = QtWidgets.QLabel("random [%]")
+        gb1_l.addRow(random1_slider_label, random1_slider)
         gb1.setLayout(gb1_l)
         l.addWidget(gb1)
 
@@ -152,6 +158,10 @@ class ModulationSettingsWidget(QtWidgets.QWidget):
         bias2_high_low_slider.setValue(self.settings.value(SETTING_MOD2_HL_BIAS, 0, float))
         bias2_high_low_slider_label = QtWidgets.QLabel("bias high-low [%]")
         gb2_l.addRow(bias2_high_low_slider_label, bias2_high_low_slider)
+        random2_slider = QtWidgets.QDoubleSpinBox(minimum=0, maximum=100)
+        random2_slider.setValue(self.settings.value(SETTING_MOD2_RANDOM, 0, float))
+        random2_slider_label = QtWidgets.QLabel("random [%]")
+        gb2_l.addRow(random2_slider_label, random2_slider)
         gb2.setLayout(gb2_l)
         l.addWidget(gb2)
 
@@ -161,11 +171,13 @@ class ModulationSettingsWidget(QtWidgets.QWidget):
         mod1_slider.valueChanged.connect(self.settings_changed)
         bias1_left_right_slider.valueChanged.connect(self.settings_changed)
         bias1_high_low_slider.valueChanged.connect(self.settings_changed)
+        random1_slider.valueChanged.connect(self.settings_changed)
         gb2.toggled.connect(self.settings_changed)
         freq2_slider.valueChanged.connect(self.settings_changed)
         mod2_slider.valueChanged.connect(self.settings_changed)
         bias2_left_right_slider.valueChanged.connect(self.settings_changed)
         bias2_high_low_slider.valueChanged.connect(self.settings_changed)
+        random2_slider.valueChanged.connect(self.settings_changed)
 
         self.carrier = carrier_slider
         self.gb1 = gb1
@@ -173,11 +185,13 @@ class ModulationSettingsWidget(QtWidgets.QWidget):
         self.mod1_slider = mod1_slider
         self.bias1_left_right_slider = bias1_left_right_slider
         self.bias1_high_low_slider = bias1_high_low_slider
+        self.random1_slider = random1_slider
         self.gb2 = gb2
         self.freq2_slider = freq2_slider
         self.mod2_slider = mod2_slider
         self.bias2_left_right_slider = bias2_left_right_slider
         self.bias2_high_low_slider = bias2_high_low_slider
+        self.random2_slider = random2_slider
 
         self.modulationSettingsChanged.connect(self.mpl_canvas.updateParams)
         self.settings_changed()
@@ -192,11 +206,13 @@ class ModulationSettingsWidget(QtWidgets.QWidget):
             self.mod1_slider.value() / 100.0,
             self.bias1_left_right_slider.value() / 100.0,
             self.bias1_high_low_slider.value() / 100.0,
+            self.random1_slider.value() / 100.0,
             self.gb2.isChecked(),
             self.freq2_slider.value(),
             self.mod2_slider.value() / 100.0,
             self.bias2_left_right_slider.value() / 100.0,
             self.bias2_high_low_slider.value() / 100.0,
+            self.random2_slider.value() / 100.0,
         )
         self.modulationSettingsChanged.emit(params)
 
@@ -206,8 +222,10 @@ class ModulationSettingsWidget(QtWidgets.QWidget):
         self.settings.setValue(SETTING_MOD1_MODULATION, self.mod1_slider.value())
         self.settings.setValue(SETTING_MOD1_LR_BIAS, self.bias1_left_right_slider.value())
         self.settings.setValue(SETTING_MOD1_HL_BIAS, self.bias1_high_low_slider.value())
+        self.settings.setValue(SETTING_MOD1_RANDOM, self.random1_slider.value())
         self.settings.setValue(SETTING_MOD2_ENABLED, self.gb2.isChecked())
         self.settings.setValue(SETTING_MOD2_FREQUENCY, self.freq2_slider.value())
         self.settings.setValue(SETTING_MOD2_MODULATION, self.mod2_slider.value())
         self.settings.setValue(SETTING_MOD2_LR_BIAS, self.bias2_left_right_slider.value())
         self.settings.setValue(SETTING_MOD2_HL_BIAS, self.bias2_high_low_slider.value())
+        self.settings.setValue(SETTING_MOD2_RANDOM, self.random2_slider.value())

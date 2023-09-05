@@ -86,11 +86,13 @@ class ThreephaseParameterManager():
         self.modulation_1_strength = InstantParameter(0.0)
         self.modulation_1_left_right_bias = InstantParameter(0.0)
         self.modulation_1_high_low_bias = InstantParameter(0.0)
+        self.modulation_1_random = InstantParameter(0.0)
         self.modulation_2_enabled = InstantParameter(True)
         self.modulation_2_frequency = InstantParameter(0.0)
         self.modulation_2_strength = InstantParameter(0.0)
         self.modulation_2_left_right_bias = InstantParameter(0.0)
         self.modulation_2_high_low_bias = InstantParameter(0.0)
+        self.modulation_2_random = InstantParameter(0.0)
 
         self.calibration_neutral = InstantParameter(0.0)
         self.calibration_right = InstantParameter(0.0)
@@ -198,11 +200,13 @@ class ThreephaseParameterManager():
         self.modulation_1_strength.add(modulation_parameters.modulation_1_modulation)
         self.modulation_1_left_right_bias.add(modulation_parameters.modulation_1_left_right_bias)
         self.modulation_1_high_low_bias.add(modulation_parameters.modulation_1_high_low_bias)
+        self.modulation_1_random.add(modulation_parameters.modulation_1_random)
         self.modulation_2_enabled.add(modulation_parameters.modulation_2_enabled)
         self.modulation_2_frequency.add(modulation_parameters.modulation_2_freq)
         self.modulation_2_strength.add(modulation_parameters.modulation_2_modulation)
         self.modulation_2_left_right_bias.add(modulation_parameters.modulation_2_left_right_bias)
         self.modulation_2_high_low_bias.add(modulation_parameters.modulation_2_high_low_bias)
+        self.modulation_2_random.add(modulation_parameters.modulation_2_random)
 
     def set_five_phase_resistance_parameters(self, resistance_parameters: stim_config.FivePhaseResistanceParameters):
         self.resistance_t.add(resistance_parameters.t)

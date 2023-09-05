@@ -3,7 +3,7 @@ from PyQt5.QtCore import QSettings
 import numpy as np
 
 from stim_math import amplitude_modulation, limits, trig, point_calibration, fourphase, fivephase
-from stim_math.sine_generator import AngleGenerator
+from stim_math.sine_generator import AngleGenerator, AngleGeneratorWithVaryingIPI
 from stim_math import threephase, hardware_calibration
 from stim_math.threephase_coordinate_transform import ThreePhaseCoordinateTransform
 from stim_math.threephase_parameter_manager import ThreephaseParameterManager
@@ -48,8 +48,8 @@ class VolumeManagementAlgorithm:
         super(VolumeManagementAlgorithm, self).__init__()
         self.params = params
 
-        self.modulation_1_angle = AngleGenerator()
-        self.modulation_2_angle = AngleGenerator()
+        self.modulation_1_angle = AngleGeneratorWithVaryingIPI()
+        self.modulation_2_angle = AngleGeneratorWithVaryingIPI()
 
     def generate_modulation_signal(self, samplerate, timeline: np.ndarray):
         volume = \
@@ -64,6 +64,7 @@ class VolumeManagementAlgorithm:
             self.params.modulation_1_strength.last_value(),
             self.params.modulation_1_left_right_bias.last_value(),
             self.params.modulation_1_high_low_bias.last_value(),
+            self.params.modulation_1_random.last_value(),
             self.modulation_1_angle,
         )
 
@@ -74,6 +75,7 @@ class VolumeManagementAlgorithm:
             self.params.modulation_2_strength.last_value(),
             self.params.modulation_2_left_right_bias.last_value(),
             self.params.modulation_2_high_low_bias.last_value(),
+            self.params.modulation_2_random.last_value(),
             self.modulation_2_angle
         )
 
@@ -82,6 +84,7 @@ class VolumeManagementAlgorithm:
     def calculate_modulation(self, samplerate, timeline, is_enabled,
                              modulation_frequency, modulation_strength,
                              modulation_left_right_bias, modulation_high_low_bias,
+                             modulation_random,
                              angle_generator):
         if not is_enabled or modulation_frequency == 0:
             return 1
@@ -89,7 +92,7 @@ class VolumeManagementAlgorithm:
         modulation_frequency = np.clip(modulation_frequency,
                                        limits.ModulationFrequency.min,
                                        limits.ModulationFrequency.max)
-        theta = angle_generator.generate(len(timeline), modulation_frequency, samplerate)
+        theta = angle_generator.generate(len(timeline), modulation_frequency, samplerate, modulation_random)
         # safety: every modulation cycle must have at least X cycles 'on' and 'off'
         maximum_on_off_time = np.clip(1 - limits.minimum_amplitude_modulation_feature_length /
                                       (self.params.carrier_frequency.last_value() / modulation_frequency), 0, None)

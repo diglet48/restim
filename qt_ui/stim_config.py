@@ -3,19 +3,21 @@ from __future__ import unicode_literals
 
 class ModulationParameters:
     def __init__(self, carrier_frequency,
-                 modulation_1_enabled, modulation_1_freq, modulation_1_modulation, modulation_1_left_right_bias, modulation_1_high_low_bias,
-                 modulation_2_enabled, modulation_2_freq, modulation_2_modulation, modulation_2_left_right_bias, modulation_2_high_low_bias):
+                 modulation_1_enabled, modulation_1_freq, modulation_1_modulation, modulation_1_left_right_bias, modulation_1_high_low_bias, modulation_1_random,
+                 modulation_2_enabled, modulation_2_freq, modulation_2_modulation, modulation_2_left_right_bias, modulation_2_high_low_bias, modulation_2_random):
         self.carrier_frequency = carrier_frequency
         self.modulation_1_enabled = modulation_1_enabled
         self.modulation_1_freq = modulation_1_freq
         self.modulation_1_modulation = modulation_1_modulation
         self.modulation_1_left_right_bias = modulation_1_left_right_bias
         self.modulation_1_high_low_bias = modulation_1_high_low_bias
+        self.modulation_1_random = modulation_1_random
         self.modulation_2_enabled = modulation_2_enabled
         self.modulation_2_freq = modulation_2_freq
         self.modulation_2_modulation = modulation_2_modulation
         self.modulation_2_left_right_bias = modulation_2_left_right_bias
         self.modulation_2_high_low_bias = modulation_2_high_low_bias
+        self.modulation_2_random = modulation_2_random
 
 
 class CalibrationParameters:
