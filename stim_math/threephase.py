@@ -4,6 +4,8 @@ from stim_math.transforms import ab_transform, potential_to_channel_matrix
 
 class ContinuousSineWaveform:
     """
+    See also https://github.com/diglet48/restim/wiki/technical-documentation
+
     The idea is that:
     [L, R, 0]^T = P @ ab_transform @ squeeze @ carrier
 
@@ -19,9 +21,8 @@ class ContinuousSineWaveform:
      [-0.5, -sin(2/3*pi), -]]   (represents electrode R)
 
     squeeze is a scale in arbitrary direction matrix:
-    [[1 + (k-1) * x^2, (k-1) * x * y],
-     [(k-1) * x * y,   1 + (k-1) * y^2]]
-    (k-1) and (x, y) are chosen dependent on input (alpha, beta)
+    [[2 - r + alpha, -beta],
+     [-beta,          2 - r - alpha]] * 0.5
 
     carrier is:
     [[cos(timeline * frequency * 2 * pi)],
@@ -47,33 +48,23 @@ class ContinuousSineWaveform:
         alpha = alpha.astype(np.float32)
         beta = beta.astype(np.float32)
 
-        r = np.clip(np.sqrt(alpha ** 2 + beta ** 2), None, 1.0)
-        theta = np.arctan2(beta, alpha) / 2
+        r = np.sqrt(alpha ** 2 + beta ** 2)
+        # sanitize input
+        mask = r > 1
+        alpha[mask] /= r[mask]
+        beta[mask] /= r[mask]
+        r[mask] = 1
 
-        # scale by k = (1 - r) in direction of theta
-        # TODO: maybe 1 - r**2? Or other?
-        k_minus_1 = (1 - r) - 1
-        y = np.cos(theta)
-        x = np.sin(theta)
-
-        # setup scale in arbitrary direction matrix
-        # [[1 + (k-1) * x^2, (k-1) * x * y  ],
-        #  [(k-1) * x * y,   1 + (k-1) * y^2]]
-        t11 = 1 + k_minus_1 * x ** 2
-        t12 = k_minus_1 * x * y
+        t11 = (2 - r + alpha) / 2
+        t12 = -beta / 2  # TODO: calculations performed for the wiki arrive at +beta/2, where did we mess up?
         t21 = t12
-        t22 = 1 + k_minus_1 * y ** 2
+        t22 = (2 - r - alpha) / 2
         return t11, t12, t21, t22
-
-        # alternative implementation. Don't forget to clip
-        # r = np.linalg.norm((alpha, beta))
-        # return np.eye(2) + 0.5 * np.array([[alpha - r, -beta], [-beta, -alpha - r]])
-        # return 1 + (alpha - r)/2, -beta/2, -beta/2, 1 + (-alpha - r)/2
 
     @staticmethod
     def carrier(theta):
-        carrier_x = np.cos(theta).astype(np.float32)
-        carrier_y = np.sin(theta).astype(np.float32)
+        carrier_x = np.cos(theta, dtype=np.float32)
+        carrier_y = np.sin(theta, dtype=np.float32)
         return carrier_x, carrier_y
 
     @staticmethod
