@@ -103,6 +103,9 @@ class Ui_WaveformDetails(object):
         self.left_label.setObjectName("left_label")
         self.formLayout_3.setWidget(1, QtWidgets.QFormLayout.FieldRole, self.left_label)
         self.verticalLayout.addWidget(self.groupBox)
+        self.label_4 = QtWidgets.QLabel(WaveformDetails)
+        self.label_4.setObjectName("label_4")
+        self.verticalLayout.addWidget(self.label_4)
         spacerItem = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
         self.verticalLayout.addItem(spacerItem)
 
@@ -138,3 +141,4 @@ class Ui_WaveformDetails(object):
         self.right_label.setText(_translate("WaveformDetails", "TextLabel"))
         self.label_10.setText(_translate("WaveformDetails", "L+"))
         self.left_label.setText(_translate("WaveformDetails", "TextLabel"))
+        self.label_4.setText(_translate("WaveformDetails", "Does not take calibration into account."))
