@@ -3,6 +3,7 @@ import matplotlib
 import numpy as np
 
 # Make sure that we are using QT5
+from stim_math.threephase_coordinate_transform import ThreePhaseCoordinateTransform
 from stim_math.threephase_parameter_manager import ThreephaseParameterManager
 
 matplotlib.use('Qt5Agg')
@@ -12,7 +13,8 @@ from PyQt5 import QtCore, QtWidgets, QtSvg
 from qt_ui.stim_config import PositionParameters, CalibrationParameters
 from qt_ui.waveform_details_widget_ui import Ui_WaveformDetails
 
-from stim_math import threephase, point_calibration
+from stim_math import threephase, point_calibration, trig
+
 
 class WaveformDetailsWidget(QtWidgets.QWidget, Ui_WaveformDetails):
     def __init__(self):
@@ -42,6 +44,21 @@ class WaveformDetailsWidget(QtWidgets.QWidget, Ui_WaveformDetails):
 
         alpha = self.config.alpha.last_value()
         beta = self.config.beta.last_value()
+
+        if self.config.transform_enabled.last_value():
+            transform = ThreePhaseCoordinateTransform(
+                self.config.transform_rotation_degrees.last_value(),
+                self.config.transform_mirror.last_value(),
+                self.config.transform_top_limit.last_value(),
+                self.config.transform_bottom_limit.last_value(),
+                self.config.transform_left_limit.last_value(),
+                self.config.transform_right_limit.last_value(),
+            )
+            [alpha], [beta] = transform.transform([alpha], [beta])
+            norm = np.clip(trig.norm(alpha, beta), 1.0, None)
+            alpha /= norm
+            beta /= norm
+
         if self.last_params == (alpha, beta):
             return
         self.last_params = (alpha, beta)
