@@ -29,21 +29,7 @@ class ContinuousSineWaveform:
      [sin(timeline * frequency * 2 * pi)]]
     """
     @staticmethod
-    def intensity(alpha, beta):
-        """
-        defined as norm(electrode_amplitude) * c
-        with c such that intensity(r=1) = 1
-        """
-        r = np.clip(np.sqrt(alpha.astype(np.float32) ** 2 + beta.astype(np.float32) ** 2), None, 1.0)
-
-        # for k_minus_1 = (1 - r) - 1
-        return np.sqrt(1 - r + 0.5 * r**2) * np.sqrt(2)
-
-        # for k_minus_1 = (1 - r**2) - 1
-        # return np.sqrt(1 - r**2 + 0.5 * r**4) * np.sqrt(2)
-
-    @staticmethod
-    def scale_in_arbitrary_direction_coefs(alpha, beta):
+    def project_on_ab_coefs(alpha, beta):
         # faster and uses less mem
         alpha = alpha.astype(np.float32)
         beta = beta.astype(np.float32)
@@ -71,8 +57,8 @@ class ContinuousSineWaveform:
     def generate(theta, alpha, beta, chunksize=10000):
         # split into chunks for better cache performance and lower peak memory usage
         if len(theta) > (2 * chunksize):
-            L = np.empty_like(theta)
-            R = np.empty_like(theta)
+            L = np.empty_like(theta, dtype=np.float32)
+            R = np.empty_like(theta, dtype=np.float32)
             for start in np.arange(0, len(theta), chunksize):
                 end = start + chunksize
                 l, r = ContinuousSineWaveform.generate(theta[start:end],
@@ -85,7 +71,7 @@ class ContinuousSineWaveform:
         carrier_x, carrier_y = ContinuousSineWaveform.carrier(theta)
 
         # apply scale in arbitrary direction
-        t11, t12, t21, t22 = ContinuousSineWaveform.scale_in_arbitrary_direction_coefs(alpha, beta)
+        t11, t12, t21, t22 = ContinuousSineWaveform.project_on_ab_coefs(alpha, beta)
         a = t11 * carrier_x + t12 * carrier_y
         b = t21 * carrier_x + t22 * carrier_y
 
@@ -111,7 +97,7 @@ class ContinuousSineWaveform:
             # phase of a * sin(x) + b * sin(x + phase)
             return np.arctan2(a * np.sin(0) + b * np.sin(phase), a * np.cos(0) + b * np.cos(phase))
 
-        t11, t12, t21, t22 = ContinuousSineWaveform.scale_in_arbitrary_direction_coefs(alpha, beta)
+        t11, t12, t21, t22 = ContinuousSineWaveform.project_on_ab_coefs(alpha, beta)
         squeeze = np.array([[t11, t12],
                             [t21, t22]])
         T = squeeze
@@ -137,7 +123,7 @@ class ContinuousSineWaveform:
         ab_transform = np.array([[1, 0],
                                  [-0.5, np.sqrt(3)/2],
                                  [-0.5, -np.sqrt(3)/2]]) / np.sqrt(3)
-        t11, t12, t21, t22 = ContinuousSineWaveform.scale_in_arbitrary_direction_coefs(alpha, beta)
+        t11, t12, t21, t22 = ContinuousSineWaveform.project_on_ab_coefs(alpha, beta)
         squeeze = np.array([[t11, t12],
                             [t21, t22]])
         T = ab_transform @ squeeze
@@ -169,7 +155,7 @@ class ContinuousSineWaveform:
         ab_transform = np.array([[1, 0],
                                  [-0.5, np.sqrt(3)/2],
                                  [-0.5, -np.sqrt(3)/2]]) / np.sqrt(3)
-        t11, t12, t21, t22 = ContinuousSineWaveform.scale_in_arbitrary_direction_coefs(alpha, beta)
+        t11, t12, t21, t22 = ContinuousSineWaveform.project_on_ab_coefs(alpha, beta)
         squeeze = np.array([[t11, t12],
                             [t21, t22]])
         T = P @ ab_transform @ squeeze

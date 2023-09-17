@@ -20,9 +20,6 @@ def generate_audio(alpha, beta, theta_carrier,
     # TODO: normalize norm(alpha, beta) <= 1
 
     L, R = threephase.ContinuousSineWaveform.generate(theta_carrier, alpha, beta)
-    # intensity = threephase.ContinuousSineWaveform.intensity(x, y)
-    # L /= intensity
-    # R /= intensity
 
     volume = 1
     if point_calibration is not None:
