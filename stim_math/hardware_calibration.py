@@ -56,5 +56,5 @@ class HardwareCalibration:
         transform = self.generate_transform_in_ab()
         corrective_matrix = potential_to_channel_matrix @ ab_transform @ transform @ ab_transform_inv @ potential_to_channel_matrix_inv
         corrective_matrix = corrective_matrix * self.scaling_contant(transform)
-        L, R, _ = corrective_matrix @ np.vstack((L, R, np.zeros_like(L)))
+        L, R = corrective_matrix[:2, :2] @ (L, R)
         return L, R
