@@ -160,15 +160,16 @@ class PhaseWidgetAlphaBeta(PhaseWidgetWithPoint):
             alpha /= norm
             beta /= norm
 
-        transform = ThreePhaseCoordinateTransform(
-            self.config.transform_rotation_degrees.last_value(),
-            self.config.transform_mirror.last_value(),
-            self.config.transform_top_limit.last_value(),
-            self.config.transform_bottom_limit.last_value(),
-            self.config.transform_left_limit.last_value(),
-            self.config.transform_right_limit.last_value(),
-        )
-        alpha, beta = transform.inverse_transform(alpha, beta)
+        if self.config.transform_enabled.last_value():
+            transform = ThreePhaseCoordinateTransform(
+                self.config.transform_rotation_degrees.last_value(),
+                self.config.transform_mirror.last_value(),
+                self.config.transform_top_limit.last_value(),
+                self.config.transform_bottom_limit.last_value(),
+                self.config.transform_left_limit.last_value(),
+                self.config.transform_right_limit.last_value(),
+            )
+            alpha, beta = transform.inverse_transform(alpha, beta)
         norm = (alpha ** 2 + beta ** 2) ** .5
         if norm >= 1:
             alpha /= norm
