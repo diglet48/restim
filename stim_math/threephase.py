@@ -1,8 +1,10 @@
 import numpy as np
-from stim_math.transforms import ab_transform, potential_to_channel_matrix
+from stim_math.transforms import (
+    potential_to_channel_matrix, potential_to_channel_matrix_inv,
+    ab_transform, ab_transform_inv)
 
 
-class ContinuousSineWaveform:
+class ThreePhaseSignalGenerator:
     """
     See also https://github.com/diglet48/restim/wiki/technical-documentation
 
@@ -20,9 +22,9 @@ class ContinuousSineWaveform:
      [-0.5,  sin(2/3*pi), -],   (represents electrode L)
      [-0.5, -sin(2/3*pi), -]]   (represents electrode R)
 
-    squeeze is a scale in arbitrary direction matrix:
+    squeeze is this funky projection matrix, the derivation of this matrix is listed on the wiki
     [[2 - r + alpha, -beta],
-     [-beta,          2 - r - alpha]] * 0.5
+     [-beta,         2 - r - alpha]] * 0.5
 
     carrier is:
     [[cos(timeline * frequency * 2 * pi)],
@@ -61,17 +63,17 @@ class ContinuousSineWaveform:
             R = np.empty_like(theta, dtype=np.float32)
             for start in np.arange(0, len(theta), chunksize):
                 end = start + chunksize
-                l, r = ContinuousSineWaveform.generate(theta[start:end],
-                                                       alpha[start:end],
-                                                       beta[start:end])
+                l, r = ThreePhaseSignalGenerator.generate(theta[start:end],
+                                                          alpha[start:end],
+                                                          beta[start:end])
                 L[start:end] = l
                 R[start:end] = r
             return L, R
 
-        carrier_x, carrier_y = ContinuousSineWaveform.carrier(theta)
+        carrier_x, carrier_y = ThreePhaseSignalGenerator.carrier(theta)
 
-        # apply scale in arbitrary direction
-        t11, t12, t21, t22 = ContinuousSineWaveform.project_on_ab_coefs(alpha, beta)
+        # apply projection
+        t11, t12, t21, t22 = ThreePhaseSignalGenerator.project_on_ab_coefs(alpha, beta)
         a = t11 * carrier_x + t12 * carrier_y
         b = t21 * carrier_x + t22 * carrier_y
 
@@ -97,7 +99,7 @@ class ContinuousSineWaveform:
             # phase of a * sin(x) + b * sin(x + phase)
             return np.arctan2(a * np.sin(0) + b * np.sin(phase), a * np.cos(0) + b * np.cos(phase))
 
-        t11, t12, t21, t22 = ContinuousSineWaveform.project_on_ab_coefs(alpha, beta)
+        t11, t12, t21, t22 = ThreePhaseSignalGenerator.project_on_ab_coefs(alpha, beta)
         squeeze = np.array([[t11, t12],
                             [t21, t22]])
         T = squeeze
@@ -123,7 +125,7 @@ class ContinuousSineWaveform:
         ab_transform = np.array([[1, 0],
                                  [-0.5, np.sqrt(3)/2],
                                  [-0.5, -np.sqrt(3)/2]]) / np.sqrt(3)
-        t11, t12, t21, t22 = ContinuousSineWaveform.project_on_ab_coefs(alpha, beta)
+        t11, t12, t21, t22 = ThreePhaseSignalGenerator.project_on_ab_coefs(alpha, beta)
         squeeze = np.array([[t11, t12],
                             [t21, t22]])
         T = ab_transform @ squeeze
@@ -155,7 +157,7 @@ class ContinuousSineWaveform:
         ab_transform = np.array([[1, 0],
                                  [-0.5, np.sqrt(3)/2],
                                  [-0.5, -np.sqrt(3)/2]]) / np.sqrt(3)
-        t11, t12, t21, t22 = ContinuousSineWaveform.project_on_ab_coefs(alpha, beta)
+        t11, t12, t21, t22 = ThreePhaseSignalGenerator.project_on_ab_coefs(alpha, beta)
         squeeze = np.array([[t11, t12],
                             [t21, t22]])
         T = P @ ab_transform @ squeeze
@@ -165,3 +167,64 @@ class ContinuousSineWaveform:
         phase_L = find_phase(T[0][0], T[1][0], np.pi/2)
         phase_R = find_phase(T[0][1], T[1][1], np.pi/2)
         return L, R, center, np.abs(phase_L - phase_R)
+
+
+def scale_in_arbitrary_direction(a, b, scale):
+    # formula from:
+    # https://computergraphics.stackexchange.com/questions/5586/what-does-it-mean-to-scale-in-an-arbitrary-direction
+    s = (scale - 1)
+    return np.array([[1 + s * a**2, s * a * b, 0],
+                     [s * a * b, 1 + s * b**2, 0],
+                     [0, 0, 1]])
+
+
+class ThreePhaseHardwareCalibration:
+    """
+    Attempt to reverse the effects of hardware bias by first transforming the (L, R) audio channel
+    into (alpha, beta), and then scaling before transforming back to (L, R)
+
+    method:
+    [alpha, beta, 0] = P^-1 @ ab_transform^-1 @ [L, R, 0]
+    [alpha, beta, 0] = inverse_hardware_transform @ [alpha, beta, 0]
+    [L, R, 0] = P @ ab_transform @ [alpha, beta, 0]
+    """
+    def __init__(self, up_down, left_right):
+        self.up_down = up_down  # in dB
+        self.left_right = left_right  # in dB
+
+    def generate_transform_in_ab(self):
+        if (self.up_down, self.left_right) == (0, 0):
+            return np.eye(3)
+
+        theta = np.arctan2(self.left_right, self.up_down) / 2
+        norm = np.sqrt(self.up_down ** 2 + self.left_right ** 2)
+        ratio = 10 ** (norm / 10)
+        return scale_in_arbitrary_direction(np.sin(-theta), np.cos(theta), 1/ratio)
+
+    def contour_in_ab(self, theta):
+        transform = self.generate_transform_in_ab()
+        alpha, beta, _ = transform @ [np.cos(theta), np.sin(theta), np.zeros_like(theta)]
+        return alpha, beta
+
+    def scaling_contant(self, transform_in_ab):
+        """
+        [L,     [[a, b],     [alpha,
+         R]  =   [c, d]]  *   beta]
+        We want |L| <= 1 and |R| <= 1
+        We know that norm(alpha, beta) <= 1
+        so we must scale matrix such that:
+        - norm(a, b) <= 1 and
+        - norm(c, d) <= 1
+        """
+        qq = potential_to_channel_matrix @ ab_transform @ transform_in_ab
+        k1 = np.linalg.norm([qq[0, 0], qq[0, 1]])
+        k2 = np.linalg.norm([qq[1, 0], qq[1, 1]])
+        k = 1 / np.max((k1, k2))
+        return k * 3**.5
+
+    def apply_transform(self, L, R):
+        transform = self.generate_transform_in_ab()
+        corrective_matrix = potential_to_channel_matrix @ ab_transform @ transform @ ab_transform_inv @ potential_to_channel_matrix_inv
+        corrective_matrix = corrective_matrix * self.scaling_contant(transform)
+        L, R = corrective_matrix[:2, :2] @ (L, R)
+        return L, R

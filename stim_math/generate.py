@@ -2,9 +2,8 @@ from PyQt5.QtCore import QSettings
 
 import numpy as np
 
-from stim_math import amplitude_modulation, limits, trig, point_calibration, fourphase, fivephase
+from stim_math import amplitude_modulation, limits, trig, point_calibration, threephase, fourphase, fivephase
 from stim_math.sine_generator import AngleGenerator, AngleGeneratorWithVaryingIPI
-from stim_math import threephase, hardware_calibration
 from stim_math.threephase_coordinate_transform import ThreePhaseCoordinateTransform
 from stim_math.threephase_parameter_manager import ThreephaseParameterManager
 from qt_ui.preferencesdialog import KEY_AUDIO_CHANNEL_COUNT, KEY_AUDIO_CHANNEL_MAP
@@ -19,7 +18,7 @@ def generate_audio(alpha, beta, theta_carrier,
                    hardware_calibration=None):
     # TODO: normalize norm(alpha, beta) <= 1
 
-    L, R = threephase.ContinuousSineWaveform.generate(theta_carrier, alpha, beta)
+    L, R = threephase.ThreePhaseSignalGenerator.generate(theta_carrier, alpha, beta)
 
     volume = 1
     if point_calibration is not None:
@@ -166,10 +165,10 @@ class ThreePhaseAlgorithm(VolumeManagementAlgorithm):
         volume *= center_calib.get_scale(alpha, beta)
 
         # hardware calibration
-        hw = hardware_calibration.HardwareCalibration(self.params.calibration_neutral.last_value(),
+        hw = threephase.ThreePhaseHardwareCalibration(self.params.calibration_neutral.last_value(),
                                                       self.params.calibration_right.last_value())
 
-        tp = threephase.ContinuousSineWaveform()
+        tp = threephase.ThreePhaseSignalGenerator()
         L, R = tp.generate(theta_carrier, alpha, beta)
         L, R = hw.apply_transform(L, R)
         L *= volume

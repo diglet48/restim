@@ -63,7 +63,7 @@ class WaveformDetailsWidget(QtWidgets.QWidget, Ui_WaveformDetails):
             return
         self.last_params = (alpha, beta)
 
-        L, R, center, phase_shift = threephase.ContinuousSineWaveform.channel_amplitude(
+        L, R, center, phase_shift = threephase.ThreePhaseSignalGenerator.channel_amplitude(
             np.array([alpha]),
             np.array([beta]))
 
@@ -81,7 +81,7 @@ class WaveformDetailsWidget(QtWidgets.QWidget, Ui_WaveformDetails):
         self.r_label.setText(format_amplitude((alpha**2 + beta**2)**.5))
         self.theta_label.setText(format_angle(np.arctan2(beta, alpha)))
 
-        N, L, R = threephase.ContinuousSineWaveform.electrode_amplitude(
+        N, L, R = threephase.ThreePhaseSignalGenerator.electrode_amplitude(
             np.array([alpha]),
             np.array([beta]))
 

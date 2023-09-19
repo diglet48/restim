@@ -5,14 +5,14 @@ import pydub
 import json
 import time
 
-from stim_math import point_calibration, generate, hardware_calibration, sine_generator
+from stim_math import point_calibration, generate, hardware_calibration, sine_generator, threephase
 import funscript_1d_to_2d
 
 
 def generate_more(theta, alpha, beta):
     # TODO: choose your own calibration parameters
     center_calibration = point_calibration.CenterCalibration(-0.7)
-    hw_calibration = hardware_calibration.HardwareCalibration(-5.3, -0.7)
+    hw_calibration = threephase.ThreePhaseHardwareCalibration(-5.3, -0.7)
 
     L, R = generate.generate_audio(alpha, beta, theta,
                                    point_calibration=center_calibration,
