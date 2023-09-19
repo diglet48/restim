@@ -3,7 +3,7 @@ from PyQt5.QtCore import QSettings
 import numpy as np
 
 from stim_math import amplitude_modulation, limits, trig, point_calibration, threephase, fourphase, fivephase
-from stim_math.sine_generator import AngleGenerator, AngleGeneratorWithVaryingIPI
+from stim_math.sine_generator import AngleGenerator, AngleGeneratorWithVaryingIPI, PulseGenerator
 from stim_math.threephase_coordinate_transform import ThreePhaseCoordinateTransform
 from stim_math.threephase_parameter_manager import ThreephaseParameterManager
 from qt_ui.preferencesdialog import KEY_AUDIO_CHANNEL_COUNT, KEY_AUDIO_CHANNEL_MAP
@@ -46,6 +46,7 @@ class VolumeManagementAlgorithm:
 
         self.modulation_1_angle = AngleGeneratorWithVaryingIPI()
         self.modulation_2_angle = AngleGeneratorWithVaryingIPI()
+        self.modulation_3 = PulseGenerator()
 
     def generate_modulation_signal(self, samplerate, timeline: np.ndarray):
         volume = \
@@ -74,6 +75,16 @@ class VolumeManagementAlgorithm:
             self.params.modulation_2_random.last_value(),
             self.modulation_2_angle
         )
+
+        if self.params.modulation_3_enabled.last_value():
+            volume *= self.modulation_3.generate(
+                len(timeline), samplerate,
+                self.params.carrier_frequency.last_value(),
+                self.params.modulation_3_pulse_width.last_value(),
+                self.params.modulation_3_frequency.last_value(),
+                self.params.modulation_3_strength.last_value(),
+                self.params.modulation_3_random.last_value()
+            )
 
         return volume
 

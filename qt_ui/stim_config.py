@@ -4,7 +4,9 @@ from __future__ import unicode_literals
 class ModulationParameters:
     def __init__(self, carrier_frequency,
                  modulation_1_enabled, modulation_1_freq, modulation_1_modulation, modulation_1_left_right_bias, modulation_1_high_low_bias, modulation_1_random,
-                 modulation_2_enabled, modulation_2_freq, modulation_2_modulation, modulation_2_left_right_bias, modulation_2_high_low_bias, modulation_2_random):
+                 modulation_2_enabled, modulation_2_freq, modulation_2_modulation, modulation_2_left_right_bias, modulation_2_high_low_bias, modulation_2_random,
+                 modulation_3_enabled, modulation_3_freq, modulation_3_modulation, modulation_3_pulse_width, modulation_3_random,
+                 ):
         self.carrier_frequency = carrier_frequency
         self.modulation_1_enabled = modulation_1_enabled
         self.modulation_1_freq = modulation_1_freq
@@ -18,6 +20,12 @@ class ModulationParameters:
         self.modulation_2_left_right_bias = modulation_2_left_right_bias
         self.modulation_2_high_low_bias = modulation_2_high_low_bias
         self.modulation_2_random = modulation_2_random
+        self.modulation_3_enabled = modulation_3_enabled
+        self.modulation_3_freq = modulation_3_freq
+        self.modulation_3_modulation = modulation_3_modulation
+        self.modulation_3_pulse_width = modulation_3_pulse_width
+        self.modulation_3_random = modulation_3_random
+
 
 
 class CalibrationParameters:

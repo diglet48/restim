@@ -165,6 +165,33 @@ class ModulationSettingsWidget(QtWidgets.QWidget):
         gb2.setLayout(gb2_l)
         l.addWidget(gb2)
 
+        gb3 = QtWidgets.QGroupBox("Modulation 3 (pulses)", self, checkable=True)
+        # gb3.setChecked(self.settings.value(SETTING_MOD3_ENABLED, True, bool))
+        gb3_l = QtWidgets.QFormLayout(gb3)
+        gb3_l.setObjectName("FormLayout modulation 3")
+        freq3_slider = QtWidgets.QDoubleSpinBox(minimum=1, # TODO: limits
+                                                maximum=stim_math.limits.ModulationFrequency.max)
+        # freq3_slider.setValue(self.settings.value(SETTING_MOD3_FREQUENCY, 0, float))
+        freq3_slider_label = QtWidgets.QLabel("frequency [Hz]")
+        gb3_l.addRow(freq3_slider_label, freq3_slider)
+        mod3_slider = QtWidgets.QDoubleSpinBox(minimum=0, maximum=100)
+        # mod3_slider.setValue(self.settings.value(SETTING_MOD3_MODULATION, 0, float))
+        mod3_slider_label = QtWidgets.QLabel("modulation [%]")
+        gb3_l.addRow(mod3_slider_label, mod3_slider)
+        pulse_width3_slider = QtWidgets.QDoubleSpinBox(minimum=3,
+                                                      maximum=50)
+        pulse_width3_slider.setSingleStep(0.1)
+        # pulse_width3_slider.setValue(self.settings.value(SETTING_MOD3_FREQUENCY, 0, float))
+        pulse_width3_label = QtWidgets.QLabel("pulse width [carrier cycles]")
+        gb3_l.addRow(pulse_width3_label, pulse_width3_slider)
+        random3_slider = QtWidgets.QDoubleSpinBox(minimum=0, maximum=100)
+        # random3_slider.setValue(self.settings.value(SETTING_MOD3_RANDOM, 0, float))
+        random3_slider_label = QtWidgets.QLabel("random [%]")
+        gb3_l.addRow(random3_slider_label, random3_slider)
+        gb3.setLayout(gb3_l)
+        l.addWidget(gb3)
+
+
         carrier_slider.valueChanged.connect(self.settings_changed)
         gb1.toggled.connect(self.settings_changed)
         freq1_slider.valueChanged.connect(self.settings_changed)
@@ -178,6 +205,11 @@ class ModulationSettingsWidget(QtWidgets.QWidget):
         bias2_left_right_slider.valueChanged.connect(self.settings_changed)
         bias2_high_low_slider.valueChanged.connect(self.settings_changed)
         random2_slider.valueChanged.connect(self.settings_changed)
+        gb3.toggled.connect(self.settings_changed)
+        freq3_slider.valueChanged.connect(self.settings_changed)
+        mod3_slider.valueChanged.connect(self.settings_changed)
+        pulse_width3_slider.valueChanged.connect(self.settings_changed)
+        random3_slider.valueChanged.connect(self.settings_changed)
 
         self.carrier = carrier_slider
         self.gb1 = gb1
@@ -192,6 +224,11 @@ class ModulationSettingsWidget(QtWidgets.QWidget):
         self.bias2_left_right_slider = bias2_left_right_slider
         self.bias2_high_low_slider = bias2_high_low_slider
         self.random2_slider = random2_slider
+        self.gb3 = gb3
+        self.freq3_slider = freq3_slider
+        self.mod3_slider = mod3_slider
+        self.pulse_width3_slider = pulse_width3_slider
+        self.random3_slider = random3_slider
 
         self.modulationSettingsChanged.connect(self.mpl_canvas.updateParams)
         self.settings_changed()
@@ -213,6 +250,11 @@ class ModulationSettingsWidget(QtWidgets.QWidget):
             self.bias2_left_right_slider.value() / 100.0,
             self.bias2_high_low_slider.value() / 100.0,
             self.random2_slider.value() / 100.0,
+            self.gb3.isChecked(),
+            self.freq3_slider.value(),
+            self.mod3_slider.value() / 100.0,
+            self.pulse_width3_slider.value(),
+            self.random3_slider.value() / 100.0,
         )
         self.modulationSettingsChanged.emit(params)
 
@@ -229,3 +271,4 @@ class ModulationSettingsWidget(QtWidgets.QWidget):
         self.settings.setValue(SETTING_MOD2_LR_BIAS, self.bias2_left_right_slider.value())
         self.settings.setValue(SETTING_MOD2_HL_BIAS, self.bias2_high_low_slider.value())
         self.settings.setValue(SETTING_MOD2_RANDOM, self.random2_slider.value())
+        # TODO: save mod3 settings
