@@ -51,8 +51,8 @@ class ThreePhaseSignalGenerator:
 
     @staticmethod
     def carrier(theta):
-        carrier_x = np.cos(theta, dtype=np.float32)
-        carrier_y = np.sin(theta, dtype=np.float32)
+        carrier_x = np.cos(theta).astype(np.float32)
+        carrier_y = np.sin(theta).astype(np.float32)
         return carrier_x, carrier_y
 
     @staticmethod
