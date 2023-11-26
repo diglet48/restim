@@ -1,31 +1,39 @@
 from __future__ import unicode_literals
 
 
-class ModulationParameters:
-    def __init__(self, carrier_frequency,
-                 modulation_1_enabled, modulation_1_freq, modulation_1_modulation, modulation_1_left_right_bias, modulation_1_high_low_bias, modulation_1_random,
-                 modulation_2_enabled, modulation_2_freq, modulation_2_modulation, modulation_2_left_right_bias, modulation_2_high_low_bias, modulation_2_random,
-                 modulation_3_enabled, modulation_3_freq, modulation_3_modulation, modulation_3_pulse_width, modulation_3_random,
+class VibrationParameters:
+    def __init__(self,
+                 vibration_1_enabled, vibration_1_freq, vibration_1_strength, vibration_1_left_right_bias, vibration_1_high_low_bias, vibration_1_random,
+                 vibration_2_enabled, vibration_2_freq, vibration_2_strength, vibration_2_left_right_bias, vibration_2_high_low_bias, vibration_2_random,
                  ):
-        self.carrier_frequency = carrier_frequency
-        self.modulation_1_enabled = modulation_1_enabled
-        self.modulation_1_freq = modulation_1_freq
-        self.modulation_1_modulation = modulation_1_modulation
-        self.modulation_1_left_right_bias = modulation_1_left_right_bias
-        self.modulation_1_high_low_bias = modulation_1_high_low_bias
-        self.modulation_1_random = modulation_1_random
-        self.modulation_2_enabled = modulation_2_enabled
-        self.modulation_2_freq = modulation_2_freq
-        self.modulation_2_modulation = modulation_2_modulation
-        self.modulation_2_left_right_bias = modulation_2_left_right_bias
-        self.modulation_2_high_low_bias = modulation_2_high_low_bias
-        self.modulation_2_random = modulation_2_random
-        self.modulation_3_enabled = modulation_3_enabled
-        self.modulation_3_freq = modulation_3_freq
-        self.modulation_3_modulation = modulation_3_modulation
-        self.modulation_3_pulse_width = modulation_3_pulse_width
-        self.modulation_3_random = modulation_3_random
+        self.vibration_1_enabled = vibration_1_enabled
+        self.vibration_1_freq = vibration_1_freq
+        self.vibration_1_strength = vibration_1_strength
+        self.vibration_1_left_right_bias = vibration_1_left_right_bias
+        self.vibration_1_high_low_bias = vibration_1_high_low_bias
+        self.vibration_1_random = vibration_1_random
+        self.vibration_2_enabled = vibration_2_enabled
+        self.vibration_2_freq = vibration_2_freq
+        self.vibration_2_strength = vibration_2_strength
+        self.vibration_2_left_right_bias = vibration_2_left_right_bias
+        self.vibration_2_high_low_bias = vibration_2_high_low_bias
+        self.vibration_2_random = vibration_2_random
 
+
+class Mk312Parameters:
+    def __init__(self, carrier_frequency):
+        self.carrier_frequency = carrier_frequency
+
+
+class PulseParameters:
+    def __init__(self, carrier_frequency, pulse_frequency, pulse_width, pulse_interval_random, polarity, device_emulation_mode, pulse_phase_offset_increment):
+        self.carrier_frequency = carrier_frequency
+        self.pulse_frequency = pulse_frequency
+        self.pulse_width = pulse_width
+        self.pulse_interval_random = pulse_interval_random
+        self.polarity = polarity
+        self.device_emulation_mode = device_emulation_mode
+        self.pulse_phase_offset_increment = pulse_phase_offset_increment
 
 
 class CalibrationParameters:
@@ -61,7 +69,7 @@ class ThreePhaseCalibrationParameters:
 
 
 class ThreePhaseTransformParameters:
-    def __init__(self, enabled, rotation_degrees, mirror, top, bottom, left, right):
+    def __init__(self, enabled, rotation_degrees, mirror, top, bottom, left, right, exponent):
         self.enabled = enabled
         self.rotation_degrees = rotation_degrees
         self.mirror = mirror
@@ -69,6 +77,7 @@ class ThreePhaseTransformParameters:
         self.bottom = bottom
         self.left = left
         self.right = right
+        self.exponent = exponent
 
 
 class FivePhaseCurrentParameters:

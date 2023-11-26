@@ -7,7 +7,7 @@ default_values = {
     'beta' : ['L1', True, -1, 1],
     'volume' : ['L2', False, 0, 1],
     'carrier' : ['L3', False, 500, 1000],
-    'modulation-1-frequency' : ['L4', False, 0, 100],
+    'vibration-1-frequency' : ['L4', False, 0, 100],
 }
 
 
@@ -46,11 +46,11 @@ class ThreephaseConfiguration:
         self.beta = ThreephaseConfigurationAxis('beta')
         self.carrier = ThreephaseConfigurationAxis('carrier')
         self.volume = ThreephaseConfigurationAxis('volume')
-        self.modulation_1_frequency = ThreephaseConfigurationAxis('modulation-1-frequency')
+        self.vibration_1_frequency = ThreephaseConfigurationAxis('vibration-1-frequency')
 
     def save(self):
         self.alpha.save()
         self.beta.save()
         self.carrier.save()
         self.volume.save()
-        self.modulation_1_frequency.save()
+        self.vibration_1_frequency.save()

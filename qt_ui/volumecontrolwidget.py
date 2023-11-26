@@ -8,6 +8,7 @@ from PyQt5.QtCore import QSettings
 
 from qt_ui.volume_control_widget_ui import Ui_VolumeControlForm
 from stim_math.threephase_parameter_manager import ThreephaseParameterManager
+from qt_ui import settings
 
 SETTING_INACTIVITY_RAMP_TIME = 'volume/inactivity_ramp_time'
 SETTING_INACTIVITY_INACTIVE_THRESHOLD = 'volume/inactivity_inactive_threshold'
@@ -17,7 +18,6 @@ class VolumeControlWidget(QtWidgets.QWidget, Ui_VolumeControlForm):
     def __init__(self, parent):
         QtWidgets.QWidget.__init__(self, parent)
         self.setupUi(self)
-        self.settings = QSettings()
 
         self.config: ThreephaseParameterManager = None
 
@@ -34,15 +34,13 @@ class VolumeControlWidget(QtWidgets.QWidget, Ui_VolumeControlForm):
         self.last_axis_values = (0, 0)
         self.inactivity_volume_progress = 0
 
-        self.doubleSpinBox_inactivity_threshold.setValue(
-            self.settings.value(SETTING_INACTIVITY_INACTIVE_THRESHOLD, 2.0, float)
-        )
-        self.doubleSpinBox_inactivity_ramp_time.setValue(
-            self.settings.value(SETTING_INACTIVITY_RAMP_TIME, 3.0, float)
-        )
+        self.doubleSpinBox_inactivity_threshold.setValue(settings.volume_inactivity_threshold.get())
+        self.doubleSpinBox_inactivity_ramp_time.setValue(settings.volume_ramp_time.get())
+        self.doubleSpinBox_rate.setValue(settings.volume_increment_rate.get())
 
         self.doubleSpinBox_inactivity_threshold.valueChanged.connect(self.settings_changed)
         self.doubleSpinBox_inactivity_ramp_time.valueChanged.connect(self.settings_changed)
+        self.doubleSpinBox_rate.valueChanged.connect(self.settings_changed)
 
         self.doubleSpinBox_target_volume.valueChanged.connect(self.refresh_message)
         self.doubleSpinBox_rate.valueChanged.connect(self.refresh_message)
@@ -148,8 +146,9 @@ class VolumeControlWidget(QtWidgets.QWidget, Ui_VolumeControlForm):
         self.checkBox_ramp_enabled.setText(message)
 
     def settings_changed(self):
-        self.settings.setValue(SETTING_INACTIVITY_INACTIVE_THRESHOLD, self.doubleSpinBox_inactivity_threshold.value())
-        self.settings.setValue(SETTING_INACTIVITY_RAMP_TIME, self.doubleSpinBox_inactivity_ramp_time.value())
+        settings.volume_inactivity_threshold.set(self.doubleSpinBox_inactivity_threshold.value())
+        settings.volume_ramp_time.set(self.doubleSpinBox_inactivity_ramp_time.value())
+        settings.volume_increment_rate.set(self.doubleSpinBox_rate.value())
         self.refresh_message()
 
     rampVolumeChanged = QtCore.pyqtSignal(float)

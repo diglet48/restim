@@ -25,6 +25,8 @@ from qt_ui.preferencesdialog import KEY_AUDIO_API, KEY_AUDIO_DEVICE, KEY_AUDIO_L
 import sounddevice as sd
 import stim_math.generate
 
+from qt_ui.device_selection_wizard import DeviceSelectionWizard, DeviceType
+
 
 class Window(QMainWindow, Ui_MainWindow):
     def __init__(self, parent=None):
@@ -34,15 +36,12 @@ class Window(QMainWindow, Ui_MainWindow):
         # set the first tab as active tab, in case we forgot to set it in designer
         self.tabWidget.setCurrentIndex(0)
         # hide the focus tab
-        self.tabWidget.setTabVisible(1, False)
+        self.tabWidget.setTabVisible(self.tabWidget.indexOf(self.tab_focus), False)
+        self.tabWidget.setTabEnabled(self.tabWidget.indexOf(self.tab_focus), False)
 
         icon = QtGui.QIcon()
         icon.addPixmap(QtGui.QPixmap(resources.favicon), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.setWindowIcon(icon)
-
-        self.comboBox_phase_selection.addItem("Three-phase", 3)
-        self.comboBox_phase_selection.addItem("Four-phase", 4)
-        self.comboBox_phase_selection.addItem("Five-phase", 5)
 
         self.threephase_parameters = ThreephaseParameterManager(ThreephaseConfiguration())
 
@@ -64,9 +63,11 @@ class Window(QMainWindow, Ui_MainWindow):
 
         self.audio_gen = qt_ui.audiogenerationwidget.AudioGenerationWidget(None)
         self.motion_generator.positionChanged.connect(self.threephase_parameters.set_position_parameters)
-        self.tab_carrier.modulationSettingsChanged.connect(self.threephase_parameters.set_modulation_parameters)
+        self.tab_carrier.carrierSettingsChanged.connect(self.threephase_parameters.set_mk312_parameters)
+        self.tab_pulse_settings.pulseSettingsChanged.connect(self.threephase_parameters.set_pulse_parameters)
         self.tab_threephase.threePhaseSettingsChanged.connect(self.threephase_parameters.set_calibration_parameters)
         self.tab_threephase.threePhaseTransformChanged.connect(self.threephase_parameters.set_three_phase_transform_parameters)
+        self.tab_vibrate.vibrationSettingsChanged.connect(self.threephase_parameters.set_vibration_parameters)
         self.tab_threephase.set_config_manager(self.threephase_parameters)
 
         self.tab_fivephase.fivePhaseCurrentChanged.connect(self.threephase_parameters.set_five_phase_current_parameters)
@@ -90,19 +91,59 @@ class Window(QMainWindow, Ui_MainWindow):
 
         # trigger updates
         self.tab_carrier.settings_changed()
+        self.tab_pulse_settings.settings_changed()
         self.tab_threephase.settings_changed()
         self.volumeWidget.updateVolume()
         self.tab_fivephase.power_changed()
         self.tab_fivephase.resistance_changed()
+        self.tab_vibrate.settings_changed()
 
         self.startStopAudioButton.clicked.connect(self.audioStartStop)
         self.audioStop() # update button icon/label
 
+        self.wizard = DeviceSelectionWizard(self)
+        self.actionDevice_selection_wizard.triggered.connect(self.show_setup_wizard)
+
         self.dialog = qt_ui.funscriptconversiondialog.FunscriptConversionDialog()
-        self.actionFunscript_conversion_2.triggered.connect(self.openFunscriptConversionDialog)
+        self.actionFunscript_conversion.triggered.connect(self.openFunscriptConversionDialog)
 
         self.settings_dialog = qt_ui.preferencesdialog.PreferencesDialog()
         self.actionPreferences.triggered.connect(self.openPreferencesDialog)
+
+        self.refresh_device_type()
+        if self.wizard.device_type() == DeviceType.NONE:
+            self.show_setup_wizard()
+
+    def show_setup_wizard(self):
+        self.audioStop()
+        self.wizard.exec()
+        self.refresh_device_type()
+
+    def refresh_device_type(self):
+        def set_visible(widget, state):
+            self.tabWidget.setTabVisible(self.tabWidget.indexOf(widget), state)
+            self.tabWidget.setTabEnabled(self.tabWidget.indexOf(widget), state)
+
+        if self.wizard.device_type() == DeviceType.THREE_PHASE:
+            set_visible(self.tab_threephase, True)
+            set_visible(self.tab_pulse_settings, True)
+            set_visible(self.tab_fivephase, False)
+            set_visible(self.tab_carrier, False)
+        elif self.wizard.device_type() == DeviceType.FOUR_PHASE:
+            set_visible(self.tab_threephase, True)
+            set_visible(self.tab_pulse_settings, False)
+            set_visible(self.tab_fivephase, True)
+            set_visible(self.tab_carrier, True)
+        elif self.wizard.device_type() == DeviceType.FIVE_PHASE:
+            set_visible(self.tab_threephase, True)
+            set_visible(self.tab_pulse_settings, False)
+            set_visible(self.tab_fivephase, True)
+            set_visible(self.tab_carrier, True)
+        elif self.wizard.device_type() == DeviceType.MK312:
+            set_visible(self.tab_threephase, True)
+            set_visible(self.tab_pulse_settings, False)
+            set_visible(self.tab_fivephase, False)
+            set_visible(self.tab_carrier, True)
 
     def audioStartStop(self):
         if self.audio_gen.stream is None:
@@ -119,13 +160,18 @@ class Window(QMainWindow, Ui_MainWindow):
             latency = float(latency)
         except ValueError:
             pass
-        phases = int(self.comboBox_phase_selection.currentData())
-        if phases == 3:
+
+        device_selection = self.wizard.device_type()
+        if device_selection == DeviceType.MK312:
             algorithm = stim_math.generate.ThreePhaseAlgorithm(self.threephase_parameters)
-        elif phases == 4:
+        elif device_selection == DeviceType.THREE_PHASE:
+            algorithm = stim_math.generate.DefaultThreePhasePulseBasedAlgorithm(self.threephase_parameters)
+        elif device_selection == DeviceType.FOUR_PHASE:
             algorithm = stim_math.generate.FourPhaseAlgorithm(self.threephase_parameters)
-        else:
+        elif device_selection == DeviceType.FIVE_PHASE:
             algorithm = stim_math.generate.FivePhaseAlgorithm(self.threephase_parameters)
+        else:
+            raise RuntimeError('unknown device type')
 
         self.audio_gen.start(api_name, device_name, latency, algorithm)
         if self.audio_gen.stream is not None:

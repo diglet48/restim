@@ -1,6 +1,5 @@
 import time
 import numpy as np
-# from PyQt5.QtCore import QObject
 
 from net.tcode import TCodeCommand
 from qt_ui.threephase_configuration import ThreephaseConfiguration
@@ -80,24 +79,28 @@ class ThreephaseParameterManager():
         self.resistance_s4 = InstantParameter(1.0)
         self.resistance_s5 = InstantParameter(1.0)
 
-        self.carrier_frequency = InstantParameter(0.0)
-        self.modulation_1_enabled = InstantParameter(True)
-        self.modulation_1_frequency = InstantParameter(0.0)
-        self.modulation_1_strength = InstantParameter(0.0)
-        self.modulation_1_left_right_bias = InstantParameter(0.0)
-        self.modulation_1_high_low_bias = InstantParameter(0.0)
-        self.modulation_1_random = InstantParameter(0.0)
-        self.modulation_2_enabled = InstantParameter(True)
-        self.modulation_2_frequency = InstantParameter(0.0)
-        self.modulation_2_strength = InstantParameter(0.0)
-        self.modulation_2_left_right_bias = InstantParameter(0.0)
-        self.modulation_2_high_low_bias = InstantParameter(0.0)
-        self.modulation_2_random = InstantParameter(0.0)
-        self.modulation_3_enabled = InstantParameter(True)
-        self.modulation_3_frequency = InstantParameter(0.0)
-        self.modulation_3_strength = InstantParameter(0.0)
-        self.modulation_3_pulse_width = InstantParameter(0.0)
-        self.modulation_3_random = InstantParameter(0.0)
+        self.mk312_carrier_frequency = InstantParameter(0.0)
+
+        self.vibration_1_enabled = InstantParameter(True)
+        self.vibration_1_frequency = InstantParameter(0.0)
+        self.vibration_1_strength = InstantParameter(0.0)
+        self.vibration_1_left_right_bias = InstantParameter(0.0)
+        self.vibration_1_high_low_bias = InstantParameter(0.0)
+        self.vibration_1_random = InstantParameter(0.0)
+        self.vibration_2_enabled = InstantParameter(True)
+        self.vibration_2_frequency = InstantParameter(0.0)
+        self.vibration_2_strength = InstantParameter(0.0)
+        self.vibration_2_left_right_bias = InstantParameter(0.0)
+        self.vibration_2_high_low_bias = InstantParameter(0.0)
+        self.vibration_2_random = InstantParameter(0.0)
+
+        self.pulse_carrier_frequency = InstantParameter(0.0)
+        self.pulse_frequency = InstantParameter(0.0)
+        self.pulse_width = InstantParameter(0.0)
+        self.pulse_interval_random = InstantParameter(0.0)
+        self.polarity = InstantParameter(0.0)
+        self.device_emulation_mode = InstantParameter(0.0)
+        self.pulse_phase_offset_increment = InstantParameter(0.0)
 
         self.calibration_neutral = InstantParameter(0.0)
         self.calibration_right = InstantParameter(0.0)
@@ -110,6 +113,7 @@ class ThreephaseParameterManager():
         self.transform_bottom_limit = InstantParameter(-1.0)
         self.transform_left_limit = InstantParameter(-1.0)
         self.transform_right_limit = InstantParameter(1.0)
+        self.threephase_exponent = InstantParameter(0.0)
 
         self.focus_alpha = ContinuousParameter(0.0)
         self.focus_beta = ContinuousParameter(0.0)
@@ -122,8 +126,8 @@ class ThreephaseParameterManager():
             (self.config.alpha, self.alpha),
             (self.config.beta, self.beta),
             (self.config.volume, self.volume),
-            (self.config.carrier, self.carrier_frequency),
-            (self.config.modulation_1_frequency, self.modulation_1_frequency)
+            (self.config.carrier, self.mk312_carrier_frequency),
+            (self.config.vibration_1_frequency, self.vibration_1_frequency)
         ]:
             if target.axis == cmd.axis_identifier:
                 if target.enabled:
@@ -155,30 +159,12 @@ class ThreephaseParameterManager():
     def set_inactivity_volume(self, value):
         self.inactivity_volume.add(value)
 
-    def set_carrier_frequency(self, value):
-        self.carrier_frequency.add(value)
-
-    def set_modulation_1_enabled(self, value):
-        self.modulation_1_enabled.add(value)
-
-    def set_modulation_1_frequency(self, value):
-        self.modulation_1_frequency.add(value)
-
-    def set_modulation_1_strength(self, value):
-        self.modulation_1_strength.add(value)
-
-    def set_modulation_2_enabled(self, value):
-        self.modulation_2_enabled.add(value)
-
-    def set_modulation_2_frequency(self, value):
-        self.modulation_2_frequency.add(value)
-
-    def set_modulation_2_strength(self, value):
-        self.modulation_1_strength.add(value)
-
     def set_position_parameters(self, position_params: stim_config.PositionParameters):
         self.alpha.add(position_params.alpha)
         self.beta.add(position_params.beta)
+
+    def set_mk312_parameters(self, params: stim_config.Mk312Parameters):
+        self.mk312_carrier_frequency.add(params.carrier_frequency)
 
     def set_focus_parameters(self, alpha: float, beta: float):
         self.focus_alpha.add(alpha)
@@ -197,27 +183,30 @@ class ThreephaseParameterManager():
         self.transform_bottom_limit.add(transform_params.bottom)
         self.transform_left_limit.add(transform_params.left)
         self.transform_right_limit.add(transform_params.right)
+        self.threephase_exponent.add(transform_params.exponent)
 
-    def set_modulation_parameters(self, modulation_parameters: stim_config.ModulationParameters):
-        self.carrier_frequency.add(modulation_parameters.carrier_frequency)
-        self.modulation_1_enabled.add(modulation_parameters.modulation_1_enabled)
-        self.modulation_1_frequency.add(modulation_parameters.modulation_1_freq)
-        self.modulation_1_strength.add(modulation_parameters.modulation_1_modulation)
-        self.modulation_1_left_right_bias.add(modulation_parameters.modulation_1_left_right_bias)
-        self.modulation_1_high_low_bias.add(modulation_parameters.modulation_1_high_low_bias)
-        self.modulation_1_random.add(modulation_parameters.modulation_1_random)
-        self.modulation_2_enabled.add(modulation_parameters.modulation_2_enabled)
-        self.modulation_2_frequency.add(modulation_parameters.modulation_2_freq)
-        self.modulation_2_strength.add(modulation_parameters.modulation_2_modulation)
-        self.modulation_2_left_right_bias.add(modulation_parameters.modulation_2_left_right_bias)
-        self.modulation_2_high_low_bias.add(modulation_parameters.modulation_2_high_low_bias)
-        self.modulation_2_random.add(modulation_parameters.modulation_2_random)
+    def set_vibration_parameters(self, vibration_parameters: stim_config.VibrationParameters):
+        self.vibration_1_enabled.add(vibration_parameters.vibration_1_enabled)
+        self.vibration_1_frequency.add(vibration_parameters.vibration_1_freq)
+        self.vibration_1_strength.add(vibration_parameters.vibration_1_strength)
+        self.vibration_1_left_right_bias.add(vibration_parameters.vibration_1_left_right_bias)
+        self.vibration_1_high_low_bias.add(vibration_parameters.vibration_1_high_low_bias)
+        self.vibration_1_random.add(vibration_parameters.vibration_1_random)
+        self.vibration_2_enabled.add(vibration_parameters.vibration_2_enabled)
+        self.vibration_2_frequency.add(vibration_parameters.vibration_2_freq)
+        self.vibration_2_strength.add(vibration_parameters.vibration_2_strength)
+        self.vibration_2_left_right_bias.add(vibration_parameters.vibration_2_left_right_bias)
+        self.vibration_2_high_low_bias.add(vibration_parameters.vibration_2_high_low_bias)
+        self.vibration_2_random.add(vibration_parameters.vibration_2_random)
 
-        self.modulation_3_enabled.add(modulation_parameters.modulation_3_enabled)
-        self.modulation_3_frequency.add(modulation_parameters.modulation_3_freq)
-        self.modulation_3_strength.add(modulation_parameters.modulation_3_modulation)
-        self.modulation_3_pulse_width.add(modulation_parameters.modulation_3_pulse_width)
-        self.modulation_3_random.add(modulation_parameters.modulation_3_random)
+    def set_pulse_parameters(self, pulse_parameters: stim_config.PulseParameters):
+        self.pulse_carrier_frequency.add(pulse_parameters.carrier_frequency)
+        self.pulse_frequency.add(pulse_parameters.pulse_frequency)
+        self.pulse_width.add(pulse_parameters.pulse_width)
+        self.pulse_interval_random.add(pulse_parameters.pulse_interval_random)
+        self.polarity.add(pulse_parameters.polarity)
+        self.device_emulation_mode.add(pulse_parameters.device_emulation_mode)
+        self.pulse_phase_offset_increment.add(pulse_parameters.pulse_phase_offset_increment)
 
     def set_five_phase_resistance_parameters(self, resistance_parameters: stim_config.FivePhaseResistanceParameters):
         self.resistance_t.add(resistance_parameters.t)

@@ -2,7 +2,7 @@ from PyQt5 import QtCore, QtWebSockets
 import numpy as np
 import time
 
-from qt_ui.stim_config import CalibrationParameters, ModulationParameters, PositionParameters
+from qt_ui.stim_config import CalibrationParameters, VibrationParameters, PositionParameters
 
 
 class Pattern:

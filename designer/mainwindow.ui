@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>881</width>
-    <height>696</height>
+    <width>764</width>
+    <height>624</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -133,9 +133,6 @@
             </property>
            </widget>
           </item>
-          <item>
-           <widget class="QComboBox" name="comboBox_phase_selection"/>
-          </item>
          </layout>
         </widget>
        </item>
@@ -161,7 +158,7 @@
        <bool>true</bool>
       </property>
       <property name="currentIndex">
-       <number>1</number>
+       <number>3</number>
       </property>
       <widget class="ThreePhaseSettingsWidget" name="tab_threephase">
        <attribute name="title">
@@ -186,9 +183,20 @@
         </property>
        </widget>
       </widget>
-      <widget class="ModulationSettingsWidget" name="tab_carrier">
+      <widget class="FivePhaseSettingsWidget" name="tab_fivephase">
        <attribute name="title">
-        <string>Carrier and modulation</string>
+        <string>4/5-phase</string>
+       </attribute>
+       <layout class="QVBoxLayout" name="verticalLayout_3"/>
+      </widget>
+      <widget class="CarrierSettingsWidget" name="tab_carrier">
+       <attribute name="title">
+        <string>Carrier settings</string>
+       </attribute>
+      </widget>
+      <widget class="PulseSettingsWidget" name="tab_pulse_settings">
+       <attribute name="title">
+        <string>Pulse settings</string>
        </attribute>
       </widget>
       <widget class="QWidget" name="tab_volume">
@@ -229,16 +237,15 @@
         </item>
        </layout>
       </widget>
+      <widget class="VibrationSettingsWidget" name="tab_vibrate">
+       <attribute name="title">
+        <string>Vibration</string>
+       </attribute>
+      </widget>
       <widget class="WaveformDetailsWidget" name="tab_details">
        <attribute name="title">
         <string>Details</string>
        </attribute>
-      </widget>
-      <widget class="FivePhaseSettingsWidget" name="tab_fivephase">
-       <attribute name="title">
-        <string>4/5-phase</string>
-       </attribute>
-       <layout class="QVBoxLayout" name="verticalLayout_3"/>
       </widget>
      </widget>
     </item>
@@ -250,7 +257,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>881</width>
+     <width>764</width>
      <height>21</height>
     </rect>
    </property>
@@ -258,14 +265,15 @@
     <property name="title">
      <string>Tools</string>
     </property>
-    <addaction name="actionFunscript_conversion_2"/>
+    <addaction name="actionDevice_selection_wizard"/>
+    <addaction name="actionFunscript_conversion"/>
     <addaction name="actionPreferences"/>
    </widget>
    <addaction name="menuTools"/>
   </widget>
-  <action name="actionFunscript_conversion_2">
+  <action name="actionFunscript_conversion">
    <property name="text">
-    <string>Funscript conversion</string>
+    <string>Funscript conversion (1d -&gt; 2d)</string>
    </property>
   </action>
   <action name="actionPreferences">
@@ -273,12 +281,17 @@
     <string>Preferences</string>
    </property>
   </action>
+  <action name="actionDevice_selection_wizard">
+   <property name="text">
+    <string>Device selection</string>
+   </property>
+  </action>
  </widget>
  <customwidgets>
   <customwidget>
-   <class>ModulationSettingsWidget</class>
+   <class>CarrierSettingsWidget</class>
    <extends>QWidget</extends>
-   <header>qt_ui/modulationsettingswidget.h</header>
+   <header>qt_ui/carriersettingswidget.h</header>
    <container>1</container>
   </customwidget>
   <customwidget>
@@ -318,6 +331,18 @@
    <class>ThreePhaseSettingsWidget</class>
    <extends>QWidget</extends>
    <header>qt_ui/threephasesettingswidget.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>PulseSettingsWidget</class>
+   <extends>QWidget</extends>
+   <header>qt_ui/pulsesettingswidget.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>VibrationSettingsWidget</class>
+   <extends>QWidget</extends>
+   <header>qt_ui/vibrationsettingswidget.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

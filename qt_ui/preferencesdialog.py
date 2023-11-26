@@ -124,10 +124,10 @@ class PreferencesDialog(QDialog, Ui_PreferencesDialog):
         self.threephase_carrier_max.setValue(self.threephase.carrier.right)
         self.threephase_carrier_enabled.setChecked(self.threephase.carrier.enabled)
 
-        self.threephase_modulation_frequency_axis.setText(self.threephase.modulation_1_frequency.axis)
-        self.threephase_modulation_frequency_min.setValue(self.threephase.modulation_1_frequency.left)
-        self.threephase_modulation_frequency_max.setValue(self.threephase.modulation_1_frequency.right)
-        self.threephase_modulation_frequency_enabled.setChecked(self.threephase.modulation_1_frequency.enabled)
+        self.threephase_vibration_frequency_axis.setText(self.threephase.vibration_1_frequency.axis)
+        self.threephase_vibration_frequency_min.setValue(self.threephase.vibration_1_frequency.left)
+        self.threephase_vibration_frequency_max.setValue(self.threephase.vibration_1_frequency.right)
+        self.threephase_vibration_frequency_enabled.setChecked(self.threephase.vibration_1_frequency.enabled)
 
     def repopulate_audio_devices(self):
         self.audio_device.clear()
@@ -205,10 +205,10 @@ class PreferencesDialog(QDialog, Ui_PreferencesDialog):
         self.threephase.carrier.right = self.threephase_carrier_max.value()
         self.threephase.carrier.enabled = self.threephase_carrier_enabled.isChecked()
 
-        self.threephase.modulation_1_frequency.axis = self.threephase_modulation_frequency_axis.text()
-        self.threephase.modulation_1_frequency.left = self.threephase_modulation_frequency_min.value()
-        self.threephase.modulation_1_frequency.right = self.threephase_modulation_frequency_max.value()
-        self.threephase.modulation_1_frequency.enabled = self.threephase_modulation_frequency_enabled.isChecked()
+        self.threephase.vibration_1_frequency.axis = self.threephase_vibration_frequency_axis.text()
+        self.threephase.vibration_1_frequency.left = self.threephase_vibration_frequency_min.value()
+        self.threephase.vibration_1_frequency.right = self.threephase_vibration_frequency_max.value()
+        self.threephase.vibration_1_frequency.enabled = self.threephase_vibration_frequency_enabled.isChecked()
 
         self.threephase.save()
 

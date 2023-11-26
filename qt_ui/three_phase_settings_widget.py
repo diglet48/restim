@@ -14,7 +14,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_ThreePhaseSettingsWidget(object):
     def setupUi(self, ThreePhaseSettingsWidget):
         ThreePhaseSettingsWidget.setObjectName("ThreePhaseSettingsWidget")
-        ThreePhaseSettingsWidget.resize(412, 417)
+        ThreePhaseSettingsWidget.resize(592, 660)
         self.verticalLayout = QtWidgets.QVBoxLayout(ThreePhaseSettingsWidget)
         self.verticalLayout.setObjectName("verticalLayout")
         self.groupBox = QtWidgets.QGroupBox(ThreePhaseSettingsWidget)
@@ -121,6 +121,19 @@ class Ui_ThreePhaseSettingsWidget(object):
         self.reset_defaults_button.setObjectName("reset_defaults_button")
         self.formLayout_2.setWidget(6, QtWidgets.QFormLayout.LabelRole, self.reset_defaults_button)
         self.verticalLayout.addWidget(self.groupBox_2)
+        self.groupBox_3 = QtWidgets.QGroupBox(ThreePhaseSettingsWidget)
+        self.groupBox_3.setObjectName("groupBox_3")
+        self.formLayout_3 = QtWidgets.QFormLayout(self.groupBox_3)
+        self.formLayout_3.setObjectName("formLayout_3")
+        self.label_11 = QtWidgets.QLabel(self.groupBox_3)
+        self.label_11.setObjectName("label_11")
+        self.formLayout_3.setWidget(0, QtWidgets.QFormLayout.LabelRole, self.label_11)
+        self.exponent = QtWidgets.QDoubleSpinBox(self.groupBox_3)
+        self.exponent.setMaximum(1.0)
+        self.exponent.setSingleStep(0.1)
+        self.exponent.setObjectName("exponent")
+        self.formLayout_3.setWidget(0, QtWidgets.QFormLayout.FieldRole, self.exponent)
+        self.verticalLayout.addWidget(self.groupBox_3)
         spacerItem = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
         self.verticalLayout.addItem(spacerItem)
 
@@ -143,4 +156,6 @@ class Ui_ThreePhaseSettingsWidget(object):
         self.label_8.setText(_translate("ThreePhaseSettingsWidget", "left limit"))
         self.label_9.setText(_translate("ThreePhaseSettingsWidget", "right limit"))
         self.reset_defaults_button.setText(_translate("ThreePhaseSettingsWidget", "reset defaults"))
+        self.groupBox_3.setTitle(_translate("ThreePhaseSettingsWidget", "Advanced"))
+        self.label_11.setText(_translate("ThreePhaseSettingsWidget", "Exponent [0, 1]"))
 from qt_ui.phasewidget import PhaseWidgetCalibration

@@ -579,7 +579,7 @@
            <widget class="QLineEdit" name="threephase_carrier_axis"/>
           </item>
           <item row="5" column="1">
-           <widget class="QLineEdit" name="threephase_modulation_frequency_axis"/>
+           <widget class="QLineEdit" name="threephase_vibration_frequency_axis"/>
           </item>
           <item row="1" column="2">
            <widget class="QDoubleSpinBox" name="threephase_alpha_min">
@@ -684,21 +684,21 @@
            </widget>
           </item>
           <item row="5" column="2">
-           <widget class="QDoubleSpinBox" name="threephase_modulation_frequency_min">
+           <widget class="QDoubleSpinBox" name="threephase_vibration_frequency_min">
             <property name="maximum">
              <double>100.000000000000000</double>
             </property>
            </widget>
           </item>
           <item row="5" column="3">
-           <widget class="QDoubleSpinBox" name="threephase_modulation_frequency_max">
+           <widget class="QDoubleSpinBox" name="threephase_vibration_frequency_max">
             <property name="maximum">
              <double>100.000000000000000</double>
             </property>
            </widget>
           </item>
           <item row="5" column="4">
-           <widget class="QCheckBox" name="threephase_modulation_frequency_enabled">
+           <widget class="QCheckBox" name="threephase_vibration_frequency_enabled">
             <property name="text">
              <string/>
             </property>

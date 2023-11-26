@@ -22,6 +22,8 @@ SETTING_TRANSFORM_LIMIT_BOTTOM = 'threephase_transform/limit_bottom'
 SETTING_TRANSFORM_LIMIT_LEFT = 'threephase_transform/limit_left'
 SETTING_TRANSFORM_LIMIT_RIGHT = 'threephase_transform/limit_right'
 
+SETTING_THREEPHASE_EXPONENT = 'threephase_transform/exponent'
+
 
 class ThreePhaseSettingsWidget(QtWidgets.QWidget, Ui_ThreePhaseSettingsWidget):
     def __init__(self):
@@ -41,6 +43,9 @@ class ThreePhaseSettingsWidget(QtWidgets.QWidget, Ui_ThreePhaseSettingsWidget):
         self.limit_left.setValue(self.settings.value(SETTING_TRANSFORM_LIMIT_LEFT, -1.0, float))
         self.limit_right.setValue(self.settings.value(SETTING_TRANSFORM_LIMIT_RIGHT, 1.0, float))
 
+        self.groupBox_3.setVisible(False)
+        self.exponent.setValue(self.settings.value(SETTING_THREEPHASE_EXPONENT, 0.0, float))
+
         self.settings_changed()
 
         self.neutral.valueChanged.connect(self.settings_changed)
@@ -54,6 +59,8 @@ class ThreePhaseSettingsWidget(QtWidgets.QWidget, Ui_ThreePhaseSettingsWidget):
         self.limit_bottom.valueChanged.connect(self.settings_changed)
         self.limit_right.valueChanged.connect(self.settings_changed)
         self.limit_left.valueChanged.connect(self.settings_changed)
+
+        self.exponent.valueChanged.connect(self.settings_changed)
 
         self.phase_widget_calibration.calibrationParametersChanged.connect(self.calibration_phase_diagram_changed)
 
@@ -104,6 +111,7 @@ class ThreePhaseSettingsWidget(QtWidgets.QWidget, Ui_ThreePhaseSettingsWidget):
         self.settings.setValue(SETTING_TRANSFORM_LIMIT_BOTTOM, self.limit_bottom.value())
         self.settings.setValue(SETTING_TRANSFORM_LIMIT_LEFT, self.limit_left.value())
         self.settings.setValue(SETTING_TRANSFORM_LIMIT_RIGHT, self.limit_right.value())
+        self.settings.setValue(SETTING_THREEPHASE_EXPONENT, self.exponent.value())
 
         params = ThreePhaseTransformParameters(
             self.groupBox_2.isChecked(),
@@ -113,6 +121,7 @@ class ThreePhaseSettingsWidget(QtWidgets.QWidget, Ui_ThreePhaseSettingsWidget):
             self.limit_bottom.value(),
             self.limit_left.value(),
             self.limit_right.value(),
+            self.exponent.value()
         )
         self.threePhaseTransformChanged.emit(params)
 
