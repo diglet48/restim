@@ -1,0 +1,28 @@
+# useful commands
+
+pyqt5-tools designer
+
+pyuic5  -o .\qt_ui\main_window_ui.py .\designer\mainwindow.ui
+pyuic5  -o .\qt_ui\waveform_details_widget_ui.py .\designer\waveformdetailswidget.ui
+pyuic5  -o .\qt_ui\funscript_conversion_ui.py .\designer\funscriptconversiondialog.ui
+pyuic5  -o .\qt_ui\volume_control_widget_ui.py .\designer\volumecontrolwidget.ui
+pyuic5  -o .\qt_ui\preferences_dialog_ui.py .\designer\preferencesdialog.ui
+pyuic5  -o .\qt_ui\three_phase_settings_widget.py .\designer\threephasesettingswidget.ui
+pyuic5  -o .\qt_ui\five_phase_settings_widget_ui.py .\designer\fivephasesettingswidget.ui
+pyuic5  -o .\qt_ui\audio_test_dialog_ui.py .\designer\audiotestdialog.ui
+
+
+# build instructions
+
+For 64 bit:
+
+git clone
+setup venv with pycharm
+./venv/Scripts/pip.exe install pyinstaller
+./venv/Scripts/pyinstaller.exe --clean --onefile --paths "." --add-data "resources/phase diagram bg.svg;resources/" --add-data "resources/favicon.png;resources/" --icon resources/favicon.ico --distpath dist-onefile restim.py
+
+for 32 bit:
+
+setup 32-bit venv with pycharm
+./venv-32/Scripts/pip.exe install pyinstaller
+./venv-32/Scripts/pyinstaller.exe --clean --onefile --paths "." --add-data "resources/phase diagram bg.svg;resources/" --add-data "resources/favicon.png;resources/" --icon resources/favicon.ico --distpath dist-onefile restim.py
