@@ -6,7 +6,7 @@ from stim_math.threephase_parameter_manager import ThreephaseParameterManager
 from PyQt5 import QtCore, QtWidgets
 from PyQt5.QtCore import QSettings
 
-from qt_ui.three_phase_settings_widget import Ui_ThreePhaseSettingsWidget
+from qt_ui.three_phase_settings_widget_ui import Ui_ThreePhaseSettingsWidget
 from qt_ui.stim_config import ThreePhaseCalibrationParameters, ThreePhaseTransformParameters
 
 
