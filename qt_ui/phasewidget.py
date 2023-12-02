@@ -8,7 +8,8 @@ from PyQt5.QtWidgets import QGraphicsView, QGraphicsEllipseItem
 from qt_ui.preferencesdialog import KEY_DISPLAY_FPS, KEY_DISPLAY_LATENCY
 from qt_ui import resources
 from stim_math.threephase_parameter_manager import ThreephaseParameterManager
-from stim_math.threephase_coordinate_transform import ThreePhaseCoordinateTransform
+from stim_math.threephase_coordinate_transform import ThreePhaseCoordinateTransform, \
+    ThreePhaseCoordinateTransformMapToEdge
 
 # Make sure that we are using QT5
 matplotlib.use('Qt5Agg')
@@ -143,6 +144,9 @@ class PhaseWidgetAlphaBeta(PhaseWidgetWithPoint):
         self.border.setPen(QColor.fromRgb(0, 0, 0))
         self.scene.addItem(self.border)
 
+        self.arc = ArcSegment(center=QPointF(*ab_to_item_pos(0, 0)), radius=80)
+        self.scene.addItem(self.arc)
+
         self.setRenderHint(QtGui.QPainter.Antialiasing)
 
         self.dot.setZValue(10)
@@ -168,6 +172,13 @@ class PhaseWidgetAlphaBeta(PhaseWidgetWithPoint):
                 self.config.transform_bottom_limit.last_value(),
                 self.config.transform_left_limit.last_value(),
                 self.config.transform_right_limit.last_value(),
+            )
+            alpha, beta = transform.inverse_transform(alpha, beta)
+        if self.config.map_to_edge_enabled.last_value():
+            transform = ThreePhaseCoordinateTransformMapToEdge(
+                self.config.map_to_edge_start.last_value(),
+                self.config.map_to_edge_length.last_value(),
+                self.config.map_to_edge_invert.last_value(),
             )
             alpha, beta = transform.inverse_transform(alpha, beta)
         norm = (alpha ** 2 + beta ** 2) ** .5
@@ -205,6 +216,12 @@ class PhaseWidgetAlphaBeta(PhaseWidgetWithPoint):
                 self.config.transform_left_limit.last_value(),
                 self.config.transform_right_limit.last_value(),
             )
+        elif self.config.map_to_edge_enabled.last_value():
+            transform = ThreePhaseCoordinateTransformMapToEdge(
+                self.config.map_to_edge_start.last_value(),
+                self.config.map_to_edge_length.last_value(),
+                self.config.map_to_edge_invert.last_value(),
+            )
         else:
             transform = ThreePhaseCoordinateTransform(0, 0, 1, -1, -1, 1)
 
@@ -240,6 +257,10 @@ class PhaseWidgetAlphaBeta(PhaseWidgetWithPoint):
             (self.config.transform_bottom_limit.last_value() - self.config.transform_top_limit.last_value()) * 83,
         )
         self.border.setVisible(bool(self.config.transform_enabled.last_value()))
+
+        self.arc.setStart(self.config.map_to_edge_start.last_value())
+        self.arc.setLength(self.config.map_to_edge_length.last_value())
+        self.arc.setVisible(bool(self.config.map_to_edge_enabled.last_value()))
 
 
 class PhaseWidgetFocus(PhaseWidgetWithPoint):
@@ -345,6 +366,43 @@ class Path(QtWidgets.QGraphicsPathItem):
 
         if triangle_source is not None:
             painter.drawPolyline(triangle_source)
+
+
+class ArcSegment(QtWidgets.QGraphicsPathItem):
+    def __init__(self, center: QtCore.QPointF, radius: int, *args, **kwargs):
+        super(ArcSegment, self).__init__(*args, **kwargs)
+
+        self._center = center
+        self._radius = radius
+        self._start = 0
+        self._length = 0
+
+        self._arrow_height = 5
+        self._arrow_width = 4
+
+        self._enabled = True
+
+    def setStart(self, start: float):
+        self._start = start
+        self.update()
+
+    def setLength(self, length: float):
+        self._length = length
+        self.update()
+
+    def setEnabled(self, enabled):
+        self._enabled = enabled
+
+    def paint(self, painter: QtGui.QPainter, option, widget=None) -> None:
+        if not self._enabled:
+            return
+
+        painter.drawArc(
+            int(self._center.x()) - self._radius,
+            int(self._center.y()) - self._radius,
+            2 * self._radius,
+            2 * self._radius,
+            int(16 * (-self._start + 90)), int(16 * -self._length))
 
 
 class PhaseWidgetCalibration(PhaseWidgetBase):

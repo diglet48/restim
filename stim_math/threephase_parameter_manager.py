@@ -114,6 +114,10 @@ class ThreephaseParameterManager():
         self.transform_left_limit = InstantParameter(-1.0)
         self.transform_right_limit = InstantParameter(1.0)
         self.threephase_exponent = InstantParameter(0.0)
+        self.map_to_edge_enabled = InstantParameter(0.0)
+        self.map_to_edge_start = InstantParameter(0.0)
+        self.map_to_edge_length = InstantParameter(0.0)
+        self.map_to_edge_invert = InstantParameter(0.0)
 
         self.focus_alpha = ContinuousParameter(0.0)
         self.focus_beta = ContinuousParameter(0.0)
@@ -176,7 +180,7 @@ class ThreephaseParameterManager():
         self.calibration_center.add(calibration_params.center)
 
     def set_three_phase_transform_parameters(self, transform_params: stim_config.ThreePhaseTransformParameters):
-        self.transform_enabled.add(transform_params.enabled)
+        self.transform_enabled.add(transform_params.transform_enabled)
         self.transform_rotation_degrees.add(transform_params.rotation_degrees)
         self.transform_mirror.add(transform_params.mirror)
         self.transform_top_limit.add(transform_params.top)
@@ -184,6 +188,10 @@ class ThreephaseParameterManager():
         self.transform_left_limit.add(transform_params.left)
         self.transform_right_limit.add(transform_params.right)
         self.threephase_exponent.add(transform_params.exponent)
+        self.map_to_edge_enabled.add(transform_params.map_to_edge_enabled)
+        self.map_to_edge_start.add(transform_params.map_to_edge_start)
+        self.map_to_edge_length.add(transform_params.map_to_edge_length)
+        self.map_to_edge_invert.add(transform_params.map_to_edge_invert)
 
     def set_vibration_parameters(self, vibration_parameters: stim_config.VibrationParameters):
         self.vibration_1_enabled.add(vibration_parameters.vibration_1_enabled)

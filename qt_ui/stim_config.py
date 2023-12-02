@@ -69,8 +69,10 @@ class ThreePhaseCalibrationParameters:
 
 
 class ThreePhaseTransformParameters:
-    def __init__(self, enabled, rotation_degrees, mirror, top, bottom, left, right, exponent):
-        self.enabled = enabled
+    def __init__(self, transform_enabled, rotation_degrees, mirror, top, bottom, left, right,
+                 exponent,
+                 map_to_edge_enabled, map_to_edge_start, map_to_edge_length, map_to_edge_mirror):
+        self.transform_enabled = transform_enabled
         self.rotation_degrees = rotation_degrees
         self.mirror = mirror
         self.top = top
@@ -78,6 +80,11 @@ class ThreePhaseTransformParameters:
         self.left = left
         self.right = right
         self.exponent = exponent
+
+        self.map_to_edge_enabled = map_to_edge_enabled
+        self.map_to_edge_start = map_to_edge_start
+        self.map_to_edge_length = map_to_edge_length
+        self.map_to_edge_invert = map_to_edge_mirror
 
 
 class FivePhaseCurrentParameters:

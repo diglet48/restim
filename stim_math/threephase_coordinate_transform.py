@@ -32,3 +32,19 @@ class ThreePhaseCoordinateTransform:
         matrix = np.linalg.inv(self.matrix)
         a, b, _ = matrix @ [alpha, beta, np.ones_like(alpha)]
         return a, b
+
+
+class ThreePhaseCoordinateTransformMapToEdge:
+    def __init__(self, start, length, invert):
+        self.start = start
+        self.end = start + length
+        if invert:
+            self.start, self.end = self.end, self.start
+
+    def transform(self, alpha, beta):
+        angle = self.start + (alpha * -0.5 + 0.5) * (self.end - self.start)
+        return np.cos(np.deg2rad(-angle)), np.sin(np.deg2rad(-angle))
+
+    def inverse_transform(self, alpha, beta):
+        # this function is surprisingly hard to implement... so we don't! Who cares?
+        return alpha, beta

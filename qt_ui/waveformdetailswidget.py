@@ -3,7 +3,8 @@ import matplotlib
 import numpy as np
 
 # Make sure that we are using QT5
-from stim_math.threephase_coordinate_transform import ThreePhaseCoordinateTransform
+from stim_math.threephase_coordinate_transform import ThreePhaseCoordinateTransform, \
+    ThreePhaseCoordinateTransformMapToEdge
 from stim_math.threephase_parameter_manager import ThreephaseParameterManager
 
 matplotlib.use('Qt5Agg')
@@ -55,6 +56,16 @@ class WaveformDetailsWidget(QtWidgets.QWidget, Ui_WaveformDetails):
                 self.config.transform_right_limit.last_value(),
             )
             [alpha], [beta] = transform.transform([alpha], [beta])
+            norm = np.clip(trig.norm(alpha, beta), 1.0, None)
+            alpha /= norm
+            beta /= norm
+        if self.config.map_to_edge_enabled.last_value():
+            transform = ThreePhaseCoordinateTransformMapToEdge(
+                self.config.map_to_edge_start.last_value(),
+                self.config.map_to_edge_length.last_value(),
+                self.config.map_to_edge_invert.last_value(),
+            )
+            alpha, beta = transform.transform(alpha, beta)
             norm = np.clip(trig.norm(alpha, beta), 1.0, None)
             alpha /= norm
             beta /= norm

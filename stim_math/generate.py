@@ -5,7 +5,7 @@ import numpy as np
 
 from stim_math import amplitude_modulation, limits, trig, point_calibration, threephase, fourphase, fivephase
 from stim_math.sine_generator import AngleGenerator, AngleGeneratorWithVaryingIPI, PulseGenerator
-from stim_math.threephase_coordinate_transform import ThreePhaseCoordinateTransform
+from stim_math.threephase_coordinate_transform import ThreePhaseCoordinateTransform, ThreePhaseCoordinateTransformMapToEdge
 from stim_math.threephase_exponent import ThreePhaseExponentAdjustment
 from stim_math.threephase_parameter_manager import ThreephaseParameterManager
 from qt_ui.preferencesdialog import KEY_AUDIO_CHANNEL_COUNT, KEY_AUDIO_CHANNEL_MAP
@@ -130,6 +130,16 @@ class ThreePhasePositionParameters:
                 self.params.transform_bottom_limit.last_value(),
                 self.params.transform_left_limit.last_value(),
                 self.params.transform_right_limit.last_value(),
+            )
+            alpha, beta = transform.transform(alpha, beta)
+            norm = np.clip(trig.norm(alpha, beta), 1.0, None)
+            alpha /= norm
+            beta /= norm
+        if self.params.map_to_edge_enabled.last_value():
+            transform = ThreePhaseCoordinateTransformMapToEdge(
+                self.params.map_to_edge_start.last_value(),
+                self.params.map_to_edge_length.last_value(),
+                self.params.map_to_edge_invert.last_value(),
             )
             alpha, beta = transform.transform(alpha, beta)
             norm = np.clip(trig.norm(alpha, beta), 1.0, None)

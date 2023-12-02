@@ -4,7 +4,7 @@ import numpy as np
 from stim_math.threephase_parameter_manager import ThreephaseParameterManager
 
 from PyQt5 import QtCore, QtWidgets
-from PyQt5.QtCore import QSettings
+from qt_ui import settings
 
 from qt_ui.three_phase_settings_widget_ui import Ui_ThreePhaseSettingsWidget
 from qt_ui.stim_config import ThreePhaseCalibrationParameters, ThreePhaseTransformParameters
@@ -29,22 +29,29 @@ class ThreePhaseSettingsWidget(QtWidgets.QWidget, Ui_ThreePhaseSettingsWidget):
     def __init__(self):
         QtWidgets.QWidget.__init__(self)
         self.setupUi(self)
-        self.settings = QSettings()
+        self.page.layout().setContentsMargins(0, 0, 0, 0)
+        self.page_2.layout().setContentsMargins(0, 0, 0, 0)
 
-        self.neutral.setValue(self.settings.value(SETTING_CALIBRATION_NEUTRAL, 0.0, float))
-        self.right.setValue(self.settings.value(SETTING_CALIBRATION_RIGHT, 0.0, float))
-        self.center.setValue(self.settings.value(SETTING_CALIBRATION_CENTER, 0.0, float))
+        self.combobox_type.setCurrentIndex(settings.threephase_transform_combobox_selection.get())
 
-        self.groupBox_2.setChecked(self.settings.value(SETTING_TRANSFORM_ENABLED, False, bool))
-        self.rotation.setValue(self.settings.value(SETTING_TRANSFORM_ROTATE, 0.0, float))
-        self.mirror.setChecked(self.settings.value(SETTING_TRANSFORM_MIRROR, False, bool))
-        self.limit_top.setValue(self.settings.value(SETTING_TRANSFORM_LIMIT_TOP, 1.0, float))
-        self.limit_bottom.setValue(self.settings.value(SETTING_TRANSFORM_LIMIT_BOTTOM, -1.0, float))
-        self.limit_left.setValue(self.settings.value(SETTING_TRANSFORM_LIMIT_LEFT, -1.0, float))
-        self.limit_right.setValue(self.settings.value(SETTING_TRANSFORM_LIMIT_RIGHT, 1.0, float))
+        self.neutral.setValue(settings.threephase_calibration_neutral.get())
+        self.right.setValue(settings.threephase_calibration_right.get())
+        self.center.setValue(settings.threephase_calibration_center.get())
+
+        self.groupBox_2.setChecked(settings.threephase_transform_enabled.get())
+        self.rotation.setValue(settings.threephase_transform_rotate.get())
+        self.mirror.setChecked(settings.threephase_transform_mirror.get())
+        self.limit_top.setValue(settings.threephase_transform_limit_top.get())
+        self.limit_bottom.setValue(settings.threephase_transform_limit_bottom.get())
+        self.limit_left.setValue(settings.threephase_transform_limit_left.get())
+        self.limit_right.setValue(settings.threephase_transform_limit_right.get())
+
+        self.mapToEdge_start.setValue(settings.threephase_map_to_edge_start.get())
+        self.mapToEdge_length.setValue(settings.threephase_map_to_edge_length.get())
+        self.mapToEdge_invert.setChecked(settings.threephase_map_to_edge_invert.get())
 
         self.groupBox_3.setVisible(False)
-        self.exponent.setValue(self.settings.value(SETTING_THREEPHASE_EXPONENT, 0.0, float))
+        self.exponent.setValue(settings.threephase_exponent.get())
 
         self.settings_changed()
 
@@ -53,12 +60,16 @@ class ThreePhaseSettingsWidget(QtWidgets.QWidget, Ui_ThreePhaseSettingsWidget):
         self.center.valueChanged.connect(self.settings_changed)
 
         self.groupBox_2.clicked.connect(self.settings_changed)
+        self.combobox_type.currentIndexChanged.connect(self.settings_changed)
         self.rotation.valueChanged.connect(self.settings_changed)
         self.mirror.stateChanged.connect(self.settings_changed)
         self.limit_top.valueChanged.connect(self.settings_changed)
         self.limit_bottom.valueChanged.connect(self.settings_changed)
         self.limit_right.valueChanged.connect(self.settings_changed)
         self.limit_left.valueChanged.connect(self.settings_changed)
+        self.mapToEdge_start.valueChanged.connect(self.settings_changed)
+        self.mapToEdge_length.valueChanged.connect(self.settings_changed)
+        self.mapToEdge_invert.toggled.connect(self.settings_changed)
 
         self.exponent.valueChanged.connect(self.settings_changed)
 
@@ -70,6 +81,9 @@ class ThreePhaseSettingsWidget(QtWidgets.QWidget, Ui_ThreePhaseSettingsWidget):
     threePhaseTransformChanged = QtCore.pyqtSignal(ThreePhaseTransformParameters)
 
     def settings_changed(self):
+        # update ui
+        self.stackedWidget.setCurrentIndex(self.combobox_type.currentIndex())
+
         # normalize angle
         self.rotation.setValue(self.rotation.value() % 360)
 
@@ -100,28 +114,37 @@ class ThreePhaseSettingsWidget(QtWidgets.QWidget, Ui_ThreePhaseSettingsWidget):
         )
         self.threePhaseSettingsChanged.emit(params)
 
-        self.settings.setValue(SETTING_CALIBRATION_NEUTRAL, self.neutral.value())
-        self.settings.setValue(SETTING_CALIBRATION_RIGHT, self.right.value())
-        self.settings.setValue(SETTING_CALIBRATION_CENTER, self.center.value())
+        settings.threephase_calibration_neutral.set(self.neutral.value())
+        settings.threephase_calibration_right.set(self.right.value())
+        settings.threephase_calibration_center.set(self.center.value())
 
-        self.settings.setValue(SETTING_TRANSFORM_ENABLED, self.groupBox_2.isChecked())
-        self.settings.setValue(SETTING_TRANSFORM_ROTATE, self.rotation.value())
-        self.settings.setValue(SETTING_TRANSFORM_MIRROR, self.mirror.isChecked())
-        self.settings.setValue(SETTING_TRANSFORM_LIMIT_TOP, self.limit_top.value())
-        self.settings.setValue(SETTING_TRANSFORM_LIMIT_BOTTOM, self.limit_bottom.value())
-        self.settings.setValue(SETTING_TRANSFORM_LIMIT_LEFT, self.limit_left.value())
-        self.settings.setValue(SETTING_TRANSFORM_LIMIT_RIGHT, self.limit_right.value())
-        self.settings.setValue(SETTING_THREEPHASE_EXPONENT, self.exponent.value())
+        settings.threephase_transform_combobox_selection.set(self.combobox_type.currentIndex())
+        settings.threephase_transform_enabled.set(self.groupBox_2.isChecked())
+        settings.threephase_transform_rotate.set(self.rotation.value())
+        settings.threephase_transform_mirror.set(self.mirror.isChecked())
+        settings.threephase_transform_limit_top.set(self.limit_top.value())
+        settings.threephase_transform_limit_bottom.set(self.limit_bottom.value())
+        settings.threephase_transform_limit_left.set(self.limit_left.value())
+        settings.threephase_transform_limit_right.set(self.limit_right.value())
+        settings.threephase_exponent.set(self.exponent.value())
+
+        settings.threephase_map_to_edge_start.set(self.mapToEdge_start.value())
+        settings.threephase_map_to_edge_length.set(self.mapToEdge_length.value())
+        settings.threephase_map_to_edge_invert.set(self.mapToEdge_invert.isChecked())
 
         params = ThreePhaseTransformParameters(
-            self.groupBox_2.isChecked(),
+            self.groupBox_2.isChecked() and self.combobox_type.currentIndex() == 0,
             self.rotation.value(),
             self.mirror.isChecked(),
             self.limit_top.value(),
             self.limit_bottom.value(),
             self.limit_left.value(),
             self.limit_right.value(),
-            self.exponent.value()
+            self.exponent.value(),
+            self.groupBox_2.isChecked() and self.combobox_type.currentIndex() == 1,
+            self.mapToEdge_start.value(),
+            self.mapToEdge_length.value(),
+            self.mapToEdge_invert.isChecked(),
         )
         self.threePhaseTransformChanged.emit(params)
 
