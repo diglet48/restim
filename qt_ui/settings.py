@@ -70,6 +70,6 @@ threephase_transform_limit_bottom = Setting('threephase_transform/limit_bottom',
 threephase_transform_limit_left = Setting('threephase_transform/limit_left', 0.0, float)
 threephase_transform_limit_right = Setting('threephase_transform/limit_right', 0.0, float)
 threephase_map_to_edge_start = Setting('threephase_transform/map_to_edge_start', 0.0, float)
-threephase_map_to_edge_length = Setting('threephase_transform/map_to_edge_length', 0.0, float)
+threephase_map_to_edge_length = Setting('threephase_transform/map_to_edge_length', 200, float)
 threephase_map_to_edge_invert = Setting('threephase_transform/map_to_edge_invert', False, bool)
 threephase_exponent = NonPersistentSetting(0.0)
