@@ -8,11 +8,17 @@ class Setting:
         self.default_value = default_value
         self.dtype = dtype
 
+        self.cache = None
+
     def get(self):
-        return QSettings().value(self.key, self.default_value, self.dtype)
+        if self.cache is None:
+            self.cache = QSettings().value(self.key, self.default_value, self.dtype)
+        return self.cache
 
     def set(self, value):
-        QSettings().setValue(self.key, value)
+        if value != self.cache:
+            QSettings().setValue(self.key, value)
+            self.cache = value
 
 
 class NonPersistentSetting:
