@@ -6,7 +6,7 @@ import json
 import time
 
 import stim_math.threephase
-from stim_math import point_calibration, generate, hardware_calibration, sine_generator, threephase
+from stim_math import sine_generator, threephase
 import funscript_1d_to_2d
 
 
@@ -15,9 +15,15 @@ def generate_more(theta, alpha, beta):
     center_calibration = stim_math.threephase.ThreePhaseCenterCalibration(-0.7)
     hw_calibration = threephase.ThreePhaseHardwareCalibration(-5.3, -0.7)
 
-    L, R = generate.generate_audio(alpha, beta, theta,
-                                   point_calibration=center_calibration,
-                                   hardware_calibration=hw_calibration)
+    L, R = threephase.ThreePhaseSignalGenerator.generate(theta, alpha, beta)
+
+    volume = 1
+    volume *= center_calibration.get_scale(alpha, beta)
+    L *= volume
+    R *= volume
+
+    L, R = hw_calibration.apply_transform(L, R)
+
     return L, R
 
 

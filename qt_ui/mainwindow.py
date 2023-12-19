@@ -6,7 +6,8 @@ from PyQt5.QtWidgets import (
     QApplication, QMainWindow, QStyle
 )
 
-
+import stim_math.audio_gen.continuous
+import stim_math.audio_gen.pulse_based
 from qt_ui.main_window_ui import Ui_MainWindow
 import qt_ui.motion_generation
 import qt_ui.audiogenerationwidget
@@ -23,7 +24,6 @@ from qt_ui.threephase_configuration import ThreephaseConfiguration
 
 from qt_ui.preferencesdialog import KEY_AUDIO_API, KEY_AUDIO_DEVICE, KEY_AUDIO_LATENCY
 import sounddevice as sd
-import stim_math.generate
 
 from qt_ui.device_selection_wizard import DeviceSelectionWizard, DeviceType
 
@@ -163,13 +163,13 @@ class Window(QMainWindow, Ui_MainWindow):
 
         device_selection = self.wizard.device_type()
         if device_selection == DeviceType.MK312:
-            algorithm = stim_math.generate.ThreePhaseAlgorithm(self.threephase_parameters)
+            algorithm = stim_math.audio_gen.continuous.ThreePhaseAlgorithm(self.threephase_parameters)
         elif device_selection == DeviceType.THREE_PHASE:
-            algorithm = stim_math.generate.DefaultThreePhasePulseBasedAlgorithm(self.threephase_parameters)
+            algorithm = stim_math.audio_gen.pulse_based.DefaultThreePhasePulseBasedAlgorithm(self.threephase_parameters)
         elif device_selection == DeviceType.FOUR_PHASE:
-            algorithm = stim_math.generate.FourPhaseAlgorithm(self.threephase_parameters)
+            algorithm = stim_math.audio_gen.continuous.FourPhaseAlgorithm(self.threephase_parameters)
         elif device_selection == DeviceType.FIVE_PHASE:
-            algorithm = stim_math.generate.FivePhaseAlgorithm(self.threephase_parameters)
+            algorithm = stim_math.audio_gen.continuous.FivePhaseAlgorithm(self.threephase_parameters)
         else:
             raise RuntimeError('unknown device type')
 
