@@ -3,7 +3,8 @@ from dataclasses import dataclass
 
 import numpy as np
 
-from stim_math import amplitude_modulation, limits, trig, point_calibration, threephase, fourphase, fivephase
+import stim_math.threephase
+from stim_math import amplitude_modulation, limits, trig, threephase, fourphase, fivephase
 from stim_math.sine_generator import AngleGenerator, AngleGeneratorWithVaryingIPI, PulseGenerator
 from stim_math.threephase_coordinate_transform import ThreePhaseCoordinateTransform, ThreePhaseCoordinateTransformMapToEdge
 from stim_math.threephase_exponent import ThreePhaseExponentAdjustment
@@ -188,7 +189,7 @@ class ThreePhaseAlgorithm:
         alpha, beta = self.position_params.get_position(command_timeline)
 
         # center scaling
-        center_calib = point_calibration.CenterCalibration(self.params.calibration_center.last_value())
+        center_calib = stim_math.threephase.ThreePhaseCenterCalibration(self.params.calibration_center.last_value())
         volume *= center_calib.get_scale(alpha, beta)
 
         # exponent transform
@@ -363,7 +364,7 @@ class ThreePhasePulseBasedAlgorithmBase:
         # pulse_envelope[:] = 1
 
         # center scaling
-        center_calib = point_calibration.CenterCalibration(self.params.calibration_center.last_value())
+        center_calib = stim_math.threephase.ThreePhaseCenterCalibration(self.params.calibration_center.last_value())
         pulse_envelope *= center_calib.get_scale(pulse.position[0], pulse.position[1])
 
         # hardware calibration

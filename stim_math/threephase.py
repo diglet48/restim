@@ -1,4 +1,6 @@
 import numpy as np
+
+from stim_math import trig
 from stim_math.transforms import (
     potential_to_channel_matrix, potential_to_channel_matrix_inv,
     ab_transform, ab_transform_inv)
@@ -228,3 +230,24 @@ class ThreePhaseHardwareCalibration:
         corrective_matrix = corrective_matrix * self.scaling_contant(transform)
         L, R = corrective_matrix[:2, :2] @ (L, R)
         return L, R
+
+
+class ThreePhaseCenterCalibration:
+    """
+    Reduce volume in the center of the phase diagram (linear scale).
+    """
+    def __init__(self, db_in_center):
+        self.db_in_center = db_in_center
+
+    def get_scale(self, x, y):
+        ratio = 10 ** (self.db_in_center / 10)
+        norm = trig.norm(x, y).clip(min=None, max=1)
+
+        if ratio <= 1:
+            edge = 1
+            center = ratio
+        else:
+            edge = 1/ratio
+            center = 1
+
+        return center + norm * (edge - center)

@@ -14,7 +14,7 @@ from PyQt5 import QtCore, QtWidgets, QtSvg
 from qt_ui.stim_config import PositionParameters, CalibrationParameters
 from qt_ui.waveform_details_widget_ui import Ui_WaveformDetails
 
-from stim_math import threephase, point_calibration, trig
+from stim_math import threephase, trig
 
 
 class WaveformDetailsWidget(QtWidgets.QWidget, Ui_WaveformDetails):
