@@ -1,126 +1,75 @@
-import time
-import numpy as np
-
 from net.tcode import TCodeCommand
 from qt_ui.threephase_configuration import ThreephaseConfiguration
 from qt_ui import stim_config
+from stim_math import axis
 
 
-class ContinuousParameter:
-    def __init__(self, init_value):
-        self.data = np.array([[0, init_value]])
-
-    def add(self, value, interval=0.0):
-        ts = time.time() + interval
-
-        # make sure data stays sorted
-        if len(self.data[-1]) > 0:
-            if self.data[-1, 0] == ts:
-                # overwrite last value
-                self.data[-1, 1] = value
-            elif self.data[-1, 0] > ts:
-                # delete any values >= interval
-                i = np.searchsorted(self.data[:, 0], ts)
-                self.data = self.data[:i]
-                self.data = np.vstack((self.data, [ts, value]))
-            else:
-                # just insert
-                self.data = np.vstack((self.data, [ts, value]))
-        else:
-            # just insert
-            self.data = np.vstack((self.data, [ts, value]))
-
-        # regularly cleanup stale data
-        if self.data.shape[0] > 100 and self.data[0][0] < (time.time() - 10):
-            cutoff = time.time() - 2
-            self.data = self.data[self.data[:, 0] > cutoff]
-
-    def interpolate(self, timeline):
-        return np.interp(timeline, self.data[:, 0], self.data[:, 1])
-
-    def last_value(self):
-        return self.data[-1, 1]
-
-
-class InstantParameter:
-    def __init__(self, init_value):
-        self.value = init_value
-
-    def add(self, value, interval=0.0):
-        self.value = value
-
-    def interpolate(self, timeline):
-        return self.value
-
-    def last_value(self):
-        return self.value
-
-
-class ThreephaseParameterManager():
+class ThreephaseParameterManager:
     def __init__(self, config: ThreephaseConfiguration):
         self.config = config
 
-        self.alpha = ContinuousParameter(0.0)
-        self.beta = ContinuousParameter(0.0)
-        self.volume = ContinuousParameter(1.0)
-        self.ramp_volume = ContinuousParameter(1.0)
-        self.inactivity_volume = ContinuousParameter(1.0)
+        # self.alpha = ContinuousParameter(0.0)
+        self.alpha = axis.LinearInterpolatedAxis(0.0)
+        self.beta = axis.LinearInterpolatedAxis(0.0)
+        self.volume = axis.LinearInterpolatedAxis(1.0)
+        self.ramp_volume = axis.LinearInterpolatedAxis(1.0)
+        self.inactivity_volume = axis.LinearInterpolatedAxis(1.0)
 
-        self.e1 = ContinuousParameter(0.0)
-        self.e2 = ContinuousParameter(0.0)
-        self.e3 = ContinuousParameter(0.0)
-        self.e4 = ContinuousParameter(0.0)
-        self.e5 = ContinuousParameter(0.0)
+        self.e1 = axis.LinearInterpolatedAxis(0.0)
+        self.e2 = axis.LinearInterpolatedAxis(0.0)
+        self.e3 = axis.LinearInterpolatedAxis(0.0)
+        self.e4 = axis.LinearInterpolatedAxis(0.0)
+        self.e5 = axis.LinearInterpolatedAxis(0.0)
 
-        self.resistance_t = InstantParameter(1.0)
-        self.resistance_s1 = InstantParameter(1.0)
-        self.resistance_s2 = InstantParameter(1.0)
-        self.resistance_s3 = InstantParameter(1.0)
-        self.resistance_s4 = InstantParameter(1.0)
-        self.resistance_s5 = InstantParameter(1.0)
+        self.resistance_t = axis.ConstantAxis(1.0)
+        self.resistance_s1 = axis.ConstantAxis(1.0)
+        self.resistance_s2 = axis.ConstantAxis(1.0)
+        self.resistance_s3 = axis.ConstantAxis(1.0)
+        self.resistance_s4 = axis.ConstantAxis(1.0)
+        self.resistance_s5 = axis.ConstantAxis(1.0)
 
-        self.mk312_carrier_frequency = InstantParameter(0.0)
+        self.mk312_carrier_frequency = axis.ConstantAxis(0.0)
 
-        self.vibration_1_enabled = InstantParameter(True)
-        self.vibration_1_frequency = InstantParameter(0.0)
-        self.vibration_1_strength = InstantParameter(0.0)
-        self.vibration_1_left_right_bias = InstantParameter(0.0)
-        self.vibration_1_high_low_bias = InstantParameter(0.0)
-        self.vibration_1_random = InstantParameter(0.0)
-        self.vibration_2_enabled = InstantParameter(True)
-        self.vibration_2_frequency = InstantParameter(0.0)
-        self.vibration_2_strength = InstantParameter(0.0)
-        self.vibration_2_left_right_bias = InstantParameter(0.0)
-        self.vibration_2_high_low_bias = InstantParameter(0.0)
-        self.vibration_2_random = InstantParameter(0.0)
+        self.vibration_1_enabled = axis.ConstantAxis(True)
+        self.vibration_1_frequency = axis.ConstantAxis(0.0)
+        self.vibration_1_strength = axis.ConstantAxis(0.0)
+        self.vibration_1_left_right_bias = axis.ConstantAxis(0.0)
+        self.vibration_1_high_low_bias = axis.ConstantAxis(0.0)
+        self.vibration_1_random = axis.ConstantAxis(0.0)
+        self.vibration_2_enabled = axis.ConstantAxis(True)
+        self.vibration_2_frequency = axis.ConstantAxis(0.0)
+        self.vibration_2_strength = axis.ConstantAxis(0.0)
+        self.vibration_2_left_right_bias = axis.ConstantAxis(0.0)
+        self.vibration_2_high_low_bias = axis.ConstantAxis(0.0)
+        self.vibration_2_random = axis.ConstantAxis(0.0)
 
-        self.pulse_carrier_frequency = InstantParameter(0.0)
-        self.pulse_frequency = InstantParameter(0.0)
-        self.pulse_width = InstantParameter(0.0)
-        self.pulse_interval_random = InstantParameter(0.0)
-        self.polarity = InstantParameter(0.0)
-        self.device_emulation_mode = InstantParameter(0.0)
-        self.pulse_phase_offset_increment = InstantParameter(0.0)
+        self.pulse_carrier_frequency = axis.ConstantAxis(0.0)
+        self.pulse_frequency = axis.ConstantAxis(0.0)
+        self.pulse_width = axis.ConstantAxis(0.0)
+        self.pulse_interval_random = axis.ConstantAxis(0.0)
+        self.polarity = axis.ConstantAxis(0.0)
+        self.device_emulation_mode = axis.ConstantAxis(0.0)
+        self.pulse_phase_offset_increment = axis.ConstantAxis(0.0)
 
-        self.calibration_neutral = InstantParameter(0.0)
-        self.calibration_right = InstantParameter(0.0)
-        self.calibration_center = InstantParameter(0.0)
+        self.calibration_neutral = axis.ConstantAxis(0.0)
+        self.calibration_right = axis.ConstantAxis(0.0)
+        self.calibration_center = axis.ConstantAxis(0.0)
 
-        self.transform_enabled = InstantParameter(0.0)
-        self.transform_rotation_degrees = InstantParameter(50.0)
-        self.transform_mirror = InstantParameter(0.0)
-        self.transform_top_limit = InstantParameter(1.0)
-        self.transform_bottom_limit = InstantParameter(-1.0)
-        self.transform_left_limit = InstantParameter(-1.0)
-        self.transform_right_limit = InstantParameter(1.0)
-        self.threephase_exponent = InstantParameter(0.0)
-        self.map_to_edge_enabled = InstantParameter(0.0)
-        self.map_to_edge_start = InstantParameter(0.0)
-        self.map_to_edge_length = InstantParameter(0.0)
-        self.map_to_edge_invert = InstantParameter(0.0)
+        self.transform_enabled = axis.ConstantAxis(0.0)
+        self.transform_rotation_degrees = axis.ConstantAxis(50.0)
+        self.transform_mirror = axis.ConstantAxis(0.0)
+        self.transform_top_limit = axis.ConstantAxis(1.0)
+        self.transform_bottom_limit = axis.ConstantAxis(-1.0)
+        self.transform_left_limit = axis.ConstantAxis(-1.0)
+        self.transform_right_limit = axis.ConstantAxis(1.0)
+        self.threephase_exponent = axis.ConstantAxis(0.0)
+        self.map_to_edge_enabled = axis.ConstantAxis(0.0)
+        self.map_to_edge_start = axis.ConstantAxis(0.0)
+        self.map_to_edge_length = axis.ConstantAxis(0.0)
+        self.map_to_edge_invert = axis.ConstantAxis(0.0)
 
-        self.focus_alpha = ContinuousParameter(0.0)
-        self.focus_beta = ContinuousParameter(0.0)
+        self.focus_alpha = axis.LinearInterpolatedAxis(0.0)
+        self.focus_beta = axis.LinearInterpolatedAxis(0.0)
 
     def set_configuration(self, config: ThreephaseConfiguration):
         self.config = config
