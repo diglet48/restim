@@ -9,6 +9,7 @@ class DeviceType(Enum):
     FOUR_PHASE = 2
     FIVE_PHASE = 3
     MK312 = 4
+    MODIFY_EXISTING_THREEPHASE_AUDIO = 5
 
 
 class PhaseSelectionWizardPage(QWizardPage):
@@ -23,22 +24,26 @@ class PhaseSelectionWizardPage(QWizardPage):
         self.stereo_p4_radio = QRadioButton("Stereostim, Four phase (experimental)")
         self.stereo_p5_radio = QRadioButton("Stereostim, Five phase (experimental)")
         self.mk312_radio = QRadioButton("312 or 2B")
+        self.modify_existing_radio = QRadioButton("Modify (calibrate) existing three phase audio")
 
         selection = DeviceType(settings.device_type.get())
         self.stereo_p3_radio.setChecked(selection == DeviceType.THREE_PHASE)
         self.stereo_p4_radio.setChecked(selection == DeviceType.FOUR_PHASE)
         self.stereo_p5_radio.setChecked(selection == DeviceType.FIVE_PHASE)
         self.mk312_radio.setChecked(selection == DeviceType.MK312)
+        self.modify_existing_radio.setChecked((selection == DeviceType.MODIFY_EXISTING_THREEPHASE_AUDIO))
 
         layout.addWidget(self.stereo_p3_radio)
         layout.addWidget(self.stereo_p4_radio)
         layout.addWidget(self.stereo_p5_radio)
         layout.addWidget(self.mk312_radio)
+        layout.addWidget(self.modify_existing_radio)
 
         self.stereo_p3_radio.toggled.connect(self.settings_changed)
         self.stereo_p4_radio.toggled.connect(self.settings_changed)
         self.stereo_p5_radio.toggled.connect(self.settings_changed)
         self.mk312_radio.toggled.connect(self.settings_changed)
+        self.modify_existing_radio.toggled.connect(self.settings_changed)
 
     def device_type(self) -> DeviceType:
         if self.stereo_p3_radio.isChecked():
@@ -49,6 +54,8 @@ class PhaseSelectionWizardPage(QWizardPage):
             return DeviceType.FIVE_PHASE
         elif self.mk312_radio.isChecked():
             return DeviceType.MK312
+        elif self.modify_existing_radio.isChecked():
+            return DeviceType.MODIFY_EXISTING_THREEPHASE_AUDIO
         else:
             return DeviceType.NONE
 

@@ -22,6 +22,14 @@ TCODE_LATENCY = 0.04  # delay tcode command. Worst-case command interval from mu
 # latency='high' 220-240ms    frames: 1136
 
 
+def float_to_int16(float_data):
+    return np.clip(np.array(float_data) * 2**15, -32768, 32767).astype(np.int16)
+
+
+def int16_to_float(int16_data):
+    return int16_data.astype(np.float32) / 2 ** 15
+
+
 class AudioGenerationWidget(QtWidgets.QWidget):
     def __init__(self, parent):
         QtWidgets.QWidget.__init__(self, parent)
@@ -78,6 +86,53 @@ class AudioGenerationWidget(QtWidgets.QWidget):
             print("Portaudio says: Success!")
             return
 
+    def start_modify(self, host_api_name, audio_input_device_name, audio_output_device_name, latency, algorithm):
+        output_device_index = -1
+        input_device_index = -1
+        for device in sd.query_devices():
+            if sd.query_hostapis(device['hostapi'])['name'] == host_api_name:
+                if device['name'] == audio_input_device_name:
+                    input_device_index = device['index']
+                    print(device)
+                if device['name'] == audio_output_device_name:
+                    output_device_index = device['index']
+                    print(device)
+
+        if output_device_index == -1 or input_device_index == -1:
+            print("Audio device no longer exists?")
+            return
+
+        device_info = sd.query_devices(output_device_index)
+        samplerate = device_info['default_samplerate']
+        self.sample_rate = int(samplerate)
+        device_channels = device_info['max_output_channels']
+
+        print('Selected audio device:', host_api_name, audio_input_device_name, audio_output_device_name, latency, samplerate)
+        for channel_count in algorithm.preferred_channel_count():
+            print(f"attempting to open audio device with {channel_count} channels.")
+            if device_channels < channel_count:
+                print(f"Device only has {device_channels} channels, so this won't work....")
+                continue
+
+            try:
+                self.stream = sd.Stream(
+                    samplerate=samplerate,
+                    device=(input_device_index, output_device_index),
+                    channels=channel_count,
+                    dtype=np.int16,
+                    callback=self.callback_rw,
+                    latency=latency,
+                )
+                self.algorithm = algorithm
+                self.stream.start()
+            except sd.PortAudioError as e:
+                print("Portaudio says:", e)
+                continue
+
+            print("Portaudio says: Success!")
+            return
+
+
     def stop(self):
         if self.stream is not None:
             self.stream.stop()
@@ -109,9 +164,14 @@ class AudioGenerationWidget(QtWidgets.QWidget):
         self.audio_latency += 0.2 * (new_audio_latency - self.audio_latency)
 
         # generate and save the audio
-        in_data_float = np.array(self.algorithm.generate_audio(self.sample_rate, timeline, command_timeline)).T
-        in_data_int16 = np.clip(in_data_float * 2**15, -32768, 32767).astype(np.int16)
+        out_data_float = np.array(self.algorithm.generate_audio(self.sample_rate, timeline, command_timeline)).T
+        out_data_int16 = np.clip(out_data_float * 2**15, -32768, 32767).astype(np.int16)
         for in_channel, out_channel in enumerate(self.algorithm.channel_mapping(outdata.shape[1])):
-            outdata[:, out_channel] = in_data_int16[:, in_channel]
+            outdata[:, out_channel] = out_data_int16[:, in_channel]
 
+    def callback_rw(self, indata, outdata, frames, time, status):
+        result_float = np.array(self.algorithm.modify_audio(int16_to_float(indata))).T
+        result = float_to_int16(result_float)
+        for in_channel, out_channel in enumerate(self.algorithm.channel_mapping(outdata.shape[1])):
+            outdata[:, out_channel] = result[:, in_channel]
 

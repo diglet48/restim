@@ -24,7 +24,8 @@ KEY_BUTTPLUG_WSDM_ADDRESS = "network/buttplug-wsdm-address"
 KEY_BUTTPLUG_WSDM_AUTO_EXPAND = "network/buttplug-wsdm-auto-expand"
 
 KEY_AUDIO_API = "audio/api-name"
-KEY_AUDIO_DEVICE = "audio/device-name"
+KEY_AUDIO_OUTPUT_DEVICE = "audio/device-name"
+KEY_AUDIO_INPUT_DEVICE = "audio/input-device-name"
 KEY_AUDIO_LATENCY = "audio/latency"
 
 KEY_AUDIO_CHANNEL_COUNT = "audio/channel-count"
@@ -45,7 +46,7 @@ class PreferencesDialog(QDialog, Ui_PreferencesDialog):
         self.loadSettings()
 
         self.audio_api.currentIndexChanged.connect(self.repopulate_audio_devices)
-        self.audio_device.currentIndexChanged.connect(self.refresh_audio_device_info)
+        self.audio_output_device.currentIndexChanged.connect(self.refresh_audio_device_info)
         self.buttonBox.clicked.connect(self.buttonClicked)
         self.commandLinkButton.clicked.connect(self.open_test_audio_dialog)
 
@@ -130,21 +131,30 @@ class PreferencesDialog(QDialog, Ui_PreferencesDialog):
         self.threephase_vibration_frequency_enabled.setChecked(self.threephase.vibration_1_frequency.enabled)
 
     def repopulate_audio_devices(self):
-        self.audio_device.clear()
-        default_audio_device_name = self.settings.value(KEY_AUDIO_DEVICE, sd.query_devices(sd.default.device[1])['name'])
+        self.audio_output_device.clear()
+        self.audio_input_device.clear()
+        default_audio_output_device_name = self.settings.value(KEY_AUDIO_OUTPUT_DEVICE, sd.query_devices(sd.default.device[1])['name'])
+        default_audio_input_device_name = self.settings.value(KEY_AUDIO_INPUT_DEVICE, sd.query_devices(sd.default.device[1])['name'])
         api_index = self.audio_api.currentIndex()
         for device in sd.query_devices():
             if (
                     device['hostapi'] == api_index and
                     device['max_output_channels'] >= 2
             ):
-                self.audio_device.addItem(device['name'])
-                if device['name'] == default_audio_device_name:
-                    self.audio_device.setCurrentIndex(self.audio_device.count() - 1)
+                self.audio_output_device.addItem(device['name'])
+                if device['name'] == default_audio_output_device_name:
+                    self.audio_output_device.setCurrentIndex(self.audio_output_device.count() - 1)
+            if (
+                    device['hostapi'] == api_index and
+                    device['max_input_channels'] >= 2
+            ):
+                self.audio_input_device.addItem(device['name'])
+                if device['name'] == default_audio_input_device_name:
+                    self.audio_input_device.setCurrentIndex(self.audio_input_device.count() - 1)
 
     def refresh_audio_device_info(self):
         api_index = self.audio_api.currentIndex()
-        device_name = self.audio_device.currentText()
+        device_name = self.audio_output_device.currentText()
         for device in sd.query_devices():
             if device['hostapi'] == api_index and device['name'] == device_name:
                 out_channels = device['max_output_channels']
@@ -175,7 +185,8 @@ class PreferencesDialog(QDialog, Ui_PreferencesDialog):
 
         # audio devices
         self.settings.setValue(KEY_AUDIO_API, self.audio_api.currentText())
-        self.settings.setValue(KEY_AUDIO_DEVICE, self.audio_device.currentText())
+        self.settings.setValue(KEY_AUDIO_OUTPUT_DEVICE, self.audio_output_device.currentText())
+        self.settings.setValue(KEY_AUDIO_INPUT_DEVICE, self.audio_input_device.currentText())
         self.settings.setValue(KEY_AUDIO_LATENCY, self.audio_latency.currentText())
         self.settings.setValue(KEY_AUDIO_CHANNEL_COUNT, self.channel_count.value())
         self.settings.setValue(KEY_AUDIO_CHANNEL_MAP, self.channel_map.text())
@@ -214,7 +225,7 @@ class PreferencesDialog(QDialog, Ui_PreferencesDialog):
 
     def open_test_audio_dialog(self):
         api_index = self.audio_api.currentIndex()
-        device_name = self.audio_device.currentText()
+        device_name = self.audio_output_device.currentText()
         device_index = -1
         for device in sd.query_devices():
             if device['hostapi'] == api_index and device['name'] == device_name:
