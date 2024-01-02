@@ -1,17 +1,21 @@
+from abc import ABC
+
 import numpy as np
 from PyQt5.QtCore import QSettings
 
 import stim_math.threephase
 from qt_ui.preferencesdialog import KEY_AUDIO_CHANNEL_COUNT, KEY_AUDIO_CHANNEL_MAP
 from stim_math import limits, threephase, fourphase, fivephase
+from stim_math.audio_gen.base_classes import AudioGenerationAlgorithm
 from stim_math.audio_gen.various import VibrationAlgorithm, ThreePhasePositionParameters
 from stim_math.sine_generator import AngleGenerator
 from stim_math.threephase_exponent import ThreePhaseExponentAdjustment
 from stim_math.threephase_parameter_manager import ThreephaseParameterManager
 
 
-class MultiPhaseAlgorithm:
+class MultiPhaseAlgorithm(AudioGenerationAlgorithm, ABC):
     def __init__(self):
+        super(MultiPhaseAlgorithm, self).__init__()
         settings = QSettings()
         self.channel_count = settings.value(KEY_AUDIO_CHANNEL_COUNT, 8, int)
         try:
@@ -21,7 +25,7 @@ class MultiPhaseAlgorithm:
             self.channel_map = [0, 1, 2, 3]
 
 
-class ThreePhaseAlgorithm:
+class ThreePhaseAlgorithm(AudioGenerationAlgorithm):
     def __init__(self, params: ThreephaseParameterManager):
         super().__init__()
         self.params = params
@@ -35,18 +39,18 @@ class ThreePhaseAlgorithm:
     def channel_mapping(self, channel_count):
         return [0, 1]
 
-    def generate_audio(self, samplerate, timeline: np.ndarray, command_timeline: np.ndarray):
+    def generate_audio(self, samplerate, steady_clock: np.ndarray, system_time_estimate: np.ndarray):
         volume = \
             np.clip(self.params.ramp_volume.last_value(), 0, 1) * \
             np.clip(self.params.volume.last_value(), 0, 1) * \
             np.clip(self.params.inactivity_volume.last_value(), 0, 1)
-        volume *= self.vibration.generate_vibration_signal(samplerate, len(timeline))
+        volume *= self.vibration.generate_vibration_signal(samplerate, len(steady_clock))
 
         frequency = self.params.mk312_carrier_frequency.last_value()
         frequency = np.clip(frequency, limits.Mk312CarrierFrequency.min, limits.Mk312CarrierFrequency.max)
-        theta_carrier = self.carrier_angle.generate(len(timeline), frequency, samplerate)
+        theta_carrier = self.carrier_angle.generate(len(steady_clock), frequency, samplerate)
 
-        alpha, beta = self.position_params.get_position(command_timeline)
+        alpha, beta = self.position_params.get_position(system_time_estimate)
 
         # center scaling
         center_calib = stim_math.threephase.ThreePhaseCenterCalibration(self.params.calibration_center.last_value())
@@ -70,7 +74,7 @@ class ThreePhaseAlgorithm:
 
 class FourPhaseAlgorithm(MultiPhaseAlgorithm):
     def __init__(self, params: ThreephaseParameterManager):
-        super().__init__(params)
+        super().__init__()
         self.params = params
         self.vibration = VibrationAlgorithm(params)
         self.carrier_angle = AngleGenerator()
@@ -83,21 +87,21 @@ class FourPhaseAlgorithm(MultiPhaseAlgorithm):
         return self.channel_map[:3]
         # return [0, 1, 2]
 
-    def generate_audio(self, samplerate, timeline: np.ndarray, command_timeline: np.ndarray):
+    def generate_audio(self, samplerate, steady_clock: np.ndarray, system_time_estimate: np.ndarray):
         volume = \
             np.clip(self.params.ramp_volume.last_value(), 0, 1) * \
             np.clip(self.params.volume.last_value(), 0, 1) * \
             np.clip(self.params.inactivity_volume.last_value(), 0, 1)
-        volume *= self.vibration.generate_vibration_signal(samplerate, len(timeline))
+        volume *= self.vibration.generate_vibration_signal(samplerate, len(steady_clock))
 
         frequency = self.params.mk312_carrier_frequency.last_value()
-        frequency = np.clip(frequency, limits.Mk312Carrier.min, limits.Mk312Carrier.max)
-        theta_carrier = self.carrier_angle.generate(len(timeline), frequency, samplerate)
+        frequency = np.clip(frequency, limits.Mk312CarrierFrequency.min, limits.Mk312CarrierFrequency.max)
+        theta_carrier = self.carrier_angle.generate(len(steady_clock), frequency, samplerate)
 
-        e1 = self.params.e1.interpolate(command_timeline)
-        e2 = self.params.e2.interpolate(command_timeline)
-        e3 = self.params.e3.interpolate(command_timeline)
-        e4 = self.params.e4.interpolate(command_timeline)
+        e1 = self.params.e1.interpolate(system_time_estimate)
+        e2 = self.params.e2.interpolate(system_time_estimate)
+        e3 = self.params.e3.interpolate(system_time_estimate)
+        e4 = self.params.e4.interpolate(system_time_estimate)
         fp = fourphase.FourPhaseSignalGenerator()
         a, b, c, d = fp.generate_from_electrode_amplitudes(theta_carrier, e1, e2, e3, e4)
         fpc = fourphase.FourPhaseHardwareCalibration(
@@ -116,7 +120,7 @@ class FourPhaseAlgorithm(MultiPhaseAlgorithm):
 
 class FivePhaseAlgorithm(MultiPhaseAlgorithm):
     def __init__(self, params: ThreephaseParameterManager):
-        super().__init__(params)
+        super().__init__()
         self.params = params
         self.vibration = VibrationAlgorithm(params)
         self.carrier_angle = AngleGenerator()
@@ -129,22 +133,22 @@ class FivePhaseAlgorithm(MultiPhaseAlgorithm):
         return self.channel_map[:4]
         # return [0, 1, 6, 7]
 
-    def generate_audio(self, samplerate, timeline: np.ndarray, command_timeline: np.ndarray):
+    def generate_audio(self, samplerate, steady_clock: np.ndarray, system_time_estimate: np.ndarray):
         volume = \
             np.clip(self.params.ramp_volume.last_value(), 0, 1) * \
             np.clip(self.params.volume.last_value(), 0, 1) * \
             np.clip(self.params.inactivity_volume.last_value(), 0, 1)
-        volume *= self.vibration.generate_vibration_signal(samplerate, len(timeline))
+        volume *= self.vibration.generate_vibration_signal(samplerate, len(steady_clock))
 
         frequency = self.params.mk312_carrier_frequency.last_value()
         frequency = np.clip(frequency, limits.Mk312CarrierFrequency.min, limits.Mk312CarrierFrequency.max)
-        theta_carrier = self.carrier_angle.generate(len(timeline), frequency, samplerate)
+        theta_carrier = self.carrier_angle.generate(len(steady_clock), frequency, samplerate)
 
-        e1 = self.params.e1.interpolate(command_timeline)
-        e2 = self.params.e2.interpolate(command_timeline)
-        e3 = self.params.e3.interpolate(command_timeline)
-        e4 = self.params.e4.interpolate(command_timeline)
-        e5 = self.params.e5.interpolate(command_timeline)
+        e1 = self.params.e1.interpolate(system_time_estimate)
+        e2 = self.params.e2.interpolate(system_time_estimate)
+        e3 = self.params.e3.interpolate(system_time_estimate)
+        e4 = self.params.e4.interpolate(system_time_estimate)
+        e5 = self.params.e5.interpolate(system_time_estimate)
         fp = fivephase.FivePhaseSignalGenerator()
         a, b, c, d, e = fp.generate_from_electrode_amplitudes(theta_carrier, e1, e2, e3, e4, e5)
         fpc = fivephase.FivePhaseHardwareCalibration(

@@ -132,7 +132,6 @@ class AudioGenerationWidget(QtWidgets.QWidget):
             print("Portaudio says: Success!")
             return
 
-
     def stop(self):
         if self.stream is not None:
             self.stream.stop()
@@ -144,27 +143,28 @@ class AudioGenerationWidget(QtWidgets.QWidget):
         current_time = patime.currentTime
         output_dac_time = patime.outputBufferDacTime
 
-        # generate timeline for carrier frequency, increasing at a consistent rate
-        timeline = np.linspace(self.frame_number / self.sample_rate,
-                               (self.frame_number + frames) / self.sample_rate,
-                               frames, endpoint=False)
+        # generate timeline that is guaranteed to increase at a steady rate.
+        # not referenced to any system clock
+        steady_clock = np.linspace(self.frame_number / self.sample_rate,
+                                   (self.frame_number + frames) / self.sample_rate,
+                                   frames, endpoint=False)
         self.frame_number += frames
 
         # generate timeline for tcode, try to synchronize to system timer...
         system_time = time.time()
-        offset = system_time - timeline[-1] - TCODE_LATENCY
+        offset = system_time - steady_clock[-1] - TCODE_LATENCY
         if abs(self.offset - offset) > 1:
             self.offset = offset
         else:
             self.offset = self.offset + 0.01 * (offset - self.offset)
-        command_timeline = timeline + self.offset
+        command_timeline = steady_clock + self.offset
 
         # audio latency for debugging purposes
         new_audio_latency = output_dac_time - current_time
         self.audio_latency += 0.2 * (new_audio_latency - self.audio_latency)
 
         # generate and save the audio
-        out_data_float = np.array(self.algorithm.generate_audio(self.sample_rate, timeline, command_timeline)).T
+        out_data_float = np.array(self.algorithm.generate_audio(self.sample_rate, steady_clock, command_timeline)).T
         out_data_int16 = np.clip(out_data_float * 2**15, -32768, 32767).astype(np.int16)
         for in_channel, out_channel in enumerate(self.algorithm.channel_mapping(outdata.shape[1])):
             outdata[:, out_channel] = out_data_int16[:, in_channel]

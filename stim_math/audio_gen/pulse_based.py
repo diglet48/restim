@@ -4,6 +4,7 @@ import numpy as np
 
 import stim_math.pulse
 import stim_math.threephase
+from stim_math.audio_gen.base_classes import AudioGenerationAlgorithm
 from stim_math import threephase
 from stim_math.audio_gen.various import ThreePhasePositionParameters, VibrationAlgorithm
 from stim_math.threephase_parameter_manager import ThreephaseParameterManager
@@ -29,8 +30,9 @@ class PulseInfo:
         return self.pulse_length_in_samples(samplerate) + self.pause_length_in_samples(samplerate)
 
 
-class ThreePhasePulseBasedAlgorithmBase:
+class ThreePhasePulseBasedAlgorithmBase(AudioGenerationAlgorithm):
     def __init__(self, params: ThreephaseParameterManager):
+        super(ThreePhasePulseBasedAlgorithmBase, self).__init__()
         self._sample_buffer = np.zeros((2, 0), dtype=np.float32)
         self.params = params
 
@@ -43,13 +45,13 @@ class ThreePhasePulseBasedAlgorithmBase:
     def next_pulse_data(self, samplerate, at_time: float, at_command_time: float) -> PulseInfo:
         raise NotImplementedError()
 
-    def generate_audio(self, samplerate, timeline: np.ndarray, command_timeline: np.ndarray):
-        while self._sample_buffer.shape[1] < len(timeline):
+    def generate_audio(self, samplerate, steady_clock: np.ndarray, system_time_estimate: np.ndarray):
+        while self._sample_buffer.shape[1] < len(steady_clock):
             i = self._sample_buffer.shape[1]
-            next_pulse = self.next_pulse_data(samplerate, timeline[i], command_timeline[i])
+            next_pulse = self.next_pulse_data(samplerate, steady_clock[i], system_time_estimate[i])
             self.add_next_pulse_to_audio_buffer(samplerate, next_pulse)
 
-        n = len(timeline)
+        n = len(steady_clock)
         L, R = self._sample_buffer[:, :n]
         self._sample_buffer = self._sample_buffer[:, n:]
         return L, R
@@ -95,7 +97,7 @@ class DefaultThreePhasePulseBasedAlgorithm(ThreePhasePulseBasedAlgorithmBase):
         self.vibration = VibrationAlgorithm(params)
         self.seq = 0
 
-    def next_pulse_data(self, samplerate, at_time: float, at_command_time: float) -> PulseInfo:
+    def next_pulse_data(self, samplerate, at_time: float, system_time_estimate: float) -> PulseInfo:
         self.seq += 1
 
         volume = \
@@ -103,22 +105,22 @@ class DefaultThreePhasePulseBasedAlgorithm(ThreePhasePulseBasedAlgorithmBase):
             np.clip(self.params.volume.last_value(), 0, 1) * \
             np.clip(self.params.inactivity_volume.last_value(), 0, 1)
 
-        pulse_carrier_freq = self.params.pulse_carrier_frequency.interpolate(at_command_time)
-        pulse_width = self.params.pulse_width.interpolate(at_command_time)
-        pulse_freq = self.params.pulse_frequency.interpolate(at_command_time)
+        pulse_carrier_freq = self.params.pulse_carrier_frequency.interpolate(system_time_estimate)
+        pulse_width = self.params.pulse_width.interpolate(system_time_estimate)
+        pulse_freq = self.params.pulse_frequency.interpolate(system_time_estimate)
         pause_duration = np.clip(1 / pulse_freq - pulse_width / pulse_carrier_freq, 0, None)
 
-        random = self.params.pulse_interval_random.interpolate(at_command_time)
+        random = self.params.pulse_interval_random.interpolate(system_time_estimate)
         pause_duration = pause_duration * np.random.uniform(1 - random, 1 + random)
 
-        alpha, beta = self.position_params.get_position(at_command_time)
+        alpha, beta = self.position_params.get_position(system_time_estimate)
 
         # exponent transform. TODO: decide whether to keep
         # transform = ThreePhaseExponentAdjustment(self.params.threephase_exponent.last_value())
         # volume *= transform.get_scale(alpha, beta)
 
         pulse = PulseInfo(
-            self.polarity(at_command_time),
+            self.polarity(system_time_estimate),
             self.phase_offset(),
             pulse_carrier_freq,
             pulse_width,

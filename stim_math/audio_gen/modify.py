@@ -1,8 +1,9 @@
 from stim_math import threephase
+from stim_math.audio_gen.base_classes import AudioModifyAlgorithm
 from stim_math.threephase_parameter_manager import ThreephaseParameterManager
 
 
-class ThreePhaseModifyAlgorithm:
+class ThreePhaseModifyAlgorithm(AudioModifyAlgorithm):
     def __init__(self, params: ThreephaseParameterManager):
         super().__init__()
         self.params = params
