@@ -80,6 +80,7 @@ class ThreephaseParameterManager:
             (self.config.beta, self.beta),
             (self.config.volume, self.volume),
             (self.config.carrier, self.mk312_carrier_frequency),
+            (self.config.carrier, self.pulse_carrier_frequency),
             (self.config.vibration_1_frequency, self.vibration_1_frequency)
         ]:
             if target.axis == cmd.axis_identifier:
