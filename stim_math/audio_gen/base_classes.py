@@ -13,9 +13,10 @@ class AudioGenerationAlgorithm(ABC):
     def generate_audio(self, samplerate, steady_clock: np.ndarray, system_time_estimate: np.ndarray):
         """
         :param samplerate: samplerate of the audio stream, like 44100 samples/s
-        :param steady_clock: time since the start of the stream, guaranteed to increase at monotonic rate
-        :param system_time_estimate: best-guess of the system time of the output sample. Guaranteed to increase
-            but not necessary at monotonic rate.
+        :param steady_clock: time since the start of the stream, guaranteed to increase at monotonic rate.
+            May increase slightly slower of faster (expected tolerance <0.01%) than actual time.
+        :param system_time_estimate: best-guess of the system time of the output sample.
+            May have large jumps, decrease between calls, etc.
         :return: tuple of audio channels
         """
         pass

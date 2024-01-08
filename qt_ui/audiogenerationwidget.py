@@ -36,14 +36,13 @@ class AudioGenerationWidget(QtWidgets.QWidget):
 
         self.sample_rate = 44100
         self.frame_number = 0
-        self.audio_latency = 0
         self.audio_channels = 2
 
         self.stream = None
 
         self.offset = 0
-        self.last_dac_time = 0
         self.algorithm = None
+        self.previous_error = []
 
     def start(self, host_api_name, audio_device_name, latency, algorithm):
         device_index = -1
@@ -69,15 +68,18 @@ class AudioGenerationWidget(QtWidgets.QWidget):
                 continue
 
             try:
+                self.frame_number = 0
                 self.stream = sd.OutputStream(
                     samplerate=samplerate,
                     device=device_index,
                     channels=channel_count,
-                    dtype=np.int16,
+                    dtype=np.float32,
                     callback=self.callback,
                     latency=latency,
                 )
+                self.sample_rate = self.stream.samplerate
                 self.algorithm = algorithm
+                self.offset = time.time() - TCODE_LATENCY
                 self.stream.start()
             except sd.PortAudioError as e:
                 print("Portaudio says:", e)
@@ -115,11 +117,12 @@ class AudioGenerationWidget(QtWidgets.QWidget):
                 continue
 
             try:
+                self.frame_number = 0
                 self.stream = sd.Stream(
                     samplerate=samplerate,
                     device=(input_device_index, output_device_index),
                     channels=channel_count,
-                    dtype=np.int16,
+                    dtype=np.float32,
                     callback=self.callback_rw,
                     latency=latency,
                 )
@@ -134,14 +137,12 @@ class AudioGenerationWidget(QtWidgets.QWidget):
 
     def stop(self):
         if self.stream is not None:
-            self.stream.stop()
+            self.stream.stop()  # blocks
             self.stream.close()
         self.stream = None
 
     def callback(self, outdata: np.ndarray, frames: int, patime, status: sd.CallbackFlags):
-        outdata.fill(0)
-        current_time = patime.currentTime
-        output_dac_time = patime.outputBufferDacTime
+        outdata.fill(0.0)
 
         # generate timeline that is guaranteed to increase at a steady rate.
         # not referenced to any system clock
@@ -150,28 +151,38 @@ class AudioGenerationWidget(QtWidgets.QWidget):
                                    frames, endpoint=False)
         self.frame_number += frames
 
-        # generate timeline for tcode, try to synchronize to system timer...
+        # generate timestamp of output samples
+        # slowly sync the timestamp to the actual audio rate.
+        # use equation: steady_clock[-1] + offset = system_time - TCODE_LATENCY
+        # minimize error to 0
+        # TODO: move tcode latency somewhere else.
         system_time = time.time()
         offset = system_time - steady_clock[-1] - TCODE_LATENCY
         if abs(self.offset - offset) > 1:
-            self.offset = offset
+            print('audio output desync (>1s). Stopping...')
+            # todo: set error flag, somewhere
+            self.previous_error = []
+            raise sd.CallbackAbort()
         else:
-            self.offset = self.offset + 0.01 * (offset - self.offset)
-        command_timeline = steady_clock + self.offset
+            dt = frames / self.sample_rate
+            error = offset - self.offset
+            self.previous_error.append(error)
+            self.previous_error = self.previous_error[-8:]
+            error = np.average(self.previous_error)  # very poor low-pass filter
+            max_adjustment = dt * 0.02   # adjust maximally 0.02 s/s
+            adjustment = np.clip(-max_adjustment, error * dt, max_adjustment)
+            # print(error * 1000, adjustment * 1000, adjustment * 44100 / frames * 100, self.previous_error)
+            old_offset = self.offset
+            self.offset += adjustment
+            command_timeline = steady_clock + np.linspace(old_offset, self.offset, frames, endpoint=False)
 
-        # audio latency for debugging purposes
-        new_audio_latency = output_dac_time - current_time
-        self.audio_latency += 0.2 * (new_audio_latency - self.audio_latency)
-
-        # generate and save the audio
-        out_data_float = np.array(self.algorithm.generate_audio(self.sample_rate, steady_clock, command_timeline)).T
-        out_data_int16 = np.clip(out_data_float * 2**15, -32768, 32767).astype(np.int16)
+        # generate audio
+        data = np.array(self.algorithm.generate_audio(self.sample_rate, steady_clock, command_timeline)).T
         for in_channel, out_channel in enumerate(self.algorithm.channel_mapping(outdata.shape[1])):
-            outdata[:, out_channel] = out_data_int16[:, in_channel]
+            outdata[:, out_channel] = data[:, in_channel]
 
     def callback_rw(self, indata, outdata, frames, time, status):
-        result_float = np.array(self.algorithm.modify_audio(int16_to_float(indata))).T
-        result = float_to_int16(result_float)
+        data = np.array(self.algorithm.modify_audio(np.array(indata))).T
         for in_channel, out_channel in enumerate(self.algorithm.channel_mapping(outdata.shape[1])):
-            outdata[:, out_channel] = result[:, in_channel]
+            outdata[:, out_channel] = data[:, in_channel]
 
