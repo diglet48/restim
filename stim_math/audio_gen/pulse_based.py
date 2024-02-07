@@ -6,8 +6,9 @@ import stim_math.pulse
 import stim_math.threephase
 from stim_math.audio_gen.base_classes import AudioGenerationAlgorithm
 from stim_math import threephase
-from stim_math.audio_gen.various import ThreePhasePositionParameters, VibrationAlgorithm
-from stim_math.threephase_parameter_manager import ThreephaseParameterManager
+from stim_math.audio_gen.various import ThreePhasePosition, VibrationAlgorithm
+from stim_math.audio_gen.params import ThreephasePulsebasedAlgorithmParams, ThreephaseCalibrationParams, SafetyParams
+from stim_math.axis import AbstractMediaSync
 
 
 @dataclass
@@ -31,16 +32,14 @@ class PulseInfo:
 
 
 class ThreePhasePulseBasedAlgorithmBase(AudioGenerationAlgorithm):
-    def __init__(self, params: ThreephaseParameterManager):
+    def __init__(self, media: AbstractMediaSync, calibration: ThreephaseCalibrationParams):
         super(ThreePhasePulseBasedAlgorithmBase, self).__init__()
         self._sample_buffer = np.zeros((2, 0), dtype=np.float32)
-        self.params = params
+        self.media = media
+        self.calibration = calibration
 
-    def preferred_channel_count(self):
-        return [2]
-
-    def channel_mapping(self, channel_count):
-        return [0, 1]
+    def channel_count(self) -> int:
+        return 2
 
     def next_pulse_data(self, samplerate, at_time: float, at_command_time: float) -> PulseInfo:
         raise NotImplementedError()
@@ -59,6 +58,10 @@ class ThreePhasePulseBasedAlgorithmBase(AudioGenerationAlgorithm):
     def add_next_pulse_to_audio_buffer(self, samplerate, pulse: PulseInfo):
         pulse_envelope = stim_math.pulse.create_pulse_envelope_half_circle(pulse.pulse_length_in_samples(samplerate))
 
+        if not self.media.is_playing():
+            # TODO: make more efficient
+            pulse_envelope *= 0
+
         pause = stim_math.pulse.create_pause(pulse.pause_length_in_samples(samplerate))
 
         theta = pulse.start_angle + np.linspace(0, 2 * np.pi * pulse.pulse_width_in_carrier_cycles,
@@ -71,12 +74,12 @@ class ThreePhasePulseBasedAlgorithmBase(AudioGenerationAlgorithm):
         # pulse_envelope[:] = 1
 
         # center scaling
-        center_calib = stim_math.threephase.ThreePhaseCenterCalibration(self.params.calibration_center.last_value())
+        center_calib = stim_math.threephase.ThreePhaseCenterCalibration(self.calibration.center.last_value())
         pulse_envelope *= center_calib.get_scale(pulse.position[0], pulse.position[1])
 
         # hardware calibration
-        hw = threephase.ThreePhaseHardwareCalibration(self.params.calibration_neutral.last_value(),
-                                                      self.params.calibration_right.last_value())
+        hw = threephase.ThreePhaseHardwareCalibration(self.calibration.neutral.last_value(),
+                                                      self.calibration.right.last_value())
         L, R = hw.apply_transform(L, R)
 
         pulse_envelope *= pulse.volume
@@ -91,21 +94,26 @@ class ThreePhasePulseBasedAlgorithmBase(AudioGenerationAlgorithm):
 
 
 class DefaultThreePhasePulseBasedAlgorithm(ThreePhasePulseBasedAlgorithmBase):
-    def __init__(self, params: ThreephaseParameterManager):
-        super().__init__(params)
-        self.position_params = ThreePhasePositionParameters(params)
-        self.vibration = VibrationAlgorithm(params)
+    def __init__(self, media: AbstractMediaSync, params: ThreephasePulsebasedAlgorithmParams, safety_limits: SafetyParams):
+        super().__init__(media, params.calibrate)
+        self.params = params
+        self.position_params = ThreePhasePosition(params.position, params.transform)
+        self.vibration = VibrationAlgorithm(params.vibration_1, params.vibration_2)
         self.seq = 0
+        self.safety_limits = safety_limits
 
     def next_pulse_data(self, samplerate, at_time: float, system_time_estimate: float) -> PulseInfo:
         self.seq += 1
 
         volume = \
-            np.clip(self.params.ramp_volume.last_value(), 0, 1) * \
-            np.clip(self.params.volume.last_value(), 0, 1) * \
-            np.clip(self.params.inactivity_volume.last_value(), 0, 1)
+            np.clip(self.params.volume.ramp.last_value(), 0, 1) * \
+            np.clip(self.params.volume.api.interpolate(system_time_estimate), 0, 1) * \
+            np.clip(self.params.volume.inactivity.last_value(), 0, 1)
 
-        pulse_carrier_freq = self.params.pulse_carrier_frequency.interpolate(system_time_estimate)
+        pulse_carrier_freq = self.params.carrier_frequency.interpolate(system_time_estimate)
+        pulse_carrier_freq = np.clip(pulse_carrier_freq,
+                                     self.safety_limits.minimum_carrier_frequency,
+                                     self.safety_limits.maximum_carrier_frequency)
         pulse_width = self.params.pulse_width.interpolate(system_time_estimate)
         pulse_freq = self.params.pulse_frequency.interpolate(system_time_estimate)
         pause_duration = np.clip(1 / pulse_freq - pulse_width / pulse_carrier_freq, 0, None)
@@ -178,7 +186,7 @@ class DefaultThreePhasePulseBasedAlgorithm(ThreePhasePulseBasedAlgorithmBase):
         return pulse
 
     def polarity(self, at_command_time):
-        polarity = self.params.polarity.interpolate(at_command_time)
+        polarity = self.params.pulse_polarity.interpolate(at_command_time)
         if polarity not in (-1, 1):
             polarity = np.random.choice((-1, 1))
         return polarity

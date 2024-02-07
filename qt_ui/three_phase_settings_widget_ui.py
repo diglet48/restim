@@ -206,4 +206,4 @@ class Ui_ThreePhaseSettingsWidget(object):
         self.label_14.setText(_translate("ThreePhaseSettingsWidget", "invert top/bottom"))
         self.groupBox_3.setTitle(_translate("ThreePhaseSettingsWidget", "Advanced"))
         self.label_11.setText(_translate("ThreePhaseSettingsWidget", "Exponent [0, 1]"))
-from qt_ui.phasewidget import PhaseWidgetCalibration
+from qt_ui.widgets.phase_widget import PhaseWidgetCalibration

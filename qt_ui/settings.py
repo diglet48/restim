@@ -1,4 +1,3 @@
-
 from PyQt5.QtCore import QSettings
 
 
@@ -31,8 +30,6 @@ class NonPersistentSetting:
     def set(self, value):
         pass
 
-
-device_type = Setting('global/device_type', 0, int)
 
 pulse_carrier_frequency = Setting('carrier/pulse_carrier_frequency', 700, float)
 pulse_frequency = Setting('carrier/pulse_frequency', 50, float)
@@ -79,3 +76,19 @@ threephase_map_to_edge_start = Setting('threephase_transform/map_to_edge_start',
 threephase_map_to_edge_length = Setting('threephase_transform/map_to_edge_length', 200, float)
 threephase_map_to_edge_invert = Setting('threephase_transform/map_to_edge_invert', False, bool)
 threephase_exponent = NonPersistentSetting(0.0)
+
+
+device_config_device_type = Setting('device_configuration/device_type', 0, int)
+device_config_waveform_type = Setting('device_configuration/waveform_type', 1, int)
+device_config_min_freq = Setting('device_configuration/min_frequency', 500, float)
+device_config_max_freq = Setting('device_configuration/max_frequency', 1000, float)
+
+media_sync_mpc_address = Setting('media_sync/mpc_address', 'http://127.0.0.1:13579', str)
+media_sync_heresphere_address = Setting('media_sync/heresphere_address', '192.168.1.???:23554', str)
+media_sync_vlc_address = Setting('media_sync/vlc_address', 'http://127.0.0.1:8080', str)
+media_sync_vlc_username = Setting('media_sync/vlc_username', '', str)
+media_sync_vlc_password = Setting('media_sync/vlc_password', '1234', str)
+
+
+audio_channel_count = Setting("audio/channel-count", 8, int)
+audio_channel_map = Setting("audio/channel-map", '0, 1, 2, 3', str)

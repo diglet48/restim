@@ -1,11 +1,14 @@
 import json
+import logging
 
 from PyQt5 import QtCore, QtWebSockets
 from PyQt5.QtCore import QSettings, QUrl
 
 from net.serialproxy import FunscriptExpander
 from net.tcode import TCodeCommand, InvalidTCodeException
-from qt_ui.preferencesdialog import KEY_BUTTPLUG_WSDM_ENABLED, KEY_BUTTPLUG_WSDM_ADDRESS, KEY_BUTTPLUG_WSDM_AUTO_EXPAND
+from qt_ui.preferences_dialog import KEY_BUTTPLUG_WSDM_ENABLED, KEY_BUTTPLUG_WSDM_ADDRESS, KEY_BUTTPLUG_WSDM_AUTO_EXPAND
+
+logger = logging.getLogger('restim.buttplug')
 
 DEVICE_ADDRESS = "00000000"
 
@@ -22,7 +25,7 @@ class ButtplugWsdmClient(QtCore.QObject):
         self.expander = FunscriptExpander()
 
         if not enabled:
-            print("Not starting buttplug WSDM client because disabled in settings.")
+            logger.info("Not starting buttplug WSDM client because disabled in settings.")
             return
 
         self.client = QtWebSockets.QWebSocket("restim")
@@ -33,10 +36,10 @@ class ButtplugWsdmClient(QtCore.QObject):
         self.client.open(QUrl(address))
 
     def error(self):
-        print('buttplug WSDM error:', self.client.errorString())
+        logger.error(f'buttplug WSDM error: {self.client.errorString()}')
 
     def connected(self):
-        print('Connected to buttplug WSDM.')
+        logger.info('Connected to buttplug WSDM.')
         self.client.sendTextMessage(
                 json.dumps({"identifier": "restim", "address": DEVICE_ADDRESS, "version": 0})
         )

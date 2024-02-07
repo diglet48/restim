@@ -366,7 +366,7 @@
   <customwidget>
    <class>PhaseWidgetCalibration</class>
    <extends>QGraphicsView</extends>
-   <header>qt_ui/phasewidget.h</header>
+   <header>qt_ui/widgets.phasewidget.h</header>
   </customwidget>
  </customwidgets>
  <resources/>

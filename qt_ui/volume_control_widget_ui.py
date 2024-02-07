@@ -86,6 +86,8 @@ class Ui_VolumeControlForm(object):
         self.doubleSpinBox_inactivity_ramp_time.setObjectName("doubleSpinBox_inactivity_ramp_time")
         self.formLayout.setWidget(1, QtWidgets.QFormLayout.FieldRole, self.doubleSpinBox_inactivity_ramp_time)
         self.verticalLayout.addWidget(self.groupBox_2)
+        spacerItem = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
+        self.verticalLayout.addItem(spacerItem)
 
         self.retranslateUi(VolumeControlForm)
         QtCore.QMetaObject.connectSlotsByName(VolumeControlForm)

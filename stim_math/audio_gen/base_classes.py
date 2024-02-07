@@ -3,10 +3,14 @@ import numpy as np
 
 
 class AudioGenerationAlgorithm(ABC):
-    def preferred_channel_count(self):
-        pass
-
-    def channel_mapping(self, channel_count):
+    @abstractmethod
+    def channel_count(self) -> int:
+        """
+        :return: The number of audio channels actually generated
+        2 for 3-phase
+        3 for 4-phase
+        4 for 5-phase
+        """
         pass
 
     @abstractmethod
@@ -23,10 +27,14 @@ class AudioGenerationAlgorithm(ABC):
 
 
 class AudioModifyAlgorithm(ABC):
-    def preferred_channel_count(self):
-        pass
-
-    def channel_mapping(self, channel_count):
+    @abstractmethod
+    def channel_count(self) -> int:
+        """
+        :return: The number of audio channels actually generated
+        2 for 3-phase
+        3 for 4-phase
+        4 for 5-phase
+        """
         pass
 
     @abstractmethod

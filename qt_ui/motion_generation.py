@@ -1,8 +1,12 @@
-from PyQt5 import QtCore, QtWebSockets
 import numpy as np
 import time
+import logging
 
-from qt_ui.stim_config import CalibrationParameters, VibrationParameters, PositionParameters
+from PyQt5 import QtCore
+
+from stim_math.axis import AbstractAxis
+
+logger = logging.getLogger('restim.motion_generation')
 
 
 class Pattern:
@@ -13,10 +17,12 @@ class Pattern:
     LARGE_CIRCLE = 4
 
 
-
 class MotionGenerator(QtCore.QObject):
-    def __init__(self, parent):
+    def __init__(self, parent, alpha: AbstractAxis, beta: AbstractAxis):
         super().__init__(parent)
+
+        self.alpha = alpha
+        self.beta = beta
 
         self.theta = 0
         self.velocity = 1.0
@@ -62,15 +68,14 @@ class MotionGenerator(QtCore.QObject):
         elif self.pattern == Pattern.MOUSE:
             return
         else:
-            print('unrecognized pattern:', self.pattern)
+            logger.error(f'unrecognized pattern: {self.pattern}')
             return
 
-        pos = PositionParameters(xy[0], xy[1])
-        self.positionChanged.emit(pos)
+        self.alpha.add(xy[0])
+        self.beta.add(xy[1])
 
     def updateMousePosition(self, x, y):
         if self.pattern == Pattern.MOUSE:
-            self.positionChanged.emit(PositionParameters(x, y))
-
-    positionChanged = QtCore.pyqtSignal(PositionParameters)
+            self.alpha.add(x)
+            self.beta.add(y)
 

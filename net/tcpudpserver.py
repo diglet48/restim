@@ -1,13 +1,16 @@
 import re
+import logging
 
 from PyQt5 import QtCore, QtNetwork
 from PyQt5.QtCore import QSettings
 from PyQt5.QtNetwork import QHostAddress
 
 from net.tcode import TCodeCommand, InvalidTCodeException
-from qt_ui.preferencesdialog import KEY_TCP_ENABLED, KEY_TCP_PORT, KEY_TCP_LOCALHOST_ONLY, KEY_UDP_ENABLED, KEY_UDP_PORT, KEY_UDP_LOCALHOST_ONLY
+from qt_ui.preferences_dialog import KEY_TCP_ENABLED, KEY_TCP_PORT, KEY_TCP_LOCALHOST_ONLY, KEY_UDP_ENABLED, KEY_UDP_PORT, KEY_UDP_LOCALHOST_ONLY
 
 from functools import partial
+
+logger = logging.getLogger('restim.tcp_udp')
 
 
 class TcpUdpServer(QtCore.QObject):
@@ -29,9 +32,9 @@ class TcpUdpServer(QtCore.QObject):
         if enabled:
             b = self.tcp_server.listen(address, port)
             if b:
-                print(f"TCP server active at localhost:{port}")
+                logger.info(f"TCP server active at localhost:{port}")
             else:
-                print("Unable to start TCP server:", self.tcp_server.errorString())
+                logger.error(f"Unable to start TCP server: {self.tcp_server.errorString()}")
             self.tcp_server.newConnection.connect(self.new_tcp_connection)
 
     def start_udp_server(self):
@@ -45,9 +48,9 @@ class TcpUdpServer(QtCore.QObject):
         if enabled:
             b = self.udp_socket.bind(address, port)
             if b:
-                print(f"UDP server active at localhost:{port}")
+                logger.info(f"UDP server active at localhost:{port}")
             else:
-                print("Unable to start UDP server:", self.udp_socket.errorString())
+                logger.error("Unable to start UDP server: {self.udp_socket.errorString()}")
             self.udp_socket.readyRead.connect(self.udp_data_received)
 
     def new_tcp_connection(self):

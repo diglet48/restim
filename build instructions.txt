@@ -2,6 +2,7 @@
 
 pyqt5-tools designer
 
+
 pyuic5  -o .\qt_ui\main_window_ui.py .\designer\mainwindow.ui
 pyuic5  -o .\qt_ui\waveform_details_widget_ui.py .\designer\waveformdetailswidget.ui
 pyuic5  -o .\qt_ui\funscript_conversion_ui.py .\designer\funscriptconversiondialog.ui
@@ -10,7 +11,14 @@ pyuic5  -o .\qt_ui\preferences_dialog_ui.py .\designer\preferencesdialog.ui
 pyuic5  -o .\qt_ui\three_phase_settings_widget_ui.py .\designer\threephasesettingswidget.ui
 pyuic5  -o .\qt_ui\five_phase_settings_widget_ui.py .\designer\fivephasesettingswidget.ui
 pyuic5  -o .\qt_ui\audio_test_dialog_ui.py .\designer\audiotestdialog.ui
+pyuic5  -o .\qt_ui\media_settings_widget_ui.py .\designer\mediasettingswidget.ui
+pyuic5  -o .\qt_ui\audio_write_dialog_ui.py .\designer\audiowritedialog.ui
 
+pyuic5  -o .\qt_ui\device_wizard\type_select_ui.py .\designer\device_wizard\type_select.ui
+pyuic5  -o .\qt_ui\device_wizard\waveform_select_ui.py .\designer\device_wizard\waveform_select.ui
+pyuic5  -o .\qt_ui\device_wizard\safety_limits_ui.py .\designer\device_wizard\safety_limits.ui
+
+pyrcc5 .\resources\restim.qrc -o restim_rc.py
 
 # build instructions
 

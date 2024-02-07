@@ -1,0 +1,20 @@
+from PyQt5.QtWidgets import QWizardPage
+
+from qt_ui.device_wizard.type_select_ui import Ui_WizardPageDeviceType
+
+
+class WizardPageDeviceType(QWizardPage, Ui_WizardPageDeviceType):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setupUi(self)
+
+        self.three_phase_radio.toggled.connect(self.completeChanged)
+        self.four_phase_radio.toggled.connect(self.completeChanged)
+        self.five_phase_radio.toggled.connect(self.completeChanged)
+
+    def isComplete(self) -> bool:
+        return any([
+                self.three_phase_radio.isChecked(),
+                self.four_phase_radio.isChecked(),
+                self.five_phase_radio.isChecked()
+        ])

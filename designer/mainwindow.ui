@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>764</width>
-    <height>624</height>
+    <width>767</width>
+    <height>564</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -19,245 +19,266 @@
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QHBoxLayout" name="horizontalLayout">
+    <property name="leftMargin">
+     <number>0</number>
+    </property>
+    <property name="topMargin">
+     <number>0</number>
+    </property>
+    <property name="rightMargin">
+     <number>0</number>
+    </property>
+    <property name="bottomMargin">
+     <number>0</number>
+    </property>
     <item>
-     <widget class="QFrame" name="frame">
-      <property name="sizePolicy">
-       <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
-        <horstretch>0</horstretch>
-        <verstretch>0</verstretch>
-       </sizepolicy>
-      </property>
-      <property name="frameShape">
-       <enum>QFrame::StyledPanel</enum>
-      </property>
-      <property name="frameShadow">
-       <enum>QFrame::Raised</enum>
-      </property>
-      <layout class="QVBoxLayout" name="verticalLayout">
-       <item>
-        <widget class="PhaseWidgetAlphaBeta" name="graphicsView">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-         <property name="minimumSize">
-          <size>
-           <width>200</width>
-           <height>200</height>
-          </size>
-         </property>
-         <property name="maximumSize">
-          <size>
-           <width>200</width>
-           <height>200</height>
-          </size>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QGroupBox" name="groupBox_3">
-         <property name="title">
-          <string>volume</string>
-         </property>
-         <layout class="QVBoxLayout" name="verticalLayout_7">
-          <item>
-           <widget class="VolumeWidget" name="progressBar_volume">
-            <property name="value">
-             <number>24</number>
-            </property>
-           </widget>
-          </item>
-         </layout>
-        </widget>
-       </item>
-       <item>
-        <widget class="QGroupBox" name="groupBox">
-         <property name="title">
-          <string>Pattern generator</string>
-         </property>
-         <layout class="QVBoxLayout" name="verticalLayout_2">
-          <item>
-           <widget class="QComboBox" name="comboBox">
-            <item>
-             <property name="text">
-              <string>Mouse</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>Circle</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>A</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>B</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>C</string>
-             </property>
-            </item>
-           </widget>
-          </item>
-          <item>
-           <widget class="QDoubleSpinBox" name="doubleSpinBox">
-            <property name="singleStep">
-             <double>0.100000000000000</double>
-            </property>
-            <property name="value">
-             <double>1.000000000000000</double>
-            </property>
-           </widget>
-          </item>
-         </layout>
-        </widget>
-       </item>
-       <item>
-        <widget class="QGroupBox" name="groupBox_2">
-         <property name="title">
-          <string>Audio</string>
-         </property>
-         <layout class="QVBoxLayout" name="verticalLayout_4">
-          <item>
-           <widget class="QCommandLinkButton" name="startStopAudioButton">
-            <property name="text">
-             <string>Start audio</string>
-            </property>
-           </widget>
-          </item>
-         </layout>
-        </widget>
-       </item>
-       <item>
-        <spacer name="verticalSpacer">
-         <property name="orientation">
-          <enum>Qt::Vertical</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>20</width>
-           <height>40</height>
-          </size>
-         </property>
-        </spacer>
-       </item>
-      </layout>
-     </widget>
-    </item>
-    <item>
-     <widget class="QTabWidget" name="tabWidget">
-      <property name="enabled">
-       <bool>true</bool>
-      </property>
+     <widget class="QStackedWidget" name="stackedWidget">
       <property name="currentIndex">
-       <number>3</number>
+       <number>0</number>
       </property>
-      <widget class="ThreePhaseSettingsWidget" name="tab_threephase">
-       <attribute name="title">
-        <string>3-phase</string>
-       </attribute>
-      </widget>
-      <widget class="QWidget" name="tab_focus">
-       <property name="enabled">
-        <bool>true</bool>
-       </property>
-       <attribute name="title">
-        <string>Focus</string>
-       </attribute>
-       <widget class="PhaseWidgetFocus" name="graphicsView_2">
-        <property name="geometry">
-         <rect>
-          <x>60</x>
-          <y>50</y>
-          <width>256</width>
-          <height>192</height>
-         </rect>
-        </property>
-       </widget>
-      </widget>
-      <widget class="FivePhaseSettingsWidget" name="tab_fivephase">
-       <attribute name="title">
-        <string>4/5-phase</string>
-       </attribute>
-       <layout class="QVBoxLayout" name="verticalLayout_3"/>
-      </widget>
-      <widget class="CarrierSettingsWidget" name="tab_carrier">
-       <attribute name="title">
-        <string>Carrier settings</string>
-       </attribute>
-      </widget>
-      <widget class="PulseSettingsWidget" name="tab_pulse_settings">
-       <attribute name="title">
-        <string>Pulse settings</string>
-       </attribute>
-      </widget>
-      <widget class="QWidget" name="tab_volume">
-       <attribute name="title">
-        <string>Volume</string>
-       </attribute>
-       <layout class="QVBoxLayout" name="verticalLayout_6">
-        <property name="spacing">
-         <number>0</number>
-        </property>
-        <property name="leftMargin">
-         <number>0</number>
-        </property>
-        <property name="topMargin">
-         <number>0</number>
-        </property>
-        <property name="rightMargin">
-         <number>0</number>
-        </property>
-        <property name="bottomMargin">
-         <number>6</number>
-        </property>
+      <widget class="QWidget" name="page_control">
+       <layout class="QHBoxLayout" name="horizontalLayout_2">
         <item>
-         <widget class="VolumeControlWidget" name="volumeWidget" native="true"/>
+         <widget class="QFrame" name="frame">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="frameShape">
+           <enum>QFrame::StyledPanel</enum>
+          </property>
+          <property name="frameShadow">
+           <enum>QFrame::Raised</enum>
+          </property>
+          <layout class="QVBoxLayout" name="verticalLayout">
+           <item>
+            <widget class="PhaseWidgetAlphaBeta" name="graphicsView">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="minimumSize">
+              <size>
+               <width>200</width>
+               <height>200</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>200</width>
+               <height>200</height>
+              </size>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QGroupBox" name="groupBox_3">
+             <property name="title">
+              <string>volume</string>
+             </property>
+             <layout class="QVBoxLayout" name="verticalLayout_7">
+              <item>
+               <widget class="VolumeWidget" name="progressBar_volume">
+                <property name="value">
+                 <number>24</number>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </item>
+           <item>
+            <widget class="QGroupBox" name="groupBox">
+             <property name="title">
+              <string>Pattern generator</string>
+             </property>
+             <layout class="QVBoxLayout" name="verticalLayout_2">
+              <item>
+               <widget class="QComboBox" name="comboBox_patternSelect">
+                <item>
+                 <property name="text">
+                  <string>Mouse</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>Circle</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>A</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>B</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>C</string>
+                 </property>
+                </item>
+               </widget>
+              </item>
+              <item>
+               <widget class="QDoubleSpinBox" name="doubleSpinBox">
+                <property name="singleStep">
+                 <double>0.100000000000000</double>
+                </property>
+                <property name="value">
+                 <double>1.000000000000000</double>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </item>
+           <item>
+            <spacer name="verticalSpacer">
+             <property name="orientation">
+              <enum>Qt::Vertical</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>20</width>
+               <height>40</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+          </layout>
+         </widget>
         </item>
         <item>
-         <spacer name="verticalSpacer_2">
-          <property name="orientation">
-           <enum>Qt::Vertical</enum>
+         <widget class="QTabWidget" name="tabWidget">
+          <property name="enabled">
+           <bool>true</bool>
           </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>20</width>
-            <height>40</height>
-           </size>
+          <property name="currentIndex">
+           <number>5</number>
           </property>
-         </spacer>
+          <widget class="ThreePhaseSettingsWidget" name="tab_threephase">
+           <attribute name="title">
+            <string>3-phase</string>
+           </attribute>
+          </widget>
+          <widget class="QWidget" name="tab_focus">
+           <property name="enabled">
+            <bool>true</bool>
+           </property>
+           <attribute name="title">
+            <string>Focus</string>
+           </attribute>
+           <widget class="PhaseWidgetFocus" name="graphicsView_focus">
+            <property name="geometry">
+             <rect>
+              <x>60</x>
+              <y>50</y>
+              <width>256</width>
+              <height>192</height>
+             </rect>
+            </property>
+           </widget>
+          </widget>
+          <widget class="FivePhaseSettingsWidget" name="tab_fivephase">
+           <attribute name="title">
+            <string>4/5-phase</string>
+           </attribute>
+           <layout class="QVBoxLayout" name="verticalLayout_3"/>
+          </widget>
+          <widget class="CarrierSettingsWidget" name="tab_carrier">
+           <attribute name="title">
+            <string>Carrier settings</string>
+           </attribute>
+          </widget>
+          <widget class="PulseSettingsWidget" name="tab_pulse_settings">
+           <attribute name="title">
+            <string>Pulse settings</string>
+           </attribute>
+          </widget>
+          <widget class="VolumeControlWidget" name="tab_volume">
+           <attribute name="title">
+            <string>Volume</string>
+           </attribute>
+           <layout class="QVBoxLayout" name="verticalLayout_6">
+            <property name="spacing">
+             <number>0</number>
+            </property>
+            <property name="leftMargin">
+             <number>0</number>
+            </property>
+            <property name="topMargin">
+             <number>0</number>
+            </property>
+            <property name="rightMargin">
+             <number>0</number>
+            </property>
+            <property name="bottomMargin">
+             <number>6</number>
+            </property>
+           </layout>
+          </widget>
+          <widget class="VibrationSettingsWidget" name="tab_vibrate">
+           <attribute name="title">
+            <string>Vibration</string>
+           </attribute>
+          </widget>
+          <widget class="WaveformDetailsWidget" name="tab_details">
+           <attribute name="title">
+            <string>Details</string>
+           </attribute>
+          </widget>
+         </widget>
         </item>
        </layout>
       </widget>
-      <widget class="VibrationSettingsWidget" name="tab_vibrate">
-       <attribute name="title">
-        <string>Vibration</string>
-       </attribute>
+      <widget class="MediaSettingsWidget" name="page_media"/>
+      <widget class="QWidget" name="page_device">
+       <widget class="QLabel" name="label_3">
+        <property name="geometry">
+         <rect>
+          <x>100</x>
+          <y>90</y>
+          <width>261</width>
+          <height>31</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Restim doesn't have device configruation yet :(</string>
+        </property>
+       </widget>
       </widget>
-      <widget class="WaveformDetailsWidget" name="tab_details">
-       <attribute name="title">
-        <string>Details</string>
-       </attribute>
+      <widget class="QWidget" name="page_log">
+       <widget class="QLabel" name="label_2">
+        <property name="geometry">
+         <rect>
+          <x>80</x>
+          <y>70</y>
+          <width>221</width>
+          <height>31</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Restim doesn't have a log yet :(</string>
+        </property>
+       </widget>
       </widget>
      </widget>
     </item>
    </layout>
   </widget>
-  <widget class="QStatusBar" name="statusbar"/>
   <widget class="QMenuBar" name="menuBar">
    <property name="geometry">
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>764</width>
+     <width>767</width>
      <height>21</height>
     </rect>
    </property>
@@ -270,6 +291,32 @@
     <addaction name="actionPreferences"/>
    </widget>
    <addaction name="menuTools"/>
+  </widget>
+  <widget class="QToolBar" name="toolBar">
+   <property name="windowTitle">
+    <string>toolBar</string>
+   </property>
+   <property name="movable">
+    <bool>false</bool>
+   </property>
+   <property name="iconSize">
+    <size>
+     <width>65</width>
+     <height>48</height>
+    </size>
+   </property>
+   <property name="toolButtonStyle">
+    <enum>Qt::ToolButtonTextUnderIcon</enum>
+   </property>
+   <attribute name="toolBarArea">
+    <enum>LeftToolBarArea</enum>
+   </attribute>
+   <attribute name="toolBarBreak">
+    <bool>false</bool>
+   </attribute>
+   <addaction name="actionControl"/>
+   <addaction name="actionMedia"/>
+   <addaction name="actionStart"/>
   </widget>
   <action name="actionFunscript_conversion">
    <property name="text">
@@ -286,66 +333,147 @@
     <string>Device selection</string>
    </property>
   </action>
+  <action name="actionControl">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="../resources/restim.qrc">
+     <normaloff>:/restim/sliders_poly.svg</normaloff>:/restim/sliders_poly.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Live Control</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+1</string>
+   </property>
+  </action>
+  <action name="actionMedia">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="../resources/restim.qrc">
+     <normaloff>:/restim/film-1_poly.svg</normaloff>:/restim/film-1_poly.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Sync Media</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+2</string>
+   </property>
+  </action>
+  <action name="actionDevice">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="../resources/restim.qrc">
+     <normaloff>:/restim/plug-1_poly.svg</normaloff>:/restim/plug-1_poly.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Device</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+3</string>
+   </property>
+  </action>
+  <action name="actionStart">
+   <property name="icon">
+    <iconset>
+     <normaloff>:/newPrefix/play_poly.svg</normaloff>
+     <normalon>../resources/stop-sign_poly.svg</normalon>:/newPrefix/play_poly.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Start</string>
+   </property>
+  </action>
+  <action name="actionLog">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="../resources/restim.qrc">
+     <normaloff>:/restim/docs-1_poly.svg</normaloff>:/restim/docs-1_poly.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Log</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+4</string>
+   </property>
+  </action>
  </widget>
  <customwidgets>
   <customwidget>
    <class>CarrierSettingsWidget</class>
    <extends>QWidget</extends>
-   <header>qt_ui/carriersettingswidget.h</header>
+   <header>qt_ui/carrier_settings_widget.h</header>
    <container>1</container>
   </customwidget>
   <customwidget>
    <class>PhaseWidgetAlphaBeta</class>
    <extends>QGraphicsView</extends>
-   <header>qt_ui/phasewidget.h</header>
+   <header>qt_ui/widgets/phase_widget.h</header>
   </customwidget>
   <customwidget>
    <class>WaveformDetailsWidget</class>
    <extends>QWidget</extends>
-   <header>qt_ui/waveformdetailswidget.h</header>
+   <header>qt_ui/waveform_details_widget.h</header>
    <container>1</container>
   </customwidget>
   <customwidget>
    <class>VolumeControlWidget</class>
    <extends>QWidget</extends>
-   <header>qt_ui/volumecontrolwidget.h</header>
+   <header>qt_ui/volume_control_widget.h</header>
    <container>1</container>
   </customwidget>
   <customwidget>
    <class>VolumeWidget</class>
    <extends>QProgressBar</extends>
-   <header>qt_ui/volumewidget.h</header>
+   <header>qt_ui/widgets/volume_widget.h</header>
   </customwidget>
   <customwidget>
    <class>FivePhaseSettingsWidget</class>
    <extends>QWidget</extends>
-   <header>qt_ui/fivephasesettingswidget.h</header>
+   <header>qt_ui/five_phase_settings_widget.h</header>
    <container>1</container>
   </customwidget>
   <customwidget>
    <class>PhaseWidgetFocus</class>
    <extends>QGraphicsView</extends>
-   <header>qt_ui/phasewidget.h</header>
+   <header>qt_ui/widgets/phase_widget.h</header>
   </customwidget>
   <customwidget>
    <class>ThreePhaseSettingsWidget</class>
    <extends>QWidget</extends>
-   <header>qt_ui/threephasesettingswidget.h</header>
+   <header>qt_ui/three_phase_settings_widget.h</header>
    <container>1</container>
   </customwidget>
   <customwidget>
    <class>PulseSettingsWidget</class>
    <extends>QWidget</extends>
-   <header>qt_ui/pulsesettingswidget.h</header>
+   <header>qt_ui/pulse_settings_widget.h</header>
    <container>1</container>
   </customwidget>
   <customwidget>
    <class>VibrationSettingsWidget</class>
    <extends>QWidget</extends>
-   <header>qt_ui/vibrationsettingswidget.h</header>
+   <header>qt_ui/vibration_settings_widget.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>MediaSettingsWidget</class>
+   <extends>QWidget</extends>
+   <header>qt_ui/media_settings_widget.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>
- <resources/>
+ <resources>
+  <include location="../resources/restim.qrc"/>
+ </resources>
  <connections/>
 </ui>

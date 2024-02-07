@@ -1,11 +1,14 @@
 import re
+import logging
 
 from PyQt5 import QtCore, QtWebSockets, QtNetwork
 from PyQt5.QtCore import QSettings
 from PyQt5.QtNetwork import QHostAddress
 
 from net.tcode import TCodeCommand, InvalidTCodeException
-from qt_ui.preferencesdialog import KEY_WEBSOCKET_ENABLED, KEY_WEBSOCKET_PORT, KEY_WEBSOCKET_LOCALHOST_ONLY
+from qt_ui.preferences_dialog import KEY_WEBSOCKET_ENABLED, KEY_WEBSOCKET_PORT, KEY_WEBSOCKET_LOCALHOST_ONLY
+
+logger = logging.getLogger('restim.websocket')
 
 
 class WebSocketServer(QtCore.QObject):
@@ -19,16 +22,16 @@ class WebSocketServer(QtCore.QObject):
         localhost_only = settings.value(KEY_WEBSOCKET_LOCALHOST_ONLY, False, bool)
 
         if not enabled:
-            print("Not starting websocket server because disabled in settings.")
+            logger.info("Not starting websocket server because disabled in settings.")
             return
 
         address = QHostAddress.LocalHost if localhost_only else QHostAddress.Any
         self.server = QtWebSockets.QWebSocketServer("restim t-code server", 1)  #not secure
         b = self.server.listen(address, port)
         if b:
-            print(f"websocket server active at localhost:{port}")
+            logger.info(f"websocket server active at localhost:{port}")
         else:
-            print("Unable to start websocket server:", self.server.errorString())
+            logger.error(f"Unable to start websocket server: {self.server.errorString()}")
 
         self.server.newConnection.connect(self.new_connection)
 

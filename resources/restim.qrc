@@ -1,0 +1,20 @@
+<RCC>
+  <qresource prefix="restim">
+    <file>media_players/heresphere.png</file>
+    <file>arrow-round_poly.svg</file>
+    <file>trash.svg</file>
+    <file>wizard/continuous.png</file>
+    <file>wizard/pulse_based.png</file>
+    <file>pause-circle_poly.svg</file>
+    <file>play-circle_poly.svg</file>
+    <file>stop-circle_poly.svg</file>
+    <file>media_players/mpc-hc.png</file>
+    <file>media_players/vlc.svg</file>
+    <file>docs-1_poly.svg</file>
+    <file>film-1_poly.svg</file>
+    <file>stop-sign_poly.svg</file>
+    <file>play_poly.svg</file>
+    <file>plug-1_poly.svg</file>
+    <file>sliders_poly.svg</file>
+  </qresource>
+</RCC>
