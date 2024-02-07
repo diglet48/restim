@@ -75,7 +75,7 @@ class HereSphere(MediaSource):
         return state
 
     def readyRead(self):
-        if self.socket.bytesAvailable() >= 4:
+        while self.socket.bytesAvailable() >= 4:
             header = self.socket.peek(4)
             length = int.from_bytes(header, byteorder='little', signed=False)
             if length == 0:
