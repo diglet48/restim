@@ -50,7 +50,7 @@ class TcpUdpServer(QtCore.QObject):
             if b:
                 logger.info(f"UDP server active at localhost:{port}")
             else:
-                logger.error("Unable to start UDP server: {self.udp_socket.errorString()}")
+                logger.error(f"Unable to start UDP server: {self.udp_socket.errorString()}")
             self.udp_socket.readyRead.connect(self.udp_data_received)
 
     def new_tcp_connection(self):
