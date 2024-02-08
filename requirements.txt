@@ -4,4 +4,3 @@ sounddevice
 soundfile
 matplotlib
 PyQt5
-pydub  # TODO: remove
