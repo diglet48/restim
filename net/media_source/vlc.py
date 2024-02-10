@@ -223,7 +223,8 @@ class VLC(MediaSource):
         if xml.readNextStartElement():  # root node
             while xml.readNextStartElement():  # read playlist or media library element
                 attributes = xml.attributes()
-                if attributes.value('name') == 'Playlist':
+                # if attributes.value('name') == 'Playlist':    # only works if language is english
+                if attributes.value('id') == '1':               # playlist has ID 1
                     while xml.readNextStartElement():
                         attributes = xml.attributes()
                         id = attributes.value('id') # playlist id
