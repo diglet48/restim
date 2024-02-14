@@ -6,13 +6,17 @@ Refer to the [wiki](https://github.com/diglet48/restim/wiki) for help.
 
 ## Main features
 
-* Control signal amplitude/phase with mouse movement or synchronize to
-  video with [MultiFunPlayer](https://github.com/Yoooi0/MultiFunPlayer) or [Intiface Central](https://intiface.com/central/).
-* Calibrate signal characteristics for your specific hardware and electrode arrangement.
-* Modify carrier frequency and amplitude modulation.
+* Control e-stim signals with funscript or user interface.
+* Synchronize e-stim with video or games.
+* No more "recommended electrode placement". Calibrate signal for your preferred electrode configuration.
 
-## Setup
+## Installation
 
-Releases available for Windows.
+Windows: download the latest release package: https://github.com/diglet48/restim/releases
 
-Other platforms: run from source (requires python 3).
+Other platforms: run from source, requires python 3:
+
+```
+python3 -m pip install -r requirements.txt
+python3 restim.py
+```
