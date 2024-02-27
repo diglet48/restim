@@ -33,4 +33,4 @@ for 32 bit:
 
 setup 32-bit venv with pycharm
 ./venv-32/Scripts/pip.exe install pyinstaller
-./venv-32/Scripts/pyinstaller.exe --clean --onefile --paths "." --add-data "resources/phase diagram bg.svg;resources/" --add-data "resources/favicon.png;resources/" --icon resources/favicon.ico --distpath dist-onefile restim.py
+./venv-32/Scripts/pyinstaller.exe --clean --onefile --paths "." --add-data "resources/phase diagram bg.svg;resources/" --add-data "resources/favicon.png;resources/" --icon resources/favicon.ico --distpath dist-onefile-32 restim.py
