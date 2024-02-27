@@ -86,11 +86,24 @@ class HereSphere(MediaSource):
                 )
                 self.set_state(state)
 
-            elif self.socket.bytesAvailable() >= (4 + length):
+            elif self.socket.bytesAvailable() == (4 + length):
                 data = self.socket.read(4 + length)[4:]
                 js = json.loads(data.decode('utf-8'))
                 state = parse_reply(js)
                 self.set_state(state)
+
+            elif self.socket.bytesAvailable() > (4 + length):
+                self.socket.skip(4 + length)
+            elif self.socket.bytesAvailable() < (4 + length):
+                logger.error('invalid HereSphere data packet. Closing connection.')
+                # something went wrong. Purge data.
+                self.socket.close()
+                state = MediaStatusReport(
+                    timestamp=time.time(),
+                    connectionState=MediaConnectionState.NOT_CONNECTED,
+                )
+                self.set_state(state)
+                self.reconnect_timer.start(1000)
 
     def onError(self):
         if self.enabled:
