@@ -63,8 +63,8 @@ class AlgorithmFactory:
                 ),
                 transform=self.mainwindow.tab_threephase.transform_params,
                 calibrate=self.mainwindow.tab_threephase.calibrate_params,
-                vibration_1=self.mainwindow.tab_vibrate.vibration_1,
-                vibration_2=self.mainwindow.tab_vibrate.vibration_2,
+                vibration_1=self.get_axis_vib1_all(),
+                vibration_2=self.get_axis_vib2_all(),
                 volume=VolumeParams(
                     api=self.get_axis_volume_api(),
                     ramp=self.get_axis_volume_ramp(),
@@ -85,8 +85,8 @@ class AlgorithmFactory:
             FivephaseContinuousAlgorithmParams(
                 position=self.mainwindow.tab_fivephase.position,
                 calibrate=self.mainwindow.tab_fivephase.calibration,
-                vibration_1=self.mainwindow.tab_vibrate.vibration_1,
-                vibration_2=self.mainwindow.tab_vibrate.vibration_2,
+                vibration_1=self.get_axis_vib1_all(),
+                vibration_2=self.get_axis_vib2_all(),
                 volume=VolumeParams(
                     api=self.get_axis_volume_api(),
                     ramp=self.get_axis_volume_ramp(),
@@ -107,8 +107,8 @@ class AlgorithmFactory:
             FivephaseContinuousAlgorithmParams(
                 position=self.mainwindow.tab_fivephase.position,
                 calibrate=self.mainwindow.tab_fivephase.calibration,
-                vibration_1=self.mainwindow.tab_vibrate.vibration_1,
-                vibration_2=self.mainwindow.tab_vibrate.vibration_2,
+                vibration_1=self.get_axis_vib1_all(),
+                vibration_2=self.get_axis_vib2_all(),
                 volume=VolumeParams(
                     api=self.get_axis_volume_api(),
                     ramp=self.get_axis_volume_ramp(),
@@ -133,17 +133,17 @@ class AlgorithmFactory:
                 ),
                 transform=self.mainwindow.tab_threephase.transform_params,
                 calibrate=self.mainwindow.tab_threephase.calibrate_params,
-                vibration_1=self.mainwindow.tab_vibrate.vibration_1,
-                vibration_2=self.mainwindow.tab_vibrate.vibration_2,
+                vibration_1=self.get_axis_vib1_all(),
+                vibration_2=self.get_axis_vib2_all(),
                 volume=VolumeParams(
                     api=self.get_axis_volume_api(),
                     ramp=self.get_axis_volume_ramp(),
                     inactivity=self.get_axis_volume_inactivity(),
                 ),
                 carrier_frequency=self.get_axis_carrier_frequency(device),
-                pulse_frequency=self.mainwindow.tab_pulse_settings.axis_pulse_frequency,
-                pulse_width=self.mainwindow.tab_pulse_settings.axis_pulse_width,
-                pulse_interval_random=self.mainwindow.tab_pulse_settings.axis_pulse_interval_random,
+                pulse_frequency=self.get_axis_pulse_frequency(),
+                pulse_width=self.get_axis_pulse_width(),
+                pulse_interval_random=self.get_axis_pulse_interval_random(),
                 pulse_polarity=self.mainwindow.tab_pulse_settings.axis_pulse_polarity,
                 device_emulation_mode=self.mainwindow.tab_pulse_settings.axis_device_emulation_mode,
                 pulse_phase_offset_increment=self.mainwindow.tab_pulse_settings.axis_pulse_phase_offset_increment,
@@ -182,6 +182,78 @@ class AlgorithmFactory:
         else:
             raise RuntimeError('unknown waveform type')
         return self.get_axis_from_script_mapping(AxisEnum.CARRIER_FREQUENCY) or default
+
+    def get_axis_pulse_frequency(self):
+        return self.get_axis_from_script_mapping(AxisEnum.PULSE_FREQUENCY) or \
+               self.mainwindow.tab_pulse_settings.axis_pulse_frequency
+
+    def get_axis_pulse_width(self):
+        return self.get_axis_from_script_mapping(AxisEnum.PULSE_WIDTH) or \
+               self.mainwindow.tab_pulse_settings.axis_pulse_width
+
+    def get_axis_pulse_interval_random(self):
+        return self.get_axis_from_script_mapping(AxisEnum.PULSE_INTERVAL_RANDOM) or \
+               self.mainwindow.tab_pulse_settings.axis_pulse_interval_random
+
+    def get_axis_vib1_all(self):
+        return VibrationParams(
+            enabled=self.mainwindow.tab_vibrate.vibration_1.enabled,
+            frequency=self.get_axis_vib1_frequency(),
+            strength=self.get_axis_vib1_strength(),
+            left_right_bias=self.get_axis_vib1_left_right_bias(),
+            high_low_bias=self.get_axis_vib1_high_low_bias(),
+            random=self.get_axis_vib1_random(),
+        )
+
+    def get_axis_vib1_frequency(self):
+        return self.get_axis_from_script_mapping(AxisEnum.VIBRATION_1_FREQUENCY) or \
+               self.mainwindow.tab_vibrate.vibration_1.frequency
+
+    def get_axis_vib1_strength(self):
+        return self.get_axis_from_script_mapping(AxisEnum.VIBRATION_1_STRENGTH) or \
+               self.mainwindow.tab_vibrate.vibration_1.strength
+
+    def get_axis_vib1_left_right_bias(self):
+        return self.get_axis_from_script_mapping(AxisEnum.VIBRATION_1_LEFT_RIGHT_BIAS) or \
+               self.mainwindow.tab_vibrate.vibration_1.left_right_bias
+
+    def get_axis_vib1_high_low_bias(self):
+        return self.get_axis_from_script_mapping(AxisEnum.VIBRATION_1_HIGH_LOW_BIAS) or \
+               self.mainwindow.tab_vibrate.vibration_1.high_low_bias
+
+    def get_axis_vib1_random(self):
+        return self.get_axis_from_script_mapping(AxisEnum.VIBRATION_1_RANDOM) or \
+               self.mainwindow.tab_vibrate.vibration_1.random
+
+    def get_axis_vib2_all(self):
+        return VibrationParams(
+            enabled=self.mainwindow.tab_vibrate.vibration_2.enabled,
+            frequency=self.get_axis_vib2_frequency(),
+            strength=self.get_axis_vib2_strength(),
+            left_right_bias=self.get_axis_vib2_left_right_bias(),
+            high_low_bias=self.get_axis_vib2_high_low_bias(),
+            random=self.get_axis_vib2_random(),
+        )
+
+    def get_axis_vib2_frequency(self):
+        return self.get_axis_from_script_mapping(AxisEnum.VIBRATION_2_FREQUENCY) or \
+               self.mainwindow.tab_vibrate.vibration_2.frequency
+
+    def get_axis_vib2_strength(self):
+        return self.get_axis_from_script_mapping(AxisEnum.VIBRATION_2_STRENGTH) or \
+               self.mainwindow.tab_vibrate.vibration_2.strength
+
+    def get_axis_vib2_left_right_bias(self):
+        return self.get_axis_from_script_mapping(AxisEnum.VIBRATION_2_LEFT_RIGHT_BIAS) or \
+               self.mainwindow.tab_vibrate.vibration_2.left_right_bias
+
+    def get_axis_vib2_high_low_bias(self):
+        return self.get_axis_from_script_mapping(AxisEnum.VIBRATION_2_HIGH_LOW_BIAS) or \
+               self.mainwindow.tab_vibrate.vibration_2.high_low_bias
+
+    def get_axis_vib2_random(self):
+        return self.get_axis_from_script_mapping(AxisEnum.VIBRATION_2_RANDOM) or \
+               self.mainwindow.tab_vibrate.vibration_2.random
 
     def get_axis_from_script_mapping(self, axis: AxisEnum) -> AbstractAxis | None:
         if not self.load_funscripts:

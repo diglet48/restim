@@ -72,7 +72,7 @@ class MediaSettingsWidget(QtWidgets.QWidget, Ui_MediaSettingsWidget, metaclass=_
         header = self.treeView.header()
         header.setSectionResizeMode(0, QtWidgets.QHeaderView.ResizeToContents)
         header.setSectionResizeMode(1, QtWidgets.QHeaderView.Fixed)
-        header.resizeSection(1, 130)
+        header.resizeSection(1, 160)
         header.setSectionResizeMode(2, QtWidgets.QHeaderView.Fixed)
         header.resizeSection(2, 50)
 

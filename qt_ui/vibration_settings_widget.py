@@ -17,6 +17,7 @@ from stim_math.axis import create_temporal_axis
 from stim_math.audio_gen.params import VibrationParams
 
 from qt_ui import settings
+from qt_ui.axis_controller import AxisController, PercentAxisController
 
 
 class MyMplCanvas(FigureCanvas):
@@ -162,63 +163,94 @@ class VibrationSettingsWidget(QtWidgets.QWidget):
         gb2.setLayout(gb2_l)
         l.addWidget(gb2)
 
-        gb1.toggled.connect(self.settings_changed)
-        freq1_slider.valueChanged.connect(self.settings_changed)
-        mod1_slider.valueChanged.connect(self.settings_changed)
-        bias1_left_right_slider.valueChanged.connect(self.settings_changed)
-        bias1_high_low_slider.valueChanged.connect(self.settings_changed)
-        random1_slider.valueChanged.connect(self.settings_changed)
-        gb2.toggled.connect(self.settings_changed)
-        freq2_slider.valueChanged.connect(self.settings_changed)
-        mod2_slider.valueChanged.connect(self.settings_changed)
-        bias2_left_right_slider.valueChanged.connect(self.settings_changed)
-        bias2_high_low_slider.valueChanged.connect(self.settings_changed)
-        random2_slider.valueChanged.connect(self.settings_changed)
 
-        self.gb1 = gb1
-        self.freq1_slider = freq1_slider
-        self.mod1_slider = mod1_slider
-        self.bias1_left_right_slider = bias1_left_right_slider
-        self.bias1_high_low_slider = bias1_high_low_slider
-        self.random1_slider = random1_slider
-        self.gb2 = gb2
-        self.freq2_slider = freq2_slider
-        self.mod2_slider = mod2_slider
-        self.bias2_left_right_slider = bias2_left_right_slider
-        self.bias2_high_low_slider = bias2_high_low_slider
-        self.random2_slider = random2_slider
+        self.vib1_gb = gb1
+        self.vib1_freq_slider = freq1_slider
+        self.vib1_strength_slider = mod1_slider
+        self.vib1_left_right_slider = bias1_left_right_slider
+        self.vib1_high_low_slider = bias1_high_low_slider
+        self.vig1_random_slider = random1_slider
+        self.vib2_gb = gb2
+        self.vib2_freq_slider = freq2_slider
+        self.vib2_strength_slider = mod2_slider
+        self.vib2_left_right_slider = bias2_left_right_slider
+        self.vib2_high_low_slider = bias2_high_low_slider
+        self.vib2_random_slider = random2_slider
+
+        self.vib1_freq_controller = AxisController(self.vib1_freq_slider)
+        self.vib1_freq_controller.link_axis(self.vibration_1.frequency)
+
+        self.vib1_strength_controller = PercentAxisController(self.vib1_strength_slider)
+        self.vib1_strength_controller.link_axis(self.vibration_1.strength)
+
+        self.vib1_left_right_bias_controller = PercentAxisController(self.vib1_left_right_slider)
+        self.vib1_left_right_bias_controller.link_axis(self.vibration_1.left_right_bias)
+
+        self.vib1_high_low_bias_controller = PercentAxisController(self.vib1_high_low_slider)
+        self.vib1_high_low_bias_controller.link_axis(self.vibration_1.high_low_bias)
+
+        self.vib1_random_controller = PercentAxisController(self.vig1_random_slider)
+        self.vib1_random_controller.link_axis(self.vibration_1.random)
+
+        self.vib2_freq_controller = AxisController(self.vib2_freq_slider)
+        self.vib2_freq_controller.link_axis(self.vibration_2.frequency)
+
+        self.vib2_strength_controller = PercentAxisController(self.vib2_strength_slider)
+        self.vib2_strength_controller.link_axis(self.vibration_2.strength)
+
+        self.vib2_left_right_bias_controller = PercentAxisController(self.vib2_left_right_slider)
+        self.vib2_left_right_bias_controller.link_axis(self.vibration_2.left_right_bias)
+
+        self.vib2_high_low_bias_controller = PercentAxisController(self.vib2_high_low_slider)
+        self.vib2_high_low_bias_controller.link_axis(self.vibration_2.high_low_bias)
+
+        self.vib2_random_controller = PercentAxisController(self.vib2_random_slider)
+        self.vib2_random_controller.link_axis(self.vibration_2.random)
+
+        gb1.toggled.connect(self.settings_changed)
+        gb2.toggled.connect(self.settings_changed)
+        self.vib1_freq_controller.modified_by_user.connect(self.settings_changed)
+        self.vib1_strength_controller.modified_by_user.connect(self.settings_changed)
+        self.vib1_left_right_bias_controller.modified_by_user.connect(self.settings_changed)
+        self.vib1_high_low_bias_controller.modified_by_user.connect(self.settings_changed)
+        self.vib1_random_controller.modified_by_user.connect(self.settings_changed)
+        self.vib2_freq_controller.modified_by_user.connect(self.settings_changed)
+        self.vib2_strength_controller.modified_by_user.connect(self.settings_changed)
+        self.vib2_left_right_bias_controller.modified_by_user.connect(self.settings_changed)
+        self.vib2_high_low_bias_controller.modified_by_user.connect(self.settings_changed)
+        self.vib2_random_controller.modified_by_user.connect(self.settings_changed)
 
         self.settings_changed()
 
     def settings_changed(self):
-        self.vibration_1.enabled.add(self.gb1.isChecked())
-        self.vibration_1.frequency.add(self.freq1_slider.value())
-        self.vibration_1.strength.add(self.mod1_slider.value() / 100.0)
-        self.vibration_1.left_right_bias.add(self.bias1_left_right_slider.value() / 100.0)
-        self.vibration_1.high_low_bias.add(self.bias1_high_low_slider.value() / 100.0)
-        self.vibration_1.random.add(self.random1_slider.value() / 100.0)
+        self.vibration_1.enabled.add(self.vib1_gb.isChecked())
+        # self.vibration_1.frequency.add(self.freq1_slider.value())
+        # self.vibration_1.strength.add(self.mod1_slider.value() / 100.0)
+        # self.vibration_1.left_right_bias.add(self.bias1_left_right_slider.value() / 100.0)
+        # self.vibration_1.high_low_bias.add(self.bias1_high_low_slider.value() / 100.0)
+        # self.vibration_1.random.add(self.random1_slider.value() / 100.0)
 
-        self.vibration_2.enabled.add(self.gb2.isChecked())
-        self.vibration_2.frequency.add(self.freq2_slider.value())
-        self.vibration_2.strength.add(self.mod2_slider.value() / 100.0)
-        self.vibration_2.left_right_bias.add(self.bias2_left_right_slider.value() / 100.0)
-        self.vibration_2.high_low_bias.add(self.bias2_high_low_slider.value() / 100.0)
-        self.vibration_2.random.add(self.random2_slider.value() / 100.0)
+        self.vibration_2.enabled.add(self.vib2_gb.isChecked())
+        # self.vibration_2.frequency.add(self.freq2_slider.value())
+        # self.vibration_2.strength.add(self.mod2_slider.value() / 100.0)
+        # self.vibration_2.left_right_bias.add(self.bias2_left_right_slider.value() / 100.0)
+        # self.vibration_2.high_low_bias.add(self.bias2_high_low_slider.value() / 100.0)
+        # self.vibration_2.random.add(self.random2_slider.value() / 100.0)
 
         self.mpl_canvas.updateParams(self.vibration_1, self.vibration_2)
 
     def save_settings(self):
-        settings.vibration_1_enabled.set(self.gb1.isChecked())
-        settings.vibration_1_frequency.set(self.freq1_slider.value())
-        settings.vibration_1_strength.set(self.mod1_slider.value())
-        settings.vibration_1_high_low_bias.set(self.bias1_high_low_slider.value())
-        settings.vibration_1_left_right_bias.set(self.bias1_left_right_slider.value())
-        settings.vibration_1_random.set(self.random1_slider.value())
+        settings.vibration_1_enabled.set(self.vib1_gb.isChecked())
+        settings.vibration_1_frequency.set(self.vib1_freq_controller.last_user_entered_value)
+        settings.vibration_1_strength.set(self.vib1_strength_controller.last_user_entered_value * 100)
+        settings.vibration_1_high_low_bias.set(self.vib1_high_low_bias_controller.last_user_entered_value * 100)
+        settings.vibration_1_left_right_bias.set(self.vib1_left_right_bias_controller.last_user_entered_value * 100)
+        settings.vibration_1_random.set(self.vib1_random_controller.last_user_entered_value * 100)
 
-        settings.vibration_2_enabled.set(self.gb2.isChecked())
-        settings.vibration_2_frequency.set(self.freq2_slider.value())
-        settings.vibration_2_strength.set(self.mod2_slider.value())
-        settings.vibration_2_high_low_bias.set(self.bias2_high_low_slider.value())
-        settings.vibration_2_left_right_bias.set(self.bias2_left_right_slider.value())
-        settings.vibration_2_random.set(self.random2_slider.value())
+        settings.vibration_2_enabled.set(self.vib2_gb.isChecked())
+        settings.vibration_2_frequency.set(self.vib2_freq_controller.last_user_entered_value)
+        settings.vibration_2_strength.set(self.vib2_strength_controller.last_user_entered_value * 100)
+        settings.vibration_2_high_low_bias.set(self.vib2_high_low_bias_controller.last_user_entered_value * 100)
+        settings.vibration_2_left_right_bias.set(self.vib2_left_right_bias_controller.last_user_entered_value * 100)
+        settings.vibration_2_random.set(self.vib2_random_controller.last_user_entered_value * 100)
 

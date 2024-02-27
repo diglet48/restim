@@ -1,6 +1,7 @@
 from __future__ import unicode_literals
 import matplotlib
 import numpy as np
+import time
 
 # Make sure that we are using QT5
 matplotlib.use('Qt5Agg')
@@ -12,9 +13,11 @@ from matplotlib.figure import Figure
 
 import stim_math.limits
 import stim_math.pulse
-from stim_math.axis import AbstractAxis, create_temporal_axis, create_constant_axis
+from stim_math.axis import AbstractAxis, create_temporal_axis, create_constant_axis, WriteProtectedAxis
 
 from qt_ui import settings
+from qt_ui.axis_controller import AxisController, PercentAxisController
+
 
 
 class MyMplCanvas(FigureCanvas):
@@ -75,10 +78,10 @@ class PulseSettingsWidget(QtWidgets.QWidget):
     def __init__(self):
         QtWidgets.QWidget.__init__(self)
 
-        self.axis_carrier_frequency = create_constant_axis(0.0)
-        self.axis_pulse_frequency = create_constant_axis(0.0)
-        self.axis_pulse_width = create_constant_axis(0.0)
-        self.axis_pulse_interval_random = create_constant_axis(0.0)
+        self.axis_carrier_frequency = create_constant_axis(settings.pulse_carrier_frequency.get())
+        self.axis_pulse_frequency = create_constant_axis(settings.pulse_frequency.get())
+        self.axis_pulse_width = create_constant_axis(settings.pulse_width.get())
+        self.axis_pulse_interval_random = create_constant_axis(settings.pulse_interval_random.get() / 100)
         self.axis_pulse_polarity = create_constant_axis(0.0)
         self.axis_device_emulation_mode = create_constant_axis(0)
         self.axis_pulse_phase_offset_increment = create_constant_axis(0)
@@ -161,17 +164,15 @@ class PulseSettingsWidget(QtWidgets.QWidget):
         # gb2.setLayout(gb2_l)
         # l.addWidget(gb2)
 
-        carrier_slider.valueChanged.connect(self.settings_changed)
-        gb.toggled.connect(self.settings_changed)
-        pulse_freq_slider.valueChanged.connect(self.settings_changed)
-        pulse_width_slider.valueChanged.connect(self.settings_changed)
-        pulse_interval_random_slider.valueChanged.connect(self.settings_changed)
+        # carrier_slider.valueChanged.connect(self.settings_changed)
+        # pulse_freq_slider.valueChanged.connect(self.settings_changed)
+        # pulse_width_slider.valueChanged.connect(self.settings_changed)
+        # pulse_interval_random_slider.valueChanged.connect(self.settings_changed)
         # polarity_combobox.currentIndexChanged.connect(self.settings_changed)
         # device_emulation_mode_combobox.currentIndexChanged.connect(self.settings_changed)
         # pulse_phase_offset_increment_slider.valueChanged.connect(self.settings_changed)
 
         self.carrier = carrier_slider
-        self.gb = gb
         self.pulse_freq_slider = pulse_freq_slider
         self.pulse_width_slider = pulse_width_slider
         self.details_info = details_info
@@ -180,21 +181,35 @@ class PulseSettingsWidget(QtWidgets.QWidget):
         # self.device_emulation_mode = device_emulation_mode_combobox
         # self.pulse_phase_offset_increment = pulse_phase_offset_increment_slider
 
+
+        self.carrier_controller = AxisController(self.carrier)
+        self.carrier_controller.link_axis(self.axis_carrier_frequency)
+
+        self.pulse_frequency_controller = AxisController(self.pulse_freq_slider)
+        self.pulse_frequency_controller.link_axis(self.axis_pulse_frequency)
+
+        self.pulse_width_controller = AxisController(self.pulse_width_slider)
+        self.pulse_width_controller.link_axis(self.axis_pulse_width)
+
+        self.pulse_interval_random_controller = PercentAxisController(self.pulse_interval_random)
+        self.pulse_interval_random_controller.link_axis(self.axis_pulse_interval_random)
+
+        self.carrier_controller.modified_by_user.connect(self.settings_changed)
+        self.pulse_width_controller.modified_by_user.connect(self.settings_changed)
+        self.pulse_frequency_controller.modified_by_user.connect(self.settings_changed)
+        self.pulse_interval_random_controller.modified_by_user.connect(self.settings_changed)
+
         self.settings_changed()
 
     def set_safety_limits(self, min_carrier, max_carrier):
         self.carrier.setRange(min_carrier, max_carrier)
 
     def settings_changed(self):
-        # update axis
-        self.axis_carrier_frequency.add(self.carrier.value())
-        self.axis_pulse_frequency.add(self.pulse_freq_slider.value())
-        self.axis_pulse_width.add(self.pulse_width_slider.value())
-        self.axis_pulse_interval_random.add(self.pulse_interval_random.value() / 100)
         # self.axis_pulse_polarity.add(self.pulse_polarity.value())
         # self.axis_device_emulation_mode.add(self.device_emulation_mode.value())
         # self.axis_pulse_phase_offset_increment.add(self.pulse_phase_offset_increment.value())
 
+        # update text
         carrier_freq = self.carrier.value()
         pulse_freq = self.pulse_freq_slider.value()
         pulse_width = self.pulse_width_slider.value()
@@ -209,10 +224,10 @@ class PulseSettingsWidget(QtWidgets.QWidget):
         self.mpl_canvas.updateParams(carrier_freq, pulse_freq, pulse_width, self.pulse_interval_random.value() / 100)
 
     def save_settings(self):
-        settings.pulse_carrier_frequency.set(self.carrier.value())
-        settings.pulse_frequency.set(self.pulse_freq_slider.value())
-        settings.pulse_width.set(self.pulse_width_slider.value())
-        settings.pulse_interval_random.set(self.pulse_interval_random.value())
+        settings.pulse_carrier_frequency.set(self.carrier_controller.last_user_entered_value)
+        settings.pulse_frequency.set(self.pulse_frequency_controller.last_user_entered_value)
+        settings.pulse_width.set(self.pulse_width_controller.last_user_entered_value)
+        settings.pulse_interval_random.set(self.pulse_interval_random_controller.last_user_entered_value * 100)
         # settings.pulse_polarity.set(self.polarity.currentText())
         # settings.pulse_device_emulation_mode.set(self.device_emulation_mode.currentText())
         # settings.pulse_phase_offset_increment.set(self.pulse_phase_offset_increment.value())

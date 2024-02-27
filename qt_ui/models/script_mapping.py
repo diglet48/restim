@@ -252,11 +252,11 @@ class ScriptMappingModel(QAbstractItemModel):
         suffix = '.funscript'.lower()
 
         try:
-            for file in os.scandir(media_dir):
+            for file in os.scandir(os.path.expanduser(media_dir)):
                 if file.name.lower().startswith(prefix) and file.name.lower().endswith(suffix):
                     self.add_funscript_resource_auto(FunscriptTreeItem(file.path))
                     dirty = True
-        except OSError:
+        except OSError as e:
             # probably invalid network path
             pass
         return dirty

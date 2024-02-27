@@ -41,7 +41,7 @@ class Funscript:
             logger.info(f'imported {filename} from cache')
             return funscript_cache[hash]
 
-        with open(filename) as f:
+        with open(filename, encoding='utf-8') as f:
             js = json.load(f)
             for action in js['actions']:
                 at = float(action['at']) / 1000

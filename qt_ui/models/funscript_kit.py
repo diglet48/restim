@@ -10,6 +10,22 @@ defaults = {
     AxisEnum.POSITION_BETA: ('beta', -1, 1, True),
     AxisEnum.VOLUME_API: ('volume', 0, 1, True),
     AxisEnum.CARRIER_FREQUENCY: ('frequency', 500, 1000, True),
+
+    AxisEnum.PULSE_FREQUENCY: ('pulse_frequency', 0, 100, True),
+    AxisEnum.PULSE_WIDTH: ('pulse_width', 4, 10, True),
+    AxisEnum.PULSE_INTERVAL_RANDOM: ('pulse_interval_random', 0, 1, True),
+
+    AxisEnum.VIBRATION_1_FREQUENCY: ('vib1_frequency', 0, 100, True),
+    AxisEnum.VIBRATION_1_STRENGTH: ('vibr1_strength', 0, 1, True),
+    AxisEnum.VIBRATION_1_LEFT_RIGHT_BIAS: ('vib1_left_right_bias', 0, 1, True),
+    AxisEnum.VIBRATION_1_HIGH_LOW_BIAS: ('vib1_up_down_bias', 0, 1, True),
+    AxisEnum.VIBRATION_1_RANDOM: ('vib1_random', 0, 1, True),
+
+    AxisEnum.VIBRATION_2_FREQUENCY: ('vib2_frequency', 0, 100, True),
+    AxisEnum.VIBRATION_2_STRENGTH: ('vibr2_strength', 0, 1, True),
+    AxisEnum.VIBRATION_2_LEFT_RIGHT_BIAS: ('vib2_left_right_bias', 0, 1, True),
+    AxisEnum.VIBRATION_2_HIGH_LOW_BIAS: ('vib2_up_down_bias', 0, 1, True),
+    AxisEnum.VIBRATION_2_RANDOM: ('vib2_random', 0, 1, True),
 }
 
 @dataclass
