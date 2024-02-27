@@ -226,6 +226,7 @@ class Window(QMainWindow, Ui_MainWindow):
         """
         logger.info('funscript mapping changed, re-linking scripts.')
         self.audio_stop()
+        self.audio_start()
 
         algorithm_factory = AlgorithmFactory(
             self,
