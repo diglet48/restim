@@ -4,6 +4,7 @@ from PyQt5 import QtCore, QtWidgets
 import stim_math.limits
 from stim_math.axis import AbstractAxis, create_temporal_axis
 from qt_ui import settings
+from qt_ui.axis_controller import AxisController
 
 
 class CarrierSettingsWidget(QtWidgets.QWidget):
@@ -12,7 +13,7 @@ class CarrierSettingsWidget(QtWidgets.QWidget):
         l = QtWidgets.QFormLayout(self)
         l.setObjectName("FormLayout")
 
-        self.axis_carrier = create_temporal_axis(0.0)
+        self.axis_carrier = create_temporal_axis(settings.mk312_carrier.get())
 
         gbc = QtWidgets.QGroupBox("Carrier", self)
         gbc_l = QtWidgets.QFormLayout(gbc)
@@ -31,17 +32,13 @@ class CarrierSettingsWidget(QtWidgets.QWidget):
         gbc.setLayout(gbc_l)
         l.addWidget(gbc)
 
-        carrier_slider.valueChanged.connect(self.settings_changed)
-
         self.carrier = carrier_slider
 
-        self.settings_changed()
+        self.carrier_controller = AxisController(carrier_slider)
+        self.carrier_controller.link_axis(self.axis_carrier)
 
     def set_safety_limits(self, min_carrier, max_carrier):
         self.carrier.setRange(min_carrier, max_carrier)
 
-    def settings_changed(self):
-        self.axis_carrier.add(self.carrier.value())
-
     def save_settings(self):
-        settings.mk312_carrier.set(self.carrier.value())
+        settings.mk312_carrier.set(self.carrier_controller.last_user_entered_value)

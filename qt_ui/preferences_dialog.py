@@ -57,6 +57,8 @@ class PreferencesDialog(QDialog, Ui_PreferencesDialog):
         # funscript mapping
         self.button_funscript_reset_defaults.clicked.connect(self.funscript_reset_defaults)
         self.tableView.horizontalHeader().setSectionResizeMode(4, QHeaderView.ResizeToContents)
+        self.tableView.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeToContents)
+        self.tableView.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeToContents)
         self.tableView.setModel(FunscriptKitModel.load_from_settings())
         self.tableView.setEditTriggers(
             # QAbstractItemView.AllEditTriggers

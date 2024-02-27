@@ -30,7 +30,7 @@ from qt_ui.models.funscript_kit import FunscriptKitModel
 from qt_ui.widgets.icon_with_connection_status import IconWithConnectionStatus
 from stim_math.audio_gen.params import ThreephaseContinuousAlgorithmParams, ThreephasePositionParams, \
     ThreephasePulsebasedAlgorithmParams, FivephaseContinuousAlgorithmParams, SafetyParams, VolumeParams
-from stim_math.axis import create_temporal_axis, create_precomputed_axis
+from stim_math.axis import create_temporal_axis, create_precomputed_axis, WriteProtectedAxis
 
 from qt_ui.tcode_route_configuration import ThreephaseRouteConfiguration
 
@@ -141,7 +141,7 @@ class Window(QMainWindow, Ui_MainWindow):
         self.page_media.bake_audio_button.clicked.connect(self.open_write_audio_dialog)
 
         # trigger updates.... maybe not all needed?
-        self.tab_carrier.settings_changed()
+        # self.tab_carrier.settings_changed()
         self.tab_pulse_settings.settings_changed()
         self.tab_threephase.settings_changed()
         self.tab_volume.updateVolume()
@@ -227,6 +227,7 @@ class Window(QMainWindow, Ui_MainWindow):
         logger.info('funscript mapping changed, re-linking scripts.')
         self.audio_stop()
 
+        device = DeviceConfiguration.from_settings()
         algorithm_factory = AlgorithmFactory(
             self,
             FunscriptKitModel.load_from_settings(),
@@ -236,10 +237,12 @@ class Window(QMainWindow, Ui_MainWindow):
             load_funscripts=not self.page_media.is_internal(),
         )
 
+        # main pane
         self.graphicsView.alpha = algorithm_factory.get_axis_alpha()
         self.graphicsView.beta = algorithm_factory.get_axis_beta()
         self.progressBar_volume.volume.api = algorithm_factory.get_axis_volume_api()
 
+        # volume tab
         self.tab_volume.set_monitor_axis([
             algorithm_factory.get_axis_alpha(),
             algorithm_factory.get_axis_beta(),
@@ -249,6 +252,27 @@ class Window(QMainWindow, Ui_MainWindow):
             self.tab_fivephase.position.e4,
             self.tab_fivephase.position.e5,
         ])
+
+        # continuous tab
+        self.tab_carrier.carrier_controller.link_axis(algorithm_factory.get_axis_carrier_frequency(device))
+
+        # pulse tab
+        self.tab_pulse_settings.carrier_controller.link_axis(algorithm_factory.get_axis_carrier_frequency(device))
+        self.tab_pulse_settings.pulse_frequency_controller.link_axis(algorithm_factory.get_axis_pulse_frequency())
+        self.tab_pulse_settings.pulse_width_controller.link_axis(algorithm_factory.get_axis_pulse_width())
+        self.tab_pulse_settings.pulse_interval_random_controller.link_axis(algorithm_factory.get_axis_pulse_interval_random())
+
+        # vibration tab
+        self.tab_vibrate.vib1_freq_controller.link_axis(algorithm_factory.get_axis_vib1_frequency())
+        self.tab_vibrate.vib1_strength_controller.link_axis(algorithm_factory.get_axis_vib1_strength())
+        self.tab_vibrate.vib1_left_right_bias_controller.link_axis(algorithm_factory.get_axis_vib1_left_right_bias())
+        self.tab_vibrate.vib1_high_low_bias_controller.link_axis(algorithm_factory.get_axis_vib1_high_low_bias())
+        self.tab_vibrate.vib1_random_controller.link_axis(algorithm_factory.get_axis_vib1_random())
+        self.tab_vibrate.vib2_freq_controller.link_axis(algorithm_factory.get_axis_vib2_frequency())
+        self.tab_vibrate.vib2_strength_controller.link_axis(algorithm_factory.get_axis_vib2_strength())
+        self.tab_vibrate.vib2_left_right_bias_controller.link_axis(algorithm_factory.get_axis_vib2_left_right_bias())
+        self.tab_vibrate.vib2_high_low_bias_controller.link_axis(algorithm_factory.get_axis_vib2_high_low_bias())
+        self.tab_vibrate.vib2_random_controller.link_axis(algorithm_factory.get_axis_vib2_random())
 
     def refresh_device_type(self):
         def set_visible(widget, state):
