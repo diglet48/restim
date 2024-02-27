@@ -1,3 +1,5 @@
+from __future__ import annotations  # multiple return values
+
 import os
 import typing
 import logging

@@ -1,3 +1,5 @@
+from __future__ import annotations  # multiple return values
+
 from qt_ui.device_wizard.enums import DeviceConfiguration, DeviceType, WaveformType
 from stim_math.audio_gen.base_classes import AudioGenerationAlgorithm
 from stim_math.audio_gen.pulse_based import DefaultThreePhasePulseBasedAlgorithm
