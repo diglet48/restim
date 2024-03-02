@@ -8,6 +8,7 @@ pyuic5  -o .\qt_ui\waveform_details_widget_ui.py .\designer\waveformdetailswidge
 pyuic5  -o .\qt_ui\funscript_conversion_ui.py .\designer\funscriptconversiondialog.ui
 pyuic5  -o .\qt_ui\volume_control_widget_ui.py .\designer\volumecontrolwidget.ui
 pyuic5  -o .\qt_ui\preferences_dialog_ui.py .\designer\preferencesdialog.ui
+pyuic5  -o .\qt_ui\additional_search_paths_dialog_ui.py .\designer\additionalsearchpathsdialog.ui
 pyuic5  -o .\qt_ui\three_phase_settings_widget_ui.py .\designer\threephasesettingswidget.ui
 pyuic5  -o .\qt_ui\five_phase_settings_widget_ui.py .\designer\fivephasesettingswidget.ui
 pyuic5  -o .\qt_ui\audio_test_dialog_ui.py .\designer\audiotestdialog.ui

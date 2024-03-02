@@ -73,6 +73,9 @@ class Ui_MediaSettingsWidget(object):
         self.bake_audio_button = QtWidgets.QPushButton(self.widget_21)
         self.bake_audio_button.setObjectName("bake_audio_button")
         self.horizontalLayout_2.addWidget(self.bake_audio_button)
+        self.additional_search_paths_button = QtWidgets.QPushButton(self.widget_21)
+        self.additional_search_paths_button.setObjectName("additional_search_paths_button")
+        self.horizontalLayout_2.addWidget(self.additional_search_paths_button)
         spacerItem = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self.horizontalLayout_2.addItem(spacerItem)
         self.verticalLayout.addWidget(self.widget_21)
@@ -88,5 +91,6 @@ class Ui_MediaSettingsWidget(object):
         self.label_2.setText(_translate("MediaSettingsWidget", "File:"))
         self.add_funscript_button.setText(_translate("MediaSettingsWidget", "Add funscript"))
         self.bake_audio_button.setText(_translate("MediaSettingsWidget", "Bake audio"))
+        self.additional_search_paths_button.setText(_translate("MediaSettingsWidget", "Search paths"))
 from qt_ui.widgets.table_view_with_combobox import TreeViewWithComboBox
 import restim_rc

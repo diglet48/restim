@@ -4,6 +4,7 @@ import os
 from PyQt5.QtCore import Qt
 
 from net.media_source.vlc import VLC
+from qt_ui.additional_search_paths_dialog import AdditionalSearchPathsDialog
 from qt_ui.device_wizard.axes import AxisEnum, text_and_data
 
 from PyQt5 import QtCore, QtWidgets
@@ -18,7 +19,7 @@ from net.media_source.internal import Internal
 from net.media_source.mpc import MPC
 from qt_ui.models.script_mapping import FunscriptTreeItem, ScriptMappingModel
 from qt_ui.widgets.table_view_with_combobox import ComboBoxDelegate, ButtonDelegate
-from qt_ui.models import funscript_kit
+from qt_ui.models import funscript_kit, additional_search_paths
 
 
 class _MediaSettingsWidget(type(QtWidgets.QWidget), type(Ui_MediaSettingsWidget)):
@@ -77,6 +78,7 @@ class MediaSettingsWidget(QtWidgets.QWidget, Ui_MediaSettingsWidget, metaclass=_
         header.resizeSection(2, 50)
 
         self.add_funscript_button.clicked.connect(self.open_add_funscripts_dialog)
+        self.additional_search_paths_button.clicked.connect(self.open_search_paths_dialog)
         self.media_index_changed()
 
     def open_add_funscripts_dialog(self):
@@ -97,6 +99,13 @@ class MediaSettingsWidget(QtWidgets.QWidget, Ui_MediaSettingsWidget, metaclass=_
             self.model.endResetModel()
             self.treeView.expandAll()
             self.funscriptMappingChanged.emit()
+
+    def open_search_paths_dialog(self):
+        self.dialogOpened.emit()  # trigger stop audio
+        dlg = AdditionalSearchPathsDialog()
+        if dlg.exec():
+            # Attempt to re-load funscripts
+            self.detect_resources_for_media_file(self.loaded_media_path)
 
     def on_data_changed(self, topleft, bottomright, roles):
         if Qt.EditRole in roles:
@@ -141,17 +150,43 @@ class MediaSettingsWidget(QtWidgets.QWidget, Ui_MediaSettingsWidget, metaclass=_
             self.lineEdit.clear()
 
         new_path = connector.media_path()
+
         if self.loaded_media_path != new_path:
             self.loaded_media_path = new_path
 
+            self.detect_resources_for_media_file(new_path)
+
+    def detect_resources_for_media_file(self, new_path):
+        self.loaded_media_path = new_path
+
+        dirty = False
+        if not new_path:
+            # path is empty string.
             self.model.beginResetModel()
-            dirty = self.model.detect_funscripts_from_path(new_path)
+            dirty |= self.model.clear_auto_detected_funscripts()
+            self.model.endResetModel()
+            self.treeView.expandAll()
+        else:
+
+            # path is something
+            dirname = os.path.dirname(new_path)
+            basename = os.path.basename(new_path)
+            extra_paths = additional_search_paths.AdditionalSearchPathsModel.load_from_settings().stringList()
+            search_paths = [dirname] + extra_paths
+
+            self.model.beginResetModel()
+            dirty |= self.model.clear_auto_detected_funscripts()
+            # search until the first funscript is found
+            for path in search_paths:
+                dirty |= self.model.detect_funscripts_from_path(path, basename)
+                if self.model._funscripts_auto.childCount():
+                    break
             self.model.endResetModel()
             self.treeView.expandAll()
 
-            self.model.auto_link_funscripts(funscript_kit.FunscriptKitModel.load_from_settings())
-            if dirty:
-                self.funscriptMappingChanged.emit()
+        self.model.auto_link_funscripts(funscript_kit.FunscriptKitModel.load_from_settings())
+        if dirty:
+            self.funscriptMappingChanged.emit()
 
     def is_connected(self):
         media = self.media_sync[self.current_index]

@@ -92,3 +92,6 @@ media_sync_vlc_password = Setting('media_sync/vlc_password', '1234', str)
 
 audio_channel_count = Setting("audio/channel-count", 8, int)
 audio_channel_map = Setting("audio/channel-map", '0, 1, 2, 3', str)
+
+
+additional_search_paths = Setting('additional_search_paths', [], list)
