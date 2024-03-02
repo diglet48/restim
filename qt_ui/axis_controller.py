@@ -52,13 +52,12 @@ class AxisController(QtCore.QObject):
     def link_to_internal_axis(self, internal_axis):
         """
         Behavior: control enabled. Whenever user modifies the control, value is inserted in axis.
-        TODO: what happens if tcode updates?
         """
         self.timer.stop()
         self.script_axis = None
         self.internal_axis = internal_axis
+        self.set_control_value(self.internal_axis.interpolate(time.time()))
         self.control.setEnabled(True)
-        self.internal_axis.add(self.get_control_value())
 
     modified_by_user = QtCore.pyqtSignal()
 
