@@ -95,3 +95,5 @@ audio_channel_map = Setting("audio/channel-map", '0, 1, 2, 3', str)
 
 
 additional_search_paths = Setting('additional_search_paths', [], list)
+
+file_dialog_last_dir = Setting('file_dialog_last_dir', '', str)

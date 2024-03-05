@@ -2,8 +2,10 @@ from PyQt5.QtCore import QItemSelectionModel
 from PyQt5.QtCore import QModelIndex
 from PyQt5.QtWidgets import QDialog, QAbstractItemView, QFileDialog
 
+
 from qt_ui.additional_search_paths_dialog_ui import Ui_AdditionalSearchPathsDialog
 from qt_ui.models.additional_search_paths import AdditionalSearchPathsModel
+from qt_ui.file_dialog import FileDialog
 
 
 class AdditionalSearchPathsDialog(QDialog, Ui_AdditionalSearchPathsDialog):
@@ -22,8 +24,15 @@ class AdditionalSearchPathsDialog(QDialog, Ui_AdditionalSearchPathsDialog):
         self.actionRemove.triggered.connect(self.remove_triggered)
 
     def add_triggered(self):
-        dir = QFileDialog.getExistingDirectory(self, 'Select Directory', None, QFileDialog.ShowDirsOnly)
-        if dir:
+        dialog = FileDialog(self)
+        dialog.setWindowTitle('Select directory')
+        dialog.setFileMode(QFileDialog.Directory)
+        dialog.setOptions(QFileDialog.ShowDirsOnly)
+        ret = dialog.exec()
+
+        files = dialog.selectedFiles()
+        if ret and len(files):
+            dir = files[0]  # dialog does not support selecting multiple dirs :(
             self.model.insertRow(self.model.rowCount())
             index = self.model.index(self.model.rowCount() - 1, 0)
             self.model.setData(index, dir)
