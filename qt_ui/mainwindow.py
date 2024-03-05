@@ -386,6 +386,7 @@ class Window(QMainWindow, Ui_MainWindow):
         self.tcode_command_router.update_routing_configuration(ThreephaseRouteConfiguration())
         self.graphicsView.refreshSettings()
         self.progressBar_volume.refreshSettings()
+        self.buttplug_wsdm_client.refreshSettings()
         self.funscript_mapping_changed()  # reload funscript axis
 
     def save_settings(self):
