@@ -1,11 +1,10 @@
 import re
 import traceback
 
-from PyQt5.QtCore import QSettings
-from PyQt5.QtWidgets import QDialog
-from PyQt5.QtWidgets import QFileDialog
+from PyQt5.QtWidgets import QDialog, QFileDialog
 
 from qt_ui.funscript_conversion_ui import Ui_FunscriptConversionDialog
+from qt_ui.file_dialog import FileDialog
 from funscript.funscript import Funscript
 from funscript.funscript_conversion import convert_1d_to_2d
 
@@ -17,21 +16,23 @@ class FunscriptConversionDialog(QDialog, Ui_FunscriptConversionDialog):
         super().__init__(parent)
         self.setupUi(self)
 
-        settings = QSettings()
-        self.file_picker_dialog = QFileDialog(self)
-        self.file_picker_dialog.setFileMode(QFileDialog.ExistingFile)
-        self.file_picker_dialog.setNameFilters(['*.funscript'])
-        self.file_picker_dialog.setDirectory(settings.value(KEY_FILEPICKER_LAST_DIR, '', str))
-        self.file_picker_dialog.fileSelected.connect(self.file_selected)
-
-        self.toolButton.clicked.connect(self.file_picker_dialog.exec)
+        self.toolButton.clicked.connect(self.open_file_dialog)
 
         self.pushButton.clicked.connect(self.convert)
 
-    def file_selected(self, filename):
-        settings = QSettings()
-        settings.setValue(KEY_FILEPICKER_LAST_DIR, filename)
+    def open_file_dialog(self):
+        dialog = FileDialog(self)
+        dialog.setWindowTitle('Select directory')
+        dialog.setFileMode(QFileDialog.ExistingFile)
+        dialog.setNameFilters(['*.funscript'])
+        ret = dialog.exec()
 
+        files = dialog.selectedFiles()
+        if ret and len(files):
+            dir = files[0]
+            self.file_selected(dir)
+
+    def file_selected(self, filename):
         self.lineEdit_funscript.setText(filename)
         self.lineEdit_alpha.setText(re.sub("\.funscript$", ".alpha.funscript", filename))
         self.lineEdit_beta.setText(re.sub("\.funscript$", ".beta.funscript", filename))

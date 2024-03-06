@@ -15,6 +15,7 @@ from qt_ui.models.funscript_kit import FunscriptKitModel
 from qt_ui.models.script_mapping import ScriptMappingModel
 from stim_math.axis import AbstractMediaSync, AbstractTimestampMapper
 from qt_ui.device_wizard.enums import DeviceConfiguration
+from qt_ui.file_dialog import FileDialog
 
 logger = logging.getLogger('restim.bake_audio')
 
@@ -148,7 +149,7 @@ class AudioWriteDialog(QDialog, Ui_AudioWriteDialog):
         self.worker.start()
 
     def open_file_picker(self):
-        dlg = QFileDialog()
+        dlg = FileDialog()
         dlg.setFileMode(QFileDialog.AnyFile)
         dlg.setNameFilters(['Audio files (*.wav, *.mp3, *.ogg, *)'])
 

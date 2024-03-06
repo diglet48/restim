@@ -237,18 +237,18 @@ class ScriptMappingModel(QAbstractItemModel):
             return parts[0], '', extension
         return '.'.join(parts[:-2]), parts[-2], extension
 
-    def detect_funscripts_from_path(self, media_path: str) -> bool:
+    def detect_funscripts_from_path(self, media_dir: str, media_file: str) -> bool:
         """
-        :param media_path: /path/to/video.mp4
+        :param media_dir: "/path/to/"
+        :param media_file: "video.mp4"
         :return:
         """
-        logger.info(f'detecting funscripts from: `{media_path}`')
+        logger.info(f'detecting funscripts from: `{media_dir}`')
         dirty = self._funscripts_auto.childCount() > 0
 
         self._funscripts_auto.children.clear()
 
-        media_dir = os.path.dirname(media_path)
-        prefix, suffix, extension = self.split_funscript_path(media_path)
+        prefix, suffix, extension = self.split_funscript_path(media_file)
 
         prefix = prefix.lower() + '.'
         suffix = '.funscript'.lower()
