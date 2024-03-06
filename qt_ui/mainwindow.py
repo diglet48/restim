@@ -32,8 +32,6 @@ from stim_math.audio_gen.params import ThreephaseContinuousAlgorithmParams, Thre
     ThreephasePulsebasedAlgorithmParams, FivephaseContinuousAlgorithmParams, SafetyParams, VolumeParams
 from stim_math.axis import create_temporal_axis, create_precomputed_axis, WriteProtectedAxis
 
-from qt_ui.tcode_route_configuration import ThreephaseRouteConfiguration
-
 from qt_ui.preferences_dialog import KEY_AUDIO_API, KEY_AUDIO_OUTPUT_DEVICE, KEY_AUDIO_LATENCY
 import sounddevice as sd
 
@@ -81,13 +79,28 @@ class Window(QMainWindow, Ui_MainWindow):
         self.beta = create_temporal_axis(0.0)
 
         self.tcode_command_router = TCodeCommandRouter(
-            ThreephaseRouteConfiguration(),
             self.alpha,
             self.beta,
             self.tab_volume.api_volume,
-            self.tab_carrier.axis_carrier,
-            self.tab_pulse_settings.axis_carrier_frequency,
+
+            self.tab_carrier.axis_carrier,  # this gets set to the device-specific axis later
+
+            self.tab_pulse_settings.axis_pulse_frequency,
+            self.tab_pulse_settings.axis_pulse_width,
+            self.tab_pulse_settings.axis_pulse_interval_random,
+
             self.tab_vibrate.vibration_1.frequency,
+            self.tab_vibrate.vibration_1.strength,
+            self.tab_vibrate.vibration_1.left_right_bias,
+            self.tab_vibrate.vibration_1.high_low_bias,
+            self.tab_vibrate.vibration_1.random,
+
+            self.tab_vibrate.vibration_2.frequency,
+            self.tab_vibrate.vibration_2.strength,
+            self.tab_vibrate.vibration_2.left_right_bias,
+            self.tab_vibrate.vibration_2.high_low_bias,
+            self.tab_vibrate.vibration_2.random,
+
             self.tab_fivephase.position
         )
 
@@ -312,6 +325,10 @@ class Window(QMainWindow, Ui_MainWindow):
 
         self.tab_carrier.set_safety_limits(config.min_frequency, config.max_frequency)
         self.tab_pulse_settings.set_safety_limits(config.min_frequency, config.max_frequency)
+        if config.waveform_type == WaveformType.CONTINUOUS:
+            self.tcode_command_router.set_carrier_axis(self.tab_carrier.axis_carrier)
+        if config.waveform_type == WaveformType.PULSE_BASED:
+            self.tcode_command_router.set_carrier_axis(self.tab_pulse_settings.axis_carrier_frequency)
 
     def audio_start_stop(self):
         if self.audio_gen.stream is None:
@@ -383,7 +400,7 @@ class Window(QMainWindow, Ui_MainWindow):
         Reload everything that is stored in settings and may be changed
         by the preferences dialog
         """
-        self.tcode_command_router.update_routing_configuration(ThreephaseRouteConfiguration())
+        self.tcode_command_router.reload_kit()
         self.graphicsView.refreshSettings()
         self.progressBar_volume.refreshSettings()
         self.buttplug_wsdm_client.refreshSettings()

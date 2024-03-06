@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>613</width>
-    <height>603</height>
+    <width>685</width>
+    <height>627</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -17,7 +17,7 @@
    <item>
     <widget class="QTabWidget" name="tabWidget">
      <property name="currentIndex">
-      <number>5</number>
+      <number>4</number>
      </property>
      <widget class="QWidget" name="tab_network">
       <attribute name="title">
@@ -620,246 +620,9 @@
        </item>
       </layout>
      </widget>
-     <widget class="QWidget" name="tab_tcode">
-      <attribute name="title">
-       <string>T-Code</string>
-      </attribute>
-      <layout class="QVBoxLayout" name="verticalLayout_5">
-       <item>
-        <widget class="QGroupBox" name="groupBox_2">
-         <property name="title">
-          <string>TCode mapping</string>
-         </property>
-         <layout class="QGridLayout" name="gridLayout_2">
-          <item row="0" column="3">
-           <widget class="QLabel" name="label_14">
-            <property name="text">
-             <string>Max</string>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="0">
-           <widget class="QLabel" name="label_17">
-            <property name="text">
-             <string>Target</string>
-            </property>
-           </widget>
-          </item>
-          <item row="3" column="0">
-           <widget class="QLabel" name="label_20">
-            <property name="text">
-             <string>volume</string>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="2">
-           <widget class="QLabel" name="label_15">
-            <property name="text">
-             <string>Min</string>
-            </property>
-           </widget>
-          </item>
-          <item row="2" column="0">
-           <widget class="QLabel" name="label_19">
-            <property name="text">
-             <string>beta</string>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="4">
-           <widget class="QLabel" name="label_13">
-            <property name="text">
-             <string>Remote control?</string>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="1">
-           <widget class="QLabel" name="label_16">
-            <property name="text">
-             <string>Axis</string>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="0">
-           <widget class="QLabel" name="label_18">
-            <property name="text">
-             <string>alpha</string>
-            </property>
-           </widget>
-          </item>
-          <item row="4" column="0">
-           <widget class="QLabel" name="label_21">
-            <property name="text">
-             <string>carrier frequency</string>
-            </property>
-           </widget>
-          </item>
-          <item row="5" column="0">
-           <widget class="QLabel" name="label_22">
-            <property name="text">
-             <string>modulation 1 frequency</string>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="1">
-           <widget class="QLineEdit" name="threephase_alpha_axis"/>
-          </item>
-          <item row="2" column="1">
-           <widget class="QLineEdit" name="threephase_beta_axis"/>
-          </item>
-          <item row="3" column="1">
-           <widget class="QLineEdit" name="threephase_volume_axis"/>
-          </item>
-          <item row="4" column="1">
-           <widget class="QLineEdit" name="threephase_carrier_axis"/>
-          </item>
-          <item row="5" column="1">
-           <widget class="QLineEdit" name="threephase_vibration_frequency_axis"/>
-          </item>
-          <item row="1" column="2">
-           <widget class="QDoubleSpinBox" name="threephase_alpha_min">
-            <property name="minimum">
-             <double>-100.000000000000000</double>
-            </property>
-            <property name="maximum">
-             <double>100.000000000000000</double>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="3">
-           <widget class="QDoubleSpinBox" name="threephase_alpha_max">
-            <property name="minimum">
-             <double>-100.000000000000000</double>
-            </property>
-            <property name="maximum">
-             <double>100.000000000000000</double>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="4">
-           <widget class="QCheckBox" name="threephase_alpha_enabled">
-            <property name="text">
-             <string/>
-            </property>
-           </widget>
-          </item>
-          <item row="2" column="2">
-           <widget class="QDoubleSpinBox" name="threephase_beta_min">
-            <property name="minimum">
-             <double>-100.000000000000000</double>
-            </property>
-            <property name="maximum">
-             <double>100.000000000000000</double>
-            </property>
-           </widget>
-          </item>
-          <item row="2" column="3">
-           <widget class="QDoubleSpinBox" name="threephase_beta_max">
-            <property name="minimum">
-             <double>-100.000000000000000</double>
-            </property>
-            <property name="maximum">
-             <double>100.000000000000000</double>
-            </property>
-           </widget>
-          </item>
-          <item row="2" column="4">
-           <widget class="QCheckBox" name="threephase_beta_enabled">
-            <property name="text">
-             <string/>
-            </property>
-           </widget>
-          </item>
-          <item row="3" column="2">
-           <widget class="QDoubleSpinBox" name="threephase_volume_min">
-            <property name="maximum">
-             <double>1.000000000000000</double>
-            </property>
-           </widget>
-          </item>
-          <item row="3" column="3">
-           <widget class="QDoubleSpinBox" name="threephase_volume_max">
-            <property name="maximum">
-             <double>1.000000000000000</double>
-            </property>
-           </widget>
-          </item>
-          <item row="3" column="4">
-           <widget class="QCheckBox" name="threephase_volume_enabled">
-            <property name="text">
-             <string/>
-            </property>
-           </widget>
-          </item>
-          <item row="4" column="2">
-           <widget class="QDoubleSpinBox" name="threephase_carrier_min">
-            <property name="minimum">
-             <double>300.000000000000000</double>
-            </property>
-            <property name="maximum">
-             <double>1500.000000000000000</double>
-            </property>
-           </widget>
-          </item>
-          <item row="4" column="3">
-           <widget class="QDoubleSpinBox" name="threephase_carrier_max">
-            <property name="minimum">
-             <double>300.000000000000000</double>
-            </property>
-            <property name="maximum">
-             <double>1500.000000000000000</double>
-            </property>
-           </widget>
-          </item>
-          <item row="4" column="4">
-           <widget class="QCheckBox" name="threephase_carrier_enabled">
-            <property name="text">
-             <string/>
-            </property>
-           </widget>
-          </item>
-          <item row="5" column="2">
-           <widget class="QDoubleSpinBox" name="threephase_vibration_frequency_min">
-            <property name="maximum">
-             <double>100.000000000000000</double>
-            </property>
-           </widget>
-          </item>
-          <item row="5" column="3">
-           <widget class="QDoubleSpinBox" name="threephase_vibration_frequency_max">
-            <property name="maximum">
-             <double>100.000000000000000</double>
-            </property>
-           </widget>
-          </item>
-          <item row="5" column="4">
-           <widget class="QCheckBox" name="threephase_vibration_frequency_enabled">
-            <property name="text">
-             <string/>
-            </property>
-           </widget>
-          </item>
-         </layout>
-        </widget>
-       </item>
-       <item>
-        <spacer name="verticalSpacer_5">
-         <property name="orientation">
-          <enum>Qt::Vertical</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>20</width>
-           <height>40</height>
-          </size>
-         </property>
-        </spacer>
-       </item>
-      </layout>
-     </widget>
      <widget class="QWidget" name="tab_funscript">
       <attribute name="title">
-       <string>Funscript</string>
+       <string>Funscript / T-Code</string>
       </attribute>
       <layout class="QVBoxLayout" name="verticalLayout_7">
        <item>
