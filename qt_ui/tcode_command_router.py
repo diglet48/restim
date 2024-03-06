@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+import logging
 
 from net.tcode import TCodeCommand
 from stim_math.audio_gen.params import FivephasePositionParams
@@ -6,6 +7,8 @@ from stim_math.axis import AbstractAxis
 
 from qt_ui.models.funscript_kit import FunscriptKitModel, FunscriptKitItem
 from qt_ui.device_wizard.axes import AxisEnum
+
+logger = logging.getLogger('restim.tcode')
 
 
 @dataclass
@@ -100,6 +103,8 @@ class TCodeCommandRouter:
                         route = Route(axis_enum_to_axis[child.axis], child.limit_min, child.limit_max)
                         if child.tcode_axis_name not in mapping:
                             mapping[child.tcode_axis_name] = route
+                elif len(child.tcode_axis_name) != 0:
+                    logger.error(f'Invalid T-Code axis name: {child.tcode_axis_name}. Axis name must be 2 chars.')
 
         # UGLY: patch in five-phase axis
         mapping['E0'] = Route(self.fivephase_position.e1, 0, 1)
