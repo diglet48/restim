@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+import logging
 
 from net.tcode import TCodeCommand
 from stim_math.audio_gen.params import FivephasePositionParams
@@ -6,6 +7,8 @@ from stim_math.axis import AbstractAxis
 
 from qt_ui.models.funscript_kit import FunscriptKitModel, FunscriptKitItem
 from qt_ui.device_wizard.axes import AxisEnum
+
+logger = logging.getLogger('restim.tcode')
 
 
 @dataclass
@@ -100,6 +103,8 @@ class TCodeCommandRouter:
                         route = Route(axis_enum_to_axis[child.axis], child.limit_min, child.limit_max)
                         if child.tcode_axis_name not in mapping:
                             mapping[child.tcode_axis_name] = route
+                elif len(child.tcode_axis_name) != 0:
+                    logger.error(f'Invalid T-Code axis name: {child.tcode_axis_name}. Axis name must be 2 chars.')
 
         # UGLY: patch in five-phase axis
         mapping['E0'] = Route(self.fivephase_position.e1, 0, 1)
@@ -120,27 +125,3 @@ class TCodeCommandRouter:
             route.axis.add(route.remap(cmd.value), cmd.interval / 1000.0)
         except KeyError:
             pass
-        return
-
-        for target, param in [
-            (self.routing.alpha, self.alpha),
-            (self.routing.beta, self.beta),
-            (self.routing.volume, self.api_volume),
-            (self.routing.carrier, self.continuous_carrier_frequency),
-            (self.routing.carrier, self.pulse_carrier_frequency),
-            (self.routing.vibration_1_frequency, self.vibration_frequency)
-        ]:
-            if target.axis == cmd.axis_identifier:
-                if target.enabled:
-                    param.add(target.left + cmd.value * (target.right - target.left),
-                              cmd.interval / 1000.0)
-
-        for target, param in [
-            ('E0', self.fivephase_position.e1),
-            ('E1', self.fivephase_position.e2),
-            ('E2', self.fivephase_position.e3),
-            ('E3', self.fivephase_position.e4),
-            ('E4', self.fivephase_position.e5),
-        ]:
-            if target == cmd.axis_identifier:
-                param.add(cmd.value, cmd.interval / 1000.0)
