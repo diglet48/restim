@@ -13,6 +13,7 @@ from PyQt5.QtWidgets import QAbstractItemView, QFileDialog
 
 from net.media_source.heresphere import HereSphere
 from net.media_source.interface import MediaConnectionState
+from qt_ui.file_dialog import FileDialog
 from qt_ui.media_settings_widget_ui import Ui_MediaSettingsWidget
 
 from net.media_source.internal import Internal
@@ -84,11 +85,11 @@ class MediaSettingsWidget(QtWidgets.QWidget, Ui_MediaSettingsWidget, metaclass=_
     def open_add_funscripts_dialog(self):
         self.dialogOpened.emit()  # trigger stop audio
 
-        dlg = QFileDialog()
+        dlg = FileDialog()
         dlg.setFileMode(QFileDialog.ExistingFiles)
         dlg.setNameFilters(["*.funscript"])
 
-        if dlg.exec_():
+        if dlg.exec():
             self.model.beginResetModel()
             filenames = dlg.selectedFiles()
             kit = funscript_kit.FunscriptKitModel.load_from_settings()
