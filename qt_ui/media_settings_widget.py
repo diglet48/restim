@@ -1,8 +1,10 @@
 import functools
 import os
+import pathlib
 
 from PyQt5.QtCore import Qt
 
+from funscript.collect_funscripts import Resource
 from net.media_source.vlc import VLC
 from qt_ui.additional_search_paths_dialog import AdditionalSearchPathsDialog
 from qt_ui.device_wizard.axes import AxisEnum, text_and_data
@@ -94,7 +96,7 @@ class MediaSettingsWidget(QtWidgets.QWidget, Ui_MediaSettingsWidget, metaclass=_
             filenames = dlg.selectedFiles()
             kit = funscript_kit.FunscriptKitModel.load_from_settings()
             for filename in filenames:
-                item = FunscriptTreeItem(filename)
+                item = FunscriptTreeItem(Resource(pathlib.Path(filename)))
                 self.model.auto_link_funscript(kit, item)
                 self.model.add_funscript_resource_manual(item)
             self.model.endResetModel()
@@ -168,7 +170,6 @@ class MediaSettingsWidget(QtWidgets.QWidget, Ui_MediaSettingsWidget, metaclass=_
             self.model.endResetModel()
             self.treeView.expandAll()
         else:
-
             # path is something
             dirname = os.path.dirname(new_path)
             basename = os.path.basename(new_path)
@@ -177,11 +178,7 @@ class MediaSettingsWidget(QtWidgets.QWidget, Ui_MediaSettingsWidget, metaclass=_
 
             self.model.beginResetModel()
             dirty |= self.model.clear_auto_detected_funscripts()
-            # search until the first funscript is found
-            for path in search_paths:
-                dirty |= self.model.detect_funscripts_from_path(path, basename)
-                if self.model._funscripts_auto.childCount():
-                    break
+            dirty |= self.model.detect_funscripts_from_path(search_paths, basename)
             self.model.endResetModel()
             self.treeView.expandAll()
 

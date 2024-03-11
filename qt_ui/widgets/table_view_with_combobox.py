@@ -147,7 +147,9 @@ class ButtonDelegate(QStyledItemDelegate):
             if event.button() == Qt.LeftButton:
                 if event.type() == QtCore.QEvent.Type.MouseButtonRelease:
                     if mouse_hover[0]:
-                        model.removeRow(index.row(), index.parent())
+                        is_removable = index.data(Qt.DisplayRole)
+                        if is_removable:
+                            model.removeRow(index.row(), index.parent())
 
         return False
 

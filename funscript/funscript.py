@@ -3,6 +3,7 @@ import json
 import time
 import logging
 import hashlib
+import pathlib
 
 
 logger = logging.getLogger('restim.funscript')
@@ -14,9 +15,9 @@ funscript_cache = {
 }
 
 
-def sha1_hash(filename):
+def sha1_hash(path):
     sha1 = hashlib.sha1()
-    with open(filename, 'rb') as f:
+    with path.open('rb') as f:
         while True:
             data = f.read(2 ** 16)
             sha1.update(data)
@@ -31,17 +32,22 @@ class Funscript:
         self.y = np.array(y)
 
     @staticmethod
-    def from_file(filename):
+    def from_file(filename_or_path):
         start = time.time()
         x = []
         y = []
 
-        hash = sha1_hash(filename)
+        if filename_or_path is str:
+            path = pathlib.Path(filename_or_path)
+        else:
+            path = filename_or_path
+
+        hash = sha1_hash(path)
         if hash in funscript_cache:
-            logger.info(f'imported {filename} from cache')
+            logger.info(f'imported {path} from cache')
             return funscript_cache[hash]
 
-        with open(filename, encoding='utf-8') as f:
+        with path.open(encoding='utf-8') as f:
             js = json.load(f)
             for action in js['actions']:
                 at = float(action['at']) / 1000
@@ -50,7 +56,7 @@ class Funscript:
                 y.append(pos)
 
         end = time.time()
-        logger.info(f'imported {filename} in {end-start} seconds')
+        logger.info(f'imported {path} in {end-start} seconds')
         funscript = Funscript(x, y)
         funscript_cache[hash] = funscript
         return funscript

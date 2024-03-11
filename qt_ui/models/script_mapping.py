@@ -1,6 +1,5 @@
 from __future__ import annotations  # multiple return values
 
-import os
 import typing
 import logging
 
@@ -12,6 +11,7 @@ from qt_ui.device_wizard.axes import AxisEnum
 from qt_ui.models.tree_item import TreeItem
 from qt_ui.models.funscript_kit import FunscriptKitModel
 from funscript.funscript import Funscript
+import funscript.collect_funscripts
 
 logger = logging.getLogger('restim.script_mapping')
 
@@ -36,24 +36,21 @@ class ResourceCategory(TreeItem):
             return self.name
         return None
 
+
 class FunscriptTreeItem(TreeItem):
-    def __init__(self, full_path: str, parent: TreeItem=None):
+    def __init__(self, resource: funscript.collect_funscripts.Resource, parent: TreeItem=None):
         super(FunscriptTreeItem, self).__init__(parent)
 
-        self.full_path = full_path
-        self.file_name = os.path.basename(full_path)
-        self.script_name = ''
-        try:
-            _, self.script_name, _ = self.file_name.split('.')
-        except ValueError:
-            pass
+        # self.resource = resource
+        self.file_name = resource.name()
+        self.funscript_type = resource.funscript_type()
         self.axis = qt_ui.device_wizard.axes.AxisEnum.NONE
         self.is_removable = False
         self.used = False
 
         # load funscript immediately. This makes the UI feel sluggish on connecting/disconnecting
         # but has the advantage of not requiring any file IO when audio starts.
-        self.script = Funscript.from_file(self.full_path)
+        self.script = Funscript.from_file(resource.path)
 
     def data(self, column):
         if column == 0:
@@ -224,43 +221,19 @@ class ScriptMappingModel(QAbstractItemModel):
                 index = self.createIndex(item.row(), 0, item.parent)
                 self.dataChanged.emit(index, index, [Qt.DisplayRole])
 
-    def case_insensitive_compare(self, a, b):
-        return a.lower() == b.lower()
-
-    def split_funscript_path(self, path):
-        a, b = os.path.split(path)
-        parts = b.split('.')
-        extension = parts[-1]
-        if len(parts) == 1:
-            return parts[0], '', ''
-        if len(parts) == 2:
-            return parts[0], '', extension
-        return '.'.join(parts[:-2]), parts[-2], extension
-
-    def detect_funscripts_from_path(self, media_dir: str, media_file: str) -> bool:
+    def detect_funscripts_from_path(self, search_directories: [str], media_file: str) -> bool:
         """
-        :param media_dir: "/path/to/"
+        :param search_directories: list of strings
         :param media_file: "video.mp4"
         :return:
         """
-        logger.info(f'detecting funscripts from: `{media_dir}`')
         dirty = self._funscripts_auto.childCount() > 0
-
         self._funscripts_auto.children.clear()
 
-        prefix, suffix, extension = self.split_funscript_path(media_file)
-
-        prefix = prefix.lower() + '.'
-        suffix = '.funscript'.lower()
-
-        try:
-            for file in os.scandir(os.path.expanduser(media_dir)):
-                if file.name.lower().startswith(prefix) and file.name.lower().endswith(suffix):
-                    self.add_funscript_resource_auto(FunscriptTreeItem(file.path))
-                    dirty = True
-        except OSError as e:
-            # probably invalid network path
-            pass
+        resources = funscript.collect_funscripts.collect_funscripts(search_directories, media_file)
+        for res in resources:
+            dirty |= True
+            self.add_funscript_resource_auto(FunscriptTreeItem(res))
         return dirty
 
     def clear_auto_detected_funscripts(self):
@@ -277,7 +250,7 @@ class ScriptMappingModel(QAbstractItemModel):
         self.refresh_active_files()
 
     def auto_link_funscript(self, kit: FunscriptKitModel, item: FunscriptTreeItem):
-        prefix, suffix, extension = self.split_funscript_path(item.file_name)
+        suffix = item.funscript_type
         if suffix:
             for kit_item in kit.funscript_conifg():
                 if kit_item.auto_loading:
