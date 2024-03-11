@@ -17,7 +17,7 @@ from stim_math.axis import create_temporal_axis
 from stim_math.audio_gen.params import VibrationParams
 
 from qt_ui import settings
-from qt_ui.axis_controller import AxisController, PercentAxisController
+from qt_ui.axis_controller import AxisController, PercentAxisController, GroupboxAxisController
 
 
 class MyMplCanvas(FigureCanvas):
@@ -177,6 +177,9 @@ class VibrationSettingsWidget(QtWidgets.QWidget):
         self.vib2_high_low_slider = bias2_high_low_slider
         self.vib2_random_slider = random2_slider
 
+        self.vib1_enabled_controller = GroupboxAxisController(self.vib1_gb)
+        self.vib1_enabled_controller.link_axis(self.vibration_1.enabled)
+
         self.vib1_freq_controller = AxisController(self.vib1_freq_slider)
         self.vib1_freq_controller.link_axis(self.vibration_1.frequency)
 
@@ -191,6 +194,9 @@ class VibrationSettingsWidget(QtWidgets.QWidget):
 
         self.vib1_random_controller = PercentAxisController(self.vig1_random_slider)
         self.vib1_random_controller.link_axis(self.vibration_1.random)
+
+        self.vib2_enabled_controller = GroupboxAxisController(self.vib2_gb)
+        self.vib2_enabled_controller.link_axis(self.vibration_2.enabled)
 
         self.vib2_freq_controller = AxisController(self.vib2_freq_slider)
         self.vib2_freq_controller.link_axis(self.vibration_2.frequency)

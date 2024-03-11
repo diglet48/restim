@@ -71,3 +71,48 @@ class PercentAxisController(AxisController):
 
     def get_control_value(self):
         return self.control.value() / 100
+
+
+class GroupboxAxisController(QtCore.QObject):
+    def __init__(self, control: QtWidgets.QGroupBox):
+        super(GroupboxAxisController, self).__init__()
+        self.control = control
+        self.script_axis: AbstractAxis = None
+        self.internal_axis: AbstractAxis = None
+        self.control.toggled.connect(self.value_changed)
+        self.last_user_entered_value = self.control.isChecked()
+        print('last user entered value:', self.last_user_entered_value)
+
+    def value_changed(self):
+        # TODO: what happens on tcode control?
+        if self.internal_axis is not None:    # if: not funscript control
+            self.internal_axis.add(self.control.isChecked())
+            self.last_user_entered_value = self.control.isChecked()
+            print('last user entered value:', self.last_user_entered_value)
+            self.modified_by_user.emit()
+
+    def link_axis(self, axis):
+        if isinstance(axis, WriteProtectedAxis):    # HACK: is funcript axis?
+            self.link_to_funscript(axis)
+        else:
+            self.link_to_internal_axis(axis)
+
+    def link_to_funscript(self, script_axis):
+        """
+        Behavior: the control gets disables. Periodically, the value shown in the control updates.
+        """
+        self.internal_axis = None
+        self.control.setCheckable(False)
+        self.script_axis = script_axis
+
+    def link_to_internal_axis(self, internal_axis):
+        """
+        Behavior: control enabled. Whenever user modifies the control, value is inserted in axis.
+        """
+        self.script_axis = None
+        self.internal_axis = None
+        self.control.setCheckable(True)
+        self.control.setChecked(self.last_user_entered_value)
+        self.internal_axis = internal_axis
+
+    modified_by_user = QtCore.pyqtSignal()

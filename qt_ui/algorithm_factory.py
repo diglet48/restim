@@ -199,13 +199,25 @@ class AlgorithmFactory:
 
     def get_axis_vib1_all(self):
         return VibrationParams(
-            enabled=self.mainwindow.tab_vibrate.vibration_1.enabled,
+            enabled=self.get_axis_vib1_enabled(),
             frequency=self.get_axis_vib1_frequency(),
             strength=self.get_axis_vib1_strength(),
             left_right_bias=self.get_axis_vib1_left_right_bias(),
             high_low_bias=self.get_axis_vib1_high_low_bias(),
             random=self.get_axis_vib1_random(),
         )
+
+    def get_axis_vib1_enabled(self):
+        is_enabled = \
+            self.script_mapping.get_config_for_axis(AxisEnum.VIBRATION_1_FREQUENCY) or \
+            self.script_mapping.get_config_for_axis(AxisEnum.VIBRATION_1_STRENGTH) or \
+            self.script_mapping.get_config_for_axis(AxisEnum.VIBRATION_1_LEFT_RIGHT_BIAS) or \
+            self.script_mapping.get_config_for_axis(AxisEnum.VIBRATION_1_HIGH_LOW_BIAS) or \
+            self.script_mapping.get_config_for_axis(AxisEnum.VIBRATION_1_RANDOM)
+        if is_enabled:
+            return create_precomputed_axis([0], [True], self.timestamp_mapper)
+        else:
+            return self.mainwindow.tab_vibrate.vibration_1.enabled
 
     def get_axis_vib1_frequency(self):
         return self.get_axis_from_script_mapping(AxisEnum.VIBRATION_1_FREQUENCY) or \
@@ -229,13 +241,25 @@ class AlgorithmFactory:
 
     def get_axis_vib2_all(self):
         return VibrationParams(
-            enabled=self.mainwindow.tab_vibrate.vibration_2.enabled,
+            enabled=self.get_axis_vib2_enabled(),
             frequency=self.get_axis_vib2_frequency(),
             strength=self.get_axis_vib2_strength(),
             left_right_bias=self.get_axis_vib2_left_right_bias(),
             high_low_bias=self.get_axis_vib2_high_low_bias(),
             random=self.get_axis_vib2_random(),
         )
+
+    def get_axis_vib2_enabled(self):
+        is_enabled = \
+            self.script_mapping.get_config_for_axis(AxisEnum.VIBRATION_2_FREQUENCY) or \
+            self.script_mapping.get_config_for_axis(AxisEnum.VIBRATION_2_STRENGTH) or \
+            self.script_mapping.get_config_for_axis(AxisEnum.VIBRATION_2_LEFT_RIGHT_BIAS) or \
+            self.script_mapping.get_config_for_axis(AxisEnum.VIBRATION_2_HIGH_LOW_BIAS) or \
+            self.script_mapping.get_config_for_axis(AxisEnum.VIBRATION_2_RANDOM)
+        if is_enabled:
+            return create_precomputed_axis([0], [True], self.timestamp_mapper)
+        else:
+            return self.mainwindow.tab_vibrate.vibration_2.enabled
 
     def get_axis_vib2_frequency(self):
         return self.get_axis_from_script_mapping(AxisEnum.VIBRATION_2_FREQUENCY) or \
