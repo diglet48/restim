@@ -30,10 +30,17 @@ def parse_reply(reply: QNetworkReply):
                 key, value = m.groups()
                 props[key.decode('utf-8')] = value.decode('utf-8')
 
+        if props['state'] == '2':
+            play_state = MediaConnectionState.CONNECTED_AND_PLAYING
+        elif props['state'] == '-1':
+            play_state = MediaConnectionState.CONNECTED_BUT_NO_FILE_LOADED
+        else:
+            play_state = MediaConnectionState.CONNECTED_AND_PAUSED
+
         return MediaStatusReport(
             timestamp=time.time(),
-            connectionState=MediaConnectionState.CONNECTED_AND_PLAYING if props['statestring'] == 'Playing' else MediaConnectionState.CONNECTED_AND_PAUSED,
-            filePath=props['filepath'] if 'filepath' in props else '',
+            connectionState=play_state,
+            filePath=props['filepath'] if 'filepath' in props and play_state != MediaConnectionState.CONNECTED_BUT_NO_FILE_LOADED else '',
             playbackRate=float(props['playbackrate']),
             claimed_media_position=float(props['position']) / 1000
         )
