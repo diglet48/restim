@@ -81,14 +81,12 @@ class GroupboxAxisController(QtCore.QObject):
         self.internal_axis: AbstractAxis = None
         self.control.toggled.connect(self.value_changed)
         self.last_user_entered_value = self.control.isChecked()
-        print('last user entered value:', self.last_user_entered_value)
 
     def value_changed(self):
         # TODO: what happens on tcode control?
         if self.internal_axis is not None:    # if: not funscript control
             self.internal_axis.add(self.control.isChecked())
             self.last_user_entered_value = self.control.isChecked()
-            print('last user entered value:', self.last_user_entered_value)
             self.modified_by_user.emit()
 
     def link_axis(self, axis):
