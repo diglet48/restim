@@ -1,4 +1,5 @@
 from __future__ import annotations  # multiple return values
+import numpy as np
 
 from qt_ui.device_wizard.enums import DeviceConfiguration, DeviceType, WaveformType
 from stim_math.audio_gen.base_classes import AudioGenerationAlgorithm
@@ -291,7 +292,7 @@ class AlgorithmFactory:
             # TODO: not very memory efficient if multiple algorithms reference the same script.
             # but worst-case it only wastes a few MB or so...
             return create_precomputed_axis(funscript_item.script.x,
-                                           funscript_item.script.y * (limit_max - limit_min) + limit_min,
+                                           np.clip(funscript_item.script.y, 0, 1) * (limit_max - limit_min) + limit_min,
                                            self.timestamp_mapper)
         else:
             return None
