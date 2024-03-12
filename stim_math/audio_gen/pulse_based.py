@@ -9,6 +9,7 @@ from stim_math import threephase
 from stim_math.audio_gen.various import ThreePhasePosition, VibrationAlgorithm
 from stim_math.audio_gen.params import ThreephasePulsebasedAlgorithmParams, ThreephaseCalibrationParams, SafetyParams
 from stim_math.axis import AbstractMediaSync
+from stim_math import limits
 
 
 @dataclass
@@ -115,7 +116,9 @@ class DefaultThreePhasePulseBasedAlgorithm(ThreePhasePulseBasedAlgorithmBase):
                                      self.safety_limits.minimum_carrier_frequency,
                                      self.safety_limits.maximum_carrier_frequency)
         pulse_width = self.params.pulse_width.interpolate(system_time_estimate)
+        pulse_width = np.clip(pulse_width, limits.PulseWidth.min, limits.PulseWidth.max)
         pulse_freq = self.params.pulse_frequency.interpolate(system_time_estimate)
+        pulse_freq = np.clip(pulse_freq, limits.PulseFrequency.min, limits.PulseFrequency.max)
         pause_duration = np.clip(1 / pulse_freq - pulse_width / pulse_carrier_freq, 0, None)
 
         random = self.params.pulse_interval_random.interpolate(system_time_estimate)

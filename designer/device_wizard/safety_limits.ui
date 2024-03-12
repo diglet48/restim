@@ -56,6 +56,9 @@ p, li { white-space: pre-wrap; }
    </item>
    <item row="0" column="1">
     <widget class="QDoubleSpinBox" name="min_frequency_spinbox">
+     <property name="minimum">
+      <double>1.000000000000000</double>
+     </property>
      <property name="maximum">
       <double>10000.000000000000000</double>
      </property>
@@ -66,6 +69,9 @@ p, li { white-space: pre-wrap; }
    </item>
    <item row="1" column="1">
     <widget class="QDoubleSpinBox" name="max_frequency_spinbox">
+     <property name="minimum">
+      <double>1.000000000000000</double>
+     </property>
      <property name="maximum">
       <double>10000.000000000000000</double>
      </property>
