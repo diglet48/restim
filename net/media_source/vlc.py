@@ -31,6 +31,7 @@ class VLC(MediaSource):
 
         self.nam = QNetworkAccessManager()
         self.nam.authenticationRequired.connect(self.authenticationRequired)
+        self.nam.finished.connect(self.on_request_finished)
 
     def authenticationRequired(self, request: QNetworkRequest, authenticator: QAuthenticator):
         logger.info('authenticating')
@@ -53,8 +54,13 @@ class VLC(MediaSource):
 
             req = QNetworkRequest(status_url)
             req.setTransferTimeout(2000)
-            reply = self.nam.get(req)
-            reply.finished.connect(functools.partial(self.on_status_request_finished, reply))
+            self.nam.get(req)
+
+    def on_request_finished(self, reply: QNetworkReply):
+        if reply.url().toString().endswith('status.xml'):
+            self.on_status_request_finished(reply)
+        if reply.url().toString().endswith('playlist.xml'):
+            self.on_playlist_request_finished(reply)
 
     def on_status_request_finished(self, reply: QNetworkReply):
         if self._enabled:
@@ -73,8 +79,7 @@ class VLC(MediaSource):
         if self._enabled and playlist_url.isValid():
             req = QNetworkRequest(playlist_url)
             req.setTransferTimeout(2000)
-            reply = self.nam.get(req)
-            reply.finished.connect(functools.partial(self.on_playlist_request_finished, reply))
+            self.nam.get(req)
 
     def on_playlist_request_finished(self, reply: QNetworkReply):
         if self._enabled:
