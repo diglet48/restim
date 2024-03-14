@@ -47,16 +47,20 @@ class MyStaticMplCanvas(MyMplCanvas):
     def compute_initial_figure(self):
         pass
 
-    def updateParams(self, carrier_frequency, pulse_frequency, pulse_width, pulse_interval_random):
+    def updateParams(self, carrier_frequency, pulse_frequency, pulse_width, pulse_interval_random, rise_time):
         samplerate = 44100
         x_limit = .10
+
+        rise_time = np.clip(rise_time,
+                            stim_math.limits.PulseRiseTime.min,
+                            stim_math.limits.PulseRiseTime.max)
 
         gen = np.random.default_rng(seed=6)
 
         y = []
         while len(y) / samplerate < x_limit:
             theta = np.linspace(0, 2 * np.pi * pulse_width, int(samplerate / carrier_frequency * pulse_width)) + gen.uniform(0, np.pi * 2)
-            pulse = np.cos(theta) * stim_math.pulse.create_pulse_envelope_half_circle(len(theta))
+            pulse = np.cos(theta) * stim_math.pulse.create_pulse_with_ramp_time(len(theta), pulse_width, rise_time)
             y += list(pulse)
             pause_length = samplerate / pulse_frequency - len(pulse)
             pause_length *= gen.uniform(1 - pulse_interval_random, 1 + pulse_interval_random)
@@ -82,6 +86,7 @@ class PulseSettingsWidget(QtWidgets.QWidget):
         self.axis_pulse_frequency = create_constant_axis(settings.pulse_frequency.get())
         self.axis_pulse_width = create_constant_axis(settings.pulse_width.get())
         self.axis_pulse_interval_random = create_constant_axis(settings.pulse_interval_random.get() / 100)
+        self.axis_pulse_rise_time = create_constant_axis(settings.pulse_rise_time.get())
         self.axis_pulse_polarity = create_constant_axis(0.0)
         self.axis_device_emulation_mode = create_constant_axis(0)
         self.axis_pulse_phase_offset_increment = create_constant_axis(0)
@@ -135,6 +140,13 @@ class PulseSettingsWidget(QtWidgets.QWidget):
         pulse_interval_random_label = QtWidgets.QLabel("pulse interval random [%]")
         gb_l.addRow(pulse_interval_random_label, pulse_interval_random_slider)
 
+        pulse_rise_time_slider = QtWidgets.QDoubleSpinBox(minimum=stim_math.limits.PulseRiseTime.min,
+                                                          maximum=stim_math.limits.PulseRiseTime.max)
+        pulse_rise_time_slider.setSingleStep(0.1)
+        pulse_rise_time_slider.setValue(settings.pulse_rise_time.get())
+        pulse_rise_time_label = QtWidgets.QLabel("rise time [carrier cycles]")
+        gb_l.addRow(pulse_rise_time_label, pulse_rise_time_slider)
+
         details_label = QtWidgets.QLabel("duty cycle (?)")
         details_label.setToolTip('Low duty cycle is best for power efficiency (less skin irritation).')
         details_info = QtWidgets.QLabel("placeholder")
@@ -177,6 +189,7 @@ class PulseSettingsWidget(QtWidgets.QWidget):
         self.pulse_width_slider = pulse_width_slider
         self.details_info = details_info
         self.pulse_interval_random = pulse_interval_random_slider
+        self.pulse_rise_time = pulse_rise_time_slider
         # self.polarity = polarity_combobox
         # self.device_emulation_mode = device_emulation_mode_combobox
         # self.pulse_phase_offset_increment = pulse_phase_offset_increment_slider
@@ -194,10 +207,14 @@ class PulseSettingsWidget(QtWidgets.QWidget):
         self.pulse_interval_random_controller = PercentAxisController(self.pulse_interval_random)
         self.pulse_interval_random_controller.link_axis(self.axis_pulse_interval_random)
 
+        self.pulse_rise_time_controller = AxisController(self.pulse_rise_time)
+        self.pulse_rise_time_controller.link_axis(self.axis_pulse_rise_time)
+
         self.carrier_controller.modified_by_user.connect(self.settings_changed)
         self.pulse_width_controller.modified_by_user.connect(self.settings_changed)
         self.pulse_frequency_controller.modified_by_user.connect(self.settings_changed)
         self.pulse_interval_random_controller.modified_by_user.connect(self.settings_changed)
+        self.pulse_rise_time_controller.modified_by_user.connect(self.settings_changed)
 
         self.settings_changed()
 
@@ -214,6 +231,7 @@ class PulseSettingsWidget(QtWidgets.QWidget):
         pulse_freq = self.pulse_freq_slider.value()
         pulse_width = self.pulse_width_slider.value()
         duty_cycle = pulse_freq*pulse_width / carrier_freq
+        rise_time = self.pulse_rise_time.value()
         if duty_cycle <= 1:
             self.details_info.setStyleSheet('')
             self.details_info.setText(f'{duty_cycle:.0%}')
@@ -221,13 +239,14 @@ class PulseSettingsWidget(QtWidgets.QWidget):
             self.details_info.setStyleSheet('color: red')
             self.details_info.setText(f'{1:.0%}')
 
-        self.mpl_canvas.updateParams(carrier_freq, pulse_freq, pulse_width, self.pulse_interval_random.value() / 100)
+        self.mpl_canvas.updateParams(carrier_freq, pulse_freq, pulse_width, self.pulse_interval_random.value() / 100, rise_time)
 
     def save_settings(self):
         settings.pulse_carrier_frequency.set(self.carrier_controller.last_user_entered_value)
         settings.pulse_frequency.set(self.pulse_frequency_controller.last_user_entered_value)
         settings.pulse_width.set(self.pulse_width_controller.last_user_entered_value)
         settings.pulse_interval_random.set(self.pulse_interval_random_controller.last_user_entered_value * 100)
+        settings.pulse_rise_time.set(self.pulse_rise_time_controller.last_user_entered_value)
         # settings.pulse_polarity.set(self.polarity.currentText())
         # settings.pulse_device_emulation_mode.set(self.device_emulation_mode.currentText())
         # settings.pulse_phase_offset_increment.set(self.pulse_phase_offset_increment.value())

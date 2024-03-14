@@ -18,5 +18,10 @@ class PulseWidth:
     max = 100
 
 
+class PulseRiseTime:
+    min = 2
+    max = 100
+
+
 # the minimum 'on' or 'off' time for amplitude modulation
 minimum_amplitude_modulation_feature_length = 3
