@@ -77,7 +77,7 @@ def collect_funscripts(
             try:
                 is_zip = True
                 traversable = zipfile.Path(current_dir)
-            except (PermissionError, FileNotFoundError):
+            except OSError:
                 is_zip = False
                 traversable = pathlib.Path(current_dir)
 
