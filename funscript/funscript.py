@@ -37,7 +37,7 @@ class Funscript:
         x = []
         y = []
 
-        if filename_or_path is str:
+        if isinstance(filename_or_path, str):
             path = pathlib.Path(filename_or_path)
         else:
             path = filename_or_path
