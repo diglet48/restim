@@ -1,7 +1,8 @@
+import pathlib
 import sys
 
 from PyQt5 import QtGui
-from PyQt5.QtCore import QSettings, QTimer, QUrl
+from PyQt5.QtCore import QSettings, QTimer, QUrl, QStandardPaths
 from PyQt5.QtGui import QIcon
 from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
 from PyQt5.QtWidgets import (
@@ -432,7 +433,9 @@ def run():
     QApplication.setOrganizationName("restim")
     QSettings.setDefaultFormat(QSettings.IniFormat)
 
-    logging.basicConfig()
+    log_path = pathlib.Path(QStandardPaths.writableLocation(QStandardPaths.AppDataLocation)) / 'logs'
+    log_path.mkdir(parents=True, exist_ok=True)
+    logging.basicConfig(filename=(log_path / 'restim.log'))
     logger = logging.getLogger('restim')
     logger.setLevel(logging.DEBUG)
     logging.getLogger('matplotlib').setLevel(logging.WARN)
