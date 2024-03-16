@@ -21,7 +21,7 @@ def parse_reply(reply: QNetworkReply):
             errorString=reply.errorString())
 
     try:
-        pattern = b'\s+<p id="(\w+)">(.+)</p>\r\n'
+        pattern = rb'\s+<p id="(\w+)">(.+)</p>\r\n'
         props = dict()
         while reply.bytesAvailable():
             line = reply.readLine()
