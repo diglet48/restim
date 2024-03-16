@@ -436,6 +436,7 @@ def run():
     log_path = pathlib.Path(QStandardPaths.writableLocation(QStandardPaths.AppDataLocation)) / 'logs'
     log_path.mkdir(parents=True, exist_ok=True)
     logging.basicConfig(filename=(log_path / 'restim.log'))
+    logging.getLogger().addHandler(logging.StreamHandler())
     logger = logging.getLogger('restim')
     logger.setLevel(logging.DEBUG)
     logging.getLogger('matplotlib').setLevel(logging.WARN)
