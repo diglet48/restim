@@ -18,6 +18,7 @@ class PulseInfo:
     start_angle: float  # in rad
     carrier_frequency: float
     pulse_width_in_carrier_cycles: float
+    rise_time_in_carrier_cycles: float
     position: tuple[float]
     pause_length_in_s: float
     volume: float
@@ -57,7 +58,10 @@ class ThreePhasePulseBasedAlgorithmBase(AudioGenerationAlgorithm):
         return L, R
 
     def add_next_pulse_to_audio_buffer(self, samplerate, pulse: PulseInfo):
-        pulse_envelope = stim_math.pulse.create_pulse_envelope_half_circle(pulse.pulse_length_in_samples(samplerate))
+        pulse_envelope = stim_math.pulse.create_pulse_with_ramp_time(
+            pulse.pulse_length_in_samples(samplerate),
+            pulse.pulse_width_in_carrier_cycles,
+            pulse.rise_time_in_carrier_cycles)
 
         if not self.media.is_playing():
             # TODO: make more efficient
@@ -135,6 +139,7 @@ class DefaultThreePhasePulseBasedAlgorithm(ThreePhasePulseBasedAlgorithmBase):
             self.phase_offset(),
             pulse_carrier_freq,
             pulse_width,
+            np.clip(self.params.pulse_rise_time.interpolate(system_time_estimate), limits.PulseRiseTime.min, limits.PulseRiseTime.max),
             (alpha, beta),
             pause_duration,
             volume,
