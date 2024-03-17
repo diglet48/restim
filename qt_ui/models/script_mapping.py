@@ -1,9 +1,11 @@
 from __future__ import annotations  # multiple return values
 
+import json.decoder
 import typing
 import logging
 
 from PyQt5.QtCore import QAbstractItemModel, QModelIndex, Qt
+from PyQt5.QtGui import QColor
 
 import qt_ui.device_wizard
 import qt_ui.device_wizard.axes
@@ -46,16 +48,25 @@ class FunscriptTreeItem(TreeItem):
         self.funscript_type = resource.funscript_type()
         self.axis = qt_ui.device_wizard.axes.AxisEnum.NONE
         self.is_removable = False
-        self.used = False
+        self.first_of_its_kind = False
 
         # load funscript immediately. This makes the UI feel sluggish on connecting/disconnecting
         # but has the advantage of not requiring any file IO when audio starts.
-        self.script = Funscript.from_file(resource.path)
+        try:
+            self.script = Funscript.from_file(resource.path)
+        except json.decoder.JSONDecodeError as e:
+            logger.error(f'Unable to parse funscript, broken? {resource.path}')
+            self.script = None
+
+    def has_broken_script(self) -> bool:
+        return self.script is None
 
     def data(self, column):
         if column == 0:
             return self.file_name
         if column == 1:
+            if self.has_broken_script():
+                return "funscript loading failed"
             return self.axis.display_name()
         if column == 2:
             return self.is_removable
@@ -101,6 +112,11 @@ class ScriptMappingModel(QAbstractItemModel):
         elif role == Qt.DisplayRole:
             item = index.internalPointer()
             return item.data(index.column())
+        elif role == Qt.ForegroundRole:
+            if isinstance(index.internalPointer(), FunscriptTreeItem):
+                if index.internalPointer().has_broken_script():
+                    return QColor(255, 0, 0)
+            return None
         else:
             return None
 
@@ -123,16 +139,23 @@ class ScriptMappingModel(QAbstractItemModel):
 
         if index.column() == 0:
             if isinstance(index.internalPointer(), FunscriptTreeItem):
-                if index.internalPointer().used:
+                if index.internalPointer().first_of_its_kind:
                     return Qt.ItemIsEnabled
                 else:
                     return Qt.NoItemFlags
 
             return Qt.ItemIsEnabled
-        else:
+        elif index.column() == 1:
             if isinstance(index.internalPointer(), ResourceCategory):
                 return Qt.ItemIsEnabled
-            return Qt.ItemIsEnabled |  Qt.ItemIsEditable
+            if isinstance(index.internalPointer(), FunscriptTreeItem):
+                if index.internalPointer().has_broken_script():
+                    return Qt.NoItemFlags
+                else:
+                    return Qt.ItemIsEnabled | Qt.ItemIsEditable
+            return Qt.ItemIsEnabled | Qt.ItemIsEditable
+        elif index.column() == 2:
+            return Qt.ItemIsEnabled
         # return super(TreeModel, self).flags(index)
 
     def headerData(self, section: int, orientation: Qt.Orientation, role: int = ...) -> typing.Any:
@@ -216,8 +239,8 @@ class ScriptMappingModel(QAbstractItemModel):
             use = item.axis not in used
             used.add(item.axis)
 
-            if use != item.used:
-                item.used = use
+            if use != item.first_of_its_kind:
+                item.first_of_its_kind = use
                 index = self.createIndex(item.row(), 0, item.parent)
                 self.dataChanged.emit(index, index, [Qt.DisplayRole])
 
@@ -250,6 +273,9 @@ class ScriptMappingModel(QAbstractItemModel):
         self.refresh_active_files()
 
     def auto_link_funscript(self, kit: FunscriptKitModel, item: FunscriptTreeItem):
+        if item.has_broken_script():
+            return
+
         suffix = item.funscript_type
         if suffix:
             for kit_item in kit.funscript_conifg():
