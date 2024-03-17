@@ -153,7 +153,7 @@ class AudioWriteDialog(QDialog, Ui_AudioWriteDialog):
         dlg.setFileMode(QFileDialog.AnyFile)
         dlg.setNameFilters(['Audio files (*.wav, *.mp3, *.ogg, *)'])
 
-        if dlg.exec_():
+        if dlg.exec():
             filenames = dlg.selectedFiles()
             if filenames:
                 self.file_edit.setText(filenames[0])

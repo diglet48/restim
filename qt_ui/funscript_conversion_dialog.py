@@ -34,8 +34,8 @@ class FunscriptConversionDialog(QDialog, Ui_FunscriptConversionDialog):
 
     def file_selected(self, filename):
         self.lineEdit_funscript.setText(filename)
-        self.lineEdit_alpha.setText(re.sub("\.funscript$", ".alpha.funscript", filename))
-        self.lineEdit_beta.setText(re.sub("\.funscript$", ".beta.funscript", filename))
+        self.lineEdit_alpha.setText(re.sub(r"\.funscript$", ".alpha.funscript", filename))
+        self.lineEdit_beta.setText(re.sub(r"\.funscript$", ".beta.funscript", filename))
 
     def convert(self):
         self.textEdit.clear()
