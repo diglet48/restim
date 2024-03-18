@@ -11,7 +11,7 @@ from PyQt5.QtXmlPatterns import QXmlQuery
 from net.media_source.mediasource import MediaSource, MediaStatusReport, MediaConnectionState
 from qt_ui import settings
 
-logger = logging.getLogger('media.VLC')
+logger = logging.getLogger('restim.media.VLC')
 
 
 class VLC(MediaSource):
