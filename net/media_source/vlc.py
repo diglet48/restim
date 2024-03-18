@@ -108,7 +108,7 @@ class VLC(MediaSource):
 
         self.media_player.durationChanged.connect(duration_changed)
         self.media_player.error.connect(on_error)
-        self.media_player.setMedia(QMediaContent(QUrl(the_file)))
+        self.media_player.setMedia(QMediaContent(QUrl.fromLocalFile(the_file)))
 
     def enable(self):
         self._enabled = True
