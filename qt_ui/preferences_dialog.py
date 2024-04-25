@@ -75,6 +75,9 @@ class PreferencesDialog(QDialog, Ui_PreferencesDialog):
         self.vlc_reload.clicked.connect(
             functools.partial(self.vlc_address.setText, qt_ui.settings.media_sync_vlc_address.default_value)
         )
+        self.kodi_reload.clicked.connect(
+            functools.partial(self.kodi_address.setText, qt_ui.settings.media_sync_kodi_address.default_value)
+        )
 
     def exec(self):
         self.loadSettings()
@@ -132,6 +135,7 @@ class PreferencesDialog(QDialog, Ui_PreferencesDialog):
         self.vlc_address.setText(qt_ui.settings.media_sync_vlc_address.get())
         self.vlc_username.setText(qt_ui.settings.media_sync_vlc_username.get())
         self.vlc_password.setText(qt_ui.settings.media_sync_vlc_password.get())
+        self.kodi_address.setText(qt_ui.settings.media_sync_kodi_address.get())
 
         # display settings
         self.display_fps.setValue(int(self.settings.value(KEY_DISPLAY_FPS, 60, float)))
@@ -197,6 +201,7 @@ class PreferencesDialog(QDialog, Ui_PreferencesDialog):
         qt_ui.settings.media_sync_vlc_address.set(self.vlc_address.text())
         qt_ui.settings.media_sync_vlc_username.set(self.vlc_username.text())
         qt_ui.settings.media_sync_vlc_password.set(self.vlc_password.text())
+        qt_ui.settings.media_sync_kodi_address.set(self.kodi_address.text())
 
         # display
         self.settings.setValue(KEY_DISPLAY_FPS, self.display_fps.value())

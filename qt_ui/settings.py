@@ -89,6 +89,7 @@ media_sync_heresphere_address = Setting('media_sync/heresphere_address', '192.16
 media_sync_vlc_address = Setting('media_sync/vlc_address', 'http://127.0.0.1:8080', str)
 media_sync_vlc_username = Setting('media_sync/vlc_username', '', str)
 media_sync_vlc_password = Setting('media_sync/vlc_password', '1234', str)
+media_sync_kodi_address = Setting('media_sync/kodi_address', 'ws://127.0.0.1:9090', str)
 
 
 audio_channel_count = Setting("audio/channel-count", 8, int)

@@ -17,7 +17,7 @@
    <item>
     <widget class="QTabWidget" name="tabWidget">
      <property name="currentIndex">
-      <number>4</number>
+      <number>2</number>
      </property>
      <widget class="QWidget" name="tab_network">
       <attribute name="title">
@@ -537,6 +537,36 @@
               <widget class="QLineEdit" name="vlc_password"/>
              </item>
             </layout>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <widget class="QGroupBox" name="groupBox_2">
+         <property name="title">
+          <string>Kodi</string>
+         </property>
+         <layout class="QGridLayout" name="gridLayout_2">
+          <item row="0" column="1">
+           <widget class="QLineEdit" name="kodi_address"/>
+          </item>
+          <item row="0" column="0">
+           <widget class="QLabel" name="label_13">
+            <property name="text">
+             <string>address:port</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="2">
+           <widget class="QToolButton" name="kodi_reload">
+            <property name="text">
+             <string>...</string>
+            </property>
+            <property name="icon">
+             <iconset resource="../resources/restim.qrc">
+              <normaloff>:/restim/arrow-round_poly.svg</normaloff>:/restim/arrow-round_poly.svg</iconset>
+            </property>
            </widget>
           </item>
          </layout>
