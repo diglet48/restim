@@ -1,7 +1,8 @@
+import pathlib
 import sys
 
 from PyQt5 import QtGui
-from PyQt5.QtCore import QSettings, QTimer, QUrl
+from PyQt5.QtCore import QSettings, QTimer, QUrl, QStandardPaths
 from PyQt5.QtGui import QIcon
 from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
 from PyQt5.QtWidgets import (
@@ -31,8 +32,6 @@ from qt_ui.widgets.icon_with_connection_status import IconWithConnectionStatus
 from stim_math.audio_gen.params import ThreephaseContinuousAlgorithmParams, ThreephasePositionParams, \
     ThreephasePulsebasedAlgorithmParams, FivephaseContinuousAlgorithmParams, SafetyParams, VolumeParams
 from stim_math.axis import create_temporal_axis, create_precomputed_axis, WriteProtectedAxis
-
-from qt_ui.tcode_route_configuration import ThreephaseRouteConfiguration
 
 from qt_ui.preferences_dialog import KEY_AUDIO_API, KEY_AUDIO_OUTPUT_DEVICE, KEY_AUDIO_LATENCY
 import sounddevice as sd
@@ -81,13 +80,29 @@ class Window(QMainWindow, Ui_MainWindow):
         self.beta = create_temporal_axis(0.0)
 
         self.tcode_command_router = TCodeCommandRouter(
-            ThreephaseRouteConfiguration(),
             self.alpha,
             self.beta,
             self.tab_volume.api_volume,
-            self.tab_carrier.axis_carrier,
-            self.tab_pulse_settings.axis_carrier_frequency,
+
+            self.tab_carrier.axis_carrier,  # this gets set to the device-specific axis later
+
+            self.tab_pulse_settings.axis_pulse_frequency,
+            self.tab_pulse_settings.axis_pulse_width,
+            self.tab_pulse_settings.axis_pulse_interval_random,
+            self.tab_pulse_settings.axis_pulse_rise_time,
+
             self.tab_vibrate.vibration_1.frequency,
+            self.tab_vibrate.vibration_1.strength,
+            self.tab_vibrate.vibration_1.left_right_bias,
+            self.tab_vibrate.vibration_1.high_low_bias,
+            self.tab_vibrate.vibration_1.random,
+
+            self.tab_vibrate.vibration_2.frequency,
+            self.tab_vibrate.vibration_2.strength,
+            self.tab_vibrate.vibration_2.left_right_bias,
+            self.tab_vibrate.vibration_2.high_low_bias,
+            self.tab_vibrate.vibration_2.random,
+
             self.tab_fivephase.position
         )
 
@@ -262,13 +277,16 @@ class Window(QMainWindow, Ui_MainWindow):
         self.tab_pulse_settings.pulse_frequency_controller.link_axis(algorithm_factory.get_axis_pulse_frequency())
         self.tab_pulse_settings.pulse_width_controller.link_axis(algorithm_factory.get_axis_pulse_width())
         self.tab_pulse_settings.pulse_interval_random_controller.link_axis(algorithm_factory.get_axis_pulse_interval_random())
+        self.tab_pulse_settings.pulse_rise_time_controller.link_axis(algorithm_factory.get_axis_pulse_rise_time())
 
         # vibration tab
+        self.tab_vibrate.vib1_enabled_controller.link_axis(algorithm_factory.get_axis_vib1_enabled())
         self.tab_vibrate.vib1_freq_controller.link_axis(algorithm_factory.get_axis_vib1_frequency())
         self.tab_vibrate.vib1_strength_controller.link_axis(algorithm_factory.get_axis_vib1_strength())
         self.tab_vibrate.vib1_left_right_bias_controller.link_axis(algorithm_factory.get_axis_vib1_left_right_bias())
         self.tab_vibrate.vib1_high_low_bias_controller.link_axis(algorithm_factory.get_axis_vib1_high_low_bias())
         self.tab_vibrate.vib1_random_controller.link_axis(algorithm_factory.get_axis_vib1_random())
+        self.tab_vibrate.vib2_enabled_controller.link_axis(algorithm_factory.get_axis_vib2_enabled())
         self.tab_vibrate.vib2_freq_controller.link_axis(algorithm_factory.get_axis_vib2_frequency())
         self.tab_vibrate.vib2_strength_controller.link_axis(algorithm_factory.get_axis_vib2_strength())
         self.tab_vibrate.vib2_left_right_bias_controller.link_axis(algorithm_factory.get_axis_vib2_left_right_bias())
@@ -313,6 +331,10 @@ class Window(QMainWindow, Ui_MainWindow):
 
         self.tab_carrier.set_safety_limits(config.min_frequency, config.max_frequency)
         self.tab_pulse_settings.set_safety_limits(config.min_frequency, config.max_frequency)
+        if config.waveform_type == WaveformType.CONTINUOUS:
+            self.tcode_command_router.set_carrier_axis(self.tab_carrier.axis_carrier)
+        if config.waveform_type == WaveformType.PULSE_BASED:
+            self.tcode_command_router.set_carrier_axis(self.tab_pulse_settings.axis_carrier_frequency)
 
     def audio_start_stop(self):
         if self.audio_gen.stream is None:
@@ -384,9 +406,10 @@ class Window(QMainWindow, Ui_MainWindow):
         Reload everything that is stored in settings and may be changed
         by the preferences dialog
         """
-        self.tcode_command_router.update_routing_configuration(ThreephaseRouteConfiguration())
+        self.tcode_command_router.reload_kit()
         self.graphicsView.refreshSettings()
         self.progressBar_volume.refreshSettings()
+        self.buttplug_wsdm_client.refreshSettings()
         self.funscript_mapping_changed()  # reload funscript axis
 
     def save_settings(self):
@@ -413,7 +436,10 @@ def run():
     QApplication.setOrganizationName("restim")
     QSettings.setDefaultFormat(QSettings.IniFormat)
 
-    logging.basicConfig()
+    log_path = pathlib.Path(QStandardPaths.writableLocation(QStandardPaths.AppDataLocation)) / 'logs'
+    log_path.mkdir(parents=True, exist_ok=True)
+    logging.basicConfig(filename=(log_path / 'restim.log'), filemode='w')
+    logging.getLogger().addHandler(logging.StreamHandler())
     logger = logging.getLogger('restim')
     logger.setLevel(logging.DEBUG)
     logging.getLogger('matplotlib').setLevel(logging.WARN)

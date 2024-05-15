@@ -4,12 +4,9 @@ from PyQt5.QtCore import QSettings, QModelIndex
 from PyQt5.QtWidgets import QDialog, QAbstractButton, QDialogButtonBox, QAbstractItemView, QHeaderView
 
 from qt_ui.preferences_dialog_ui import Ui_PreferencesDialog
-from qt_ui.tcode_route_configuration import ThreephaseRouteConfiguration
 from qt_ui.audio_test_dialog import AudioTestDialog
 from qt_ui.models.funscript_kit import FunscriptKitModel
 import qt_ui.settings
-
-
 
 import sounddevice as sd
 
@@ -44,8 +41,6 @@ class PreferencesDialog(QDialog, Ui_PreferencesDialog):
 
         self.tabWidget.setCurrentIndex(0)
 
-        self.threephase = ThreephaseRouteConfiguration()
-
         self.settings = QSettings()
         self.loadSettings()
 
@@ -56,9 +51,10 @@ class PreferencesDialog(QDialog, Ui_PreferencesDialog):
 
         # funscript mapping
         self.button_funscript_reset_defaults.clicked.connect(self.funscript_reset_defaults)
-        self.tableView.horizontalHeader().setSectionResizeMode(4, QHeaderView.ResizeToContents)
         self.tableView.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeToContents)
         self.tableView.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeToContents)
+        self.tableView.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeToContents)
+        self.tableView.horizontalHeader().setSectionResizeMode(5, QHeaderView.ResizeToContents)
         self.tableView.setModel(FunscriptKitModel.load_from_settings())
         self.tableView.setEditTriggers(
             # QAbstractItemView.AllEditTriggers
@@ -78,6 +74,9 @@ class PreferencesDialog(QDialog, Ui_PreferencesDialog):
         )
         self.vlc_reload.clicked.connect(
             functools.partial(self.vlc_address.setText, qt_ui.settings.media_sync_vlc_address.default_value)
+        )
+        self.kodi_reload.clicked.connect(
+            functools.partial(self.kodi_address.setText, qt_ui.settings.media_sync_kodi_address.default_value)
         )
 
     def exec(self):
@@ -136,36 +135,11 @@ class PreferencesDialog(QDialog, Ui_PreferencesDialog):
         self.vlc_address.setText(qt_ui.settings.media_sync_vlc_address.get())
         self.vlc_username.setText(qt_ui.settings.media_sync_vlc_username.get())
         self.vlc_password.setText(qt_ui.settings.media_sync_vlc_password.get())
+        self.kodi_address.setText(qt_ui.settings.media_sync_kodi_address.get())
 
         # display settings
         self.display_fps.setValue(int(self.settings.value(KEY_DISPLAY_FPS, 60, float)))
         self.display_latency_ms.setValue(self.settings.value(KEY_DISPLAY_LATENCY, 200, float))
-
-        # threephase settings
-        self.threephase_alpha_axis.setText(self.threephase.alpha.axis)
-        self.threephase_alpha_min.setValue(self.threephase.alpha.left)
-        self.threephase_alpha_max.setValue(self.threephase.alpha.right)
-        self.threephase_alpha_enabled.setChecked(self.threephase.alpha.enabled)
-
-        self.threephase_beta_axis.setText(self.threephase.beta.axis)
-        self.threephase_beta_min.setValue(self.threephase.beta.left)
-        self.threephase_beta_max.setValue(self.threephase.beta.right)
-        self.threephase_beta_enabled.setChecked(self.threephase.beta.enabled)
-
-        self.threephase_volume_axis.setText(self.threephase.volume.axis)
-        self.threephase_volume_min.setValue(self.threephase.volume.left)
-        self.threephase_volume_max.setValue(self.threephase.volume.right)
-        self.threephase_volume_enabled.setChecked(self.threephase.volume.enabled)
-
-        self.threephase_carrier_axis.setText(self.threephase.carrier.axis)
-        self.threephase_carrier_min.setValue(self.threephase.carrier.left)
-        self.threephase_carrier_max.setValue(self.threephase.carrier.right)
-        self.threephase_carrier_enabled.setChecked(self.threephase.carrier.enabled)
-
-        self.threephase_vibration_frequency_axis.setText(self.threephase.vibration_1_frequency.axis)
-        self.threephase_vibration_frequency_min.setValue(self.threephase.vibration_1_frequency.left)
-        self.threephase_vibration_frequency_max.setValue(self.threephase.vibration_1_frequency.right)
-        self.threephase_vibration_frequency_enabled.setChecked(self.threephase.vibration_1_frequency.enabled)
 
         # funscript mapping
         self.tableView.setModel(FunscriptKitModel.load_from_settings())
@@ -227,38 +201,11 @@ class PreferencesDialog(QDialog, Ui_PreferencesDialog):
         qt_ui.settings.media_sync_vlc_address.set(self.vlc_address.text())
         qt_ui.settings.media_sync_vlc_username.set(self.vlc_username.text())
         qt_ui.settings.media_sync_vlc_password.set(self.vlc_password.text())
+        qt_ui.settings.media_sync_kodi_address.set(self.kodi_address.text())
 
         # display
         self.settings.setValue(KEY_DISPLAY_FPS, self.display_fps.value())
         self.settings.setValue(KEY_DISPLAY_LATENCY, self.display_latency_ms.value())
-
-        # threephase
-        self.threephase.alpha.axis = self.threephase_alpha_axis.text()
-        self.threephase.alpha.left = self.threephase_alpha_min.value()
-        self.threephase.alpha.right = self.threephase_alpha_max.value()
-        self.threephase.alpha.enabled = self.threephase_alpha_enabled.isChecked()
-
-        self.threephase.beta.axis = self.threephase_beta_axis.text()
-        self.threephase.beta.left = self.threephase_beta_min.value()
-        self.threephase.beta.right = self.threephase_beta_max.value()
-        self.threephase.beta.enabled = self.threephase_beta_enabled.isChecked()
-
-        self.threephase.volume.axis = self.threephase_volume_axis.text()
-        self.threephase.volume.left = self.threephase_volume_min.value()
-        self.threephase.volume.right = self.threephase_volume_max.value()
-        self.threephase.volume.enabled = self.threephase_volume_enabled.isChecked()
-
-        self.threephase.carrier.axis = self.threephase_carrier_axis.text()
-        self.threephase.carrier.left = self.threephase_carrier_min.value()
-        self.threephase.carrier.right = self.threephase_carrier_max.value()
-        self.threephase.carrier.enabled = self.threephase_carrier_enabled.isChecked()
-
-        self.threephase.vibration_1_frequency.axis = self.threephase_vibration_frequency_axis.text()
-        self.threephase.vibration_1_frequency.left = self.threephase_vibration_frequency_min.value()
-        self.threephase.vibration_1_frequency.right = self.threephase_vibration_frequency_max.value()
-        self.threephase.vibration_1_frequency.enabled = self.threephase_vibration_frequency_enabled.isChecked()
-
-        self.threephase.save()
 
         # funscript mapping
         self.tableView.model().save_to_settings()

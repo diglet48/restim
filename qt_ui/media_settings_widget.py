@@ -1,9 +1,13 @@
 import functools
 import os
+import pathlib
 
 from PyQt5.QtCore import Qt
 
+from funscript.collect_funscripts import Resource
 from net.media_source.vlc import VLC
+from net.media_source.kodi import Kodi
+from qt_ui.additional_search_paths_dialog import AdditionalSearchPathsDialog
 from qt_ui.device_wizard.axes import AxisEnum, text_and_data
 
 from PyQt5 import QtCore, QtWidgets
@@ -12,13 +16,14 @@ from PyQt5.QtWidgets import QAbstractItemView, QFileDialog
 
 from net.media_source.heresphere import HereSphere
 from net.media_source.interface import MediaConnectionState
+from qt_ui.file_dialog import FileDialog
 from qt_ui.media_settings_widget_ui import Ui_MediaSettingsWidget
 
 from net.media_source.internal import Internal
 from net.media_source.mpc import MPC
 from qt_ui.models.script_mapping import FunscriptTreeItem, ScriptMappingModel
 from qt_ui.widgets.table_view_with_combobox import ComboBoxDelegate, ButtonDelegate
-from qt_ui.models import funscript_kit
+from qt_ui.models import funscript_kit, additional_search_paths
 
 
 class _MediaSettingsWidget(type(QtWidgets.QWidget), type(Ui_MediaSettingsWidget)):
@@ -35,16 +40,19 @@ class MediaSettingsWidget(QtWidgets.QWidget, Ui_MediaSettingsWidget, metaclass=_
             MPC(self),
             HereSphere(self),
             VLC(self),
+            Kodi(self),
         ]
         self.media_sync[0].connectionStatusChanged.connect(functools.partial(self.connection_status_changed, 0))
         self.media_sync[1].connectionStatusChanged.connect(functools.partial(self.connection_status_changed, 1))
         self.media_sync[2].connectionStatusChanged.connect(functools.partial(self.connection_status_changed, 2))
         self.media_sync[3].connectionStatusChanged.connect(functools.partial(self.connection_status_changed, 3))
+        self.media_sync[4].connectionStatusChanged.connect(functools.partial(self.connection_status_changed, 4))
 
         self.comboBox.addItem("Internal")
         self.comboBox.addItem(QIcon(":/restim/media_players/mpc-hc.png"), "MPC-HC")
         self.comboBox.addItem(QIcon(":/restim/media_players/heresphere.png"), "HereSphere")
         self.comboBox.addItem(QIcon(":/restim/media_players/vlc.svg"), "VLC")
+        self.comboBox.addItem(QIcon(":/restim/media_players/kodi.png"), "Kodi")
         self.comboBox.currentIndexChanged.connect(self.media_index_changed)
 
         self.loaded_media_path = None
@@ -77,26 +85,34 @@ class MediaSettingsWidget(QtWidgets.QWidget, Ui_MediaSettingsWidget, metaclass=_
         header.resizeSection(2, 50)
 
         self.add_funscript_button.clicked.connect(self.open_add_funscripts_dialog)
+        self.additional_search_paths_button.clicked.connect(self.open_search_paths_dialog)
         self.media_index_changed()
 
     def open_add_funscripts_dialog(self):
         self.dialogOpened.emit()  # trigger stop audio
 
-        dlg = QFileDialog()
+        dlg = FileDialog()
         dlg.setFileMode(QFileDialog.ExistingFiles)
         dlg.setNameFilters(["*.funscript"])
 
-        if dlg.exec_():
+        if dlg.exec():
             self.model.beginResetModel()
             filenames = dlg.selectedFiles()
             kit = funscript_kit.FunscriptKitModel.load_from_settings()
             for filename in filenames:
-                item = FunscriptTreeItem(filename)
+                item = FunscriptTreeItem(Resource(pathlib.Path(filename)))
                 self.model.auto_link_funscript(kit, item)
                 self.model.add_funscript_resource_manual(item)
             self.model.endResetModel()
             self.treeView.expandAll()
             self.funscriptMappingChanged.emit()
+
+    def open_search_paths_dialog(self):
+        self.dialogOpened.emit()  # trigger stop audio
+        dlg = AdditionalSearchPathsDialog()
+        if dlg.exec():
+            # Attempt to re-load funscripts
+            self.detect_resources_for_media_file(self.loaded_media_path)
 
     def on_data_changed(self, topleft, bottomright, roles):
         if Qt.EditRole in roles:
@@ -141,17 +157,38 @@ class MediaSettingsWidget(QtWidgets.QWidget, Ui_MediaSettingsWidget, metaclass=_
             self.lineEdit.clear()
 
         new_path = connector.media_path()
+
         if self.loaded_media_path != new_path:
             self.loaded_media_path = new_path
 
+            self.detect_resources_for_media_file(new_path)
+
+    def detect_resources_for_media_file(self, new_path):
+        self.loaded_media_path = new_path
+
+        dirty = False
+        if not new_path:
+            # path is empty string.
             self.model.beginResetModel()
-            dirty = self.model.detect_funscripts_from_path(new_path)
+            dirty |= self.model.clear_auto_detected_funscripts()
+            self.model.endResetModel()
+            self.treeView.expandAll()
+        else:
+            # path is something
+            dirname = os.path.dirname(new_path)
+            basename = os.path.basename(new_path)
+            extra_paths = additional_search_paths.AdditionalSearchPathsModel.load_from_settings().stringList()
+            search_paths = [dirname] + extra_paths
+
+            self.model.beginResetModel()
+            dirty |= self.model.clear_auto_detected_funscripts()
+            dirty |= self.model.detect_funscripts_from_path(search_paths, basename)
             self.model.endResetModel()
             self.treeView.expandAll()
 
-            self.model.auto_link_funscripts(funscript_kit.FunscriptKitModel.load_from_settings())
-            if dirty:
-                self.funscriptMappingChanged.emit()
+        self.model.auto_link_funscripts(funscript_kit.FunscriptKitModel.load_from_settings())
+        if dirty:
+            self.funscriptMappingChanged.emit()
 
     def is_connected(self):
         media = self.media_sync[self.current_index]

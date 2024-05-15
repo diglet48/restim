@@ -1,4 +1,5 @@
 from __future__ import annotations  # multiple return values
+import numpy as np
 
 from qt_ui.device_wizard.enums import DeviceConfiguration, DeviceType, WaveformType
 from stim_math.audio_gen.base_classes import AudioGenerationAlgorithm
@@ -146,6 +147,7 @@ class AlgorithmFactory:
                 pulse_frequency=self.get_axis_pulse_frequency(),
                 pulse_width=self.get_axis_pulse_width(),
                 pulse_interval_random=self.get_axis_pulse_interval_random(),
+                pulse_rise_time=self.get_axis_pulse_rise_time(),
                 pulse_polarity=self.mainwindow.tab_pulse_settings.axis_pulse_polarity,
                 device_emulation_mode=self.mainwindow.tab_pulse_settings.axis_device_emulation_mode,
                 pulse_phase_offset_increment=self.mainwindow.tab_pulse_settings.axis_pulse_phase_offset_increment,
@@ -197,15 +199,31 @@ class AlgorithmFactory:
         return self.get_axis_from_script_mapping(AxisEnum.PULSE_INTERVAL_RANDOM) or \
                self.mainwindow.tab_pulse_settings.axis_pulse_interval_random
 
+    def get_axis_pulse_rise_time(self):
+        return self.get_axis_from_script_mapping(AxisEnum.PULSE_RISE_TIME) or \
+            self.mainwindow.tab_pulse_settings.axis_pulse_rise_time
+
     def get_axis_vib1_all(self):
         return VibrationParams(
-            enabled=self.mainwindow.tab_vibrate.vibration_1.enabled,
+            enabled=self.get_axis_vib1_enabled(),
             frequency=self.get_axis_vib1_frequency(),
             strength=self.get_axis_vib1_strength(),
             left_right_bias=self.get_axis_vib1_left_right_bias(),
             high_low_bias=self.get_axis_vib1_high_low_bias(),
             random=self.get_axis_vib1_random(),
         )
+
+    def get_axis_vib1_enabled(self):
+        is_enabled = \
+            self.script_mapping.get_config_for_axis(AxisEnum.VIBRATION_1_FREQUENCY) or \
+            self.script_mapping.get_config_for_axis(AxisEnum.VIBRATION_1_STRENGTH) or \
+            self.script_mapping.get_config_for_axis(AxisEnum.VIBRATION_1_LEFT_RIGHT_BIAS) or \
+            self.script_mapping.get_config_for_axis(AxisEnum.VIBRATION_1_HIGH_LOW_BIAS) or \
+            self.script_mapping.get_config_for_axis(AxisEnum.VIBRATION_1_RANDOM)
+        if is_enabled:
+            return create_precomputed_axis([0], [True], self.timestamp_mapper)
+        else:
+            return self.mainwindow.tab_vibrate.vibration_1.enabled
 
     def get_axis_vib1_frequency(self):
         return self.get_axis_from_script_mapping(AxisEnum.VIBRATION_1_FREQUENCY) or \
@@ -229,13 +247,25 @@ class AlgorithmFactory:
 
     def get_axis_vib2_all(self):
         return VibrationParams(
-            enabled=self.mainwindow.tab_vibrate.vibration_2.enabled,
+            enabled=self.get_axis_vib2_enabled(),
             frequency=self.get_axis_vib2_frequency(),
             strength=self.get_axis_vib2_strength(),
             left_right_bias=self.get_axis_vib2_left_right_bias(),
             high_low_bias=self.get_axis_vib2_high_low_bias(),
             random=self.get_axis_vib2_random(),
         )
+
+    def get_axis_vib2_enabled(self):
+        is_enabled = \
+            self.script_mapping.get_config_for_axis(AxisEnum.VIBRATION_2_FREQUENCY) or \
+            self.script_mapping.get_config_for_axis(AxisEnum.VIBRATION_2_STRENGTH) or \
+            self.script_mapping.get_config_for_axis(AxisEnum.VIBRATION_2_LEFT_RIGHT_BIAS) or \
+            self.script_mapping.get_config_for_axis(AxisEnum.VIBRATION_2_HIGH_LOW_BIAS) or \
+            self.script_mapping.get_config_for_axis(AxisEnum.VIBRATION_2_RANDOM)
+        if is_enabled:
+            return create_precomputed_axis([0], [True], self.timestamp_mapper)
+        else:
+            return self.mainwindow.tab_vibrate.vibration_2.enabled
 
     def get_axis_vib2_frequency(self):
         return self.get_axis_from_script_mapping(AxisEnum.VIBRATION_2_FREQUENCY) or \
@@ -267,7 +297,7 @@ class AlgorithmFactory:
             # TODO: not very memory efficient if multiple algorithms reference the same script.
             # but worst-case it only wastes a few MB or so...
             return create_precomputed_axis(funscript_item.script.x,
-                                           funscript_item.script.y * (limit_max - limit_min) + limit_min,
+                                           np.clip(funscript_item.script.y, 0, 1) * (limit_max - limit_min) + limit_min,
                                            self.timestamp_mapper)
         else:
             return None

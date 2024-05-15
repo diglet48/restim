@@ -11,7 +11,7 @@ from PyQt5.QtXmlPatterns import QXmlQuery
 from net.media_source.mediasource import MediaSource, MediaStatusReport, MediaConnectionState
 from qt_ui import settings
 
-logger = logging.getLogger('media.VLC')
+logger = logging.getLogger('restim.media.VLC')
 
 
 class VLC(MediaSource):
@@ -31,6 +31,7 @@ class VLC(MediaSource):
 
         self.nam = QNetworkAccessManager()
         self.nam.authenticationRequired.connect(self.authenticationRequired)
+        self.nam.finished.connect(self.on_request_finished)
 
     def authenticationRequired(self, request: QNetworkRequest, authenticator: QAuthenticator):
         logger.info('authenticating')
@@ -53,8 +54,13 @@ class VLC(MediaSource):
 
             req = QNetworkRequest(status_url)
             req.setTransferTimeout(2000)
-            reply = self.nam.get(req)
-            reply.finished.connect(functools.partial(self.on_status_request_finished, reply))
+            self.nam.get(req)
+
+    def on_request_finished(self, reply: QNetworkReply):
+        if reply.url().toString().endswith('status.xml'):
+            self.on_status_request_finished(reply)
+        if reply.url().toString().endswith('playlist.xml'):
+            self.on_playlist_request_finished(reply)
 
     def on_status_request_finished(self, reply: QNetworkReply):
         if self._enabled:
@@ -73,8 +79,7 @@ class VLC(MediaSource):
         if self._enabled and playlist_url.isValid():
             req = QNetworkRequest(playlist_url)
             req.setTransferTimeout(2000)
-            reply = self.nam.get(req)
-            reply.finished.connect(functools.partial(self.on_playlist_request_finished, reply))
+            self.nam.get(req)
 
     def on_playlist_request_finished(self, reply: QNetworkReply):
         if self._enabled:
@@ -103,7 +108,7 @@ class VLC(MediaSource):
 
         self.media_player.durationChanged.connect(duration_changed)
         self.media_player.error.connect(on_error)
-        self.media_player.setMedia(QMediaContent(QUrl(the_file)))
+        self.media_player.setMedia(QMediaContent(QUrl.fromLocalFile(the_file)))
 
     def enable(self):
         self._enabled = True

@@ -15,6 +15,7 @@ class AxisEnum(Enum):
     PULSE_FREQUENCY = 31
     PULSE_WIDTH = 32
     PULSE_INTERVAL_RANDOM = 33
+    PULSE_RISE_TIME = 34
 
     VIBRATION_1_FREQUENCY = 40
     VIBRATION_1_STRENGTH = 41
@@ -40,6 +41,7 @@ class AxisEnum(Enum):
                 AxisEnum.PULSE_FREQUENCY: "pulse frequency",
                 AxisEnum.PULSE_WIDTH: "pulse width",
                 AxisEnum.PULSE_INTERVAL_RANDOM: "pulse interval random",
+                AxisEnum.PULSE_RISE_TIME: "pulse rise time",
 
                 AxisEnum.VIBRATION_1_FREQUENCY: "vibration 1 frequency",
                 AxisEnum.VIBRATION_1_STRENGTH: "vibration 1 strength",
@@ -66,6 +68,7 @@ class AxisEnum(Enum):
             AxisEnum.PULSE_FREQUENCY: "PULSE_FREQUENCY",
             AxisEnum.PULSE_WIDTH: "PULSE_WIDTH",
             AxisEnum.PULSE_INTERVAL_RANDOM: "PULSE_INTERVAL_RANDOM",
+            AxisEnum.PULSE_RISE_TIME: "PULSE_RISE_TIME",
 
             AxisEnum.VIBRATION_1_FREQUENCY: "VIBRATION_1_FREQUENCY",
             AxisEnum.VIBRATION_1_STRENGTH: "VIBRATION_1_STRENGTH",
@@ -91,6 +94,7 @@ all_axis = [
     AxisEnum.PULSE_FREQUENCY,
     AxisEnum.PULSE_WIDTH,
     AxisEnum.PULSE_INTERVAL_RANDOM,
+    AxisEnum.PULSE_RISE_TIME,
 
     AxisEnum.VIBRATION_1_FREQUENCY,
     AxisEnum.VIBRATION_1_STRENGTH,

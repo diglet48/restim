@@ -35,6 +35,7 @@ pulse_carrier_frequency = Setting('carrier/pulse_carrier_frequency', 700, float)
 pulse_frequency = Setting('carrier/pulse_frequency', 50, float)
 pulse_width = Setting('carrier/pulse_width', 5, float)
 pulse_interval_random = Setting('carrier/pulse_interval_random', 10, float)
+pulse_rise_time = Setting('carrier/pulse_rise_time', 10, float)
 pulse_polarity = NonPersistentSetting('random')
 pulse_device_emulation_mode = NonPersistentSetting('continuous (best)')
 pulse_phase_offset_increment = NonPersistentSetting(0.0)
@@ -88,7 +89,13 @@ media_sync_heresphere_address = Setting('media_sync/heresphere_address', '192.16
 media_sync_vlc_address = Setting('media_sync/vlc_address', 'http://127.0.0.1:8080', str)
 media_sync_vlc_username = Setting('media_sync/vlc_username', '', str)
 media_sync_vlc_password = Setting('media_sync/vlc_password', '1234', str)
+media_sync_kodi_address = Setting('media_sync/kodi_address', 'ws://127.0.0.1:9090', str)
 
 
 audio_channel_count = Setting("audio/channel-count", 8, int)
 audio_channel_map = Setting("audio/channel-map", '0, 1, 2, 3', str)
+
+
+additional_search_paths = Setting('additional_search_paths', [], list)
+
+file_dialog_last_dir = Setting('file_dialog_last_dir', '', str)

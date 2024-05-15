@@ -1,5 +1,6 @@
 <RCC>
   <qresource prefix="restim">
+    <file>media_players/kodi.png</file>
     <file>media_players/heresphere.png</file>
     <file>arrow-round_poly.svg</file>
     <file>trash.svg</file>

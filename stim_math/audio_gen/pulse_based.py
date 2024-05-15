@@ -9,6 +9,7 @@ from stim_math import threephase
 from stim_math.audio_gen.various import ThreePhasePosition, VibrationAlgorithm
 from stim_math.audio_gen.params import ThreephasePulsebasedAlgorithmParams, ThreephaseCalibrationParams, SafetyParams
 from stim_math.axis import AbstractMediaSync
+from stim_math import limits
 
 
 @dataclass
@@ -17,6 +18,7 @@ class PulseInfo:
     start_angle: float  # in rad
     carrier_frequency: float
     pulse_width_in_carrier_cycles: float
+    rise_time_in_carrier_cycles: float
     position: tuple[float]
     pause_length_in_s: float
     volume: float
@@ -56,7 +58,10 @@ class ThreePhasePulseBasedAlgorithmBase(AudioGenerationAlgorithm):
         return L, R
 
     def add_next_pulse_to_audio_buffer(self, samplerate, pulse: PulseInfo):
-        pulse_envelope = stim_math.pulse.create_pulse_envelope_half_circle(pulse.pulse_length_in_samples(samplerate))
+        pulse_envelope = stim_math.pulse.create_pulse_with_ramp_time(
+            pulse.pulse_length_in_samples(samplerate),
+            pulse.pulse_width_in_carrier_cycles,
+            pulse.rise_time_in_carrier_cycles)
 
         if not self.media.is_playing():
             # TODO: make more efficient
@@ -115,7 +120,12 @@ class DefaultThreePhasePulseBasedAlgorithm(ThreePhasePulseBasedAlgorithmBase):
                                      self.safety_limits.minimum_carrier_frequency,
                                      self.safety_limits.maximum_carrier_frequency)
         pulse_width = self.params.pulse_width.interpolate(system_time_estimate)
+        pulse_width = np.clip(pulse_width, limits.PulseWidth.min, limits.PulseWidth.max)
         pulse_freq = self.params.pulse_frequency.interpolate(system_time_estimate)
+        pulse_freq = np.clip(pulse_freq, limits.PulseFrequency.min, limits.PulseFrequency.max)
+        pulse_rise_time = self.params.pulse_rise_time.interpolate(system_time_estimate)
+        pulse_rise_time = np.clip(pulse_rise_time, limits.PulseRiseTime.min, limits.PulseRiseTime.max)
+
         pause_duration = np.clip(1 / pulse_freq - pulse_width / pulse_carrier_freq, 0, None)
 
         random = self.params.pulse_interval_random.interpolate(system_time_estimate)
@@ -132,6 +142,7 @@ class DefaultThreePhasePulseBasedAlgorithm(ThreePhasePulseBasedAlgorithmBase):
             self.phase_offset(),
             pulse_carrier_freq,
             pulse_width,
+            pulse_rise_time,
             (alpha, beta),
             pause_duration,
             volume,
