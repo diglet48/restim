@@ -123,6 +123,9 @@ class DefaultThreePhasePulseBasedAlgorithm(ThreePhasePulseBasedAlgorithmBase):
         pulse_width = np.clip(pulse_width, limits.PulseWidth.min, limits.PulseWidth.max)
         pulse_freq = self.params.pulse_frequency.interpolate(system_time_estimate)
         pulse_freq = np.clip(pulse_freq, limits.PulseFrequency.min, limits.PulseFrequency.max)
+        pulse_rise_time = self.params.pulse_rise_time.interpolate(system_time_estimate)
+        pulse_rise_time = np.clip(pulse_rise_time, limits.PulseRiseTime.min, limits.PulseRiseTime.max)
+
         pause_duration = np.clip(1 / pulse_freq - pulse_width / pulse_carrier_freq, 0, None)
 
         random = self.params.pulse_interval_random.interpolate(system_time_estimate)
@@ -139,7 +142,7 @@ class DefaultThreePhasePulseBasedAlgorithm(ThreePhasePulseBasedAlgorithmBase):
             self.phase_offset(),
             pulse_carrier_freq,
             pulse_width,
-            np.clip(self.params.pulse_rise_time.interpolate(system_time_estimate), limits.PulseRiseTime.min, limits.PulseRiseTime.max),
+            pulse_rise_time,
             (alpha, beta),
             pause_duration,
             volume,

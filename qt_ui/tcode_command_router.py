@@ -32,6 +32,7 @@ class TCodeCommandRouter:
                  pulse_frequency: AbstractAxis,
                  pulse_width: AbstractAxis,
                  pulse_interval_random: AbstractAxis,
+                 pulse_rise_time: AbstractAxis,
 
                  vibration_1_frequency: AbstractAxis,
                  vibration_1_strength: AbstractAxis,
@@ -54,6 +55,7 @@ class TCodeCommandRouter:
         self.pulse_frequency = pulse_frequency
         self.pulse_width = pulse_width
         self.pulse_interval_random = pulse_interval_random
+        self.pulse_rise_time = pulse_rise_time
         self.vibration_1_frequency = vibration_1_frequency
         self.vibration_1_strength = vibration_1_strength
         self.vibration_1_left_right_bias = vibration_1_left_right_bias
@@ -79,6 +81,7 @@ class TCodeCommandRouter:
             AxisEnum.PULSE_FREQUENCY: self.pulse_frequency,
             AxisEnum.PULSE_WIDTH: self.pulse_width,
             AxisEnum.PULSE_INTERVAL_RANDOM: self.pulse_interval_random,
+            AxisEnum.PULSE_RISE_TIME: self.pulse_rise_time,
 
             AxisEnum.VIBRATION_1_FREQUENCY: self.vibration_1_frequency,
             AxisEnum.VIBRATION_1_STRENGTH: self.vibration_1_strength,

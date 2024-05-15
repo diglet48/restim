@@ -89,6 +89,7 @@ class Window(QMainWindow, Ui_MainWindow):
             self.tab_pulse_settings.axis_pulse_frequency,
             self.tab_pulse_settings.axis_pulse_width,
             self.tab_pulse_settings.axis_pulse_interval_random,
+            self.tab_pulse_settings.axis_pulse_rise_time,
 
             self.tab_vibrate.vibration_1.frequency,
             self.tab_vibrate.vibration_1.strength,
@@ -275,6 +276,7 @@ class Window(QMainWindow, Ui_MainWindow):
         self.tab_pulse_settings.pulse_frequency_controller.link_axis(algorithm_factory.get_axis_pulse_frequency())
         self.tab_pulse_settings.pulse_width_controller.link_axis(algorithm_factory.get_axis_pulse_width())
         self.tab_pulse_settings.pulse_interval_random_controller.link_axis(algorithm_factory.get_axis_pulse_interval_random())
+        self.tab_pulse_settings.pulse_rise_time_controller.link_axis(algorithm_factory.get_axis_pulse_rise_time())
 
         # vibration tab
         self.tab_vibrate.vib1_enabled_controller.link_axis(algorithm_factory.get_axis_vib1_enabled())

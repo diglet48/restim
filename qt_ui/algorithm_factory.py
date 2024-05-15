@@ -147,7 +147,7 @@ class AlgorithmFactory:
                 pulse_frequency=self.get_axis_pulse_frequency(),
                 pulse_width=self.get_axis_pulse_width(),
                 pulse_interval_random=self.get_axis_pulse_interval_random(),
-                pulse_rise_time=self.mainwindow.tab_pulse_settings.axis_pulse_rise_time,
+                pulse_rise_time=self.get_axis_pulse_rise_time(),
                 pulse_polarity=self.mainwindow.tab_pulse_settings.axis_pulse_polarity,
                 device_emulation_mode=self.mainwindow.tab_pulse_settings.axis_device_emulation_mode,
                 pulse_phase_offset_increment=self.mainwindow.tab_pulse_settings.axis_pulse_phase_offset_increment,
@@ -198,6 +198,10 @@ class AlgorithmFactory:
     def get_axis_pulse_interval_random(self):
         return self.get_axis_from_script_mapping(AxisEnum.PULSE_INTERVAL_RANDOM) or \
                self.mainwindow.tab_pulse_settings.axis_pulse_interval_random
+
+    def get_axis_pulse_rise_time(self):
+        return self.get_axis_from_script_mapping(AxisEnum.PULSE_RISE_TIME) or \
+            self.mainwindow.tab_pulse_settings.axis_pulse_rise_time
 
     def get_axis_vib1_all(self):
         return VibrationParams(

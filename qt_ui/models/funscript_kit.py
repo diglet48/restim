@@ -14,6 +14,7 @@ defaults = {
     AxisEnum.PULSE_FREQUENCY: ('pulse_frequency', '', 0, 100, True),
     AxisEnum.PULSE_WIDTH: ('pulse_width', '', 4, 10, True),
     AxisEnum.PULSE_INTERVAL_RANDOM: ('pulse_interval_random', '', 0, 1, True),
+    AxisEnum.PULSE_RISE_TIME: ('pulse_rise_time', '', 2, 20, True),
 
     AxisEnum.VIBRATION_1_FREQUENCY: ('vib1_frequency', '', 0, 100, True),
     AxisEnum.VIBRATION_1_STRENGTH: ('vib1_strength', '', 0, 1, True),
