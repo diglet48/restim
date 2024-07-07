@@ -10,10 +10,12 @@ class WizardPageWaveformType(QWizardPage, Ui_WizardPageWaveformType):
 
         self.pulse_based_radio.toggled.connect(self.completeChanged)
         self.continuous_radio.toggled.connect(self.completeChanged)
+        self.a_b_radio.toggled.connect(self.completeChanged)
 
     def isComplete(self) -> bool:
         return any([
             self.pulse_based_radio.isChecked() and self.pulse_based_radio.isEnabled(),
-            self.continuous_radio.isChecked() and self.continuous_radio.isEnabled()
+            self.continuous_radio.isChecked() and self.continuous_radio.isEnabled(),
+            self.a_b_radio.isChecked() and self.a_b_radio.isEnabled()
         ])
 

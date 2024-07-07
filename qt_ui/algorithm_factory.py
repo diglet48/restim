@@ -3,7 +3,7 @@ import numpy as np
 
 from qt_ui.device_wizard.enums import DeviceConfiguration, DeviceType, WaveformType
 from stim_math.audio_gen.base_classes import AudioGenerationAlgorithm
-from stim_math.audio_gen.pulse_based import DefaultThreePhasePulseBasedAlgorithm
+from stim_math.audio_gen.pulse_based import DefaultThreePhasePulseBasedAlgorithm, ABTestThreePhasePulseBasedAlgorithm
 from stim_math.audio_gen.continuous import ThreePhaseAlgorithm, FourPhaseAlgorithm, FivePhaseAlgorithm
 from stim_math.audio_gen.params import *
 
@@ -37,6 +37,8 @@ class AlgorithmFactory:
                 return self.create_3phase_continuous(device)
             elif device.waveform_type == WaveformType.PULSE_BASED:
                 return self.create_3phase_pulsebased(device)
+            elif device.waveform_type == WaveformType.A_B_TESTING:
+                return self.create_3phase_abtest(device)
             else:
                 raise RuntimeError('unknown waveform type')
         elif device.device_type == DeviceType.FOUR_PHASE:
@@ -73,7 +75,7 @@ class AlgorithmFactory:
                     ramp=self.get_axis_volume_ramp(),
                     inactivity=self.get_axis_volume_inactivity(),
                 ),
-                carrier_frequency=self.get_axis_carrier_frequency(device)
+                carrier_frequency=self.get_axis_continuous_carrier_frequency(),
             ),
             safety_limits=SafetyParams(
                 device.min_frequency,
@@ -95,7 +97,7 @@ class AlgorithmFactory:
                     ramp=self.get_axis_volume_ramp(),
                     inactivity=self.get_axis_volume_inactivity(),
                 ),
-                carrier_frequency=self.get_axis_carrier_frequency(device)
+                carrier_frequency=self.get_axis_continuous_carrier_frequency(device)
             ),
             safety_limits=SafetyParams(
                 device.min_frequency,
@@ -117,7 +119,7 @@ class AlgorithmFactory:
                     ramp=self.get_axis_volume_ramp(),
                     inactivity=self.get_axis_volume_inactivity(),
                 ),
-                carrier_frequency=self.get_axis_carrier_frequency(device)
+                carrier_frequency=self.get_axis_continuous_carrier_frequency(),
             ),
             safety_limits=SafetyParams(
                 device.min_frequency,
@@ -143,7 +145,7 @@ class AlgorithmFactory:
                     ramp=self.get_axis_volume_ramp(),
                     inactivity=self.get_axis_volume_inactivity(),
                 ),
-                carrier_frequency=self.get_axis_carrier_frequency(device),
+                carrier_frequency=self.get_axis_pulse_carrier_frequency(),
                 pulse_frequency=self.get_axis_pulse_frequency(),
                 pulse_width=self.get_axis_pulse_width(),
                 pulse_interval_random=self.get_axis_pulse_interval_random(),
@@ -159,6 +161,44 @@ class AlgorithmFactory:
         )
         return algorithm
 
+    def create_3phase_abtest(self, device: DeviceConfiguration) -> AudioGenerationAlgorithm:
+        algorithm = ABTestThreePhasePulseBasedAlgorithm(
+            self.media_sync,
+            ThreephaseABTestAlgorithmParams(
+                position=ThreephasePositionParams(
+                    self.get_axis_alpha(),
+                    self.get_axis_beta(),
+                ),
+                transform=self.mainwindow.tab_threephase.transform_params,
+                calibrate=self.mainwindow.tab_threephase.calibrate_params,
+                vibration_1=self.get_axis_vib1_all(),
+                vibration_2=self.get_axis_vib2_all(),
+                volume=VolumeParams(
+                    api=self.get_axis_volume_api(),
+                    ramp=self.get_axis_volume_ramp(),
+                    inactivity=self.get_axis_volume_inactivity(),
+                ),
+                a_volume=self.mainwindow.tab_a_b_testing.axis_a_volume,
+                a_pulse_count=self.mainwindow.tab_a_b_testing.axis_a_pulse_count,
+                a_carrier_frequency=self.mainwindow.tab_a_b_testing.axis_a_carrier_frequency,
+                a_pulse_frequency=self.mainwindow.tab_a_b_testing.axis_a_pulse_frequency,
+                a_pulse_width=self.mainwindow.tab_a_b_testing.axis_a_pulse_width,
+                a_pulse_interval_random=self.mainwindow.tab_a_b_testing.axis_a_pulse_interval_random,
+                a_pulse_rise_time=self.mainwindow.tab_a_b_testing.axis_a_pulse_rise_time,
+                b_volume=self.mainwindow.tab_a_b_testing.axis_b_volume,
+                b_pulse_count=self.mainwindow.tab_a_b_testing.axis_b_pulse_count,
+                b_carrier_frequency=self.mainwindow.tab_a_b_testing.axis_b_carrier_frequency,
+                b_pulse_frequency=self.mainwindow.tab_a_b_testing.axis_b_pulse_frequency,
+                b_pulse_width=self.mainwindow.tab_a_b_testing.axis_b_pulse_width,
+                b_pulse_interval_random=self.mainwindow.tab_a_b_testing.axis_b_pulse_interval_random,
+                b_pulse_rise_time=self.mainwindow.tab_a_b_testing.axis_b_pulse_rise_time,
+        ),
+            safety_limits=SafetyParams(
+                device.min_frequency,
+                device.max_frequency,
+            )
+        )
+        return algorithm
     def get_axis_alpha(self):
         return self.get_axis_from_script_mapping(AxisEnum.POSITION_ALPHA) or self.mainwindow.alpha
 
@@ -178,13 +218,12 @@ class AlgorithmFactory:
             return create_constant_axis(1.0)    # inactivity does NOT work in bake mode
         return self.mainwindow.tab_volume.volume.inactivity
 
-    def get_axis_carrier_frequency(self, device: DeviceConfiguration):
-        if device.waveform_type == WaveformType.CONTINUOUS:
-            default = self.mainwindow.tab_carrier.axis_carrier
-        elif device.waveform_type == WaveformType.PULSE_BASED:
-            default = self.mainwindow.tab_pulse_settings.axis_carrier_frequency
-        else:
-            raise RuntimeError('unknown waveform type')
+    def get_axis_continuous_carrier_frequency(self):
+        default = self.mainwindow.tab_carrier.axis_carrier
+        return self.get_axis_from_script_mapping(AxisEnum.CARRIER_FREQUENCY) or default
+
+    def get_axis_pulse_carrier_frequency(self):
+        default = self.mainwindow.tab_pulse_settings.axis_carrier_frequency
         return self.get_axis_from_script_mapping(AxisEnum.CARRIER_FREQUENCY) or default
 
     def get_axis_pulse_frequency(self):

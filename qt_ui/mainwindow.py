@@ -269,10 +269,10 @@ class Window(QMainWindow, Ui_MainWindow):
         ])
 
         # continuous tab
-        self.tab_carrier.carrier_controller.link_axis(algorithm_factory.get_axis_carrier_frequency(device))
+        self.tab_carrier.carrier_controller.link_axis(algorithm_factory.get_axis_continuous_carrier_frequency())
 
         # pulse tab
-        self.tab_pulse_settings.carrier_controller.link_axis(algorithm_factory.get_axis_carrier_frequency(device))
+        self.tab_pulse_settings.carrier_controller.link_axis(algorithm_factory.get_axis_pulse_carrier_frequency())
         self.tab_pulse_settings.pulse_frequency_controller.link_axis(algorithm_factory.get_axis_pulse_frequency())
         self.tab_pulse_settings.pulse_width_controller.link_axis(algorithm_factory.get_axis_pulse_width())
         self.tab_pulse_settings.pulse_interval_random_controller.link_axis(algorithm_factory.get_axis_pulse_interval_random())
@@ -304,7 +304,8 @@ class Window(QMainWindow, Ui_MainWindow):
                     self.tab_volume,
                     self.tab_vibrate,
                     self.tab_details,
-                    self.tab_focus}
+                    self.tab_focus,
+                    self.tab_a_b_testing}
 
         visible = {self.tab_threephase, self.tab_volume, self.tab_vibrate, self.tab_details}
 
@@ -321,6 +322,8 @@ class Window(QMainWindow, Ui_MainWindow):
             visible |= {self.tab_carrier}
         if config.waveform_type == WaveformType.PULSE_BASED:
             visible |= {self.tab_pulse_settings}
+        if config.waveform_type == WaveformType.A_B_TESTING:
+            visible |= {self.tab_a_b_testing}
 
         # if config.device_type == DeviceType.MODIFY_EXISTING_THREEPHASE_AUDIO:
         #     visible -= {self.tab_volume, self.tab_vibrate, self.tab_details}
@@ -330,6 +333,7 @@ class Window(QMainWindow, Ui_MainWindow):
 
         self.tab_carrier.set_safety_limits(config.min_frequency, config.max_frequency)
         self.tab_pulse_settings.set_safety_limits(config.min_frequency, config.max_frequency)
+        self.tab_a_b_testing.set_safety_limits(config.min_frequency, config.max_frequency)
         if config.waveform_type == WaveformType.CONTINUOUS:
             self.tcode_command_router.set_carrier_axis(self.tab_carrier.axis_carrier)
         if config.waveform_type == WaveformType.PULSE_BASED:

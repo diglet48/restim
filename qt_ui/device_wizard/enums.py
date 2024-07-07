@@ -14,6 +14,7 @@ class DeviceType(Enum):
 class WaveformType(Enum):
     CONTINUOUS = 1
     PULSE_BASED = 2
+    A_B_TESTING = 3
 
 
 @dataclass

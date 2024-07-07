@@ -69,6 +69,20 @@
     </widget>
    </item>
    <item>
+    <widget class="QRadioButton" name="a_b_radio">
+     <property name="text">
+      <string>A/B testing</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QLabel" name="label_5">
+     <property name="text">
+      <string>Experimental waveform, for science.</string>
+     </property>
+    </widget>
+   </item>
+   <item>
     <spacer name="verticalSpacer">
      <property name="orientation">
       <enum>Qt::Vertical</enum>
