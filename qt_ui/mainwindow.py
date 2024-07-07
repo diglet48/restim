@@ -383,6 +383,7 @@ class Window(QMainWindow, Ui_MainWindow):
         self.audio_stop()
         self.wizard.exec()
         self.refresh_device_type()
+        self.reload_settings()
 
     def open_funscript_conversion_dialog(self):
         self.audio_stop()
