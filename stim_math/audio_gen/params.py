@@ -100,6 +100,30 @@ class ThreephasePulsebasedAlgorithmParams:
 
 
 @dataclass
+class ThreephaseABTestAlgorithmParams:
+    position: ThreephasePositionParams
+    transform: ThreephasePositionTransformParams
+    calibrate: ThreephaseCalibrationParams
+    vibration_1: VibrationParams
+    vibration_2: VibrationParams
+    volume: VolumeParams
+    a_volume: AbstractAxis
+    a_pulse_count: AbstractAxis
+    a_carrier_frequency: AbstractAxis  # Hz
+    a_pulse_frequency: AbstractAxis  # Hz
+    a_pulse_width: AbstractAxis  # carrier cycles
+    a_pulse_interval_random: AbstractAxis
+    a_pulse_rise_time: AbstractAxis
+    b_volume: AbstractAxis
+    b_pulse_count: AbstractAxis
+    b_carrier_frequency: AbstractAxis  # Hz
+    b_pulse_frequency: AbstractAxis  # Hz
+    b_pulse_width: AbstractAxis  # carrier cycles
+    b_pulse_interval_random: AbstractAxis
+    b_pulse_rise_time: AbstractAxis
+
+
+@dataclass
 class FivephaseContinuousAlgorithmParams:   # TODO: it says 5-phase, but used for both 4 and 5-phase.
     position: FivephasePositionParams  # TODO: technically not a position
     calibrate: FivephaseCalibrationParams

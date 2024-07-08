@@ -202,6 +202,11 @@
             <string>Pulse settings</string>
            </attribute>
           </widget>
+          <widget class="ABTestWidget" name="tab_a_b_testing">
+           <attribute name="title">
+            <string>A/B testing</string>
+           </attribute>
+          </widget>
           <widget class="VolumeControlWidget" name="tab_volume">
            <attribute name="title">
             <string>Volume</string>
@@ -469,6 +474,12 @@
    <class>MediaSettingsWidget</class>
    <extends>QWidget</extends>
    <header>qt_ui/media_settings_widget.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>ABTestWidget</class>
+   <extends>QWidget</extends>
+   <header>qt_ui/ab_test_widget.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

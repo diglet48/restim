@@ -62,10 +62,14 @@ class DeviceSelectionWizard(QWizard):
 
     def validateCurrentPage(self) -> bool:
         # disable 'pulse-based' option when 4/5-phase is selected
-        pulse_enabled = self.page_device_type.three_phase_radio.isChecked()
-        self.page_waveform_type.pulse_based_radio.setEnabled(pulse_enabled)
-        if not pulse_enabled:
+        selection_is_threephase = self.page_device_type.three_phase_radio.isChecked()
+        self.page_waveform_type.pulse_based_radio.setEnabled(selection_is_threephase)
+        if not selection_is_threephase:
             self.page_waveform_type.pulse_based_radio.setChecked(False)
+        self.page_waveform_type.a_b_radio.setEnabled(selection_is_threephase)
+        if not selection_is_threephase:
+            self.page_waveform_type.a_b_radio.setChecked(False)
+
         return super(DeviceSelectionWizard, self).validateCurrentPage()
 
     def get_configuration(self) -> DeviceConfiguration:
@@ -73,7 +77,14 @@ class DeviceSelectionWizard(QWizard):
         max_freq = self.page_safety_limits.max_frequency_spinbox.value()
 
         if self.page_device_type.three_phase_radio.isChecked():
-            alg = WaveformType.CONTINUOUS if self.page_waveform_type.continuous_radio.isChecked() else WaveformType.PULSE_BASED
+            if self.page_waveform_type.continuous_radio.isChecked():
+                alg = WaveformType.CONTINUOUS
+            elif self.page_waveform_type.pulse_based_radio.isChecked():
+                alg = WaveformType.PULSE_BASED
+            elif self.page_waveform_type.a_b_radio.isChecked():
+                alg = WaveformType.A_B_TESTING
+            else:
+                assert False
             return DeviceConfiguration(
                 DeviceType.THREE_PHASE,
                 alg,
@@ -104,8 +115,10 @@ class DeviceSelectionWizard(QWizard):
 
         if config.waveform_type == WaveformType.CONTINUOUS:
             self.page_waveform_type.continuous_radio.setChecked(True)
-        if config.waveform_type == WaveformType.PULSE_BASED:
+        elif config.waveform_type == WaveformType.PULSE_BASED:
             self.page_waveform_type.pulse_based_radio.setChecked(True)
+        elif config.waveform_type == WaveformType.A_B_TESTING:
+            self.page_waveform_type.a_b_radio.setChecked(True)
 
         self.page_safety_limits.min_frequency_spinbox.setValue(config.min_frequency)
         self.page_safety_limits.max_frequency_spinbox.setValue(config.max_frequency)

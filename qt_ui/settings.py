@@ -46,6 +46,14 @@ volume_increment_rate = Setting('volume/increment_rate', 1.0, float)
 
 mk312_carrier = Setting('mk312/carrier_frequency', 700, float)
 
+ab_test_volume = NonPersistentSetting(1.0)
+ab_test_carrier = NonPersistentSetting(1000.0)
+ab_test_pulse_count = NonPersistentSetting(20)
+ab_test_pulse_frequency = NonPersistentSetting(50.0)
+ab_test_pulse_width = NonPersistentSetting(5.0)
+ab_test_pulse_rise_time = NonPersistentSetting(2.0)
+ab_test_pulse_interval_random = NonPersistentSetting(0.0)
+
 vibration_1_enabled = Setting('vibration/vibration_1_enabled', False, bool)
 vibration_1_frequency = Setting('vibration/vibration_1_frequency', 10, float)
 vibration_1_strength = Setting('vibration/vibration_1_strength', 50, float)
@@ -99,3 +107,6 @@ audio_channel_map = Setting("audio/channel-map", '0, 1, 2, 3', str)
 additional_search_paths = Setting('additional_search_paths', [], list)
 
 file_dialog_last_dir = Setting('file_dialog_last_dir', '', str)
+
+display_fps = Setting('display/fps', 60, float)
+display_latency = Setting('display/latency', 200, float)
