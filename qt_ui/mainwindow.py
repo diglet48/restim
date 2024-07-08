@@ -415,6 +415,7 @@ class Window(QMainWindow, Ui_MainWindow):
         self.progressBar_volume.refreshSettings()
         self.buttplug_wsdm_client.refreshSettings()
         self.funscript_mapping_changed()  # reload funscript axis
+        self.tab_a_b_testing.refreshSettings()
 
     def save_settings(self):
         """

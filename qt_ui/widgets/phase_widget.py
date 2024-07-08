@@ -3,11 +3,10 @@ import matplotlib
 import time
 import math
 
-from PyQt5.QtCore import QSettings, QPoint, QPointF
+from PyQt5.QtCore import QPoint, QPointF
 from PyQt5.QtWidgets import QGraphicsView, QGraphicsEllipseItem
 
-from qt_ui.preferences_dialog import KEY_DISPLAY_FPS, KEY_DISPLAY_LATENCY
-from qt_ui import resources
+from qt_ui import resources, settings
 from stim_math.threephase_coordinate_transform import ThreePhaseCoordinateTransform, \
     ThreePhaseCoordinateTransformMapToEdge
 
@@ -109,9 +108,8 @@ class PhaseWidgetWithPoint(PhaseWidgetBase):
         self.scene.addItem(self.dot)
 
     def refreshSettings(self):
-        settings = QSettings()
-        self.timer.setInterval(int(1000 // settings.value(KEY_DISPLAY_FPS, 60.0, float)))
-        self.latency = settings.value(KEY_DISPLAY_LATENCY, 200.0, float) / 1000.0
+        self.timer.setInterval(int(1000 // settings.display_latency.get()))
+        self.latency = settings.display_latency.get() / 1000.0
 
     def mouse_event(self, alpha, beta, buttons: QtCore.Qt.MouseButtons):
         if buttons & QtCore.Qt.MouseButton.LeftButton:
@@ -439,9 +437,8 @@ class PhaseWidgetCalibration(PhaseWidgetBase):
         self.last_state = None
 
     def refreshSettings(self):
-        settings = QSettings()
-        self.timer.setInterval(int(1000 // settings.value(KEY_DISPLAY_FPS, 60.0, float)))
-        self.latency = settings.value(KEY_DISPLAY_LATENCY, 200.0, float) / 1000.0
+        self.timer.setInterval(int(1000 // settings.display_latency.get()))
+        self.latency = settings.display_latency.get() / 1000.0
 
     def set_axis(self, neutral: AbstractAxis, right: AbstractAxis):
         self.neutral = neutral

@@ -30,9 +30,6 @@ KEY_AUDIO_API = "audio/api-name"
 KEY_AUDIO_OUTPUT_DEVICE = "audio/device-name"
 KEY_AUDIO_LATENCY = "audio/latency"
 
-KEY_DISPLAY_FPS = "display/fps"
-KEY_DISPLAY_LATENCY = "display/latency"
-
 
 class PreferencesDialog(QDialog, Ui_PreferencesDialog):
     def __init__(self, parent=None):
@@ -138,8 +135,9 @@ class PreferencesDialog(QDialog, Ui_PreferencesDialog):
         self.kodi_address.setText(qt_ui.settings.media_sync_kodi_address.get())
 
         # display settings
-        self.display_fps.setValue(int(self.settings.value(KEY_DISPLAY_FPS, 60, float)))
-        self.display_latency_ms.setValue(self.settings.value(KEY_DISPLAY_LATENCY, 200, float))
+
+        self.display_fps.setValue(int(qt_ui.settings.display_fps.get()))
+        self.display_latency_ms.setValue(qt_ui.settings.display_latency.get())
 
         # funscript mapping
         self.tableView.setModel(FunscriptKitModel.load_from_settings())
@@ -204,8 +202,8 @@ class PreferencesDialog(QDialog, Ui_PreferencesDialog):
         qt_ui.settings.media_sync_kodi_address.set(self.kodi_address.text())
 
         # display
-        self.settings.setValue(KEY_DISPLAY_FPS, self.display_fps.value())
-        self.settings.setValue(KEY_DISPLAY_LATENCY, self.display_latency_ms.value())
+        qt_ui.settings.display_fps.set(self.display_fps.value())
+        qt_ui.settings.display_latency.set(self.display_latency_ms.value())
 
         # funscript mapping
         self.tableView.model().save_to_settings()

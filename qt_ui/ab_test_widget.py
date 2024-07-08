@@ -1,6 +1,7 @@
 from __future__ import unicode_literals
 
-from PyQt5 import QtWidgets
+from PyQt5 import QtCore, QtWidgets
+from PyQt5.QtCore import QTimer
 
 from qt_ui.ab_test_widget_ui import Ui_ABTestWidget
 
@@ -15,6 +16,8 @@ class ABTestWidget(QtWidgets.QWidget, Ui_ABTestWidget):
     def __init__(self, parent=None):
         QtWidgets.QWidget.__init__(self, parent)
         self.setupUi(self)
+
+        self.display_latency = settings.display_latency.get()
 
         self.a_pulse_frequency.setMinimum(limits.PulseFrequency.min)
         self.a_pulse_frequency.setMaximum(limits.PulseFrequency.max)
@@ -91,6 +94,7 @@ class ABTestWidget(QtWidgets.QWidget, Ui_ABTestWidget):
         self.axis_b_rise_time_controller.modified_by_user.connect(self.settings_changed)
 
         self.settings_changed()
+        self.test_waveform_changed_triggered.connect(self.highlight_text_with_delay)
 
     def set_safety_limits(self, min_carrier, max_carrier):
         self.a_carrier.setRange(min_carrier, max_carrier)
@@ -116,3 +120,21 @@ class ABTestWidget(QtWidgets.QWidget, Ui_ABTestWidget):
         # TODO: call me
         pass
 
+    def refreshSettings(self):
+        self.display_latency = settings.display_latency.get()
+
+    test_waveform_changed_triggered = QtCore.pyqtSignal(bool)
+
+    def test_waveform_changed(self, is_a: bool):
+        self.test_waveform_changed_triggered.emit(is_a)
+
+    def highlight_text_with_delay(self, is_a: bool):
+        def highlight_text():
+            if is_a:
+                self.a_signal_label.setStyleSheet('background-color: green')
+                self.b_signal_label.setStyleSheet('')
+            else:
+                self.a_signal_label.setStyleSheet('')
+                self.b_signal_label.setStyleSheet('background-color: green')
+
+        QTimer.singleShot(int(self.display_latency), highlight_text)

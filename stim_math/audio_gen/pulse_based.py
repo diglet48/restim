@@ -212,13 +212,14 @@ class DefaultThreePhasePulseBasedAlgorithm(ThreePhasePulseBasedAlgorithmBase):
 
 
 class ABTestThreePhasePulseBasedAlgorithm(ThreePhasePulseBasedAlgorithmBase):
-    def __init__(self, media: AbstractMediaSync, params: ThreephaseABTestAlgorithmParams, safety_limits: SafetyParams):
+    def __init__(self, media: AbstractMediaSync, params: ThreephaseABTestAlgorithmParams, safety_limits: SafetyParams, waveform_change_callback):
         super().__init__(media, params.calibrate)
         self.params = params
         self.position_params = ThreePhasePosition(params.position, params.transform)
         self.vibration = VibrationAlgorithm(params.vibration_1, params.vibration_2)
         self.seq = 0
         self.safety_limits = safety_limits
+        self.callback = waveform_change_callback
 
         self.is_A_cycle = True
         self.pulse_no = 0
@@ -231,11 +232,13 @@ class ABTestThreePhasePulseBasedAlgorithm(ThreePhasePulseBasedAlgorithmBase):
             if self.pulse_no > pulse_train_length:
                 self.is_A_cycle = False
                 self.pulse_no = 0
+                self.callback(False)
         else:
             pulse_train_length = self.params.b_pulse_count.last_value()
             if self.pulse_no > pulse_train_length:
                 self.is_A_cycle = True
                 self.pulse_no = 0
+                self.callback(True)
 
         volume = \
             np.clip(self.params.volume.ramp.last_value(), 0, 1) * \

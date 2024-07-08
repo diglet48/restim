@@ -192,11 +192,12 @@ class AlgorithmFactory:
                 b_pulse_width=self.mainwindow.tab_a_b_testing.axis_b_pulse_width,
                 b_pulse_interval_random=self.mainwindow.tab_a_b_testing.axis_b_pulse_interval_random,
                 b_pulse_rise_time=self.mainwindow.tab_a_b_testing.axis_b_pulse_rise_time,
-        ),
+            ),
             safety_limits=SafetyParams(
                 device.min_frequency,
                 device.max_frequency,
-            )
+            ),
+            waveform_change_callback=self.mainwindow.tab_a_b_testing.test_waveform_changed,
         )
         return algorithm
     def get_axis_alpha(self):
