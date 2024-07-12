@@ -70,19 +70,6 @@
         </property>
        </widget>
       </item>
-      <item row="2" column="2">
-       <widget class="QSpinBox" name="b_pulse_count">
-        <property name="minimum">
-         <number>1</number>
-        </property>
-        <property name="maximum">
-         <number>1000</number>
-        </property>
-        <property name="value">
-         <number>20</number>
-        </property>
-       </widget>
-      </item>
       <item row="1" column="1">
        <widget class="QDoubleSpinBox" name="a_volume">
         <property name="maximum">
@@ -107,19 +94,6 @@
        <widget class="QDoubleSpinBox" name="b_pulse_width">
         <property name="singleStep">
          <double>0.100000000000000</double>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="1">
-       <widget class="QSpinBox" name="a_pulse_count">
-        <property name="minimum">
-         <number>1</number>
-        </property>
-        <property name="maximum">
-         <number>1000</number>
-        </property>
-        <property name="value">
-         <number>20</number>
         </property>
        </widget>
       </item>
@@ -153,7 +127,7 @@
       <item row="2" column="0">
        <widget class="QLabel" name="label_3">
         <property name="text">
-         <string>number of pulses</string>
+         <string>Pulse train duration [s]</string>
         </property>
        </widget>
       </item>
@@ -242,6 +216,26 @@
         </property>
        </widget>
       </item>
+      <item row="2" column="1">
+       <widget class="QDoubleSpinBox" name="a_train_duration">
+        <property name="maximum">
+         <double>100.000000000000000</double>
+        </property>
+        <property name="singleStep">
+         <double>0.100000000000000</double>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="2">
+       <widget class="QDoubleSpinBox" name="b_train_duration">
+        <property name="maximum">
+         <double>100.000000000000000</double>
+        </property>
+        <property name="singleStep">
+         <double>0.100000000000000</double>
+        </property>
+       </widget>
+      </item>
      </layout>
     </widget>
    </item>
@@ -263,8 +257,8 @@
  <tabstops>
   <tabstop>a_volume</tabstop>
   <tabstop>b_volume</tabstop>
-  <tabstop>a_pulse_count</tabstop>
-  <tabstop>b_pulse_count</tabstop>
+  <tabstop>a_train_duration</tabstop>
+  <tabstop>b_train_duration</tabstop>
   <tabstop>a_carrier</tabstop>
   <tabstop>b_carrier</tabstop>
   <tabstop>a_pulse_frequency</tabstop>

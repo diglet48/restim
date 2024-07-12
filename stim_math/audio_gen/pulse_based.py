@@ -222,22 +222,21 @@ class ABTestThreePhasePulseBasedAlgorithm(ThreePhasePulseBasedAlgorithmBase):
         self.callback = waveform_change_callback
 
         self.is_A_cycle = True
-        self.pulse_no = 0
+        self.seconds_generated = 0
 
     def next_pulse_data(self, samplerate, at_time: float, system_time_estimate: float) -> PulseInfo:
         self.seq += 1
-        self.pulse_no += 1
         if self.is_A_cycle:
-            pulse_train_length = self.params.a_pulse_count.last_value()
-            if self.pulse_no > pulse_train_length:
+            target_train_length = self.params.a_train_duration.last_value()
+            if self.seconds_generated >= target_train_length:
                 self.is_A_cycle = False
-                self.pulse_no = 0
+                self.seconds_generated = 0
                 self.callback(False)
         else:
-            pulse_train_length = self.params.b_pulse_count.last_value()
-            if self.pulse_no > pulse_train_length:
+            target_train_length = self.params.b_train_duration.last_value()
+            if self.seconds_generated >= target_train_length:
                 self.is_A_cycle = True
-                self.pulse_no = 0
+                self.seconds_generated = 0
                 self.callback(True)
 
         volume = \
@@ -279,6 +278,7 @@ class ABTestThreePhasePulseBasedAlgorithm(ThreePhasePulseBasedAlgorithmBase):
             volume,
         )
         pulse = self.apply_vibration(samplerate, pulse)
+        self.seconds_generated += float(pulse.total_length_in_samples(samplerate)) / samplerate
         return pulse
 
     def apply_vibration(self, samplerate, pulse: PulseInfo) -> PulseInfo:
