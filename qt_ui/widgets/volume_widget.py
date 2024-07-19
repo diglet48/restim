@@ -22,7 +22,6 @@ class VolumeWidget(QtWidgets.QProgressBar):
         self.refreshSettings()
 
     def refreshSettings(self):
-        # self.timer.setInterval(int(1000 // settings.display_latency.get()))
         self.latency = settings.display_latency.get() / 1000.0
 
     def set_axis(self, volume: VolumeParams):
