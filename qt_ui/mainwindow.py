@@ -1,3 +1,4 @@
+import os
 import pathlib
 import sys
 
@@ -24,6 +25,7 @@ import net.websocketserver
 import net.tcpudpserver
 import qt_ui.funscript_conversion_dialog
 import qt_ui.preferences_dialog
+import qt_ui.settings
 import net.serialproxy
 import net.buttplug_wsdm_client
 from qt_ui import resources
@@ -33,7 +35,7 @@ from stim_math.audio_gen.params import ThreephaseContinuousAlgorithmParams, Thre
     ThreephasePulsebasedAlgorithmParams, FivephaseContinuousAlgorithmParams, SafetyParams, VolumeParams
 from stim_math.axis import create_temporal_axis, create_precomputed_axis, WriteProtectedAxis
 
-from qt_ui.preferences_dialog import KEY_AUDIO_API, KEY_AUDIO_OUTPUT_DEVICE, KEY_AUDIO_LATENCY
+
 import sounddevice as sd
 
 # from qt_ui.device_selection_wizard_1 import DeviceSelectionWizard1, DeviceType
@@ -346,10 +348,9 @@ class Window(QMainWindow, Ui_MainWindow):
             self.audio_stop()
 
     def audio_start(self):
-        settings = QSettings()
-        api_name = settings.value(KEY_AUDIO_API, sd.query_hostapis(sd.default.hostapi)['name'])
-        output_device_name = settings.value(KEY_AUDIO_OUTPUT_DEVICE, sd.query_devices(sd.default.device[1])['name'])
-        latency = settings.value(KEY_AUDIO_LATENCY, 'high')
+        api_name = qt_ui.settings.audio_api.get() or sd.query_hostapis(sd.default.hostapi)['name']
+        output_device_name = qt_ui.settings.audio_output_device.get() or sd.query_devices(sd.default.device[1])['name']
+        latency = qt_ui.settings.audio_latency.get() or 'high'
         try:
             latency = float(latency)
         except ValueError:

@@ -3,12 +3,11 @@ import numpy as np
 import logging
 
 from PyQt5 import QtCore
-from PyQt5.QtCore import QSettings
 from PyQt5.QtSerialPort import QSerialPort
 from PyQt5.QtCore import QIODevice
 
 from net.tcode import TCodeCommand, InvalidTCodeException
-from qt_ui.preferences_dialog import KEY_SERIAL_ENABLED, KEY_SERIAL_PORT, KEY_SERIAL_AUTO_EXPAND
+from qt_ui import settings
 
 logger = logging.getLogger('restim.serial')
 
@@ -43,16 +42,15 @@ class FunscriptExpander:
 class SerialProxy(QtCore.QObject):
     def __init__(self, parent):
         super().__init__(parent)
-        settings = QSettings()
 
         self.expander = FunscriptExpander()
-        self.do_auto_expand = settings.value(KEY_SERIAL_AUTO_EXPAND, True, bool)
+        self.do_auto_expand = settings.serial_auto_expand.get()
 
         self.port = QSerialPort(self)
-        self.port.setPortName(settings.value(KEY_SERIAL_PORT, "COM20", str))
+        self.port.setPortName(settings.serial_port.get())
         self.port.setBaudRate(115200)
         self.port.readyRead.connect(self.new_serial_data)
-        if settings.value(KEY_SERIAL_ENABLED, False, bool):
+        if settings.serial_enabled.get():
             b = self.port.open(QIODevice.ReadOnly)
             if b:
                 logger.info(f"Serial listener active on port: {self.port.portName()}")

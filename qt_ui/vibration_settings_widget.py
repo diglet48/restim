@@ -3,8 +3,6 @@ import matplotlib
 import numpy as np
 
 # Make sure that we are using QT5
-from PyQt5.QtCore import QSettings
-
 matplotlib.use('Qt5Agg')
 from PyQt5 import QtWidgets
 
@@ -81,7 +79,6 @@ class MyStaticMplCanvas(MyMplCanvas):
 class VibrationSettingsWidget(QtWidgets.QWidget):
     def __init__(self):
         QtWidgets.QWidget.__init__(self)
-        self.settings = QSettings()
 
         self.vibration_1 = VibrationParams(
             create_temporal_axis(False, interpolation='step'),

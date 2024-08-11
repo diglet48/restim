@@ -1,6 +1,5 @@
 import time
 
-from PyQt5.QtCore import QSettings
 from PyQt5 import QtCore, QtWidgets
 
 from qt_ui import settings

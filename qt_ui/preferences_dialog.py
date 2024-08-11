@@ -1,6 +1,5 @@
 import functools
 
-from PyQt5.QtCore import QSettings, QModelIndex
 from PyQt5.QtWidgets import QDialog, QAbstractButton, QDialogButtonBox, QAbstractItemView, QHeaderView
 
 from qt_ui.preferences_dialog_ui import Ui_PreferencesDialog
@@ -10,26 +9,6 @@ import qt_ui.settings
 
 import sounddevice as sd
 
-KEY_WEBSOCKET_ENABLED = "network/websocket-enabled"
-KEY_WEBSOCKET_PORT = "network/websocket-port"
-KEY_WEBSOCKET_LOCALHOST_ONLY = "network/websocket-localhost-only"
-KEY_TCP_ENABLED = "network/tcp-enabled"
-KEY_TCP_PORT = "network/tcp-port"
-KEY_TCP_LOCALHOST_ONLY = "network/tcp-localhost-only"
-KEY_UDP_ENABLED = "network/udp-enabled"
-KEY_UDP_PORT = "network/udp-port"
-KEY_UDP_LOCALHOST_ONLY = "network/udp-localhost-only"
-KEY_SERIAL_ENABLED = "network/serial-enabled"
-KEY_SERIAL_PORT = "network/serial-port"
-KEY_SERIAL_AUTO_EXPAND = "network/serial-auto-expand"
-KEY_BUTTPLUG_WSDM_ENABLED = "network/buttplug-wsdm-enabled"
-KEY_BUTTPLUG_WSDM_ADDRESS = "network/buttplug-wsdm-address"
-KEY_BUTTPLUG_WSDM_AUTO_EXPAND = "network/buttplug-wsdm-auto-expand"
-
-KEY_AUDIO_API = "audio/api-name"
-KEY_AUDIO_OUTPUT_DEVICE = "audio/device-name"
-KEY_AUDIO_LATENCY = "audio/latency"
-
 
 class PreferencesDialog(QDialog, Ui_PreferencesDialog):
     def __init__(self, parent=None):
@@ -38,7 +17,6 @@ class PreferencesDialog(QDialog, Ui_PreferencesDialog):
 
         self.tabWidget.setCurrentIndex(0)
 
-        self.settings = QSettings()
         self.loadSettings()
 
         self.audio_api.currentIndexChanged.connect(self.repopulate_audio_devices)
@@ -92,28 +70,31 @@ class PreferencesDialog(QDialog, Ui_PreferencesDialog):
 
     def loadSettings(self):
         # network settings
-        self.gb_websocket_server.setChecked(self.settings.value(KEY_WEBSOCKET_ENABLED, True, bool))
-        self.websocket_port.setValue(self.settings.value(KEY_WEBSOCKET_PORT, 12346, int))
-        self.websocket_localhost_only.setChecked(self.settings.value(KEY_WEBSOCKET_LOCALHOST_ONLY, False, bool))
+        self.gb_websocket_server.setChecked(qt_ui.settings.websocket_enabled.get())
+        self.websocket_port.setValue(qt_ui.settings.websocket_port.get())
+        self.websocket_localhost_only.setChecked(qt_ui.settings.websocket_localhost_only.get())
 
-        self.gb_tcp_server.setChecked(self.settings.value(KEY_TCP_ENABLED, True, bool))
-        self.tcp_port.setValue(self.settings.value(KEY_TCP_PORT, 12347, int))
-        self.tcp_localhost_only.setChecked(self.settings.value(KEY_TCP_LOCALHOST_ONLY, False, bool))
+        self.gb_tcp_server.setChecked(qt_ui.settings.tcp_enabled.get())
+        self.tcp_port.setValue(qt_ui.settings.tcp_port.get())
+        self.tcp_localhost_only.setChecked(qt_ui.settings.tcp_localhost_only.get())
 
-        self.gb_udp_server.setChecked(self.settings.value(KEY_UDP_ENABLED, True, bool))
-        self.udp_port.setValue(self.settings.value(KEY_UDP_PORT, 12347, int))
-        self.udp_localhost_only.setChecked(self.settings.value(KEY_UDP_LOCALHOST_ONLY, False, bool))
+        self.gb_udp_server.setChecked(qt_ui.settings.udp_enabled.get())
+        self.udp_port.setValue(qt_ui.settings.udp_port.get())
+        self.udp_localhost_only.setChecked(qt_ui.settings.udp_localhost_only.get())
 
-        self.gb_serial.setChecked(self.settings.value(KEY_SERIAL_ENABLED, False, bool))
-        self.serial_port.setText(self.settings.value(KEY_SERIAL_PORT, "COM20", str))
-        self.serial_auto_expand.setChecked(self.settings.value(KEY_SERIAL_AUTO_EXPAND, True, bool))
+        self.gb_serial.setChecked(qt_ui.settings.serial_enabled.get())
+        self.serial_port.setText(qt_ui.settings.serial_port.get())
+        self.serial_auto_expand.setChecked(qt_ui.settings.serial_auto_expand.get())
 
-        self.gb_buttplug_wsdm.setChecked(self.settings.value(KEY_BUTTPLUG_WSDM_ENABLED, False, bool))
-        self.buttplug_wsdm_address.setText(self.settings.value(KEY_BUTTPLUG_WSDM_ADDRESS, "ws://127.0.0.1:54817", str))
-        self.buttplug_wsdm_auto_expand.setChecked(self.settings.value(KEY_BUTTPLUG_WSDM_AUTO_EXPAND, True, bool))
+        self.gb_buttplug_wsdm.setChecked(qt_ui.settings.buttplug_wsdm_enabled.get())
+        self.buttplug_wsdm_address.setText(qt_ui.settings.buttplug_wsdm_address.get())
+        self.buttplug_wsdm_auto_expand.setChecked(qt_ui.settings.buttplug_wsdm_auto_expand.get())
 
         # audio settings
-        hostapi_name = self.settings.value(KEY_AUDIO_API, sd.query_hostapis(sd.default.hostapi)['name'])
+        hostapi_name = qt_ui.settings.audio_api.get()
+        if not hostapi_name:
+            hostapi_name = sd.query_hostapis(sd.default.hostapi)['name']
+
         self.audio_api.clear()
         for host_api in sd.query_hostapis():
             self.audio_api.addItem(host_api['name'])
@@ -122,7 +103,7 @@ class PreferencesDialog(QDialog, Ui_PreferencesDialog):
 
         self.repopulate_audio_devices()
 
-        self.audio_latency.setCurrentText(self.settings.value(KEY_AUDIO_LATENCY, 'high'))
+        self.audio_latency.setCurrentText(qt_ui.settings.audio_latency.get())
         self.channel_count.setValue(qt_ui.settings.audio_channel_count.get())
         self.channel_map.setText(qt_ui.settings.audio_channel_map.get())
 
@@ -144,7 +125,9 @@ class PreferencesDialog(QDialog, Ui_PreferencesDialog):
 
     def repopulate_audio_devices(self):
         self.audio_output_device.clear()
-        default_audio_output_device_name = self.settings.value(KEY_AUDIO_OUTPUT_DEVICE, sd.query_devices(sd.default.device[1])['name'])
+        default_audio_output_device_name = qt_ui.settings.audio_output_device.get()
+        if not default_audio_output_device_name:
+            default_audio_output_device_name = sd.query_devices(sd.default.device[1])['name']
         api_index = self.audio_api.currentIndex()
         for device in sd.query_devices():
             if (
@@ -166,30 +149,30 @@ class PreferencesDialog(QDialog, Ui_PreferencesDialog):
 
     def saveSettings(self):
         # network
-        self.settings.setValue(KEY_WEBSOCKET_ENABLED, self.gb_websocket_server.isChecked())
-        self.settings.setValue(KEY_WEBSOCKET_PORT, self.websocket_port.value())
-        self.settings.setValue(KEY_WEBSOCKET_LOCALHOST_ONLY, self.websocket_localhost_only.isChecked())
+        qt_ui.settings.websocket_enabled.set(self.gb_websocket_server.isChecked())
+        qt_ui.settings.websocket_port.set(self.websocket_port.value())
+        qt_ui.settings.websocket_localhost_only.set(self.websocket_localhost_only.isChecked())
 
-        self.settings.setValue(KEY_TCP_ENABLED, self.gb_tcp_server.isChecked())
-        self.settings.setValue(KEY_TCP_PORT, self.tcp_port.value())
-        self.settings.setValue(KEY_TCP_LOCALHOST_ONLY, self.tcp_localhost_only.isChecked())
+        qt_ui.settings.tcp_enabled.set(self.gb_tcp_server.isChecked())
+        qt_ui.settings.tcp_port.set(self.tcp_port.value())
+        qt_ui.settings.tcp_localhost_only.set(self.tcp_localhost_only.isChecked())
 
-        self.settings.setValue(KEY_UDP_ENABLED, self.gb_udp_server.isChecked())
-        self.settings.setValue(KEY_UDP_PORT, self.udp_port.value())
-        self.settings.setValue(KEY_UDP_LOCALHOST_ONLY, self.udp_localhost_only.isChecked())
+        qt_ui.settings.udp_enabled.set(self.gb_udp_server.isChecked())
+        qt_ui.settings.udp_port.set(self.udp_port.value())
+        qt_ui.settings.udp_localhost_only.set(self.udp_localhost_only.isChecked())
 
-        self.settings.setValue(KEY_SERIAL_ENABLED, self.gb_serial.isChecked())
-        self.settings.setValue(KEY_SERIAL_PORT, self.serial_port.text())
-        self.settings.setValue(KEY_SERIAL_AUTO_EXPAND, self.serial_auto_expand.isChecked())
+        qt_ui.settings.serial_enabled.set(self.gb_serial.isChecked())
+        qt_ui.settings.serial_port.set(self.serial_port.text())
+        qt_ui.settings.serial_auto_expand.set(self.serial_auto_expand.isChecked())
 
-        self.settings.setValue(KEY_BUTTPLUG_WSDM_ENABLED, self.gb_buttplug_wsdm.isChecked())
-        self.settings.setValue(KEY_BUTTPLUG_WSDM_ADDRESS, self.buttplug_wsdm_address.text())
-        self.settings.setValue(KEY_BUTTPLUG_WSDM_AUTO_EXPAND, self.buttplug_wsdm_auto_expand.isChecked())
+        qt_ui.settings.buttplug_wsdm_enabled.set(self.gb_buttplug_wsdm.isChecked())
+        qt_ui.settings.buttplug_wsdm_address.set(self.buttplug_wsdm_address.text())
+        qt_ui.settings.buttplug_wsdm_auto_expand.set(self.buttplug_wsdm_auto_expand.isChecked())
 
         # audio devices
-        self.settings.setValue(KEY_AUDIO_API, self.audio_api.currentText())
-        self.settings.setValue(KEY_AUDIO_OUTPUT_DEVICE, self.audio_output_device.currentText())
-        self.settings.setValue(KEY_AUDIO_LATENCY, self.audio_latency.currentText())
+        qt_ui.settings.audio_api.set(self.audio_api.currentText())
+        qt_ui.settings.audio_output_device.set(self.audio_output_device.currentText())
+        qt_ui.settings.audio_latency.set(self.audio_latency.currentText())
         qt_ui.settings.audio_channel_count.set(self.channel_count.value())
         qt_ui.settings.audio_channel_map.set(self.channel_map.text())
 

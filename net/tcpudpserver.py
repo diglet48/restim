@@ -2,11 +2,10 @@ import re
 import logging
 
 from PyQt5 import QtCore, QtNetwork
-from PyQt5.QtCore import QSettings
 from PyQt5.QtNetwork import QHostAddress
 
 from net.tcode import TCodeCommand, InvalidTCodeException
-from qt_ui.preferences_dialog import KEY_TCP_ENABLED, KEY_TCP_PORT, KEY_TCP_LOCALHOST_ONLY, KEY_UDP_ENABLED, KEY_UDP_PORT, KEY_UDP_LOCALHOST_ONLY
+from qt_ui import settings
 
 from functools import partial
 
@@ -22,10 +21,9 @@ class TcpUdpServer(QtCore.QObject):
         self.start_udp_server()
 
     def start_tcp_server(self):
-        settings = QSettings()
-        enabled = settings.value(KEY_TCP_ENABLED, True, bool)
-        port = settings.value(KEY_TCP_PORT, 12347, int)
-        localhost_only = settings.value(KEY_TCP_LOCALHOST_ONLY, False, bool)
+        enabled = settings.tcp_enabled.get()
+        port = settings.tcp_port.get()
+        localhost_only = settings.tcp_localhost_only.get()
 
         self.tcp_server = QtNetwork.QTcpServer()
         address = QHostAddress.LocalHost if localhost_only else QHostAddress.Any
@@ -38,10 +36,9 @@ class TcpUdpServer(QtCore.QObject):
             self.tcp_server.newConnection.connect(self.new_tcp_connection)
 
     def start_udp_server(self):
-        settings = QSettings()
-        enabled = settings.value(KEY_UDP_ENABLED, True, bool)
-        port = settings.value(KEY_UDP_PORT, 12347, int)
-        localhost_only = settings.value(KEY_UDP_LOCALHOST_ONLY, False, bool)
+        enabled = settings.udp_enabled.get()
+        port = settings.udp_port.get()
+        localhost_only = settings.udp_localhost_only.get()
 
         self.udp_socket = QtNetwork.QUdpSocket()
         address = QHostAddress.LocalHost if localhost_only else QHostAddress.Any

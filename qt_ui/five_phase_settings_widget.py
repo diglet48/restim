@@ -1,7 +1,6 @@
 from __future__ import unicode_literals
 
 from PyQt5 import QtWidgets
-from PyQt5.QtCore import QSettings
 
 from qt_ui.five_phase_settings_widget_ui import Ui_FivePhaseSettingsWidget
 from stim_math.audio_gen.params import FivephaseCalibrationParams, FivephasePositionParams
@@ -12,7 +11,6 @@ class FivePhaseSettingsWidget(QtWidgets.QWidget, Ui_FivePhaseSettingsWidget):
     def __init__(self):
         QtWidgets.QWidget.__init__(self)
         self.setupUi(self)
-        self.settings = QSettings()
 
         self.position = FivephasePositionParams(
             create_constant_axis(0.0),

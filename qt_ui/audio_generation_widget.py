@@ -11,13 +11,6 @@ from stim_math.audio_gen.base_classes import AudioGenerationAlgorithm
 from qt_ui import settings
 
 
-# TODO: remove
-# from qt_ui.preferences_dialog import KEY_AUDIO_CHANNEL_COUNT, KEY_AUDIO_CHANNEL_MAP
-from PyQt5.QtCore import QSettings
-KEY_AUDIO_CHANNEL_COUNT = "audio/channel-count"
-KEY_AUDIO_CHANNEL_MAP = "audio/channel-map"
-
-
 
 logger = logging.getLogger('restim.audio')
 
