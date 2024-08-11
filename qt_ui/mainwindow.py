@@ -438,13 +438,8 @@ class Window(QMainWindow, Ui_MainWindow):
 
 
 def run():
-    QApplication.setApplicationName("restim")
-    QApplication.setOrganizationName("restim")
-    QSettings.setDefaultFormat(QSettings.IniFormat)
-
-    log_path = pathlib.Path(QStandardPaths.writableLocation(QStandardPaths.AppDataLocation)) / 'logs'
-    log_path.mkdir(parents=True, exist_ok=True)
-    logging.basicConfig(filename=(log_path / 'restim.log'), filemode='w')
+    log_path = os.getcwd()
+    logging.basicConfig(filename=os.path.join(log_path, 'restim.log'), filemode='w')
     logging.getLogger().addHandler(logging.StreamHandler())
     logger = logging.getLogger('restim')
     logger.setLevel(logging.DEBUG)

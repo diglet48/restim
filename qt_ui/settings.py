@@ -1,4 +1,11 @@
 from PyQt5.QtCore import QSettings
+import os
+
+
+def get_settings_instance():
+    cwd = os.getcwd()
+    path = os.path.join(cwd, 'restim.ini')
+    return QSettings(path, QSettings.IniFormat)
 
 
 class Setting:
@@ -11,12 +18,12 @@ class Setting:
 
     def get(self):
         if self.cache is None:
-            self.cache = QSettings().value(self.key, self.default_value, self.dtype)
+            self.cache = get_settings_instance().value(self.key, self.default_value, self.dtype)
         return self.cache
 
     def set(self, value):
         if value != self.cache:
-            QSettings().setValue(self.key, value)
+            get_settings_instance().setValue(self.key, value)
             self.cache = value
 
 

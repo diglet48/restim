@@ -1,8 +1,9 @@
 import typing
 from dataclasses import dataclass
-from PyQt5.QtCore import QModelIndex, Qt, QAbstractTableModel, QSettings
+from PyQt5.QtCore import QModelIndex, Qt, QAbstractTableModel
 
 from qt_ui.device_wizard.axes import AxisEnum, all_axis
+from qt_ui.settings import get_settings_instance
 
 
 defaults = {
@@ -54,7 +55,7 @@ class FunscriptKitModel(QAbstractTableModel):
         for axis in all_axis:
             kit.children.append(FunscriptKitItem(axis, '', None, None, False))
 
-        settings = QSettings()
+        settings = get_settings_instance()
         settings.beginGroup('funscript_configuration')
         for item in kit.children:
             default_funscript_name, default_tcode_axis_name, default_min, default_max, default_auto_load = defaults[item.axis]
@@ -71,7 +72,7 @@ class FunscriptKitModel(QAbstractTableModel):
         return kit
 
     def save_to_settings(self):
-        settings = QSettings()
+        settings = get_settings_instance()
         settings.beginGroup('funscript_configuration')
         for item in self.children:
             settings.beginGroup(item.axis.settings_key())
