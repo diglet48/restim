@@ -23,13 +23,19 @@ class ThreePhaseCoordinateTransform:
             [0, 0, 1]]
         )
         self.matrix = limits_matrix @ rotation_matrix @ mirror_matrix
+        self.mirror = mirror
 
     def transform(self, alpha, beta):
         a, b, _ = self.matrix @ [alpha, beta, np.ones_like(alpha)]
         return a, b
 
     def inverse_transform(self, alpha, beta):
-        matrix = np.linalg.inv(self.matrix)
+        try:
+            matrix = np.linalg.inv(self.matrix)
+        except np.linalg.LinAlgError:
+            matrix = np.eye(3)
+            if self.mirror:
+                matrix[1, 1] = -1
         a, b, _ = matrix @ [alpha, beta, np.ones_like(alpha)]
         return a, b
 
