@@ -452,6 +452,7 @@ def run():
 
     sys.excepthook = excepthook
 
+    os.environ["QT_ENABLE_HIGHDPI_SCALING"] = "1"   # windows
     app = QApplication(sys.argv)
     win = Window()
     win.show()
