@@ -60,6 +60,12 @@ def collect_funscripts(
     :param media:
     :return:
     """
+    def path_is_zip(path):
+        try:
+            zipfile.Path(path)
+            return True
+        except OSError:
+            return False
 
     dir_stack = dirs[:]
     new_dirs = []
@@ -75,21 +81,21 @@ def collect_funscripts(
             logger.info(f'detecting funscripts from {current_dir}')
 
             try:
-                is_zip = True
+                traversing_a_zip = True
                 traversable = zipfile.Path(current_dir)
             except OSError:
-                is_zip = False
+                traversing_a_zip = False
                 traversable = pathlib.Path(current_dir)
 
             for node in traversable.iterdir():
                 full_path = os.path.join(current_dir, node.name)
-                if not is_zip and node.is_dir(): # do not support dir-in-zip
+                if not traversing_a_zip and node.is_dir(): # do not support dir-in-zip
                     if case_insensitive_compare(node.name, media_prefix):
                         new_dirs.append(full_path)
                 else:
                     a, b, c = split_funscript_path(full_path)
                     if case_insensitive_compare(a, media_prefix):
-                        if not is_zip and zipfile.is_zipfile(full_path):    # do not support zip-in-zip
+                        if not traversing_a_zip and zipfile.is_zipfile(full_path):    # do not support zip-in-zip
                             new_dirs.append(full_path)
                         elif case_insensitive_compare(c, 'funscript'):
                             collected_files.append(Resource(node))
@@ -97,7 +103,10 @@ def collect_funscripts(
         except OSError as e:    # unreachable network?
             pass
 
-        dir_stack = new_dirs + dir_stack
+        # make sure to search dirs before zipfiles
+        new_zips = list(filter(path_is_zip, new_dirs))
+        new_dirs = list(filter(lambda x: not path_is_zip(x), new_dirs))
+        dir_stack = new_dirs + new_zips + dir_stack
         new_dirs = []
 
 
