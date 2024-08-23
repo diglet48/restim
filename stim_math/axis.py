@@ -70,24 +70,32 @@ class ShortMemoryTimeline:
         return self.data[:, 1]
 
     def add(self, value, interval=0.0):
-        ts = time.time() + interval
+        assert interval >= 0
+        begin_ts = time.time()
+        end_ts = begin_ts + interval
 
-        # make sure data stays sorted
-        if len(self.data[-1]) > 0:
-            if self.data[-1, 0] == ts:
-                # overwrite last value
-                self.data[-1, 1] = value
-            elif self.data[-1, 0] > ts:
-                # delete any values >= interval
-                i = np.searchsorted(self.data[:, 0], ts)
-                self.data = self.data[:i]
-                self.data = np.vstack((self.data, [ts, value]))
+        insertion_index = np.searchsorted(self.data[:, 0], begin_ts)
+        if insertion_index == len(self.data[:, 0]):
+            # append to end
+            current_value = self.data[-1, 1]
+            if interval > 0.0:
+                self.data = np.vstack((self.data,
+                                       [[begin_ts, current_value],
+                                        [end_ts, value]]))
             else:
-                # just insert
-                self.data = np.vstack((self.data, [ts, value]))
+                self.data = np.vstack((self.data,
+                                       [begin_ts, value]))
+        elif insertion_index == 0:
+            # insert at very beginning, must be a bug?
+            self.data = np.array([[end_ts, value]], dtype=self.data.dtype)
         else:
-            # just insert
-            self.data = np.vstack((self.data, [ts, value]))
+            # insert between two points, overwrite all future data
+            prev_ts, prev_value = self.data[insertion_index-1]
+            next_ts, next_value = self.data[insertion_index]
+            current_value = np.interp(begin_ts,[prev_ts, next_ts], [prev_value, next_value])
+            self.data = np.vstack((self.data[:insertion_index, :],
+                                   [[begin_ts, current_value],
+                                    [end_ts, value]]))
 
         self.cleanup_if_needed()
 
