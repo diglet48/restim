@@ -82,19 +82,19 @@ class VibrationSettingsWidget(QtWidgets.QWidget):
 
         self.vibration_1 = VibrationParams(
             create_temporal_axis(False, interpolation='step'),
-            create_temporal_axis(0.0),
-            create_temporal_axis(0.0),
-            create_temporal_axis(0.0),
-            create_temporal_axis(0.0),
-            create_temporal_axis(0.0),
+            create_temporal_axis(settings.vibration_1_frequency.get()),
+            create_temporal_axis(settings.vibration_1_strength.get() / 100),
+            create_temporal_axis(settings.vibration_1_left_right_bias.get() / 100),
+            create_temporal_axis(settings.vibration_1_high_low_bias.get() / 100),
+            create_temporal_axis(settings.vibration_1_random.get() / 100),
         )
         self.vibration_2 = VibrationParams(
             create_temporal_axis(False, interpolation='step'),
-            create_temporal_axis(0.0),
-            create_temporal_axis(0.0),
-            create_temporal_axis(0.0),
-            create_temporal_axis(0.0),
-            create_temporal_axis(0.0),
+            create_temporal_axis(settings.vibration_2_frequency.get()),
+            create_temporal_axis(settings.vibration_2_strength.get() / 100),
+            create_temporal_axis(settings.vibration_2_left_right_bias.get() / 100),
+            create_temporal_axis(settings.vibration_2_high_low_bias.get() / 100),
+            create_temporal_axis(settings.vibration_2_random.get() / 100),
         )
 
         l = QtWidgets.QFormLayout(self)
