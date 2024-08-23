@@ -51,8 +51,8 @@ class PhaseWidgetBase(QtWidgets.QGraphicsView):
         svg.setPos(-svg.boundingRect().width()/2, -svg.boundingRect().height()/2)
         self.svg = svg
         self.scene = scene
+        self.setBackgroundBrush(Qt.white)
 
-        #mouse tracking
         self.setMouseTracking(True)
 
         self.setViewportUpdateMode(QGraphicsView.FullViewportUpdate)
@@ -374,8 +374,10 @@ class Path(QtWidgets.QGraphicsPathItem):
 
         painter.setRenderHint(painter.Antialiasing)
 
-        painter.pen().setWidth(2)
-        painter.setBrush(QtCore.Qt.NoBrush)
+        pen = painter.pen()
+        pen.setWidth(1)
+        pen.setColor(Qt.black)
+        painter.setPen(pen)
 
         path = self.directPath()
         painter.drawPath(path)
