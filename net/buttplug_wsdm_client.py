@@ -2,12 +2,12 @@ import json
 import logging
 
 from PyQt5 import QtCore, QtWebSockets
-from PyQt5.QtCore import QSettings, QUrl, QTimer
+from PyQt5.QtCore import QUrl, QTimer
 from PyQt5.QtNetwork import QAbstractSocket
 
 from net.serialproxy import FunscriptExpander
 from net.tcode import TCodeCommand, InvalidTCodeException
-from qt_ui.preferences_dialog import KEY_BUTTPLUG_WSDM_ENABLED, KEY_BUTTPLUG_WSDM_ADDRESS, KEY_BUTTPLUG_WSDM_AUTO_EXPAND
+from qt_ui import settings
 
 logger = logging.getLogger('restim.buttplug')
 
@@ -25,10 +25,9 @@ class ButtplugWsdmClient(QtCore.QObject):
 
         self.retry_count = 0
 
-        settings = QSettings()
-        self.enabled = settings.value(KEY_BUTTPLUG_WSDM_ENABLED, False, bool)
-        self.address = settings.value(KEY_BUTTPLUG_WSDM_ADDRESS, 'ws://127.0.0.1:54817', str)
-        self.do_auto_expand = settings.value(KEY_BUTTPLUG_WSDM_AUTO_EXPAND, True, bool)
+        self.enabled = settings.buttplug_wsdm_enabled.get()
+        self.address = settings.buttplug_wsdm_address.get()
+        self.do_auto_expand = settings.buttplug_wsdm_auto_expand.get()
 
         self.expander = FunscriptExpander()
 
@@ -77,10 +76,9 @@ class ButtplugWsdmClient(QtCore.QObject):
 
     def refreshSettings(self):
         self.retry_count = 0
-        settings = QSettings()
-        self.enabled = settings.value(KEY_BUTTPLUG_WSDM_ENABLED, False, bool)
-        self.address = settings.value(KEY_BUTTPLUG_WSDM_ADDRESS, 'ws://127.0.0.1:54817', str)
-        self.do_auto_expand = settings.value(KEY_BUTTPLUG_WSDM_AUTO_EXPAND, True, bool)
+        self.enabled = settings.buttplug_wsdm_enabled.get()
+        self.address = settings.buttplug_wsdm_address.get()
+        self.do_auto_expand = settings.buttplug_wsdm_auto_expand.get()
 
         self.timer.setInterval(10)
 

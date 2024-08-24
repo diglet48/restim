@@ -34,7 +34,7 @@ class TCodeCommand:
         value = buf[2:]
         value, _, interval = value.partition('I')
         try:
-            value = float(value) / (10**len(value) - 1)
+            value = float(value) / (10**len(value))
         except ValueError:
             raise InvalidTCodeException()
 
@@ -47,8 +47,8 @@ class TCodeCommand:
 
     def format_cmd(self):
         if self.interval:
-            return "{}{:04d}I{:d}".format(self.axis_identifier, int(np.clip(self.value, 0.0, 1.0) * 9999), int(self.interval))
-        return "{}{:04d}".format(self.axis_identifier, int(np.clip(self.value, 0.0, 1.0) * 9999))
+            return "{}{:04d}I{:d}".format(self.axis_identifier, np.clip(int(self.value * 10000), 0, 9999), int(self.interval))
+        return "{}{:04d}".format(self.axis_identifier, np.clip(int(self.value * 10000), 0, 9999))
 
     def __str__(self):
         return self.format_cmd()

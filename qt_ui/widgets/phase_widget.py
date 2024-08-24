@@ -2,6 +2,7 @@ from dataclasses import dataclass
 import matplotlib
 import time
 import math
+import numpy as np
 
 from PyQt5.QtCore import QPoint, QPointF
 from PyQt5.QtWidgets import QGraphicsView, QGraphicsEllipseItem
@@ -50,8 +51,8 @@ class PhaseWidgetBase(QtWidgets.QGraphicsView):
         svg.setPos(-svg.boundingRect().width()/2, -svg.boundingRect().height()/2)
         self.svg = svg
         self.scene = scene
+        self.setBackgroundBrush(Qt.white)
 
-        #mouse tracking
         self.setMouseTracking(True)
 
         self.setViewportUpdateMode(QGraphicsView.FullViewportUpdate)
@@ -108,7 +109,7 @@ class PhaseWidgetWithPoint(PhaseWidgetBase):
         self.scene.addItem(self.dot)
 
     def refreshSettings(self):
-        self.timer.setInterval(int(1000 // settings.display_latency.get()))
+        self.timer.setInterval(int(1000 // np.clip(settings.display_fps.get(), 1.0, 500.0)))
         self.latency = settings.display_latency.get() / 1000.0
 
     def mouse_event(self, alpha, beta, buttons: QtCore.Qt.MouseButtons):
@@ -373,8 +374,10 @@ class Path(QtWidgets.QGraphicsPathItem):
 
         painter.setRenderHint(painter.Antialiasing)
 
-        painter.pen().setWidth(2)
-        painter.setBrush(QtCore.Qt.NoBrush)
+        pen = painter.pen()
+        pen.setWidth(1)
+        pen.setColor(Qt.black)
+        painter.setPen(pen)
 
         path = self.directPath()
         painter.drawPath(path)
@@ -437,7 +440,7 @@ class PhaseWidgetCalibration(PhaseWidgetBase):
         self.last_state = None
 
     def refreshSettings(self):
-        self.timer.setInterval(int(1000 // settings.display_latency.get()))
+        self.timer.setInterval(int(1000 // np.clip(settings.display_fps.get(), 1.0, 500.0)))
         self.latency = settings.display_latency.get() / 1000.0
 
     def set_axis(self, neutral: AbstractAxis, right: AbstractAxis):

@@ -1,4 +1,11 @@
 from PyQt5.QtCore import QSettings
+import os
+
+
+def get_settings_instance():
+    cwd = os.getcwd()
+    path = os.path.join(cwd, 'restim.ini')
+    return QSettings(path, QSettings.IniFormat)
 
 
 class Setting:
@@ -11,12 +18,12 @@ class Setting:
 
     def get(self):
         if self.cache is None:
-            self.cache = QSettings().value(self.key, self.default_value, self.dtype)
+            self.cache = get_settings_instance().value(self.key, self.default_value, self.dtype)
         return self.cache
 
     def set(self, value):
         if value != self.cache:
-            QSettings().setValue(self.key, value)
+            get_settings_instance().setValue(self.key, value)
             self.cache = value
 
 
@@ -77,10 +84,10 @@ threephase_transform_combobox_selection = Setting('threephase_transform/combobox
 threephase_transform_enabled = Setting('threephase_transform/enabled', False, bool)
 threephase_transform_rotate = Setting('threephase_transform/rotate', 0.0, float)
 threephase_transform_mirror = Setting('threephase_transform/mirror', False, bool)
-threephase_transform_limit_top = Setting('threephase_transform/limit_top', 0.0, float)
-threephase_transform_limit_bottom = Setting('threephase_transform/limit_bottom', 0.0, float)
-threephase_transform_limit_left = Setting('threephase_transform/limit_left', 0.0, float)
-threephase_transform_limit_right = Setting('threephase_transform/limit_right', 0.0, float)
+threephase_transform_limit_top = Setting('threephase_transform/limit_top', 1.0, float)
+threephase_transform_limit_bottom = Setting('threephase_transform/limit_bottom', -1.0, float)
+threephase_transform_limit_left = Setting('threephase_transform/limit_left', -1.0, float)
+threephase_transform_limit_right = Setting('threephase_transform/limit_right', 1.0, float)
 threephase_map_to_edge_start = Setting('threephase_transform/map_to_edge_start', 0.0, float)
 threephase_map_to_edge_length = Setting('threephase_transform/map_to_edge_length', 200, float)
 threephase_map_to_edge_invert = Setting('threephase_transform/map_to_edge_invert', False, bool)
@@ -99,10 +106,11 @@ media_sync_vlc_username = Setting('media_sync/vlc_username', '', str)
 media_sync_vlc_password = Setting('media_sync/vlc_password', '1234', str)
 media_sync_kodi_address = Setting('media_sync/kodi_address', 'ws://127.0.0.1:9090', str)
 
-
+audio_api = Setting("audio/api-name", "", str)
+audio_output_device = Setting("audio/device-name", "", str)
+audio_latency = Setting("audio/latency", 'high', str)
 audio_channel_count = Setting("audio/channel-count", 8, int)
 audio_channel_map = Setting("audio/channel-map", '0, 1, 2, 3', str)
-
 
 additional_search_paths = Setting('additional_search_paths', [], list)
 
@@ -110,3 +118,24 @@ file_dialog_last_dir = Setting('file_dialog_last_dir', '', str)
 
 display_fps = Setting('display/fps', 60, float)
 display_latency = Setting('display/latency', 200, float)
+
+buttplug_wsdm_enabled = Setting("network/buttplug-wsdm-enabled", False, bool)
+buttplug_wsdm_address = Setting("network/buttplug-wsdm-address", "ws://127.0.0.1:54817", str)
+buttplug_wsdm_auto_expand = Setting("network/buttplug-wsdm-auto-expand", True, bool)
+
+
+websocket_enabled = Setting("network/websocket-enabled", True, bool)
+websocket_port = Setting("network/websocket-port", 12346, int)
+websocket_localhost_only = Setting("network/websocket-localhost-only", False, bool)
+tcp_enabled = Setting("network/tcp-enabled", True, bool)
+tcp_port = Setting("network/tcp-port", 12347, int)
+tcp_localhost_only = Setting("network/tcp-localhost-only", False, bool)
+udp_enabled = Setting("network/udp-enabled", True, bool)
+udp_port = Setting("network/udp-port", 12347, int)
+udp_localhost_only = Setting("network/udp-localhost-only", False, bool)
+serial_enabled = Setting("network/serial-enabled", False, bool)
+serial_port = Setting("network/serial-port", "COM20", str)
+serial_auto_expand = Setting("network/serial-auto-expand", True, bool)
+
+
+

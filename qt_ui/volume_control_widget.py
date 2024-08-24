@@ -10,9 +10,6 @@ from stim_math.audio_gen.params import VolumeParams
 from stim_math.axis import create_temporal_axis, AbstractAxis
 from qt_ui import settings
 
-SETTING_INACTIVITY_RAMP_TIME = 'volume/inactivity_ramp_time'
-SETTING_INACTIVITY_INACTIVE_THRESHOLD = 'volume/inactivity_inactive_threshold'
-
 
 class VolumeControlWidget(QtWidgets.QWidget, Ui_VolumeControlForm):
     def __init__(self, parent=None):

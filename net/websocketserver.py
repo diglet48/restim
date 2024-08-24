@@ -2,11 +2,10 @@ import re
 import logging
 
 from PyQt5 import QtCore, QtWebSockets, QtNetwork
-from PyQt5.QtCore import QSettings
 from PyQt5.QtNetwork import QHostAddress
 
 from net.tcode import TCodeCommand, InvalidTCodeException
-from qt_ui.preferences_dialog import KEY_WEBSOCKET_ENABLED, KEY_WEBSOCKET_PORT, KEY_WEBSOCKET_LOCALHOST_ONLY
+from qt_ui import settings
 
 logger = logging.getLogger('restim.websocket')
 
@@ -16,10 +15,9 @@ class WebSocketServer(QtCore.QObject):
         super().__init__(parent)
         self.connections = []
 
-        settings = QSettings()
-        enabled = settings.value(KEY_WEBSOCKET_ENABLED, True, bool)
-        port = settings.value(KEY_WEBSOCKET_PORT, 12346, int)
-        localhost_only = settings.value(KEY_WEBSOCKET_LOCALHOST_ONLY, False, bool)
+        enabled = settings.websocket_enabled.get()
+        port = settings.websocket_port.get()
+        localhost_only = settings.websocket_localhost_only.get()
 
         if not enabled:
             logger.info("Not starting websocket server because disabled in settings.")
