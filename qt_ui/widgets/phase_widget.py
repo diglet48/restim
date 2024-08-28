@@ -13,7 +13,7 @@ from stim_math.threephase_coordinate_transform import ThreePhaseCoordinateTransf
 
 # Make sure that we are using QT5
 matplotlib.use('Qt5Agg')
-from PyQt5.QtGui import QColor, QMouseEvent, QPainterPath
+from PyQt5.QtGui import QColor, QMouseEvent, QPainterPath, QPainter
 from PyQt5 import QtCore, QtWidgets, QtSvg, QtGui
 from PyQt5.QtCore import Qt
 
@@ -48,7 +48,7 @@ class PhaseWidgetBase(QtWidgets.QGraphicsView):
         self.setScene(scene)
         svg = QtSvg.QGraphicsSvgItem(resources.phase_diagram_bg)
         scene.addItem(svg)
-        svg.setPos(-svg.boundingRect().width()/2, -svg.boundingRect().height()/2)
+        svg.setPos(-svg.boundingRect().width()/2.0, -svg.boundingRect().height()/2.0)
         self.svg = svg
         self.scene = scene
         self.setBackgroundBrush(Qt.white)
@@ -61,6 +61,8 @@ class PhaseWidgetBase(QtWidgets.QGraphicsView):
         self.timer.timeout.connect(self.refresh)
         self.timer.start(int(1000 / 60.0))
         self.refreshSettings()
+
+        self.setRenderHint(QtGui.QPainter.SmoothPixmapTransform, True)  # makes SVG look better on odd dpi settings
 
     def resizeEvent(self, event: QtGui.QResizeEvent) -> None:
         self.fitInView(-100, -100, 200, 200, Qt.KeepAspectRatio)

@@ -1,11 +1,11 @@
 <RCC>
   <qresource prefix="restim">
+    <file>wizard/continuous.svg</file>
+    <file>wizard/pulse_based.svg</file>
     <file>media_players/kodi.png</file>
     <file>media_players/heresphere.png</file>
     <file>arrow-round_poly.svg</file>
     <file>trash.svg</file>
-    <file>wizard/continuous.png</file>
-    <file>wizard/pulse_based.png</file>
     <file>pause-circle_poly.svg</file>
     <file>play-circle_poly.svg</file>
     <file>stop-circle_poly.svg</file>
