@@ -5,7 +5,7 @@ import math
 import numpy as np
 
 from PyQt5.QtCore import QPoint, QPointF
-from PyQt5.QtWidgets import QGraphicsView, QGraphicsEllipseItem
+from PyQt5.QtWidgets import QGraphicsView, QGraphicsEllipseItem, QGraphicsItem
 
 from qt_ui import resources, settings
 from stim_math.threephase_coordinate_transform import ThreePhaseCoordinateTransform, \
@@ -47,6 +47,7 @@ class PhaseWidgetBase(QtWidgets.QGraphicsView):
         scene = QtWidgets.QGraphicsScene()
         self.setScene(scene)
         svg = QtSvg.QGraphicsSvgItem(resources.phase_diagram_bg)
+        svg.setCacheMode(QGraphicsItem.NoCache)  # Improves clarity. Must be Qt bug. Remove in Qt6?
         scene.addItem(svg)
         svg.setPos(-svg.boundingRect().width()/2.0, -svg.boundingRect().height()/2.0)
         self.svg = svg
