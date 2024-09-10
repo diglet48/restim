@@ -10,12 +10,7 @@ from PyQt5 import QtWidgets
 from stim_math.audio_gen.base_classes import AudioGenerationAlgorithm
 from qt_ui import settings
 
-
-
 logger = logging.getLogger('restim.audio')
-
-
-TCODE_LATENCY = 0.04  # delay tcode command. Worst-case command interval from multifunplayer
 
 # measured latency on my machine, excluding tcode latency
 # wdm-ks,
@@ -184,11 +179,10 @@ class AudioGenerationWidget(QtWidgets.QWidget):
 
         # generate timestamp of output samples
         # slowly sync the timestamp to the actual audio rate.
-        # use equation: steady_clock[-1] + offset = system_time - TCODE_LATENCY
+        # use equation: steady_clock[-1] + offset = system_time
         # minimize error to 0
-        # TODO: move tcode latency somewhere else.
         system_time = time.time()
-        offset = system_time - steady_clock[-1] - TCODE_LATENCY
+        offset = system_time - steady_clock[-1]
         if abs(self.offset - offset) > 1:
             logger.error('audio output desync (>1s). Stopping...')
             # todo: set error flag, somewhere

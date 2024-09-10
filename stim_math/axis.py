@@ -71,31 +71,26 @@ class ShortMemoryTimeline:
 
     def add(self, value, interval=0.0):
         assert interval >= 0
+        interval = np.clip(interval, 1.0/30, None)    # Optimal value depends on tcode update frequency. Assume 30hz
         begin_ts = time.time()
         end_ts = begin_ts + interval
 
-        insertion_index = np.searchsorted(self.data[:, 0], begin_ts)
-        if insertion_index == len(self.data[:, 0]):
-            # append to end
-            current_value = self.data[-1, 1]
-            if interval > 0.0:
-                self.data = np.vstack((self.data,
-                                       [[begin_ts, current_value],
-                                        [end_ts, value]]))
-            else:
-                self.data = np.vstack((self.data,
-                                       [begin_ts, value]))
-        elif insertion_index == 0:
+        begin_index = np.searchsorted(self.data[:, 0], begin_ts)
+        end_index = np.searchsorted(self.data[:, 0], end_ts)
+        current_value = np.interp(begin_ts, self.x(), self.y())
+
+        if begin_index == 0:
             # insert at very beginning, must be a bug?
             self.data = np.array([[end_ts, value]], dtype=self.data.dtype)
-        else:
-            # insert between two points, overwrite all future data
-            prev_ts, prev_value = self.data[insertion_index-1]
-            next_ts, next_value = self.data[insertion_index]
-            current_value = np.interp(begin_ts,[prev_ts, next_ts], [prev_value, next_value])
-            self.data = np.vstack((self.data[:insertion_index, :],
+        elif begin_index == end_index:
+            # strip away future data, add linear segment at end
+            # to avoid changing current data
+            self.data = np.vstack((self.data[:end_index],
                                    [[begin_ts, current_value],
                                     [end_ts, value]]))
+        else:
+            # strip away future data, add single data point at end
+            self.data = np.vstack((self.data[:end_index], [[end_ts, value]]))
 
         self.cleanup_if_needed()
 
