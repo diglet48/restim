@@ -90,7 +90,7 @@ class AudioGenerationWidget(QtWidgets.QWidget):
                 self.sample_rate = self.stream.samplerate
                 self.algorithm = algorithm
                 self.channel_map = mapping_parameter.device_channel_map
-                self.offset = time.time() - TCODE_LATENCY
+                self.offset = time.time()
                 self.stream.start()
             except sd.PortAudioError as e:
                 logger.error(f"Portaudio says: {e}")
