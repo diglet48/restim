@@ -22,7 +22,7 @@ def show_continuous():
     ax.plot(t, a)
     ax.plot(t, b)
     fig.show()
-    fig.savefig('../resources/wizard/continuous.png', bbox_inches='tight')
+    fig.savefig('../resources/wizard/continuous.svg', bbox_inches='tight')
     plt.show()
 
 
@@ -52,7 +52,7 @@ def show_pulse_based():
     ax.plot(t, a)
     ax.plot(t, b)
     fig.show()
-    fig.savefig('../resources/wizard/pulse_based.png', bbox_inches='tight')
+    fig.savefig('../resources/wizard/pulse_based.svg', bbox_inches='tight')
     plt.show()
 
 show_continuous()
