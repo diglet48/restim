@@ -131,3 +131,4 @@ dmypy.json
 # sound files
 .wav
 .mp3
+.idea/workspace.xml
