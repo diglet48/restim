@@ -159,8 +159,6 @@ class MediaSettingsWidget(QtWidgets.QWidget, Ui_MediaSettingsWidget, metaclass=_
         new_path = connector.media_path()
 
         if self.loaded_media_path != new_path:
-            self.loaded_media_path = new_path
-
             self.detect_resources_for_media_file(new_path)
 
     def detect_resources_for_media_file(self, new_path):
@@ -187,8 +185,13 @@ class MediaSettingsWidget(QtWidgets.QWidget, Ui_MediaSettingsWidget, metaclass=_
             self.treeView.expandAll()
 
         self.model.auto_link_funscripts(funscript_kit.FunscriptKitModel.load_from_settings())
-        if dirty:
-            self.funscriptMappingChanged.emit()
+        self.funscriptMappingChanged.emit()
+
+    def has_media_file_loaded(self):
+        return bool(self.loaded_media_path)
+
+    def autostart_enabled(self):
+        return not self.stop_audio_automatically_checkbox.isChecked()
 
     def is_connected(self):
         media = self.media_sync[self.current_index]

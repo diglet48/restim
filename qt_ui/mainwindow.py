@@ -1,6 +1,8 @@
 import os
 import pathlib
 import sys
+import time
+from enum import Enum
 
 from PyQt5 import QtGui
 from PyQt5.QtCore import QSettings, QTimer, QUrl, QStandardPaths
@@ -48,10 +50,19 @@ from qt_ui.tcode_command_router import TCodeCommandRouter
 logger = logging.getLogger('restim.main')
 
 
+class PlayState(Enum):
+    STOPPED = 0
+    PLAYING = 1
+    WAITING_ON_LOAD = 2  # the audio is stopped, but is ready to be auto-started once funscripts are loaded.
+
+
 class Window(QMainWindow, Ui_MainWindow):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setupUi(self)
+
+        self.playstate = PlayState.STOPPED
+        self.refresh_play_button_icon()
 
         # set the first tab as active tab, in case we forgot to set it in designer
         self.tabWidget.setCurrentIndex(0)
@@ -166,8 +177,6 @@ class Window(QMainWindow, Ui_MainWindow):
         self.tab_fivephase.resistance_changed()
         self.tab_vibrate.settings_changed()
 
-        self.set_play_button_state(False)
-
         self.wizard = DeviceSelectionWizard(self)
         self.actionDevice_selection_wizard.triggered.connect(self.open_setup_wizard)
 
@@ -192,6 +201,11 @@ class Window(QMainWindow, Ui_MainWindow):
             self.timer.setSingleShot(True)
             self.timer.timeout.connect(self.open_setup_wizard)
             self.timer.start(0)
+
+        self.autostart_timer = QTimer()
+        self.autostart_timer.setSingleShot(True)
+        self.autostart_timer.timeout.connect(self.autostart_timeout)
+        self.autostart_timer.setInterval(5000)
 
     def connect_signals_slots_actionbar(self):
         def uncheck():
@@ -239,10 +253,15 @@ class Window(QMainWindow, Ui_MainWindow):
 
     def funscript_mapping_changed(self):
         """
-        Called whenever the user modifies the loaded funscripts
+        Called whenever the loaded funscripts change
         """
         logger.info('funscript mapping changed, re-linking scripts.')
-        self.audio_stop()
+        if self.page_media.autostart_enabled():
+            if self.playstate == PlayState.PLAYING:
+                self.audio_stop(PlayState.WAITING_ON_LOAD)
+                self.autostart_timer.start()
+        else:
+            self.audio_stop(PlayState.STOPPED)
 
         device = DeviceConfiguration.from_settings()
         algorithm_factory = AlgorithmFactory(
@@ -294,6 +313,13 @@ class Window(QMainWindow, Ui_MainWindow):
         self.tab_vibrate.vib2_high_low_bias_controller.link_axis(algorithm_factory.get_axis_vib2_high_low_bias())
         self.tab_vibrate.vib2_random_controller.link_axis(algorithm_factory.get_axis_vib2_random())
 
+        if all((not self.page_media.is_internal(),
+                self.page_media.has_media_file_loaded(),
+                self.page_media.autostart_enabled(),
+                self.playstate == PlayState.WAITING_ON_LOAD)):
+            logger.info("autostart audio")
+            self.audio_start()
+
     def refresh_device_type(self):
         def set_visible(widget, state):
             self.tabWidget.setTabVisible(self.tabWidget.indexOf(widget), state)
@@ -342,12 +368,14 @@ class Window(QMainWindow, Ui_MainWindow):
             self.tcode_command_router.set_carrier_axis(self.tab_pulse_settings.axis_carrier_frequency)
 
     def audio_start_stop(self):
-        if self.audio_gen.stream is None:
+        if self.playstate == PlayState.STOPPED:
             self.audio_start()
         else:
-            self.audio_stop()
+            self.audio_stop(PlayState.STOPPED)
 
     def audio_start(self):
+        self.autostart_timer.stop()
+
         api_name = qt_ui.settings.audio_api.get() or sd.query_hostapis(sd.default.hostapi)['name']
         output_device_name = qt_ui.settings.audio_output_device.get() or sd.query_devices(sd.default.device[1])['name']
         latency = qt_ui.settings.audio_latency.get() or 'high'
@@ -370,14 +398,22 @@ class Window(QMainWindow, Ui_MainWindow):
 
         self.audio_gen.start(api_name, output_device_name, latency, algorithm, mapping_parameters)
         if self.audio_gen.stream is not None:
-            self.set_play_button_state(True)
+            self.playstate = PlayState.PLAYING
+            self.refresh_play_button_icon()
 
-    def audio_stop(self):
+    def audio_stop(self, new_playstate: PlayState = PlayState.STOPPED):
         self.audio_gen.stop()
-        self.set_play_button_state(False)
+        self.playstate = new_playstate
+        self.refresh_play_button_icon()
 
-    def set_play_button_state(self, playing: bool):
-        if playing:
+    def autostart_timeout(self):
+        print('autostart timeout')
+        if self.playstate == PlayState.WAITING_ON_LOAD:
+            logger.info("autostart timeout reached. No longer starting audio on file load")
+            self.audio_stop(PlayState.STOPPED)
+
+    def refresh_play_button_icon(self):
+        if self.playstate in (PlayState.PLAYING, PlayState.WAITING_ON_LOAD):
             self.actionStart.setIcon(QtGui.QIcon(":/restim/stop-sign_poly.svg"))
             self.actionStart.setText("Stop")
         else:
@@ -385,17 +421,17 @@ class Window(QMainWindow, Ui_MainWindow):
             self.actionStart.setText("Start")
 
     def open_setup_wizard(self):
-        self.audio_stop()
+        self.audio_stop(PlayState.STOPPED)
         self.wizard.exec()
         self.refresh_device_type()
         self.reload_settings()
 
     def open_funscript_conversion_dialog(self):
-        self.audio_stop()
+        self.audio_stop(PlayState.STOPPED)
         self.dialog.exec()
 
     def open_preferences_dialog(self):
-        self.audio_stop()
+        self.audio_stop(PlayState.STOPPED)
         self.settings_dialog.exec()
         self.reload_settings()
 
