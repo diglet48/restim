@@ -13,6 +13,5 @@ jobs:
           spec: 'restim.spec'
           requirements: 'requirements.txt'
           upload_exe_with_name: 'restim.exe'
-          options: --onefile, --name "restim.exe"
 
           
