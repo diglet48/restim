@@ -10,9 +10,9 @@ jobs:
         with:
           python_ver: '3.11'
           python_arch: 'x64'
-          spec: 'restim.py'
-          requirements: 'src/requirements.txt'
+          spec: 'restim.spec'
+          requirements: 'requirements.txt'
           upload_exe_with_name: 'restim.exe'
-          options: --onefile, --paths ".", --add-data "resources/phase diagram bg.svg;resources/", --add-data "resources/favicon.png;resources/", --icon resources/favicon.ico
+          options: --onefile, --name "restim.exe"
 
           
