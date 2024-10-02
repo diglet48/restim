@@ -8,7 +8,7 @@ jobs:
       - name: Create Executable
         uses: sayyid5416/pyinstaller@v1
         with:
-          python_ver: '3.10'
+          python_ver: '3.9'
           python_arch: 'x64'
           spec: 'restim-macos.spec'
           requirements: 'requirements.txt'
