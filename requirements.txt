@@ -2,5 +2,5 @@ numpy
 websockets
 sounddevice
 soundfile
-matplotlib!=3.9.1,!=3.9.2
+matplotlib!=3.9.1.*,!=3.9.2.*
 PyQt5
