@@ -10,8 +10,8 @@ jobs:
         with:
           python_ver: '3.11'
           python_arch: 'x64'
-          spec: 'restim.spec'
+          spec: 'restim-macos.spec'
           requirements: 'requirements.txt'
-          upload_exe_with_name: 'restim.app'
+          upload_exe_with_name: 'restim'
 
           
