@@ -1,11 +1,15 @@
 # -*- mode: python ; coding: utf-8 -*-
 
+added_files = [
+    ('resources/phase diagram bg.svg', 'resources/'),
+    ('resources/favicon.png', 'resources/')
+]
 
 a = Analysis(
     ['restim.py'],
-    pathex=['.'],
+    pathex=[],
     binaries=[],
-    datas=[('resources/phase diagram bg.svg', 'resources/'), ('resources/favicon.png', 'resources/')],
+    datas=datas=added_files,
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},
