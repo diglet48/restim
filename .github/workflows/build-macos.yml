@@ -21,6 +21,7 @@ jobs:
             --clean \
             --noconfirm \
             restim-macos.spec
+          ls dist/
           cd dist/ &&
           zip -r9 restim restim.app/
       - name: chmod
