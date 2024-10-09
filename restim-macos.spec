@@ -44,3 +44,10 @@ coll = COLLECT(
     upx_exclude=[],
     name='restim',
 )
+
+app = BUNDLE(
+    coll,
+    name='restim.app',
+    icon='resources/favicon.png',
+    bundle_identifier=None,
+)
