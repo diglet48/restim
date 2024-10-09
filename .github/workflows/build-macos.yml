@@ -30,7 +30,8 @@ jobs:
           tar -cvf restim.app.tar restim.app
       - name: Upload Executable
         id: artifact_upload
-        uses: actions/upload-artifact@v4
+        uses: eXhumer/upload-artifact@0b7d5f5684d3f642f978d2faad9ade64f5b4dd57
         with:
-          name: restim.app.tar
-          path: dist/restim.app.tar
+          name: restim.app
+          path: dist/restim.app
+          follow-symlinks: false
