@@ -20,7 +20,7 @@ jobs:
           pyinstaller \
             --clean \
             --noconfirm \
-            --dist restim-macos.spec
+            restim-macos.spec
       - name: chmod
         run: |
           ls dist/
