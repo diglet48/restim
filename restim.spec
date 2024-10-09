@@ -9,7 +9,7 @@ a = Analysis(
     ['restim.py'],
     pathex=[],
     binaries=[],
-    datas=datas=added_files,
+    datas=added_files,
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},
