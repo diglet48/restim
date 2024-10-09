@@ -23,16 +23,14 @@ jobs:
             restim-macos.spec
           ls -lah dist/
           ls -lah dist/restim.app
-          du -d1 dist/restim.app
-      - name: chmod
+          du -d2 dist/restim.app
+      - name: tar files
         run: |
-          ls dist
-          ls dist/restim.app
-          chmod u+x dist/restim
+          cd dist && \
+          tar -cvf restim.app.tar restim.app
       - name: Upload Executable
         id: artifact_upload
         uses: actions/upload-artifact@v4
         with:
-          name: restim.app
-          path: dist/restim.app
-          asset_content_type: application/zip
+          name: restim.app.tar
+          path: dist/restim.app.tar
