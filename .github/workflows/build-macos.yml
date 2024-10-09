@@ -20,22 +20,13 @@ jobs:
           pyinstaller \
             --clean \
             --noconfirm \
-            restim-macos.spec
-          ls -lah dist/
-          ls -lah dist/restim.app
-          du -d2 dist/restim.app
-      - name: tar files
+            restim.spec
+      - name: chmod
         run: |
-          cd dist && \
-          tar -cvf restim.app.tar restim.app
-      - name: adjust folders
-        run: |
-          mkdir dist/restim-mac-arm64
-          mv dist/restim.app/ dist/restim-mac-arm64/
+          chmod u+x dist/restim
       - name: Upload Executable
         id: artifact_upload
-        uses: eXhumer/upload-artifact@0b7d5f5684d3f642f978d2faad9ade64f5b4dd57
+        uses: actions/upload-artifact@v4
         with:
           name: restim-mac-arm64
-          path: dist/restim-mac-arm64/
-          follow-symlinks: false
+          path: dist/restim
