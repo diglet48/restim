@@ -22,8 +22,8 @@ jobs:
             --noconfirm \
             restim-macos.spec
           ls -lah dist/
-          cd dist/ &&
-          zip -r9 restim.app.zip restim.app/
+          ls -lah dist/restim.app
+          du -d1 dist/restim.app
       - name: chmod
         run: |
           ls dist
@@ -33,6 +33,6 @@ jobs:
         id: artifact_upload
         uses: actions/upload-artifact@v4
         with:
-          name: restim.app.zip
-          path: dist/restim.app.zip
+          name: restim.app
+          path: dist/restim.app
           asset_content_type: application/zip
