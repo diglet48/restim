@@ -55,7 +55,7 @@ class SerialProxy(QtCore.QObject):
             if b:
                 logger.info(f"Serial listener active on port: {self.port.portName()}")
             else:
-                logger.error(f"Unable to listen to serial post: {self.port.errorString()}")
+                logger.error(f"Unable to listen to serial port: {self.port.errorString()}")
 
         self.data = b''
 

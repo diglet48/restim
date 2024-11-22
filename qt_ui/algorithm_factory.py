@@ -3,6 +3,7 @@ import numpy as np
 
 from qt_ui.device_wizard.enums import DeviceConfiguration, DeviceType, WaveformType
 from stim_math.audio_gen.base_classes import AudioGenerationAlgorithm
+from stim_math.audio_gen.focstim import FOCStimAlgorithm
 from stim_math.audio_gen.pulse_based import DefaultThreePhasePulseBasedAlgorithm, ABTestThreePhasePulseBasedAlgorithm
 from stim_math.audio_gen.continuous import ThreePhaseAlgorithm, FourPhaseAlgorithm, FivePhaseAlgorithm
 from stim_math.audio_gen.params import *
@@ -32,7 +33,7 @@ class AlgorithmFactory:
         self.create_for_bake = create_for_bake
 
     def create_algorithm(self, device: DeviceConfiguration) -> AudioGenerationAlgorithm:
-        if device.device_type == DeviceType.THREE_PHASE:
+        if device.device_type == DeviceType.AUDIO_THREE_PHASE:
             if device.waveform_type == WaveformType.CONTINUOUS:
                 return self.create_3phase_continuous(device)
             elif device.waveform_type == WaveformType.PULSE_BASED:
@@ -41,18 +42,25 @@ class AlgorithmFactory:
                 return self.create_3phase_abtest(device)
             else:
                 raise RuntimeError('unknown waveform type')
-        elif device.device_type == DeviceType.FOUR_PHASE:
+        elif device.device_type == DeviceType.AUDIO_FOUR_PHASE:
             if device.waveform_type == WaveformType.CONTINUOUS:
                 return self.create_4phase_continuous(device)
             elif device.waveform_type == WaveformType.PULSE_BASED:
                 raise RuntimeError('unsupported device/waveform combination')
             else:
                 raise RuntimeError('unknown waveform type')
-        elif device.device_type == DeviceType.FIVE_PHASE:
+        elif device.device_type == DeviceType.AUDIO_FIVE_PHASE:
             if device.waveform_type == WaveformType.CONTINUOUS:
                 return self.create_5phase_continuous(device)
             elif device.waveform_type == WaveformType.PULSE_BASED:
                 raise RuntimeError('unsupported device/waveform combination')
+            else:
+                raise RuntimeError('unknown waveform type')
+        elif device.device_type == DeviceType.FOCSTIM_THREE_PHASE:
+            if device.waveform_type == WaveformType.CONTINUOUS:
+                raise RuntimeError('unsupported device/waveform combination')
+            elif device.waveform_type == WaveformType.PULSE_BASED:
+                return self.create_focstim_3phase_pulsebased(device)
             else:
                 raise RuntimeError('unknown waveform type')
         else:
@@ -72,7 +80,7 @@ class AlgorithmFactory:
                 vibration_2=self.get_axis_vib2_all(),
                 volume=VolumeParams(
                     api=self.get_axis_volume_api(),
-                    ramp=self.get_axis_volume_ramp(),
+                    master=self.get_axis_volume_master(),
                     inactivity=self.get_axis_volume_inactivity(),
                 ),
                 carrier_frequency=self.get_axis_continuous_carrier_frequency(),
@@ -94,7 +102,7 @@ class AlgorithmFactory:
                 vibration_2=self.get_axis_vib2_all(),
                 volume=VolumeParams(
                     api=self.get_axis_volume_api(),
-                    ramp=self.get_axis_volume_ramp(),
+                    master=self.get_axis_volume_master(),
                     inactivity=self.get_axis_volume_inactivity(),
                 ),
                 carrier_frequency=self.get_axis_continuous_carrier_frequency(device)
@@ -116,7 +124,7 @@ class AlgorithmFactory:
                 vibration_2=self.get_axis_vib2_all(),
                 volume=VolumeParams(
                     api=self.get_axis_volume_api(),
-                    ramp=self.get_axis_volume_ramp(),
+                    master=self.get_axis_volume_master(),
                     inactivity=self.get_axis_volume_inactivity(),
                 ),
                 carrier_frequency=self.get_axis_continuous_carrier_frequency(),
@@ -142,7 +150,7 @@ class AlgorithmFactory:
                 vibration_2=self.get_axis_vib2_all(),
                 volume=VolumeParams(
                     api=self.get_axis_volume_api(),
-                    ramp=self.get_axis_volume_ramp(),
+                    master=self.get_axis_volume_master(),
                     inactivity=self.get_axis_volume_inactivity(),
                 ),
                 carrier_frequency=self.get_axis_pulse_carrier_frequency(),
@@ -175,7 +183,7 @@ class AlgorithmFactory:
                 vibration_2=self.get_axis_vib2_all(),
                 volume=VolumeParams(
                     api=self.get_axis_volume_api(),
-                    ramp=self.get_axis_volume_ramp(),
+                    master=self.get_axis_volume_master(),
                     inactivity=self.get_axis_volume_inactivity(),
                 ),
                 a_volume=self.mainwindow.tab_a_b_testing.axis_a_volume,
@@ -200,6 +208,36 @@ class AlgorithmFactory:
             waveform_change_callback=self.mainwindow.tab_a_b_testing.test_waveform_changed,
         )
         return algorithm
+
+    def create_focstim_3phase_pulsebased(self, device: DeviceConfiguration) -> AudioGenerationAlgorithm:
+        algorithm = FOCStimAlgorithm(
+            self.media_sync,
+            FOCStimParams(
+                position=ThreephasePositionParams(
+                    self.get_axis_alpha(),
+                    self.get_axis_beta(),
+                ),
+                transform=self.mainwindow.tab_threephase.transform_params,
+                calibrate=self.mainwindow.tab_threephase.calibrate_params,
+                volume=VolumeParams(
+                    api=self.get_axis_volume_api(),
+                    master=self.get_axis_volume_master(),
+                    inactivity=self.get_axis_volume_inactivity(),
+                ),
+                carrier_frequency=self.get_axis_pulse_carrier_frequency(),
+                pulse_frequency=self.get_axis_pulse_frequency(),
+                pulse_width=self.get_axis_pulse_width(),
+                pulse_interval_random=self.get_axis_pulse_interval_random(),
+                pulse_rise_time=self.get_axis_pulse_rise_time(),
+                pulse_polarity=self.mainwindow.tab_pulse_settings.axis_pulse_polarity,
+            ),
+            safety_limits=SafetyParams(
+                device.min_frequency,
+                device.max_frequency,
+            )
+        )
+        return algorithm
+
     def get_axis_alpha(self):
         return self.get_axis_from_script_mapping(AxisEnum.POSITION_ALPHA) or self.mainwindow.alpha
 
@@ -209,10 +247,10 @@ class AlgorithmFactory:
     def get_axis_volume_api(self):
         return self.get_axis_from_script_mapping(AxisEnum.VOLUME_API) or self.mainwindow.tab_volume.volume.api
 
-    def get_axis_volume_ramp(self):
+    def get_axis_volume_master(self):
         if self.create_for_bake:
             return create_constant_axis(1.0)    # ramp does NOT work in bake mode
-        return self.mainwindow.tab_volume.volume.ramp
+        return self.mainwindow.tab_volume.volume.master
 
     def get_axis_volume_inactivity(self):
         if self.create_for_bake:

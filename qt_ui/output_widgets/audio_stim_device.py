@@ -5,10 +5,9 @@ from dataclasses import dataclass
 import numpy as np
 import sounddevice as sd
 
-from PyQt5 import QtWidgets
-
 from stim_math.audio_gen.base_classes import AudioGenerationAlgorithm
 from qt_ui import settings
+from qt_ui.output_widgets.output_device import OutputDevice
 
 logger = logging.getLogger('restim.audio')
 
@@ -39,9 +38,9 @@ class ChannelMappingParameters:
     device_channel_map: list[int]
 
 
-class AudioGenerationWidget(QtWidgets.QWidget):
+class AudioStimDevice(OutputDevice):
     def __init__(self, parent):
-        QtWidgets.QWidget.__init__(self, parent)
+        OutputDevice.__init__(self)
 
         self.sample_rate = 44100
         self.frame_number = 0
@@ -151,6 +150,9 @@ class AudioGenerationWidget(QtWidgets.QWidget):
             self.stream.stop()  # blocks
             self.stream.close()
         self.stream = None
+
+    def is_connected_and_running(self) -> bool:
+        return self.stream is not None
 
     def auto_detect_channel_mapping_parameters(self, algorithm: AudioGenerationAlgorithm) -> [ChannelMappingParameters]:
         if algorithm.channel_count() == 2:

@@ -26,7 +26,7 @@ class VolumeWidget(QtWidgets.QProgressBar):
     def set_axis(self, volume: VolumeParams):
         self.volume = VolumeParams(
             api=volume.api,
-            ramp=volume.ramp,
+            master=volume.master,
             inactivity=volume.inactivity,
         )
 
@@ -34,13 +34,13 @@ class VolumeWidget(QtWidgets.QProgressBar):
         if self.volume is None:
             return
 
-        ramp_volume = self.volume.ramp.last_value()
+        master_volume = self.volume.master.last_value()
         inactivity_volume = self.volume.inactivity.last_value()
         api_volume = self.volume.api.interpolate(time.time() - self.latency)
-        self.setValue(int(ramp_volume * api_volume * inactivity_volume * 100))
+        self.setValue(int(master_volume * api_volume * inactivity_volume * 100))
 
         self.setToolTip(
-            f"ramp volume: {ramp_volume * 100:.0f}%\n" +
+            f"master volume: {master_volume * 100:.0f}%\n" +
             f"inactivity volume: {inactivity_volume * 100:.0f}%\n" +
             f"api volume: {api_volume * 100:.0f}%"
         )

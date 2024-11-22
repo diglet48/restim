@@ -44,3 +44,12 @@ class AudioModifyAlgorithm(ABC):
         :return: modified audio channel data
         """
         pass
+
+
+class RemoteGenerationAlgorithm(ABC):
+    @abstractmethod
+    def parameter_dict(self) -> dict:
+        """
+        :return: the tcode axis and values, range 0-1
+        """
+        pass

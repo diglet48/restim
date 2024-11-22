@@ -138,4 +138,6 @@ serial_port = Setting("network/serial-port", "COM20", str)
 serial_auto_expand = Setting("network/serial-auto-expand", True, bool)
 
 
+focstim_serial_port = Setting("focstim/serial_port", '', str)
+focstim_use_teleplot = Setting("focstim/use-teleplot", True, bool)
 

@@ -61,14 +61,22 @@ class DeviceSelectionWizard(QWizard):
     #     return -1
 
     def validateCurrentPage(self) -> bool:
-        # disable 'pulse-based' option when 4/5-phase is selected
-        selection_is_threephase = self.page_device_type.three_phase_radio.isChecked()
-        self.page_waveform_type.pulse_based_radio.setEnabled(selection_is_threephase)
-        if not selection_is_threephase:
-            self.page_waveform_type.pulse_based_radio.setChecked(False)
-        self.page_waveform_type.a_b_radio.setEnabled(selection_is_threephase)
-        if not selection_is_threephase:
-            self.page_waveform_type.a_b_radio.setChecked(False)
+        # Enable/disable the relevant waveform types.
+        if self.page_device_type.three_phase_radio.isChecked():
+            self.page_waveform_type.pulse_based_radio.setEnabled(True)
+            self.page_waveform_type.continuous_radio.setEnabled(True)
+            self.page_waveform_type.a_b_radio.setEnabled(True)
+        elif any([
+            self.page_device_type.four_phase_radio.isChecked(),
+            self.page_device_type.five_phase_radio.isChecked()
+        ]):
+            self.page_waveform_type.pulse_based_radio.setEnabled(False)
+            self.page_waveform_type.continuous_radio.setEnabled(True)
+            self.page_waveform_type.a_b_radio.setEnabled(False)
+        elif self.page_device_type.focstim_radio.isChecked():
+            self.page_waveform_type.pulse_based_radio.setEnabled(True)
+            self.page_waveform_type.continuous_radio.setEnabled(False)
+            self.page_waveform_type.a_b_radio.setEnabled(False)
 
         return super(DeviceSelectionWizard, self).validateCurrentPage()
 
@@ -86,32 +94,40 @@ class DeviceSelectionWizard(QWizard):
             else:
                 assert False
             return DeviceConfiguration(
-                DeviceType.THREE_PHASE,
+                DeviceType.AUDIO_THREE_PHASE,
                 alg,
                 min_freq, max_freq
             )
         elif self.page_device_type.four_phase_radio.isChecked():
             return DeviceConfiguration(
-                DeviceType.FOUR_PHASE,
+                DeviceType.AUDIO_FOUR_PHASE,
                 WaveformType.CONTINUOUS,
                 min_freq, max_freq
             )
         elif self.page_device_type.five_phase_radio.isChecked():
             return DeviceConfiguration(
-                DeviceType.FIVE_PHASE,
+                DeviceType.AUDIO_FIVE_PHASE,
                 WaveformType.CONTINUOUS,
+                min_freq, max_freq
+            )
+        elif self.page_device_type.focstim_radio.isChecked():
+            return DeviceConfiguration(
+                DeviceType.FOCSTIM_THREE_PHASE,
+                WaveformType.PULSE_BASED,
                 min_freq, max_freq
             )
         else:
             assert(False)
 
     def set_configuration(self, config: DeviceConfiguration):
-        if config.device_type == DeviceType.THREE_PHASE:
+        if config.device_type == DeviceType.AUDIO_THREE_PHASE:
             self.page_device_type.three_phase_radio.setChecked(True)
-        if config.device_type == DeviceType.FOUR_PHASE:
+        if config.device_type == DeviceType.AUDIO_FOUR_PHASE:
             self.page_device_type.four_phase_radio.setChecked(True)
-        if config.device_type == DeviceType.FIVE_PHASE:
+        if config.device_type == DeviceType.AUDIO_FIVE_PHASE:
             self.page_device_type.five_phase_radio.setChecked(True)
+        if config.device_type == DeviceType.FOCSTIM_THREE_PHASE:
+            self.page_device_type.focstim_radio.setChecked(True)
 
         if config.waveform_type == WaveformType.CONTINUOUS:
             self.page_waveform_type.continuous_radio.setChecked(True)

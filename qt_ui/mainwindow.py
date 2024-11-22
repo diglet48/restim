@@ -1,28 +1,21 @@
 import os
-import pathlib
 import sys
-import time
 from enum import Enum
 
 from PyQt5 import QtGui
-from PyQt5.QtCore import QSettings, QTimer, QUrl, QStandardPaths
+from PyQt5.QtCore import QTimer
 from PyQt5.QtGui import QIcon
-from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
 from PyQt5.QtWidgets import (
     QApplication, QMainWindow, QWidget, QSizePolicy, QFrame
 )
 import logging
 
-import stim_math.audio_gen.continuous
-import stim_math.audio_gen.pulse_based
-import stim_math.audio_gen.modify
 from net.media_source.interface import MediaConnectionState
 from qt_ui.algorithm_factory import AlgorithmFactory
 from qt_ui.audio_write_dialog import AudioWriteDialog
-from qt_ui.device_wizard.axes import AxisEnum
 from qt_ui.main_window_ui import Ui_MainWindow
 import qt_ui.motion_generation
-import qt_ui.audio_generation_widget
+from qt_ui.output_widgets.audio_stim_device import AudioStimDevice
 import net.websocketserver
 import net.tcpudpserver
 import qt_ui.funscript_conversion_dialog
@@ -32,6 +25,7 @@ import net.serialproxy
 import net.buttplug_wsdm_client
 from qt_ui import resources
 from qt_ui.models.funscript_kit import FunscriptKitModel
+from qt_ui.output_widgets.focstim_device import FOCStimDevice
 from qt_ui.widgets.icon_with_connection_status import IconWithConnectionStatus
 from stim_math.audio_gen.params import ThreephaseContinuousAlgorithmParams, ThreephasePositionParams, \
     ThreephasePulsebasedAlgorithmParams, FivephaseContinuousAlgorithmParams, SafetyParams, VolumeParams
@@ -138,7 +132,7 @@ class Window(QMainWindow, Ui_MainWindow):
         self.doubleSpinBox.valueChanged.connect(self.motion_generator.velocityChanged)
         self.motion_generator.velocityChanged(self.doubleSpinBox.value())
 
-        self.audio_gen = qt_ui.audio_generation_widget.AudioGenerationWidget(None)
+        self.output_device = None
 
         self.websocket_server = net.websocketserver.WebSocketServer(self)
         self.websocket_server.new_tcode_command.connect(self.tcode_command_router.route_command)
@@ -163,7 +157,7 @@ class Window(QMainWindow, Ui_MainWindow):
         ])
 
         # stop audio when user modifies settings in media tab
-        self.page_media.dialogOpened.connect(self.audio_stop)
+        self.page_media.dialogOpened.connect(self.signal_stop)
         self.page_media.funscriptMappingChanged.connect(self.funscript_mapping_changed)
         self.page_media.connectionStatusChanged.connect(self.media_connection_status_changed)
         self.page_media.bake_audio_button.clicked.connect(self.open_write_audio_dialog)
@@ -238,7 +232,7 @@ class Window(QMainWindow, Ui_MainWindow):
         self.actionMedia.triggered.connect(show_media)
         # self.actionDevice.triggered.connect(show_device)
         # self.actionLog.triggered.connect(show_log)
-        self.actionStart.triggered.connect(self.audio_start_stop)
+        self.actionStart.triggered.connect(self.signal_start_stop)
 
     def media_connection_status_changed(self, status: MediaConnectionState):
         """
@@ -258,10 +252,10 @@ class Window(QMainWindow, Ui_MainWindow):
         logger.info('funscript mapping changed, re-linking scripts.')
         if self.page_media.autostart_enabled():
             if self.playstate == PlayState.PLAYING:
-                self.audio_stop(PlayState.WAITING_ON_LOAD)
+                self.signal_stop(PlayState.WAITING_ON_LOAD)
                 self.autostart_timer.start()
         else:
-            self.audio_stop(PlayState.STOPPED)
+            self.signal_stop(PlayState.STOPPED)
 
         device = DeviceConfiguration.from_settings()
         algorithm_factory = AlgorithmFactory(
@@ -318,7 +312,7 @@ class Window(QMainWindow, Ui_MainWindow):
                 self.page_media.autostart_enabled(),
                 self.playstate == PlayState.WAITING_ON_LOAD)):
             logger.info("autostart audio")
-            self.audio_start()
+            self.signal_start()
 
     def refresh_device_type(self):
         def set_visible(widget, state):
@@ -339,11 +333,11 @@ class Window(QMainWindow, Ui_MainWindow):
 
         config = DeviceConfiguration.from_settings()
 
-        if config.device_type == DeviceType.THREE_PHASE:
+        if config.device_type == DeviceType.AUDIO_THREE_PHASE:
             pass
-        if config.device_type == DeviceType.FOUR_PHASE:
+        if config.device_type == DeviceType.AUDIO_FOUR_PHASE:
             visible |= {self.tab_fivephase}
-        if config.device_type == DeviceType.FIVE_PHASE:
+        if config.device_type == DeviceType.AUDIO_FIVE_PHASE:
             visible |= {self.tab_fivephase}
 
         if config.waveform_type == WaveformType.CONTINUOUS:
@@ -367,23 +361,17 @@ class Window(QMainWindow, Ui_MainWindow):
         if config.waveform_type == WaveformType.PULSE_BASED:
             self.tcode_command_router.set_carrier_axis(self.tab_pulse_settings.axis_carrier_frequency)
 
-    def audio_start_stop(self):
+    def signal_start_stop(self):
         if self.playstate == PlayState.STOPPED:
-            self.audio_start()
+            self.signal_start()
         else:
-            self.audio_stop(PlayState.STOPPED)
+            self.signal_stop(PlayState.STOPPED)
 
-    def audio_start(self):
+    def signal_start(self):
+        assert self.output_device is None
+
         self.autostart_timer.stop()
-
-        api_name = qt_ui.settings.audio_api.get() or sd.query_hostapis(sd.default.hostapi)['name']
-        output_device_name = qt_ui.settings.audio_output_device.get() or sd.query_devices(sd.default.device[1])['name']
-        latency = qt_ui.settings.audio_latency.get() or 'high'
-        try:
-            latency = float(latency)
-        except ValueError:
-            pass
-
+        device = DeviceConfiguration.from_settings()
         algorithm_factory = AlgorithmFactory(
             self,
             FunscriptKitModel.load_from_settings(),
@@ -392,17 +380,44 @@ class Window(QMainWindow, Ui_MainWindow):
             self.page_media.current_media_sync(),
             load_funscripts=not self.page_media.is_internal(),
         )
-        device = DeviceConfiguration.from_settings()
         algorithm = algorithm_factory.create_algorithm(device)
-        mapping_parameters = self.audio_gen.auto_detect_channel_mapping_parameters(algorithm)
 
-        self.audio_gen.start(api_name, output_device_name, latency, algorithm, mapping_parameters)
-        if self.audio_gen.stream is not None:
-            self.playstate = PlayState.PLAYING
-            self.refresh_play_button_icon()
+        if device.device_type in [
+            DeviceType.AUDIO_THREE_PHASE,
+            DeviceType.AUDIO_FOUR_PHASE,
+            DeviceType.AUDIO_FIVE_PHASE,
+        ]: # is audio device
+            api_name = qt_ui.settings.audio_api.get() or sd.query_hostapis(sd.default.hostapi)['name']
+            output_device_name = qt_ui.settings.audio_output_device.get() or sd.query_devices(sd.default.device[1])['name']
+            latency = qt_ui.settings.audio_latency.get() or 'high'
+            try:
+                latency = float(latency)
+            except ValueError:
+                pass
 
-    def audio_stop(self, new_playstate: PlayState = PlayState.STOPPED):
-        self.audio_gen.stop()
+            output_device = AudioStimDevice(None)
+            mapping_parameters = output_device.auto_detect_channel_mapping_parameters(algorithm)
+            output_device.start(api_name, output_device_name, latency, algorithm, mapping_parameters)
+            if output_device.is_connected_and_running():
+                self.output_device = output_device
+                self.playstate = PlayState.PLAYING
+                self.refresh_play_button_icon()
+        elif device.device_type == DeviceType.FOCSTIM_THREE_PHASE:
+            output_device = FOCStimDevice()
+            serial_port_name = qt_ui.settings.focstim_serial_port.get()
+            use_teleplot = qt_ui.settings.focstim_use_teleplot.get()
+            output_device.start(serial_port_name, use_teleplot, algorithm)
+            if output_device.is_connected_and_running():
+                self.output_device = output_device
+                self.playstate = PlayState.PLAYING
+                self.refresh_play_button_icon()
+        else:
+            raise RuntimeError("Unknown device type")
+
+    def signal_stop(self, new_playstate: PlayState = PlayState.STOPPED):
+        if self.output_device is not None:
+            self.output_device.stop()
+            self.output_device = None
         self.playstate = new_playstate
         self.refresh_play_button_icon()
 
@@ -410,7 +425,7 @@ class Window(QMainWindow, Ui_MainWindow):
         print('autostart timeout')
         if self.playstate == PlayState.WAITING_ON_LOAD:
             logger.info("autostart timeout reached. No longer starting audio on file load")
-            self.audio_stop(PlayState.STOPPED)
+            self.signal_stop(PlayState.STOPPED)
 
     def refresh_play_button_icon(self):
         if self.playstate in (PlayState.PLAYING, PlayState.WAITING_ON_LOAD):
@@ -421,17 +436,17 @@ class Window(QMainWindow, Ui_MainWindow):
             self.actionStart.setText("Start")
 
     def open_setup_wizard(self):
-        self.audio_stop(PlayState.STOPPED)
+        self.signal_stop(PlayState.STOPPED)
         self.wizard.exec()
         self.refresh_device_type()
         self.reload_settings()
 
     def open_funscript_conversion_dialog(self):
-        self.audio_stop(PlayState.STOPPED)
+        self.signal_stop(PlayState.STOPPED)
         self.dialog.exec()
 
     def open_preferences_dialog(self):
-        self.audio_stop(PlayState.STOPPED)
+        self.signal_stop(PlayState.STOPPED)
         self.settings_dialog.exec()
         self.reload_settings()
 
@@ -468,7 +483,8 @@ class Window(QMainWindow, Ui_MainWindow):
 
     def closeEvent(self, event):
         logger.warning('Shutting down')
-        self.audio_gen.stop()
+        if self.output_device is not None:
+            self.output_device.stop()
         self.save_settings()
         event.accept()
 
