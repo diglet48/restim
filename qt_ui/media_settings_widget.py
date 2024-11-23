@@ -79,6 +79,7 @@ class MediaSettingsWidget(QtWidgets.QWidget, Ui_MediaSettingsWidget, metaclass=_
         self.treeView.setMouseTracking(True)
 
         self.comboBox.setCurrentIndex(self.comboBox.findText(settings.media_sync_default_source.get()))
+        self.stop_audio_automatically_checkbox.setChecked(settings.media_sync_stop_audio_automatically.get())
 
         header = self.treeView.header()
         header.setSectionResizeMode(0, QtWidgets.QHeaderView.ResizeToContents)

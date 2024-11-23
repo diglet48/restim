@@ -122,9 +122,6 @@
      <property name="text">
       <string>Stop audio when file changes</string>
      </property>
-     <property name="checked">
-      <bool>true</bool>
-     </property>
     </widget>
    </item>
    <item>
