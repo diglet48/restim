@@ -24,6 +24,7 @@ from net.media_source.mpc import MPC
 from qt_ui.models.script_mapping import FunscriptTreeItem, ScriptMappingModel
 from qt_ui.widgets.table_view_with_combobox import ComboBoxDelegate, ButtonDelegate
 from qt_ui.models import funscript_kit, additional_search_paths
+from qt_ui import settings
 
 
 class _MediaSettingsWidget(type(QtWidgets.QWidget), type(Ui_MediaSettingsWidget)):
@@ -76,6 +77,8 @@ class MediaSettingsWidget(QtWidgets.QWidget, Ui_MediaSettingsWidget, metaclass=_
         )
         self.treeView.setItemDelegateForColumn(2, ButtonDelegate(self))
         self.treeView.setMouseTracking(True)
+
+        self.comboBox.setCurrentIndex(self.comboBox.findText(settings.media_sync_default_source.get()))
 
         header = self.treeView.header()
         header.setSectionResizeMode(0, QtWidgets.QHeaderView.ResizeToContents)
