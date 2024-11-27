@@ -47,6 +47,7 @@ pulse_polarity = NonPersistentSetting('random')
 pulse_device_emulation_mode = NonPersistentSetting('continuous (best)')
 pulse_phase_offset_increment = NonPersistentSetting(0.0)
 
+volume_default_level = Setting('volume/default_level', 10.0, float)
 volume_ramp_time = Setting('volume/inactivity_ramp_time', 3.0, float)
 volume_inactivity_threshold = Setting('volume/inactivity_inactive_threshold', 2.0, float)
 volume_increment_rate = Setting('volume/increment_rate', 1.0, float)
@@ -99,12 +100,14 @@ device_config_waveform_type = Setting('device_configuration/waveform_type', 1, i
 device_config_min_freq = Setting('device_configuration/min_frequency', 500, float)
 device_config_max_freq = Setting('device_configuration/max_frequency', 1000, float)
 
+media_sync_default_source = Setting('media_sync/default_source', 'Internal', str)
 media_sync_mpc_address = Setting('media_sync/mpc_address', 'http://127.0.0.1:13579', str)
 media_sync_heresphere_address = Setting('media_sync/heresphere_address', '192.168.1.???:23554', str)
 media_sync_vlc_address = Setting('media_sync/vlc_address', 'http://127.0.0.1:8080', str)
 media_sync_vlc_username = Setting('media_sync/vlc_username', '', str)
 media_sync_vlc_password = Setting('media_sync/vlc_password', '1234', str)
 media_sync_kodi_address = Setting('media_sync/kodi_address', 'ws://127.0.0.1:9090', str)
+media_sync_stop_audio_automatically = Setting('media_sync/stop_audio_automatically', True, bool)
 
 audio_api = Setting("audio/api-name", "", str)
 audio_output_device = Setting("audio/device-name", "", str)

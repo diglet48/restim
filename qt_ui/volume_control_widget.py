@@ -32,6 +32,8 @@ class VolumeControlWidget(QtWidgets.QWidget, Ui_VolumeControlForm):
         self.last_update_time = time.time()
         self.remainder = 0
 
+        self.doubleSpinBox_volume.setValue(settings.volume_default_level.get())
+
         self.doubleSpinBox_volume.valueChanged.connect(self.updateVolume)
         self.doubleSpinBox_volume.valueChanged.connect(self.refresh_message)
 

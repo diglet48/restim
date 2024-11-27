@@ -60,7 +60,6 @@ class Ui_MediaSettingsWidget(object):
         self.formLayout.setWidget(1, QtWidgets.QFormLayout.SpanningRole, self.widget_2)
         self.verticalLayout.addWidget(self.frame)
         self.stop_audio_automatically_checkbox = QtWidgets.QCheckBox(MediaSettingsWidget)
-        self.stop_audio_automatically_checkbox.setChecked(True)
         self.stop_audio_automatically_checkbox.setObjectName("stop_audio_automatically_checkbox")
         self.verticalLayout.addWidget(self.stop_audio_automatically_checkbox)
         self.treeView = TreeViewWithComboBox(MediaSettingsWidget)
