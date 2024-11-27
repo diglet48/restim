@@ -18,11 +18,13 @@ class VolumeControlWidget(QtWidgets.QWidget, Ui_VolumeControlForm):
 
         self.api_volume = create_temporal_axis(1.0)
         self.inactivity_volume = create_temporal_axis(1.0)
-        self.ramp_volume = create_temporal_axis(1.0)
+        self.master_volume = create_temporal_axis(self.doubleSpinBox_volume.value())
+        self.external_volume = create_temporal_axis(1.0)
         self.volume = VolumeParams(
             api=self.api_volume,
-            ramp=self.ramp_volume,
+            master=self.master_volume,
             inactivity=self.inactivity_volume,
+            external=self.external_volume,
         )
         self.monitor_axis = []
 
@@ -31,6 +33,8 @@ class VolumeControlWidget(QtWidgets.QWidget, Ui_VolumeControlForm):
         timer.start(int(1000 / 10.0))
         self.last_update_time = time.time()
         self.remainder = 0
+
+        self.doubleSpinBox_volume.setValue(settings.volume_default_level.get())
 
         self.doubleSpinBox_volume.valueChanged.connect(self.updateVolume)
         self.doubleSpinBox_volume.valueChanged.connect(self.refresh_message)
@@ -119,7 +123,7 @@ class VolumeControlWidget(QtWidgets.QWidget, Ui_VolumeControlForm):
         self.inactivity_volume.add(1 - self.inactivity_volume_progress * self.doubleSpinBox_inactivity_volume.value() / 100)
 
     def updateVolume(self, _=None):
-        self.ramp_volume.add(np.clip(self.doubleSpinBox_volume.value() / 100, 0.0, 1.0))
+        self.master_volume.add(np.clip(self.doubleSpinBox_volume.value() / 100, 0.0, 1.0))
 
     def refresh_message(self, _=None):
         try:

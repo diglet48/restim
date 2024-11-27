@@ -2,7 +2,7 @@ from PyQt5 import QtWidgets, QtGui
 from PyQt5.QtWidgets import QDialog, QStyle
 
 from qt_ui.audio_test_dialog_ui import Ui_AudioTestDialog
-from qt_ui.audio_generation_widget import AudioGenerationWidget, ChannelMappingParameters
+from qt_ui.output_widgets.audio_stim_device import AudioStimDevice, ChannelMappingParameters
 from stim_math.sine_generator import AngleGenerator
 
 import sounddevice as sd
@@ -17,7 +17,7 @@ class AudioTestDialog(QDialog, Ui_AudioTestDialog):
         self.device_index = device_index
         self.angle = AngleGenerator()
         self.checkboxes = []
-        self.audio_gen = AudioGenerationWidget(None)
+        self.audio_gen = AudioStimDevice(None)
 
         self.layout = QtWidgets.QFormLayout(self)
         self.groupBox_2.setLayout(self.layout)

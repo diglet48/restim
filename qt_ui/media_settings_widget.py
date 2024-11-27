@@ -8,7 +8,7 @@ from funscript.collect_funscripts import Resource
 from net.media_source.vlc import VLC
 from net.media_source.kodi import Kodi
 from qt_ui.additional_search_paths_dialog import AdditionalSearchPathsDialog
-from qt_ui.device_wizard.axes import AxisEnum, text_and_data
+from qt_ui.device_wizard.axes import AxisEnum
 
 from PyQt5 import QtCore, QtWidgets
 from PyQt5.QtGui import QIcon
@@ -24,6 +24,8 @@ from net.media_source.mpc import MPC
 from qt_ui.models.script_mapping import FunscriptTreeItem, ScriptMappingModel
 from qt_ui.widgets.table_view_with_combobox import ComboBoxDelegate, ButtonDelegate
 from qt_ui.models import funscript_kit, additional_search_paths
+from qt_ui.models.funscript_kit import FunscriptKitItem
+from qt_ui import settings
 
 
 class _MediaSettingsWidget(type(QtWidgets.QWidget), type(Ui_MediaSettingsWidget)):
@@ -63,8 +65,12 @@ class MediaSettingsWidget(QtWidgets.QWidget, Ui_MediaSettingsWidget, metaclass=_
         self.treeView.setModel(self.model)
         self.treeView.expandAll()
 
-        combobox_items = text_and_data.copy()
-        combobox_items.insert(0, ('(none)', AxisEnum.NONE))
+        combobox_items = []
+        combobox_items.append(('(none)', AxisEnum.NONE))
+        for item in funscript_kit.FunscriptKitModel.load_from_settings().children:
+            item: FunscriptKitItem
+            if item.allow_funscript_control:
+                combobox_items.append((item.axis.display_name(), item.axis))
         self.treeView.setItemDelegateForColumn(1, ComboBoxDelegate(combobox_items, self))
         self.treeView.setEditTriggers(
             # QAbstractItemView.AllEditTriggers
@@ -76,6 +82,9 @@ class MediaSettingsWidget(QtWidgets.QWidget, Ui_MediaSettingsWidget, metaclass=_
         )
         self.treeView.setItemDelegateForColumn(2, ButtonDelegate(self))
         self.treeView.setMouseTracking(True)
+
+        self.comboBox.setCurrentIndex(self.comboBox.findText(settings.media_sync_default_source.get()))
+        self.stop_audio_automatically_checkbox.setChecked(settings.media_sync_stop_audio_automatically.get())
 
         header = self.treeView.header()
         header.setSectionResizeMode(0, QtWidgets.QHeaderView.ResizeToContents)
@@ -159,8 +168,6 @@ class MediaSettingsWidget(QtWidgets.QWidget, Ui_MediaSettingsWidget, metaclass=_
         new_path = connector.media_path()
 
         if self.loaded_media_path != new_path:
-            self.loaded_media_path = new_path
-
             self.detect_resources_for_media_file(new_path)
 
     def detect_resources_for_media_file(self, new_path):
@@ -187,8 +194,13 @@ class MediaSettingsWidget(QtWidgets.QWidget, Ui_MediaSettingsWidget, metaclass=_
             self.treeView.expandAll()
 
         self.model.auto_link_funscripts(funscript_kit.FunscriptKitModel.load_from_settings())
-        if dirty:
-            self.funscriptMappingChanged.emit()
+        self.funscriptMappingChanged.emit()
+
+    def has_media_file_loaded(self):
+        return bool(self.loaded_media_path)
+
+    def autostart_enabled(self):
+        return not self.stop_audio_automatically_checkbox.isChecked()
 
     def is_connected(self):
         media = self.media_sync[self.current_index]

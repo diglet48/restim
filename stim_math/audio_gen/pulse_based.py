@@ -111,9 +111,10 @@ class DefaultThreePhasePulseBasedAlgorithm(ThreePhasePulseBasedAlgorithmBase):
         self.seq += 1
 
         volume = \
-            np.clip(self.params.volume.ramp.last_value(), 0, 1) * \
+            np.clip(self.params.volume.master.last_value(), 0, 1) * \
             np.clip(self.params.volume.api.interpolate(system_time_estimate), 0, 1) * \
-            np.clip(self.params.volume.inactivity.last_value(), 0, 1)
+            np.clip(self.params.volume.inactivity.last_value(), 0, 1) * \
+            np.clip(self.params.volume.external.last_value(), 0, 1)
 
         pulse_carrier_freq = self.params.carrier_frequency.interpolate(system_time_estimate)
         pulse_carrier_freq = np.clip(pulse_carrier_freq,
@@ -240,10 +241,11 @@ class ABTestThreePhasePulseBasedAlgorithm(ThreePhasePulseBasedAlgorithmBase):
                 self.callback(True)
 
         volume = \
-            np.clip(self.params.volume.ramp.last_value(), 0, 1) * \
+            np.clip(self.params.volume.master.last_value(), 0, 1) * \
             np.clip(self.params.volume.api.interpolate(system_time_estimate), 0, 1) * \
             np.clip(self.params.volume.inactivity.last_value(), 0, 1) * \
-            np.clip(self.ab_volume(system_time_estimate), 0, 1)
+            np.clip(self.ab_volume(system_time_estimate), 0, 1) * \
+            np.clip(self.params.volume.external.last_value(), 0, 1)
 
         pulse_carrier_freq = self.carrier_frequency(system_time_estimate)
         pulse_carrier_freq = np.clip(pulse_carrier_freq,

@@ -25,7 +25,8 @@ class TCodeCommandRouter:
     def __init__(self,
                  alpha: AbstractAxis,
                  beta: AbstractAxis,
-                 api_volume: AbstractAxis,
+                 volume_api: AbstractAxis,
+                 volume_external: AbstractAxis,
 
                  carrier_frequency: AbstractAxis,   # either pulse of continuous
 
@@ -50,7 +51,8 @@ class TCodeCommandRouter:
                  ):
         self.alpha = alpha
         self.beta = beta
-        self.api_volume = api_volume
+        self.volume_api = volume_api
+        self.volume_external = volume_external
         self.carrier_frequency = carrier_frequency
         self.pulse_frequency = pulse_frequency
         self.pulse_width = pulse_width
@@ -75,7 +77,8 @@ class TCodeCommandRouter:
         axis_enum_to_axis = {
             AxisEnum.POSITION_ALPHA: self.alpha,
             AxisEnum.POSITION_BETA: self.beta,
-            AxisEnum.VOLUME_API: self.api_volume,
+            AxisEnum.VOLUME_API: self.volume_api,
+            AxisEnum.VOLUME_EXTERNAL: self.volume_external,
             AxisEnum.CARRIER_FREQUENCY: self.carrier_frequency,
 
             AxisEnum.PULSE_FREQUENCY: self.pulse_frequency,
@@ -100,14 +103,13 @@ class TCodeCommandRouter:
         mapping = {}
         for child in kit.children:
             child: FunscriptKitItem
-            if child.auto_loading:
-                if len(child.tcode_axis_name) == 2:
-                    if child.axis in axis_enum_to_axis:
-                        route = Route(axis_enum_to_axis[child.axis], child.limit_min, child.limit_max)
-                        if child.tcode_axis_name not in mapping:
-                            mapping[child.tcode_axis_name] = route
-                elif len(child.tcode_axis_name) != 0:
-                    logger.error(f'Invalid T-Code axis name: {child.tcode_axis_name}. Axis name must be 2 chars.')
+            if len(child.tcode_axis_name) == 2:
+                if child.axis in axis_enum_to_axis:
+                    route = Route(axis_enum_to_axis[child.axis], child.limit_min, child.limit_max)
+                    if child.tcode_axis_name not in mapping:
+                        mapping[child.tcode_axis_name] = route
+            elif len(child.tcode_axis_name) != 0:
+                logger.error(f'Invalid T-Code axis name: {child.tcode_axis_name}. Axis name must be 2 chars.')
 
         # UGLY: patch in five-phase axis
         mapping['E0'] = Route(self.fivephase_position.e1, 0, 1)

@@ -66,8 +66,9 @@ class VibrationParams:
 @dataclass
 class VolumeParams:
     api: AbstractAxis         # [0, 1]
-    ramp: AbstractAxis        # [0, 1]
+    master: AbstractAxis      # [0, 1]
     inactivity: AbstractAxis  # [0, 1]
+    external: AbstractAxis    # [0, 1]
 
 
 @dataclass
@@ -131,6 +132,20 @@ class FivephaseContinuousAlgorithmParams:   # TODO: it says 5-phase, but used fo
     vibration_2: VibrationParams
     volume: VolumeParams
     carrier_frequency: AbstractAxis
+
+
+@dataclass
+class FOCStimParams:
+    position: ThreephasePositionParams
+    transform: ThreephasePositionTransformParams
+    calibrate: ThreephaseCalibrationParams
+    volume: VolumeParams
+    carrier_frequency: AbstractAxis # Hz
+    pulse_frequency: AbstractAxis   # Hz
+    pulse_width: AbstractAxis       # carrier cycles
+    pulse_interval_random: AbstractAxis
+    pulse_rise_time: AbstractAxis
+    pulse_polarity: AbstractAxis    # 1: clockwise. -1: counter-clockwise. else: random
 
 
 @dataclass

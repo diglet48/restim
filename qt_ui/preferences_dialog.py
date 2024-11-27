@@ -1,5 +1,6 @@
 import functools
 
+from PyQt5.QtSerialPort import QSerialPortInfo
 from PyQt5.QtWidgets import QDialog, QAbstractButton, QDialogButtonBox, QAbstractItemView, QHeaderView
 
 from qt_ui.preferences_dialog_ui import Ui_PreferencesDialog
@@ -54,6 +55,9 @@ class PreferencesDialog(QDialog, Ui_PreferencesDialog):
             functools.partial(self.kodi_address.setText, qt_ui.settings.media_sync_kodi_address.default_value)
         )
 
+        # focstim reload serial devices
+        self.refresh_serial_devices.clicked.connect(self.repopulate_serial_devices)
+
     def exec(self):
         self.loadSettings()
         return super(PreferencesDialog, self).exec()
@@ -107,6 +111,11 @@ class PreferencesDialog(QDialog, Ui_PreferencesDialog):
         self.channel_count.setValue(qt_ui.settings.audio_channel_count.get())
         self.channel_map.setText(qt_ui.settings.audio_channel_map.get())
 
+        # focstim settings
+        self.repopulate_serial_devices()
+        self.focstim_port.setCurrentIndex(self.focstim_port.findData(qt_ui.settings.focstim_serial_port.get()))
+        self.focstim_use_teleplot.setChecked(qt_ui.settings.focstim_use_teleplot.get())
+
         # media sync settings
         self.mpc_address.setText(qt_ui.settings.media_sync_mpc_address.get())
         self.heresphere_address.setText(qt_ui.settings.media_sync_heresphere_address.get())
@@ -137,6 +146,29 @@ class PreferencesDialog(QDialog, Ui_PreferencesDialog):
                 self.audio_output_device.addItem(device['name'])
                 if device['name'] == default_audio_output_device_name:
                     self.audio_output_device.setCurrentIndex(self.audio_output_device.count() - 1)
+
+    def repopulate_serial_devices(self):
+        selected_port_name = self.focstim_port.currentData()
+
+        self.focstim_port.clear()
+        for port in QSerialPortInfo.availablePorts():
+            self.focstim_port.addItem(
+                f"{port.portName()} {port.description()}",
+                port.portName()
+            )
+
+        if selected_port_name:
+            index = self.focstim_port.findData(selected_port_name)
+            if index != -1:
+                self.focstim_port.setCurrentIndex(index)
+            else:
+                # if the port is no longer available, create a dummy port and add that.
+                self.focstim_port.addItem(
+                    f"{selected_port_name}",
+                    selected_port_name
+                )
+                self.focstim_port.setCurrentIndex(self.focstim_port.count() - 1)
+
 
     def refresh_audio_device_info(self):
         api_index = self.audio_api.currentIndex()
@@ -175,6 +207,10 @@ class PreferencesDialog(QDialog, Ui_PreferencesDialog):
         qt_ui.settings.audio_latency.set(self.audio_latency.currentText())
         qt_ui.settings.audio_channel_count.set(self.channel_count.value())
         qt_ui.settings.audio_channel_map.set(self.channel_map.text())
+
+        # focstim
+        qt_ui.settings.focstim_serial_port.set(str(self.focstim_port.currentData()))
+        qt_ui.settings.focstim_use_teleplot.set(self.focstim_use_teleplot.isChecked())
 
         # media sync settings
         qt_ui.settings.media_sync_mpc_address.set(self.mpc_address.text())

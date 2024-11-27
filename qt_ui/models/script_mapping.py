@@ -279,7 +279,7 @@ class ScriptMappingModel(QAbstractItemModel):
         suffix = item.funscript_type
         if suffix:
             for kit_item in kit.funscript_conifg():
-                if kit_item.auto_loading:
+                if kit_item.auto_loading and kit_item.allow_funscript_control:
                     if suffix in kit_item.funscript_names:
                         item.axis = kit_item.axis
                         logger.info(f'auto-linking `{item.file_name}` to {kit_item.axis.display_name()}.')
