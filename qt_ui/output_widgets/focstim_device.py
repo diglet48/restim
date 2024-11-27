@@ -14,7 +14,8 @@ logger = logging.getLogger('restim.focstim')
 teleplotAddr = ("127.0.0.1", 47269)
 
 FOCSTIM_BOOT_MARKER = b'Device ready. Awaiting DSTART.'
-FOCSTIM_VERSION_STRING = b'FOC-Stim 0.1'
+FOCSTIM_VERSION_STRING = b'FOC-Stim 0.2'
+
 
 class FOCStimDevice(QObject, OutputDevice):
     def __init__(self):
@@ -48,7 +49,6 @@ class FOCStimDevice(QObject, OutputDevice):
             logger.info(f"Successfully opened: {self.port.portName()}")
             self.stop_device()
             self.request_version_string()
-            print(self.port.isOpen())
         else:
             logger.error(f"Unable to open serial port: {self.port.errorString()}")
 
