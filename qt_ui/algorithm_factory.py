@@ -82,6 +82,7 @@ class AlgorithmFactory:
                     api=self.get_axis_volume_api(),
                     master=self.get_axis_volume_master(),
                     inactivity=self.get_axis_volume_inactivity(),
+                    external=self.get_axis_volume_external(),
                 ),
                 carrier_frequency=self.get_axis_continuous_carrier_frequency(),
             ),
@@ -104,6 +105,7 @@ class AlgorithmFactory:
                     api=self.get_axis_volume_api(),
                     master=self.get_axis_volume_master(),
                     inactivity=self.get_axis_volume_inactivity(),
+                    external=self.get_axis_volume_external(),
                 ),
                 carrier_frequency=self.get_axis_continuous_carrier_frequency(device)
             ),
@@ -126,6 +128,7 @@ class AlgorithmFactory:
                     api=self.get_axis_volume_api(),
                     master=self.get_axis_volume_master(),
                     inactivity=self.get_axis_volume_inactivity(),
+                    external=self.get_axis_volume_external(),
                 ),
                 carrier_frequency=self.get_axis_continuous_carrier_frequency(),
             ),
@@ -152,6 +155,7 @@ class AlgorithmFactory:
                     api=self.get_axis_volume_api(),
                     master=self.get_axis_volume_master(),
                     inactivity=self.get_axis_volume_inactivity(),
+                    external=self.get_axis_volume_external(),
                 ),
                 carrier_frequency=self.get_axis_pulse_carrier_frequency(),
                 pulse_frequency=self.get_axis_pulse_frequency(),
@@ -185,6 +189,7 @@ class AlgorithmFactory:
                     api=self.get_axis_volume_api(),
                     master=self.get_axis_volume_master(),
                     inactivity=self.get_axis_volume_inactivity(),
+                    external=self.get_axis_volume_external(),
                 ),
                 a_volume=self.mainwindow.tab_a_b_testing.axis_a_volume,
                 a_train_duration=self.mainwindow.tab_a_b_testing.axis_a_train_duration,
@@ -223,6 +228,7 @@ class AlgorithmFactory:
                     api=self.get_axis_volume_api(),
                     master=self.get_axis_volume_master(),
                     inactivity=self.get_axis_volume_inactivity(),
+                    external=self.get_axis_volume_external(),
                 ),
                 carrier_frequency=self.get_axis_pulse_carrier_frequency(),
                 pulse_frequency=self.get_axis_pulse_frequency(),
@@ -256,6 +262,11 @@ class AlgorithmFactory:
         if self.create_for_bake:
             return create_constant_axis(1.0)    # inactivity does NOT work in bake mode
         return self.mainwindow.tab_volume.volume.inactivity
+
+    def get_axis_volume_external(self):
+        if self.create_for_bake:
+            return create_constant_axis(1.0)    # external volume does NOT work in bake mode
+        return self.mainwindow.tab_volume.volume.external
 
     def get_axis_continuous_carrier_frequency(self):
         default = self.mainwindow.tab_carrier.axis_carrier

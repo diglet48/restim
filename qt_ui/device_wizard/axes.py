@@ -7,8 +7,9 @@ class AxisEnum(Enum):
     POSITION_BETA = 2
 
     VOLUME_API = 10
-    VOLUME_RAMP = 11
+    VOLUME_MASTER = 11
     VOLUME_INACTIVITY = 12
+    VOLUME_EXTERNAL = 13
 
     CARRIER_FREQUENCY = 20
 
@@ -37,6 +38,7 @@ class AxisEnum(Enum):
                 AxisEnum.POSITION_BETA: 'beta',
                 AxisEnum.CARRIER_FREQUENCY: 'carrier frequency',
                 AxisEnum.VOLUME_API: 'volume',
+                AxisEnum.VOLUME_EXTERNAL: 'volume (external)',
 
                 AxisEnum.PULSE_FREQUENCY: "pulse frequency",
                 AxisEnum.PULSE_WIDTH: "pulse width",
@@ -64,6 +66,7 @@ class AxisEnum(Enum):
             AxisEnum.POSITION_BETA: 'POSITION_BETA',
             AxisEnum.CARRIER_FREQUENCY: 'CARRIER_FREQUENCY',
             AxisEnum.VOLUME_API: 'VOLUME_API',
+            AxisEnum.VOLUME_EXTERNAL: 'VOLUME_EXTERNAL',
 
             AxisEnum.PULSE_FREQUENCY: "PULSE_FREQUENCY",
             AxisEnum.PULSE_WIDTH: "PULSE_WIDTH",
@@ -89,6 +92,7 @@ all_axis = [
     AxisEnum.POSITION_BETA,
 
     AxisEnum.VOLUME_API,
+    AxisEnum.VOLUME_EXTERNAL,
     AxisEnum.CARRIER_FREQUENCY,
 
     AxisEnum.PULSE_FREQUENCY,
@@ -109,6 +113,3 @@ all_axis = [
     AxisEnum.VIBRATION_2_RANDOM,
 ]
 
-text_and_data = []
-for k in all_axis:
-    text_and_data.append((k.display_name(), k))

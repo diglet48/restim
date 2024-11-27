@@ -7,27 +7,28 @@ from qt_ui.settings import get_settings_instance
 
 
 defaults = {
-    AxisEnum.POSITION_ALPHA: ('alpha', 'L0', -1, 1, True),
-    AxisEnum.POSITION_BETA: ('beta', 'L1', -1, 1, True),
-    AxisEnum.VOLUME_API: ('volume', '', 0, 1, True),
-    AxisEnum.CARRIER_FREQUENCY: ('frequency', '', 500, 1000, True),
+    AxisEnum.POSITION_ALPHA: ('alpha', 'L0', -1, 1, True, True),
+    AxisEnum.POSITION_BETA: ('beta', 'L1', -1, 1, True, True),
+    AxisEnum.VOLUME_API: ('volume', '', 0, 1, True, True),
+    AxisEnum.VOLUME_EXTERNAL: ('', '', 0, 1, False, False),
+    AxisEnum.CARRIER_FREQUENCY: ('frequency', '', 500, 1000, True, True),
 
-    AxisEnum.PULSE_FREQUENCY: ('pulse_frequency', '', 0, 100, True),
-    AxisEnum.PULSE_WIDTH: ('pulse_width', '', 4, 10, True),
-    AxisEnum.PULSE_INTERVAL_RANDOM: ('pulse_interval_random', '', 0, 1, True),
-    AxisEnum.PULSE_RISE_TIME: ('pulse_rise_time', '', 2, 20, True),
+    AxisEnum.PULSE_FREQUENCY: ('pulse_frequency', '', 0, 100, True, True),
+    AxisEnum.PULSE_WIDTH: ('pulse_width', '', 4, 10, True, True),
+    AxisEnum.PULSE_INTERVAL_RANDOM: ('pulse_interval_random', '', 0, 1, True, True),
+    AxisEnum.PULSE_RISE_TIME: ('pulse_rise_time', '', 2, 20, True, True),
 
-    AxisEnum.VIBRATION_1_FREQUENCY: ('vib1_frequency', '', 0, 100, True),
-    AxisEnum.VIBRATION_1_STRENGTH: ('vib1_strength', '', 0, 1, True),
-    AxisEnum.VIBRATION_1_LEFT_RIGHT_BIAS: ('vib1_left_right_bias', '', 0, 1, True),
-    AxisEnum.VIBRATION_1_HIGH_LOW_BIAS: ('vib1_up_down_bias', '', 0, 1, True),
-    AxisEnum.VIBRATION_1_RANDOM: ('vib1_random', '', 0, 1, True),
+    AxisEnum.VIBRATION_1_FREQUENCY: ('vib1_frequency', '', 0, 100, True, True),
+    AxisEnum.VIBRATION_1_STRENGTH: ('vib1_strength', '', 0, 1, True, True),
+    AxisEnum.VIBRATION_1_LEFT_RIGHT_BIAS: ('vib1_left_right_bias', '', 0, 1, True, True),
+    AxisEnum.VIBRATION_1_HIGH_LOW_BIAS: ('vib1_up_down_bias', '', 0, 1, True, True),
+    AxisEnum.VIBRATION_1_RANDOM: ('vib1_random', '', 0, 1, True, True),
 
-    AxisEnum.VIBRATION_2_FREQUENCY: ('vib2_frequency', '', 0, 100, True),
-    AxisEnum.VIBRATION_2_STRENGTH: ('vib2_strength', '', 0, 1, True),
-    AxisEnum.VIBRATION_2_LEFT_RIGHT_BIAS: ('vib2_left_right_bias', '', 0, 1, True),
-    AxisEnum.VIBRATION_2_HIGH_LOW_BIAS: ('vib2_up_down_bias', '', 0, 1, True),
-    AxisEnum.VIBRATION_2_RANDOM: ('vib2_random', '', 0, 1, True),
+    AxisEnum.VIBRATION_2_FREQUENCY: ('vib2_frequency', '', 0, 100, True, True),
+    AxisEnum.VIBRATION_2_STRENGTH: ('vib2_strength', '', 0, 1, True, True),
+    AxisEnum.VIBRATION_2_LEFT_RIGHT_BIAS: ('vib2_left_right_bias', '', 0, 1, True, True),
+    AxisEnum.VIBRATION_2_HIGH_LOW_BIAS: ('vib2_up_down_bias', '', 0, 1, True, True),
+    AxisEnum.VIBRATION_2_RANDOM: ('vib2_random', '', 0, 1, True, True),
 }
 
 @dataclass
@@ -38,6 +39,7 @@ class FunscriptKitItem:
     limit_min: float
     limit_max: float
     auto_loading: bool
+    allow_funscript_control: bool
 
 
 def split_functipt_names(str):
@@ -53,12 +55,12 @@ class FunscriptKitModel(QAbstractTableModel):
     def load_from_settings():
         kit = FunscriptKitModel()
         for axis in all_axis:
-            kit.children.append(FunscriptKitItem(axis, '', None, None, False))
+            kit.children.append(FunscriptKitItem(axis, '', None, None, False, False))
 
         settings = get_settings_instance()
         settings.beginGroup('funscript_configuration')
         for item in kit.children:
-            default_funscript_name, default_tcode_axis_name, default_min, default_max, default_auto_load = defaults[item.axis]
+            default_funscript_name, default_tcode_axis_name, default_min, default_max, default_auto_load, default_allow_funscript_control = defaults[item.axis]
 
             settings.beginGroup(item.axis.settings_key())
             item.funscript_names = split_functipt_names(settings.value('funscript_names', default_funscript_name, str))
@@ -66,6 +68,7 @@ class FunscriptKitModel(QAbstractTableModel):
             item.limit_max = settings.value('limit_max', default_max, float)
             item.auto_loading = settings.value('auto_loading', default_auto_load, bool)
             item.tcode_axis_name = settings.value('tcode_axis', default_tcode_axis_name, str)
+            item.allow_funscript_control = default_allow_funscript_control
             settings.endGroup()
 
         settings.endGroup()
@@ -128,7 +131,10 @@ class FunscriptKitModel(QAbstractTableModel):
                 if role == Qt.DisplayRole:
                     return item.axis.display_name()
             if col == 1:
-                return ', '.join(item.funscript_names)
+                if item.allow_funscript_control:
+                    return ', '.join(item.funscript_names)
+                else:
+                    return ''
             if col == 2:
                 return item.tcode_axis_name
             if col == 3:
@@ -142,8 +148,14 @@ class FunscriptKitModel(QAbstractTableModel):
                     return None
 
     def flags(self, index: QModelIndex) -> Qt.ItemFlags:
+        item: FunscriptKitItem = self.children[index.row()]
         if index.column() == 0:
             return Qt.ItemIsSelectable | Qt.ItemIsEnabled
+        if index.column() == 1:
+            if item.allow_funscript_control:
+                return Qt.ItemIsEditable | Qt.ItemIsSelectable | Qt.ItemIsEnabled
+            else:
+                return Qt.ItemIsSelectable
         if index.column() == 5:
             return Qt.ItemIsSelectable | Qt.ItemIsEnabled | Qt.ItemIsUserCheckable
         return Qt.ItemIsEditable | Qt.ItemIsSelectable | Qt.ItemIsEnabled

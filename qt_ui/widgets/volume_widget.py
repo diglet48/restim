@@ -28,6 +28,7 @@ class VolumeWidget(QtWidgets.QProgressBar):
             api=volume.api,
             master=volume.master,
             inactivity=volume.inactivity,
+            external=volume.external
         )
 
     def refresh(self):
@@ -37,10 +38,12 @@ class VolumeWidget(QtWidgets.QProgressBar):
         master_volume = self.volume.master.last_value()
         inactivity_volume = self.volume.inactivity.last_value()
         api_volume = self.volume.api.interpolate(time.time() - self.latency)
-        self.setValue(int(master_volume * api_volume * inactivity_volume * 100))
+        external_volume = self.volume.external.interpolate(time.time() - self.latency)
+        self.setValue(int(master_volume * api_volume * inactivity_volume * external_volume * 100))
 
         self.setToolTip(
             f"master volume: {master_volume * 100:.0f}%\n" +
+            f"tcode/funscript volume: {api_volume * 100:.0f}%\n" +
             f"inactivity volume: {inactivity_volume * 100:.0f}%\n" +
-            f"api volume: {api_volume * 100:.0f}%"
+            f"external volume: {external_volume * 100:.0f}%"
         )

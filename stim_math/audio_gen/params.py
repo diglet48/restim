@@ -68,6 +68,7 @@ class VolumeParams:
     api: AbstractAxis         # [0, 1]
     master: AbstractAxis      # [0, 1]
     inactivity: AbstractAxis  # [0, 1]
+    external: AbstractAxis    # [0, 1]
 
 
 @dataclass

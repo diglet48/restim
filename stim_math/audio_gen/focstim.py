@@ -26,7 +26,8 @@ class FOCStimAlgorithm(RemoteGenerationAlgorithm):
         volume = \
             np.clip(self.params.volume.master.last_value(), 0, 1) * \
             np.clip(self.params.volume.api.interpolate(t), 0, 1) * \
-            np.clip(self.params.volume.inactivity.last_value(), 0, 1)
+            np.clip(self.params.volume.inactivity.last_value(), 0, 1) * \
+            np.clip(self.params.volume.external.last_value(), 0, 1)
 
         alpha, beta = self.position_params.get_position(t)
 

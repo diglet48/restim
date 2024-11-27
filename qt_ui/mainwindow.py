@@ -90,6 +90,7 @@ class Window(QMainWindow, Ui_MainWindow):
             self.alpha,
             self.beta,
             self.tab_volume.api_volume,
+            self.tab_volume.external_volume,
 
             self.tab_carrier.axis_carrier,  # this gets set to the device-specific axis later
 

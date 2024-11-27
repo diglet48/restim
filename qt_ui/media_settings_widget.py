@@ -8,7 +8,7 @@ from funscript.collect_funscripts import Resource
 from net.media_source.vlc import VLC
 from net.media_source.kodi import Kodi
 from qt_ui.additional_search_paths_dialog import AdditionalSearchPathsDialog
-from qt_ui.device_wizard.axes import AxisEnum, text_and_data
+from qt_ui.device_wizard.axes import AxisEnum
 
 from PyQt5 import QtCore, QtWidgets
 from PyQt5.QtGui import QIcon
@@ -24,6 +24,7 @@ from net.media_source.mpc import MPC
 from qt_ui.models.script_mapping import FunscriptTreeItem, ScriptMappingModel
 from qt_ui.widgets.table_view_with_combobox import ComboBoxDelegate, ButtonDelegate
 from qt_ui.models import funscript_kit, additional_search_paths
+from qt_ui.models.funscript_kit import FunscriptKitItem
 from qt_ui import settings
 
 
@@ -64,8 +65,12 @@ class MediaSettingsWidget(QtWidgets.QWidget, Ui_MediaSettingsWidget, metaclass=_
         self.treeView.setModel(self.model)
         self.treeView.expandAll()
 
-        combobox_items = text_and_data.copy()
-        combobox_items.insert(0, ('(none)', AxisEnum.NONE))
+        combobox_items = []
+        combobox_items.append(('(none)', AxisEnum.NONE))
+        for item in funscript_kit.FunscriptKitModel.load_from_settings().children:
+            item: FunscriptKitItem
+            if item.allow_funscript_control:
+                combobox_items.append((item.axis.display_name(), item.axis))
         self.treeView.setItemDelegateForColumn(1, ComboBoxDelegate(combobox_items, self))
         self.treeView.setEditTriggers(
             # QAbstractItemView.AllEditTriggers

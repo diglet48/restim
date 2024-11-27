@@ -34,7 +34,8 @@ class ThreePhaseAlgorithm(AudioGenerationAlgorithm):
         volume = \
             np.clip(self.params.volume.master.last_value(), 0, 1) * \
             np.clip(self.params.volume.api.interpolate(system_time_estimate), 0, 1) * \
-            np.clip(self.params.volume.inactivity.last_value(), 0, 1)
+            np.clip(self.params.volume.inactivity.last_value(), 0, 1) * \
+            np.clip(self.params.volume.external.last_value(), 0, 1)
         volume *= self.vibration.generate_vibration_signal(samplerate, len(steady_clock))
         if not self.media.is_playing():
             volume *= 0
@@ -84,7 +85,8 @@ class FourPhaseAlgorithm(MultiPhaseAlgorithm):
         volume = \
             np.clip(self.params.volume.master.last_value(), 0, 1) * \
             np.clip(self.params.volume.api.interpolate(system_time_estimate), 0, 1) * \
-            np.clip(self.params.volume.inactivity.last_value(), 0, 1)
+            np.clip(self.params.volume.inactivity.last_value(), 0, 1) * \
+            np.clip(self.params.volume.external.last_value(), 0, 1)
         volume *= self.vibration.generate_vibration_signal(samplerate, len(steady_clock))
         if not self.media.is_playing():
             volume *= 0
@@ -132,7 +134,8 @@ class FivePhaseAlgorithm(MultiPhaseAlgorithm):
         volume = \
             np.clip(self.params.volume.master.last_value(), 0, 1) * \
             np.clip(self.params.volume.api.interpolate(system_time_estimate), 0, 1) * \
-            np.clip(self.params.volume.inactivity.last_value(), 0, 1)
+            np.clip(self.params.volume.inactivity.last_value(), 0, 1) * \
+            np.clip(self.params.volume.external.last_value(), 0, 1)
         volume *= self.vibration.generate_vibration_signal(samplerate, len(steady_clock))
         if not self.media.is_playing():
             volume *= 0
