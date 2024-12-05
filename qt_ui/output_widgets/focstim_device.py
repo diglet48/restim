@@ -77,6 +77,7 @@ class FOCStimDevice(QObject, OutputDevice):
         self.update_timer.stop()
 
     def send_ping(self):
+        self.old_dict = dict()  # re-transmit all params every second to handle packet loss
         self.port.write(b'DPING\r\n')
 
     def new_serial_data(self):
@@ -87,10 +88,17 @@ class FOCStimDevice(QObject, OutputDevice):
 
             if line.startswith(b'$') and line.count(b'$') == 1:
                 parts = line[1:].split(b' ')
-                self.sock.sendto(b'\r\n'.join(parts), teleplotAddr)
+                try:
+                    self.sock.sendto(b'\r\n'.join(parts), teleplotAddr)
+                except OSError:
+                    pass
                 break
 
-            logger.info(line.decode('utf-8'))
+            try:
+                logger.info(line.decode('utf-8'))
+            except UnicodeDecodeError:
+                pass
+
             if line == FOCSTIM_BOOT_MARKER:
                 self.boot_marker_detected = True
                 self.version_string_detected = False
