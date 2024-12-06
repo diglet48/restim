@@ -149,7 +149,7 @@ class DefaultThreePhasePulseBasedAlgorithm(ThreePhasePulseBasedAlgorithmBase):
             volume,
         )
         # pulse = self.apply_device_emulation(pulse) # Reduces volume by 15%
-        pulse = self.apply_vibration(samplerate, pulse)
+        pulse = self.apply_vibration(system_time_estimate, samplerate, pulse)
         return pulse
 
     def apply_device_emulation(self, pulse: PulseInfo) -> PulseInfo:
@@ -193,8 +193,8 @@ class DefaultThreePhasePulseBasedAlgorithm(ThreePhasePulseBasedAlgorithmBase):
         pulse.volume = volume
         return pulse
 
-    def apply_vibration(self, samplerate, pulse: PulseInfo) -> PulseInfo:
-        pulse.volume *= self.vibration.generate_vibration_float(samplerate, pulse.total_length_in_samples(samplerate))
+    def apply_vibration(self, at_command_time, samplerate, pulse: PulseInfo) -> PulseInfo:
+        pulse.volume *= self.vibration.generate_vibration_float(at_command_time, samplerate, pulse.total_length_in_samples(samplerate))
         return pulse
 
     def polarity(self, at_command_time):
@@ -279,12 +279,12 @@ class ABTestThreePhasePulseBasedAlgorithm(ThreePhasePulseBasedAlgorithmBase):
             pause_duration,
             volume,
         )
-        pulse = self.apply_vibration(samplerate, pulse)
+        pulse = self.apply_vibration(system_time_estimate, samplerate, pulse)
         self.seconds_generated += float(pulse.total_length_in_samples(samplerate)) / samplerate
         return pulse
 
-    def apply_vibration(self, samplerate, pulse: PulseInfo) -> PulseInfo:
-        pulse.volume *= self.vibration.generate_vibration_float(samplerate, pulse.total_length_in_samples(samplerate))
+    def apply_vibration(self, at_command_time, samplerate, pulse: PulseInfo) -> PulseInfo:
+        pulse.volume *= self.vibration.generate_vibration_float(at_command_time, samplerate, pulse.total_length_in_samples(samplerate))
         return pulse
 
     def polarity(self, at_command_time):

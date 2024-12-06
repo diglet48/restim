@@ -15,38 +15,42 @@ class VibrationAlgorithm:
         self.vib_2 = vib_2
         self.vibration_2_angle = AngleGeneratorWithVaryingIPI()
 
-    def generate_vibration_signal(self, samplerate, n_samples: int):
+    def generate_vibration_signal(self, command_timeline, samplerate, n_samples: int):
         volume = 1
 
         volume *= self._calculate_modulation(
+            command_timeline,
             samplerate, n_samples,
             self.vib_1, self.vibration_1_angle,
         )
 
         volume *= self._calculate_modulation(
+            command_timeline,
             samplerate, n_samples,
             self.vib_2, self.vibration_2_angle,
         )
 
         return volume
 
-    def generate_vibration_float(self, samplerate, n_samples):
-        volume = self.generate_vibration_signal(samplerate, n_samples)
+    def generate_vibration_float(self, command_timeline, samplerate, n_samples):
+        volume = self.generate_vibration_signal(command_timeline, samplerate, n_samples)
         try:
             return volume[0]
         except TypeError:
             return volume
 
-    def _calculate_modulation(self, samplerate, n_samples, params: VibrationParams, angle_generator):
+    def _calculate_modulation(self, command_timeline, samplerate, n_samples, params: VibrationParams, angle_generator):
         is_enabled = params.enabled.last_value()
-        modulation_frequency = params.frequency.last_value()
-        modulation_strength = params.strength.last_value()
-        modulation_left_right_bias = params.left_right_bias.last_value()
-        modulation_high_low_bias = params.high_low_bias.last_value()
-        modulation_random = params.high_low_bias.last_value()
+        modulation_frequency = params.frequency.interpolate(command_timeline)
+        modulation_strength = params.strength.interpolate(command_timeline)
+        modulation_left_right_bias = params.left_right_bias.interpolate(command_timeline)
+        modulation_high_low_bias = params.high_low_bias.interpolate(command_timeline)
+        modulation_random = params.high_low_bias.interpolate(command_timeline)
 
         if not is_enabled or modulation_frequency == 0:
             return 1
+
+        print(modulation_frequency, modulation_strength)
 
         modulation_frequency = np.clip(modulation_frequency,
                                        limits.ModulationFrequency.min,
