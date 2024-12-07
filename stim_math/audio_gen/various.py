@@ -50,8 +50,6 @@ class VibrationAlgorithm:
         if not is_enabled or modulation_frequency == 0:
             return 1
 
-        print(modulation_frequency, modulation_strength)
-
         modulation_frequency = np.clip(modulation_frequency,
                                        limits.ModulationFrequency.min,
                                        limits.ModulationFrequency.max)
