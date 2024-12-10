@@ -95,9 +95,6 @@ class ThreephasePulsebasedAlgorithmParams:
     pulse_width: AbstractAxis       # carrier cycles
     pulse_interval_random: AbstractAxis
     pulse_rise_time: AbstractAxis
-    pulse_polarity: AbstractAxis    # 1: clockwise. -1: counter-clockwise. else: random
-    device_emulation_mode: AbstractAxis
-    pulse_phase_offset_increment: AbstractAxis
 
 
 @dataclass
@@ -145,7 +142,6 @@ class FOCStimParams:
     pulse_width: AbstractAxis       # carrier cycles
     pulse_interval_random: AbstractAxis
     pulse_rise_time: AbstractAxis
-    pulse_polarity: AbstractAxis    # 1: clockwise. -1: counter-clockwise. else: random
 
 
 @dataclass

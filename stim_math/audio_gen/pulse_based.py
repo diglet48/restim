@@ -106,6 +106,8 @@ class DefaultThreePhasePulseBasedAlgorithm(ThreePhasePulseBasedAlgorithmBase):
         self.vibration = VibrationAlgorithm(params.vibration_1, params.vibration_2)
         self.seq = 0
         self.safety_limits = safety_limits
+        self.last_pulse_polarity = 1
+        self.last_pulse_start_angle = 0
 
     def next_pulse_data(self, samplerate, at_time: float, system_time_estimate: float) -> PulseInfo:
         self.seq += 1
@@ -139,7 +141,7 @@ class DefaultThreePhasePulseBasedAlgorithm(ThreePhasePulseBasedAlgorithmBase):
         # volume *= transform.get_scale(alpha, beta)
 
         pulse = PulseInfo(
-            self.polarity(system_time_estimate),
+            self.polarity(),
             self.phase_offset(),
             pulse_carrier_freq,
             pulse_width,
@@ -148,68 +150,24 @@ class DefaultThreePhasePulseBasedAlgorithm(ThreePhasePulseBasedAlgorithmBase):
             pause_duration,
             volume,
         )
-        # pulse = self.apply_device_emulation(pulse) # Reduces volume by 15%
         pulse = self.apply_vibration(system_time_estimate, samplerate, pulse)
-        return pulse
-
-    def apply_device_emulation(self, pulse: PulseInfo) -> PulseInfo:
-        alpha, beta = pulse.position
-        volume = pulse.volume
-
-        if self.params.device_emulation_mode.last_value() in (1, 2):
-            r = np.sqrt(alpha**2 + beta**2)
-            projection_on_complex_plane = np.array([
-                [1, 0],
-                [-.5, np.sqrt(3) / 2],
-                [-.5, -np.sqrt(3) / 2],
-            ]) @ np.array([
-                [2 - r + alpha, beta],
-                [beta, 2 - r - alpha]
-            ]) * 0.5
-
-            c1 = np.linalg.norm(projection_on_complex_plane[0] - projection_on_complex_plane[1]) / np.sqrt(3)
-            c2 = np.linalg.norm(projection_on_complex_plane[0] - projection_on_complex_plane[2]) / np.sqrt(3)
-            c3 = np.linalg.norm(projection_on_complex_plane[1] - projection_on_complex_plane[2]) / np.sqrt(3)
-
-            # emulation mode 1, 'et312'
-            if self.params.device_emulation_mode.last_value() == 1:
-                channel = self.seq % 2
-            else: # emulation mode 2 'neostim'
-                channel = self.seq % 3
-
-            if channel == 2:
-                alpha, beta = (1, 0)
-                volume *= c3
-            if channel == 0:
-                alpha, beta = (-1/2, -np.sqrt(3)/2)
-                volume *= c1
-            if channel == 1:
-                alpha, beta = (-1/2, np.sqrt(3)/2)
-                volume *= c2
-        else:
-            volume *= 0.85
-
-        pulse.position = (alpha, beta)
-        pulse.volume = volume
         return pulse
 
     def apply_vibration(self, at_command_time, samplerate, pulse: PulseInfo) -> PulseInfo:
         pulse.volume *= self.vibration.generate_vibration_float(at_command_time, samplerate, pulse.total_length_in_samples(samplerate))
         return pulse
 
-    def polarity(self, at_command_time):
-        polarity = self.params.pulse_polarity.interpolate(at_command_time)
-        if polarity not in (-1, 1):
-            polarity = np.random.choice((-1, 1))
-        return polarity
+    def polarity(self):
+        if self.last_pulse_polarity == 1:
+            self.last_pulse_polarity = -1
+            return -1
+        else:
+            self.last_pulse_polarity = 1
+            return 1
 
     def phase_offset(self):
-        phase_offset_increment = self.params.pulse_phase_offset_increment.last_value()
-        if phase_offset_increment == 0.0:
-            phase_offset = np.random.uniform(0, np.pi * 2)
-        else:
-            phase_offset = (phase_offset_increment * self.seq) % (np.pi * 2)
-        return phase_offset
+        self.last_pulse_start_angle = (self.last_pulse_start_angle + (np.pi * 2 * 19 / 97)) % (2 * np.pi)  # ~1/5
+        return self.last_pulse_start_angle
 
 
 class ABTestThreePhasePulseBasedAlgorithm(ThreePhasePulseBasedAlgorithmBase):
@@ -220,6 +178,8 @@ class ABTestThreePhasePulseBasedAlgorithm(ThreePhasePulseBasedAlgorithmBase):
         self.vibration = VibrationAlgorithm(params.vibration_1, params.vibration_2)
         self.seq = 0
         self.safety_limits = safety_limits
+        self.last_pulse_polarity = 1
+        self.last_pulse_start_angle = 0
         self.callback = waveform_change_callback
 
         self.is_A_cycle = True
@@ -270,7 +230,7 @@ class ABTestThreePhasePulseBasedAlgorithm(ThreePhasePulseBasedAlgorithmBase):
         # volume *= transform.get_scale(alpha, beta)
 
         pulse = PulseInfo(
-            self.polarity(system_time_estimate),
+            self.polarity(),
             self.phase_offset(),
             pulse_carrier_freq,
             pulse_width,
@@ -287,13 +247,17 @@ class ABTestThreePhasePulseBasedAlgorithm(ThreePhasePulseBasedAlgorithmBase):
         pulse.volume *= self.vibration.generate_vibration_float(at_command_time, samplerate, pulse.total_length_in_samples(samplerate))
         return pulse
 
-    def polarity(self, at_command_time):
-        polarity = np.random.choice((-1, 1))
-        return polarity
+    def polarity(self):
+        if self.last_pulse_polarity == 1:
+            self.last_pulse_polarity = -1
+            return -1
+        else:
+            self.last_pulse_polarity = 1
+            return 1
 
     def phase_offset(self):
-        phase_offset = np.random.uniform(0, np.pi * 2)
-        return phase_offset
+        self.last_pulse_start_angle = (self.last_pulse_start_angle + (np.pi * 2 * 19 / 97)) % (2 * np.pi)  # ~1/5
+        return self.last_pulse_start_angle
 
     def ab_volume(self, time):
         if self.is_A_cycle:
