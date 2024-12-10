@@ -8,32 +8,11 @@ class ThreephasePositionParams:
     alpha: AbstractAxis    # float [-1, 1]
     beta: AbstractAxis     # float [-1, 1]
 
-
-@dataclass
-class FivephasePositionParams:
-    e1: AbstractAxis    # float [0, 1]
-    e2: AbstractAxis    # float [0, 1]
-    e3: AbstractAxis    # float [0, 1]
-    e4: AbstractAxis    # float [0, 1]
-    e5: AbstractAxis    # float [0, 1]
-
-
 @dataclass
 class ThreephaseCalibrationParams:
     neutral: AbstractAxis   # float
     right: AbstractAxis     # float
     center: AbstractAxis    # float
-
-
-@dataclass
-class FivephaseCalibrationParams:
-    t: AbstractAxis     # float [0 - inf)
-    s1: AbstractAxis    # float [0 - inf)
-    s2: AbstractAxis    # float [0 - inf)
-    s3: AbstractAxis    # float [0 - inf)
-    s4: AbstractAxis    # float [0 - inf)
-    s5: AbstractAxis    # float [0 - inf)
-
 
 @dataclass
 class ThreephasePositionTransformParams:
@@ -119,16 +98,6 @@ class ThreephaseABTestAlgorithmParams:
     b_pulse_width: AbstractAxis  # carrier cycles
     b_pulse_interval_random: AbstractAxis
     b_pulse_rise_time: AbstractAxis
-
-
-@dataclass
-class FivephaseContinuousAlgorithmParams:   # TODO: it says 5-phase, but used for both 4 and 5-phase.
-    position: FivephasePositionParams  # TODO: technically not a position
-    calibrate: FivephaseCalibrationParams
-    vibration_1: VibrationParams
-    vibration_2: VibrationParams
-    volume: VolumeParams
-    carrier_frequency: AbstractAxis
 
 
 @dataclass

@@ -5,7 +5,7 @@ from qt_ui.device_wizard.enums import DeviceConfiguration, DeviceType, WaveformT
 from stim_math.audio_gen.base_classes import AudioGenerationAlgorithm
 from stim_math.audio_gen.focstim import FOCStimAlgorithm
 from stim_math.audio_gen.pulse_based import DefaultThreePhasePulseBasedAlgorithm, ABTestThreePhasePulseBasedAlgorithm
-from stim_math.audio_gen.continuous import ThreePhaseAlgorithm, FourPhaseAlgorithm, FivePhaseAlgorithm
+from stim_math.audio_gen.continuous import ThreePhaseAlgorithm
 from stim_math.audio_gen.params import *
 
 from qt_ui.models.funscript_kit import FunscriptKitModel
@@ -42,20 +42,6 @@ class AlgorithmFactory:
                 return self.create_3phase_abtest(device)
             else:
                 raise RuntimeError('unknown waveform type')
-        elif device.device_type == DeviceType.AUDIO_FOUR_PHASE:
-            if device.waveform_type == WaveformType.CONTINUOUS:
-                return self.create_4phase_continuous(device)
-            elif device.waveform_type == WaveformType.PULSE_BASED:
-                raise RuntimeError('unsupported device/waveform combination')
-            else:
-                raise RuntimeError('unknown waveform type')
-        elif device.device_type == DeviceType.AUDIO_FIVE_PHASE:
-            if device.waveform_type == WaveformType.CONTINUOUS:
-                return self.create_5phase_continuous(device)
-            elif device.waveform_type == WaveformType.PULSE_BASED:
-                raise RuntimeError('unsupported device/waveform combination')
-            else:
-                raise RuntimeError('unknown waveform type')
         elif device.device_type == DeviceType.FOCSTIM_THREE_PHASE:
             if device.waveform_type == WaveformType.CONTINUOUS:
                 raise RuntimeError('unsupported device/waveform combination')
@@ -76,52 +62,6 @@ class AlgorithmFactory:
                 ),
                 transform=self.mainwindow.tab_threephase.transform_params,
                 calibrate=self.mainwindow.tab_threephase.calibrate_params,
-                vibration_1=self.get_axis_vib1_all(),
-                vibration_2=self.get_axis_vib2_all(),
-                volume=VolumeParams(
-                    api=self.get_axis_volume_api(),
-                    master=self.get_axis_volume_master(),
-                    inactivity=self.get_axis_volume_inactivity(),
-                    external=self.get_axis_volume_external(),
-                ),
-                carrier_frequency=self.get_axis_continuous_carrier_frequency(),
-            ),
-            safety_limits=SafetyParams(
-                device.min_frequency,
-                device.max_frequency,
-            )
-        )
-        return algorithm
-
-    def create_4phase_continuous(self, device: DeviceConfiguration) -> AudioGenerationAlgorithm:
-        algorithm = FourPhaseAlgorithm(
-            self.media_sync,
-            FivephaseContinuousAlgorithmParams(
-                position=self.mainwindow.tab_fivephase.position,
-                calibrate=self.mainwindow.tab_fivephase.calibration,
-                vibration_1=self.get_axis_vib1_all(),
-                vibration_2=self.get_axis_vib2_all(),
-                volume=VolumeParams(
-                    api=self.get_axis_volume_api(),
-                    master=self.get_axis_volume_master(),
-                    inactivity=self.get_axis_volume_inactivity(),
-                    external=self.get_axis_volume_external(),
-                ),
-                carrier_frequency=self.get_axis_continuous_carrier_frequency(device)
-            ),
-            safety_limits=SafetyParams(
-                device.min_frequency,
-                device.max_frequency,
-            )
-        )
-        return algorithm
-
-    def create_5phase_continuous(self, device: DeviceConfiguration) -> AudioGenerationAlgorithm:
-        algorithm = FivePhaseAlgorithm(
-            self.media_sync,
-            FivephaseContinuousAlgorithmParams(
-                position=self.mainwindow.tab_fivephase.position,
-                calibrate=self.mainwindow.tab_fivephase.calibration,
                 vibration_1=self.get_axis_vib1_all(),
                 vibration_2=self.get_axis_vib2_all(),
                 volume=VolumeParams(

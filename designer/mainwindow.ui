@@ -161,7 +161,7 @@
            <bool>true</bool>
           </property>
           <property name="currentIndex">
-           <number>5</number>
+           <number>0</number>
           </property>
           <widget class="ThreePhaseSettingsWidget" name="tab_threephase">
            <attribute name="title">
@@ -185,12 +185,6 @@
              </rect>
             </property>
            </widget>
-          </widget>
-          <widget class="FivePhaseSettingsWidget" name="tab_fivephase">
-           <attribute name="title">
-            <string>4/5-phase</string>
-           </attribute>
-           <layout class="QVBoxLayout" name="verticalLayout_3"/>
           </widget>
           <widget class="CarrierSettingsWidget" name="tab_carrier">
            <attribute name="title">
@@ -440,12 +434,6 @@
    <class>VolumeWidget</class>
    <extends>QProgressBar</extends>
    <header>qt_ui/widgets/volume_widget.h</header>
-  </customwidget>
-  <customwidget>
-   <class>FivePhaseSettingsWidget</class>
-   <extends>QWidget</extends>
-   <header>qt_ui/five_phase_settings_widget.h</header>
-   <container>1</container>
   </customwidget>
   <customwidget>
    <class>PhaseWidgetFocus</class>

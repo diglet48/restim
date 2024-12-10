@@ -2,7 +2,6 @@ from dataclasses import dataclass
 import logging
 
 from net.tcode import TCodeCommand
-from stim_math.audio_gen.params import FivephasePositionParams
 from stim_math.axis import AbstractAxis
 
 from qt_ui.models.funscript_kit import FunscriptKitModel, FunscriptKitItem
@@ -46,8 +45,6 @@ class TCodeCommandRouter:
                  vibration_2_left_right_bias: AbstractAxis,
                  vibration_2_high_low_bias: AbstractAxis,
                  vibration_2_random: AbstractAxis,
-
-                 fivephase_position: FivephasePositionParams,
                  ):
         self.alpha = alpha
         self.beta = beta
@@ -68,7 +65,6 @@ class TCodeCommandRouter:
         self.vibration_2_left_right_bias = vibration_2_left_right_bias
         self.vibration_2_high_low_bias = vibration_2_high_low_bias
         self.vibration_2_random = vibration_2_random
-        self.fivephase_position = fivephase_position
 
         self.mapping = {}
         self.reload_kit()
@@ -110,13 +106,6 @@ class TCodeCommandRouter:
                         mapping[child.tcode_axis_name] = route
             elif len(child.tcode_axis_name) != 0:
                 logger.error(f'Invalid T-Code axis name: {child.tcode_axis_name}. Axis name must be 2 chars.')
-
-        # UGLY: patch in five-phase axis
-        mapping['E0'] = Route(self.fivephase_position.e1, 0, 1)
-        mapping['E1'] = Route(self.fivephase_position.e2, 0, 1)
-        mapping['E2'] = Route(self.fivephase_position.e3, 0, 1)
-        mapping['E3'] = Route(self.fivephase_position.e4, 0, 1)
-        mapping['E4'] = Route(self.fivephase_position.e5, 0, 1)
 
         self.mapping = mapping
 

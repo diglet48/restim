@@ -112,8 +112,6 @@ media_sync_stop_audio_automatically = Setting('media_sync/stop_audio_automatical
 audio_api = Setting("audio/api-name", "", str)
 audio_output_device = Setting("audio/device-name", "", str)
 audio_latency = Setting("audio/latency", 'high', str)
-audio_channel_count = Setting("audio/channel-count", 8, int)
-audio_channel_map = Setting("audio/channel-map", '0, 1, 2, 3', str)
 
 additional_search_paths = Setting('additional_search_paths', [], list)
 

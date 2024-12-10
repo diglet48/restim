@@ -157,16 +157,6 @@ class AudioStimDevice(OutputDevice):
     def auto_detect_channel_mapping_parameters(self, algorithm: AudioGenerationAlgorithm) -> [ChannelMappingParameters]:
         if algorithm.channel_count() == 2:
             return [ChannelMappingParameters(2, [0, 1])]
-        if algorithm.channel_count() == 3:
-            channel_count = settings.audio_channel_count.get()
-            channel_map = settings.audio_channel_map.get()
-            channel_map = [int(x) for x in channel_map.split(',')][:3]
-            return [ChannelMappingParameters(channel_count, channel_map)]
-        if algorithm.channel_count() == 4:
-            channel_count = settings.audio_channel_count.get()
-            channel_map = settings.audio_channel_map.get()
-            channel_map = [int(x) for x in channel_map.split(',')][:4]
-            return [ChannelMappingParameters(channel_count, channel_map)]
         raise RuntimeError('Invalid audio algorithm')
 
     def callback(self, outdata: np.ndarray, frames: int, patime, status: sd.CallbackFlags):
