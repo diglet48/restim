@@ -1,5 +1,7 @@
 import logging
 import socket
+from dataclasses import dataclass
+import re
 
 from PyQt5.Qt import QObject
 from PyQt5.QtSerialPort import QSerialPort
@@ -13,8 +15,41 @@ logger = logging.getLogger('restim.focstim')
 
 teleplotAddr = ("127.0.0.1", 47269)
 
-FOCSTIM_BOOT_MARKER = b'Device ready. Awaiting DSTART.'
-FOCSTIM_VERSION_STRING = b'FOC-Stim 0.2'
+FOCSTIM_VERSION_STRING = '0.3'
+
+
+@dataclass
+class FocStatus:
+    booted: bool
+    vbus: bool
+    estop: bool
+    playing: bool
+
+    @staticmethod
+    def from_bytes(b):
+        try:
+            match = re.match(b'status: (\\d+)', b)
+            status = int(match[1])
+            return FocStatus(
+                booted=bool(status & 0x01),
+                vbus=bool(status & 0x02),
+                estop=bool(status & 0x04),
+                playing=bool(status & 0x08),
+            )
+        except TypeError:
+            return None
+
+@dataclass
+class FocVersion:
+    version: str
+
+    @staticmethod
+    def from_bytes(b):
+        match = re.match(b'version: FOC-Stim (.+)$', b)
+        try:
+            return FocVersion(match[1].decode('ascii'))
+        except (UnicodeDecodeError, TypeError):
+            return None
 
 
 class FOCStimDevice(QObject, OutputDevice):
@@ -23,9 +58,10 @@ class FOCStimDevice(QObject, OutputDevice):
         self.port = None
         self.algorithm = None
         self.old_dict = {}
-        self.boot_marker_detected = False
-        self.version_string_detected = False
         self.sock = None
+        self.version_string_detected = False
+        self.under_voltage_detected = False
+        self.status = FocStatus(False, False, False, False)
 
         self.update_timer = QTimer()
         self.update_timer.setInterval(int(1000 / 60))
@@ -60,6 +96,40 @@ class FOCStimDevice(QObject, OutputDevice):
     def is_connected_and_running(self) -> bool:
         return self.port and self.port.isOpen()
 
+    def handle_version_message(self, version: FocVersion):
+        if version.version == FOCSTIM_VERSION_STRING:
+            if not self.version_string_detected:
+                self.version_string_detected = True
+                if not self.under_voltage_detected:
+                    self.start_device()
+        else:
+            logger.warning(f'incompatible FOC-Stim version: {version.version}')
+
+    def handle_status_message(self, status: FocStatus):
+        # device boot
+        if (self.status.booted, status.booted) == (False, True):
+            self.request_version_string()
+
+        # device restart, request version string again.
+        if (self.status.booted, status.booted) == (True, False):
+            self.version_string_detected = False
+            self.request_version_string()
+
+        # device running, but vbus dropped out.
+        # force user to stop/start in restim to continue playing.
+        if (self.status.booted, self.status.vbus, status.booted, status.vbus) == (True, True, True, False):
+            print('vbus dropout...')
+            self.under_voltage_detected = True
+
+        # device running, vbus just came online.
+        # start signal
+        if (self.status.booted, self.status.vbus, status.booted, status.vbus) == (True, False, True, True):
+            if self.version_string_detected:
+                if not self.under_voltage_detected:
+                    self.start_device()
+
+        self.status = status
+
     def request_version_string(self):
         self.port.write(b'D0\r\n')
 
@@ -86,6 +156,7 @@ class FOCStimDevice(QObject, OutputDevice):
             if len(line) == 0:
                 continue
 
+            # line is teleplot message?
             if line.startswith(b'$') and line.count(b'$') == 1:
                 parts = line[1:].split(b' ')
                 try:
@@ -94,20 +165,23 @@ class FOCStimDevice(QObject, OutputDevice):
                     pass
                 break
 
+            # line is status message?
+            status = FocStatus.from_bytes(line)
+            if status is not None:
+                self.handle_status_message(status)
+                break
+
+            # line is version message?
+            version = FocVersion.from_bytes(line)
+            if version is not None:
+                self.handle_version_message(version)
+                break
+
+            # not any known message, just log.
             try:
                 logger.info(line.decode('utf-8'))
             except UnicodeDecodeError:
                 pass
-
-            if line == FOCSTIM_BOOT_MARKER:
-                self.boot_marker_detected = True
-                self.version_string_detected = False
-                self.request_version_string()
-
-            if line == FOCSTIM_VERSION_STRING:
-                if not self.version_string_detected:
-                    self.version_string_detected = True
-                    self.start_device()
 
     def transmit_dirty_params(self, interval=30):
         new_dict = self.algorithm.parameter_dict()
