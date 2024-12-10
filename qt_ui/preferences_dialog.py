@@ -144,6 +144,8 @@ class PreferencesDialog(QDialog, Ui_PreferencesDialog):
 
     def repopulate_serial_devices(self):
         selected_port_name = self.focstim_port.currentData()
+        if selected_port_name is None:
+            selected_port_name = qt_ui.settings.focstim_serial_port.get()
 
         self.focstim_port.clear()
         for port in QSerialPortInfo.availablePorts():
