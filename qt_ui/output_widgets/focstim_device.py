@@ -158,11 +158,12 @@ class FOCStimDevice(QObject, OutputDevice):
 
             # line is teleplot message?
             if line.startswith(b'$') and line.count(b'$') == 1:
-                parts = line[1:].split(b' ')
-                try:
-                    self.sock.sendto(b'\r\n'.join(parts), teleplotAddr)
-                except OSError:
-                    pass
+                if self.sock is not None:
+                    parts = line[1:].split(b' ')
+                    try:
+                        self.sock.sendto(b'\r\n'.join(parts), teleplotAddr)
+                    except OSError:
+                        pass
                 break
 
             # line is status message?
