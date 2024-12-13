@@ -172,6 +172,7 @@ class AlgorithmFactory:
                 pulse_width=self.get_axis_pulse_width(),
                 pulse_interval_random=self.get_axis_pulse_interval_random(),
                 pulse_rise_time=self.get_axis_pulse_rise_time(),
+                tau=self.get_axis_tau(),
             ),
             safety_limits=SafetyParams(
                 device.min_frequency,
@@ -203,6 +204,9 @@ class AlgorithmFactory:
         if self.create_for_bake:
             return create_constant_axis(1.0)    # external volume does NOT work in bake mode
         return self.mainwindow.tab_volume.volume.external
+
+    def get_axis_tau(self):
+        return self.mainwindow.tab_volume.axis_tau
 
     def get_axis_continuous_carrier_frequency(self):
         default = self.mainwindow.tab_carrier.axis_carrier

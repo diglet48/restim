@@ -111,6 +111,7 @@ class FOCStimParams:
     pulse_width: AbstractAxis       # carrier cycles
     pulse_interval_random: AbstractAxis
     pulse_rise_time: AbstractAxis
+    tau: AbstractAxis               # µs
 
 
 @dataclass
