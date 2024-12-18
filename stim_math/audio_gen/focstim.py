@@ -8,7 +8,7 @@ from stim_math.audio_gen.various import ThreePhasePosition
 from stim_math.axis import AbstractMediaSync
 
 FOC_MIN_FREQUENCY = 500
-FOC_MAX_FREQUENCY = 1000
+FOC_MAX_FREQUENCY = 1500
 
 
 class FOCStimAlgorithm(RemoteGenerationAlgorithm):

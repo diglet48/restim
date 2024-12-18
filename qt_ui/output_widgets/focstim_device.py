@@ -15,7 +15,7 @@ logger = logging.getLogger('restim.focstim')
 
 teleplotAddr = ("127.0.0.1", 47269)
 
-FOCSTIM_VERSION_STRING = '0.3'
+FOCSTIM_VERSION_STRING = '0.4'
 
 
 @dataclass
