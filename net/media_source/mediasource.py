@@ -125,7 +125,7 @@ class MediaSource(QObject, MediaSourceInterface, metaclass=A):
                 # equation: report.timestamp - status.media_play_timestamp = report.claimed_media_position - self.state.cursor
                 drift = (report.timestamp - self.last_state.media_play_timestamp) - (
                             report.claimed_media_position - self.last_state.cursor)
-                logger.debug('still playing, drift=%f', drift)
+                # logger.debug('still playing, drift=%f', drift)
 
                 if abs(drift) > 2.0:
                     new_state.media_play_timestamp = report.timestamp
