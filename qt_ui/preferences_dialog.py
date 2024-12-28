@@ -111,6 +111,7 @@ class PreferencesDialog(QDialog, Ui_PreferencesDialog):
         self.repopulate_serial_devices()
         self.focstim_port.setCurrentIndex(self.focstim_port.findData(qt_ui.settings.focstim_serial_port.get()))
         self.focstim_use_teleplot.setChecked(qt_ui.settings.focstim_use_teleplot.get())
+        self.focstim_teleplot_prefix.setText(qt_ui.settings.focstim_teleplot_prefix.get())
 
         # media sync settings
         self.mpc_address.setText(qt_ui.settings.media_sync_mpc_address.get())
@@ -206,6 +207,7 @@ class PreferencesDialog(QDialog, Ui_PreferencesDialog):
         # focstim
         qt_ui.settings.focstim_serial_port.set(str(self.focstim_port.currentData()))
         qt_ui.settings.focstim_use_teleplot.set(self.focstim_use_teleplot.isChecked())
+        qt_ui.settings.focstim_teleplot_prefix.set(self.focstim_teleplot_prefix.text())
 
         # media sync settings
         qt_ui.settings.media_sync_mpc_address.set(self.mpc_address.text())

@@ -7,6 +7,7 @@ from PyQt5.Qt import QObject
 from PyQt5.QtSerialPort import QSerialPort
 from PyQt5.QtCore import QIODevice, QTimer
 
+import qt_ui.settings
 from net.tcode import TCodeCommand
 from qt_ui.output_widgets.output_device import OutputDevice
 from stim_math.audio_gen.base_classes import RemoteGenerationAlgorithm
@@ -62,6 +63,7 @@ class FOCStimDevice(QObject, OutputDevice):
         self.version_string_detected = False
         self.under_voltage_detected = False
         self.status = FocStatus(False, False, False, False)
+        self.teleplot_prefix = qt_ui.settings.focstim_teleplot_prefix.get().encode('ascii')
 
         self.update_timer = QTimer()
         self.update_timer.setInterval(int(1000 / 60))
@@ -118,7 +120,6 @@ class FOCStimDevice(QObject, OutputDevice):
         # device running, but vbus dropped out.
         # force user to stop/start in restim to continue playing.
         if (self.status.booted, self.status.vbus, status.booted, status.vbus) == (True, True, True, False):
-            print('vbus dropout...')
             self.under_voltage_detected = True
 
         # device running, vbus just came online.
@@ -160,6 +161,7 @@ class FOCStimDevice(QObject, OutputDevice):
             if line.startswith(b'$') and line.count(b'$') == 1:
                 if self.sock is not None:
                     parts = line[1:].split(b' ')
+                    parts = [self.teleplot_prefix + part for part in parts]
                     try:
                         self.sock.sendto(b'\r\n'.join(parts), teleplotAddr)
                     except OSError:
