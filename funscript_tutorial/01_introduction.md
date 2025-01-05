@@ -32,7 +32,7 @@ As a side note, these file names are just *defaults*, as in *default configurati
 Since funscript format allows value of axis to be decimal between 0 and 1, in this screen you can also see the ranges (Limit min / Limit max) to which the values are mapped.
   
 
-1. positional axes (stroking/alpha/beta):
+1. **positional axes (stroking/alpha/beta)**:
 
     The *default* funscript file, which contains *stroking* movement is named *filename.funscript*
 
@@ -44,23 +44,28 @@ Since funscript format allows value of axis to be decimal between 0 and 1, in th
 
   
 
-2. volume axis
+2. **volume axis**
+   
    This file is named *filename.volume.funscript*
    In simplest use-case you create it manually. This axis controls the intensity of estim, and usually also contains a ramp over time, where a good starting value is 0.5% - 0.7% per minute (if it is very long video, like 2 hours, then you would use slower ramp). I will cover more advanced ways for creating this axis in separate page.
 
-3. pulse frequency   
+3. **pulse frequency**   
+   
    This file is named *filename.pulse_frequency.funscript*
    The mapped value of this axis controls the number of wavelets that are created per second.
 
-4. pulse width   
+4. **pulse width**   
+   
    This file is named *filename.pulse_width.funscript*
    The mapped value of this axis controls the *length* (number of carrier oscillations) of each wavelet produced.
    
-5. pulse rise time
+5. **pulse rise time**
+   
    This file is named *filename.pulse_rise_time.funscript*
    The mapped value of this axis controls how fast (in number of carrier oscillations) the wavelet reaches the current signal intensity (volume).
 
-6. frequency
+6. **frequency**
+   
    This file is named *filename.frequency.funscript*
    The mapped value of this axis controls the carrier frequency that is used to produce wavelets. It is not recommended to use this axis for stereostim boxes since lower frequency generally produce stronger perceived intensity and it is impossible to make uniform compensation for this that would work on all boxes.
 
