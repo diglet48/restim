@@ -95,12 +95,13 @@ class FunscriptKitModel(QAbstractTableModel):
 
     def reset_to_defaults(self):
         for item in self.children:
-            names, tcode, min, max, auto_load = defaults[item.axis]
+            names, tcode, min, max, auto_load, allow_funscript_control = defaults[item.axis]
             item.funscript_names = split_functipt_names(names)
             item.tcode_axis_name = tcode
             item.limit_min = min
             item.limit_max = max
             item.auto_loading = auto_load
+            item.allow_funscript_control = allow_funscript_control
         self.dataChanged.emit(self.index(0, 1), self.index(len(self.children), 3))
 
     def funscript_conifg(self) -> list[FunscriptKitItem]:
