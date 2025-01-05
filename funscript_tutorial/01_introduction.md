@@ -59,7 +59,7 @@ Since funscript format allows value of axis to be decimal between 0 and 1, in th
    This file is named *filename.frequency.funscript*
    The mapped value of this axis controls the carrier frequency that is used to produce wavelets. It is not recommended to use this axis for stereostim boxes since lower frequency generally produce stronger perceived intensity and it is impossible to make uniform compensation for this that would work on all boxes.
 
-### a tip
+### pro tip
 For the axes 3-6 (pulse frequency/width/rise time and carrier frequency) you can use Pulse settings tab in Restim UI to view illustration of wavelets produced and get better idea how these numbers affect shape of the signal.
 
 
