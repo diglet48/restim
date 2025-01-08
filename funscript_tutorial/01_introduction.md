@@ -15,11 +15,11 @@ File name conventions are rules how the funscript files are named. For all of th
 
   
 
-As a side note, these file names are just *defaults*, as in *default configuration of restim*, that you can see in preferences => Funscript / T-Code:
-
-![restim_preferences_funscript_tcode.png](restim_preferences_funscript_tcode.png)
-
-Since funscript format allows value of axis to be decimal between 0 and 1, in this screen you can also see the ranges (Limit min / Limit max) to which the values are mapped.
+> As a side note, these file names are just *defaults*, as in *default configuration of restim*, that you can see in preferences => Funscript / T-Code:
+> 
+> ![restim_preferences_funscript_tcode.png](restim_preferences_funscript_tcode.png)
+> 
+> Since funscript format allows value of axis to be decimal between 0 and 1, in this screen you can also see the ranges (Limit min / Limit max) to which the values are mapped.
   
 
 #### 1. **positional axes (stroking/alpha/beta)**:
@@ -75,18 +75,8 @@ You will be met with metadata window that you can optionally fill then close and
 
 The usage of OFS tool will not be covered here, if it is new for you, I recommend [this tutorial](https://discuss.eroscripts.com/t/how-to-script-in-openfunscripter-video-tutorial/16637/1)
 
+Besides that, I also recommend checking out this resource: [How to Script a Cock Hero in Under 10 Minutes](https://milovana.com/forum/viewtopic.php?p=302420#p302420)
 
-When starting work on set of scripts for Restim in OFS, the first thing is to create the project (as mentioned by opening the video file, the *default* funscript appears automatically), and add any funscript axes you plan to use.
-For example, adding *volume*, *pulse_frequency* and *pulse_width* (according to filename conventions above), and you have basic project where you are ready to start working:
-![ofs_project_created.png](ofs_project_created.png)
+Once you have learned how to use the OFS and understand what is funscript and how it works, you are ready to proceed to next step: [create your first set of scripts](02 creating your first set of scripts).
 
-You can see the file name for each added axis in the bottom right corner of that axis's timeline.
 
-Saving this project creates *filename.ofsp* in same folder with video that you can open and work on at any time.
-
-### Important to remember
-Default (stroking) axis won't be covered in this tutorial since that is subject of already linked tutorial for OFS, except one detail:
-For any video where you want to create calibration signal, you need to add stroking if there isn't one in existing funscript. On screenshot above you can see that stroking starts along with increase of *volume* to 50%, which then slowly increases to 60% during half of calibration, and then stays there for other half.
-The values for volume and other axes are covered in dedicated documents, this is only to underline the need of stroking movement during calibration signal.
-
-And, for every edit of funscripts in this project, don't forget to perform export (File -> Export) and then whenever you changed stroking script, perform conversion to alpha/beta using Restim tools.
