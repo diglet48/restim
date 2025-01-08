@@ -79,3 +79,4 @@ Besides that, I also recommend checking out this resource: [How to Script a Cock
 
 Once you have learned how to use the OFS and understand what is funscript and how it works, you are ready to proceed to next step: [create your first set of scripts](02_creating_your_first_set_of_scripts.md).
 
+

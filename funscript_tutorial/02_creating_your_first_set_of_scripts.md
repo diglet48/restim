@@ -51,10 +51,15 @@ For now, this is all that I will do with volume, I leave it to linearly ramp up 
 If we were trying to just create *anything* we want to call estim, then what is done so far could be already called a very simple estim, we could just export funscripts now and call it done.
 Of course, if you want to create something immersive, interesting and enjoyable, then you need to invest more love and work into your creation.
 
+## Create beats and add stop sections to volume axis
 
+In this case, I want to make estim for this correspond to actual JOI that are in voiceover and synced to the on-screen beats that creator (Tia.Blaze) intended here. This is why I am going through the video and creating funscript that is based of beats. There are multiple ways you could do this, the best is if creator exports beatmeter timestamps, then you could convert them to funscript, but here I will just go and manually create pattern on each change, then select it, copy and paste it until I reach next pattern.
+As I reach "stop" instruction, I switch to volume axis, I note the current value (to see it go to Simulator => check Show Position like in screenshot), and then create one point that is equal to current value, play a bit and set 0 (to remove estim according to stop instruction), and then as it is about to start, set another 0 value few seconds before, and previous value again to resume, just like in screenshot.
+![OFS_syt_20250108203707.png](OFS_syt_20250108203707.png)
 
+I have actually hidden the default .funscript timeline here and created .beats track, this is because I did not want to delete whole generated track in case there is some teasing section that I will leave synced to music, so I work on another track that I use as working space, and will copy it to the stroking axis.
 
+As you will see later, creating your own tracks can be very helpful because there are ways to combine them in different ratios to create interesting effects that are progressive/gradual without spending too much time on them.
+You can download current version of project (snapshot from screenshot above) [here](Sexy_Youtube_2.ofsp)
 
-
-
-
+Once this is done (beats and volume breaks implemented to the end of video), next step will be in new page (and this paragraph updated with link to it).
