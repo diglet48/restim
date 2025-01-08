@@ -94,7 +94,7 @@ class Ui_VolumeControlForm(object):
         self.formLayout_3.setWidget(0, QtWidgets.QFormLayout.LabelRole, self.label_5)
         self.doubleSpinBox_tau = QtWidgets.QDoubleSpinBox(self.groupBox_3)
         self.doubleSpinBox_tau.setDecimals(0)
-        self.doubleSpinBox_tau.setMinimum(100.0)
+        self.doubleSpinBox_tau.setMinimum(0.0)
         self.doubleSpinBox_tau.setMaximum(1000.0)
         self.doubleSpinBox_tau.setProperty("value", 355.0)
         self.doubleSpinBox_tau.setObjectName("doubleSpinBox_tau")
