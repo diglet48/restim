@@ -62,4 +62,9 @@ I have actually hidden the default .funscript timeline here and created .beats t
 As you will see later, creating your own tracks can be very helpful because there are ways to combine them in different ratios to create interesting effects that are progressive/gradual without spending too much time on them.
 You can download current version of project (snapshot from screenshot above) [here](Sexy_Youtube_2.ofsp)
 
-Once this is done (beats and volume breaks implemented to the end of video), next step will be in new page (and this paragraph updated with link to it).
+From there, I entered beats into beats axis to the end, and then copied it to the default axis, but left "freestyle/you decide" sections with generated-from-music funscript. Since I left volume in these sections at 0, the stroking has no effect, but in case someone wants to change their freestyle section, it makes it easy as they will only need to change volume.
+
+This now makes even better version of estim done. There is volume axis and stroking. There is snapshot of project [here](Sexy_Youtube_3.ofsp). 
+Note that I made sure that all scripts have a value at start and end of file, just to avoid having any of them be undefined at some time periods.
+
+For me, this is still not done, not even volume, and we will cover [how to make it interesting in next part](03_making_your_script_interesting.md).
