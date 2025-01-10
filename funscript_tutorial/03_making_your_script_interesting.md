@@ -7,16 +7,18 @@ For this step, I am sharing few python scripts that I wrote to automate parts of
 They are available zipped [here](tools.zip).
 
 To use them you need python installed. Open a terminal in the unpacked folder (tools) and run:
+
 `pip install -r .\requirements.txt`
 
 First thing that I will do is spice up volume by making it *derivative* from our current volume (that I will rename to volume_ramp by clicking on Project -> Configure in OFS and then click on volume funscript and rename it to be filename.volume_ramp.funscript).
 
 Now I do File -> Export -> Export all
 
-I copy file *Sexy Youtube.beats.funscript* tools folder (where I have the python scripts/terminal) and then first I run this command:
+I copy file *Sexy Youtube.beats.funscript* into tools folder (where I have the python scripts/terminal) and then first I run this command:
+
 `python .\convert-to-speed.py '.\Sexy Youtube.beats.funscript' '.\Sexy Youtube.speed.funscript' 5`
 
-This creates *Sexy Youtube.speed.funscript* which is 'derivate' (also in mathematical sense) of the beats funscript, meaning it shows the relative speed (the fastest part of file is 100, the slowest 0).
+This creates *Sexy Youtube.speed.funscript* which is 'derivate' (also in mathematical sense) of the beats funscript, meaning it shows the relative speed (the fastest part of file is 100, the slowest 0). The 5 is *window width*, meaning it calculates the average speed over 5 seconds. You might change this to have different responsiveness, i.e. increase it to make the speed change more slowly (but note that current speed will be average over *last* x seconds, so if you use too large window, like 20 sec, you might want to select and move all of the points of speed script to left by 10 seconds, so that current speed reflects the last 10 sec and next 10 sec).
 
 I copy this file back to my work folder, I add it as existing to the project and after quick inspection I note that I have made "as fast as you can" section around 1h:03m way too fast, faster than any other part of the beats. That is why I want to reduce it to correspond roughly to the finisher section.
 
