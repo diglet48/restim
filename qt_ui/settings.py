@@ -51,6 +51,7 @@ volume_default_level = Setting('volume/default_level', 10.0, float)
 volume_ramp_time = Setting('volume/inactivity_ramp_time', 3.0, float)
 volume_inactivity_threshold = Setting('volume/inactivity_inactive_threshold', 2.0, float)
 volume_increment_rate = Setting('volume/increment_rate', 1.0, float)
+tau_us = Setting('volume/tau_us', 355, float)
 
 mk312_carrier = Setting('mk312/carrier_frequency', 700, float)
 
@@ -112,8 +113,6 @@ media_sync_stop_audio_automatically = Setting('media_sync/stop_audio_automatical
 audio_api = Setting("audio/api-name", "", str)
 audio_output_device = Setting("audio/device-name", "", str)
 audio_latency = Setting("audio/latency", 'high', str)
-audio_channel_count = Setting("audio/channel-count", 8, int)
-audio_channel_map = Setting("audio/channel-map", '0, 1, 2, 3', str)
 
 additional_search_paths = Setting('additional_search_paths', [], list)
 
@@ -143,4 +142,5 @@ serial_auto_expand = Setting("network/serial-auto-expand", True, bool)
 
 focstim_serial_port = Setting("focstim/serial_port", '', str)
 focstim_use_teleplot = Setting("focstim/use-teleplot", True, bool)
+focstim_teleplot_prefix = Setting("focstim/teleplot_prefix", "", str)
 

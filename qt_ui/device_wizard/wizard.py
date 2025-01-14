@@ -66,17 +66,12 @@ class DeviceSelectionWizard(QWizard):
             self.page_waveform_type.pulse_based_radio.setEnabled(True)
             self.page_waveform_type.continuous_radio.setEnabled(True)
             self.page_waveform_type.a_b_radio.setEnabled(True)
-        elif any([
-            self.page_device_type.four_phase_radio.isChecked(),
-            self.page_device_type.five_phase_radio.isChecked()
-        ]):
-            self.page_waveform_type.pulse_based_radio.setEnabled(False)
-            self.page_waveform_type.continuous_radio.setEnabled(True)
-            self.page_waveform_type.a_b_radio.setEnabled(False)
         elif self.page_device_type.focstim_radio.isChecked():
             self.page_waveform_type.pulse_based_radio.setEnabled(True)
             self.page_waveform_type.continuous_radio.setEnabled(False)
             self.page_waveform_type.a_b_radio.setEnabled(False)
+        else:
+            return False
 
         return super(DeviceSelectionWizard, self).validateCurrentPage()
 
@@ -98,18 +93,6 @@ class DeviceSelectionWizard(QWizard):
                 alg,
                 min_freq, max_freq
             )
-        elif self.page_device_type.four_phase_radio.isChecked():
-            return DeviceConfiguration(
-                DeviceType.AUDIO_FOUR_PHASE,
-                WaveformType.CONTINUOUS,
-                min_freq, max_freq
-            )
-        elif self.page_device_type.five_phase_radio.isChecked():
-            return DeviceConfiguration(
-                DeviceType.AUDIO_FIVE_PHASE,
-                WaveformType.CONTINUOUS,
-                min_freq, max_freq
-            )
         elif self.page_device_type.focstim_radio.isChecked():
             return DeviceConfiguration(
                 DeviceType.FOCSTIM_THREE_PHASE,
@@ -122,10 +105,6 @@ class DeviceSelectionWizard(QWizard):
     def set_configuration(self, config: DeviceConfiguration):
         if config.device_type == DeviceType.AUDIO_THREE_PHASE:
             self.page_device_type.three_phase_radio.setChecked(True)
-        if config.device_type == DeviceType.AUDIO_FOUR_PHASE:
-            self.page_device_type.four_phase_radio.setChecked(True)
-        if config.device_type == DeviceType.AUDIO_FIVE_PHASE:
-            self.page_device_type.five_phase_radio.setChecked(True)
         if config.device_type == DeviceType.FOCSTIM_THREE_PHASE:
             self.page_device_type.focstim_radio.setChecked(True)
 

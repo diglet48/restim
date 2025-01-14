@@ -20,7 +20,7 @@
    <item row="0" column="0">
     <widget class="QRadioButton" name="three_phase_radio">
      <property name="text">
-      <string>Three-phase</string>
+      <string>Audio-based three-phase</string>
      </property>
      <property name="checked">
       <bool>true</bool>
@@ -28,20 +28,13 @@
     </widget>
    </item>
    <item row="1" column="0">
-    <widget class="QRadioButton" name="four_phase_radio">
+    <widget class="QRadioButton" name="focstim_radio">
      <property name="text">
-      <string>Four-phase (experimental)</string>
+      <string>FOC-Stim</string>
      </property>
     </widget>
    </item>
    <item row="2" column="0">
-    <widget class="QRadioButton" name="five_phase_radio">
-     <property name="text">
-      <string>Five-phase (experimental)</string>
-     </property>
-    </widget>
-   </item>
-   <item row="4" column="0">
     <spacer name="verticalSpacer">
      <property name="orientation">
       <enum>Qt::Vertical</enum>
@@ -53,13 +46,6 @@
       </size>
      </property>
     </spacer>
-   </item>
-   <item row="3" column="0">
-    <widget class="QRadioButton" name="focstim_radio">
-     <property name="text">
-      <string>FOC-Stim</string>
-     </property>
-    </widget>
    </item>
   </layout>
  </widget>

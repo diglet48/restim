@@ -5,9 +5,10 @@ import numpy as np
 import math
 from PyQt5 import QtCore, QtWidgets
 
+from qt_ui.axis_controller import AxisController
 from qt_ui.volume_control_widget_ui import Ui_VolumeControlForm
 from stim_math.audio_gen.params import VolumeParams
-from stim_math.axis import create_temporal_axis, AbstractAxis
+from stim_math.axis import create_temporal_axis, AbstractAxis, create_constant_axis
 from qt_ui import settings
 
 
@@ -20,6 +21,7 @@ class VolumeControlWidget(QtWidgets.QWidget, Ui_VolumeControlForm):
         self.inactivity_volume = create_temporal_axis(1.0)
         self.master_volume = create_temporal_axis(self.doubleSpinBox_volume.value())
         self.external_volume = create_temporal_axis(1.0)
+        self.axis_tau = create_constant_axis(settings.tau_us.get())
         self.volume = VolumeParams(
             api=self.api_volume,
             master=self.master_volume,
@@ -35,6 +37,7 @@ class VolumeControlWidget(QtWidgets.QWidget, Ui_VolumeControlForm):
         self.remainder = 0
 
         self.doubleSpinBox_volume.setValue(settings.volume_default_level.get())
+        self.doubleSpinBox_tau.setValue(settings.tau_us.get())
 
         self.doubleSpinBox_volume.valueChanged.connect(self.updateVolume)
         self.doubleSpinBox_volume.valueChanged.connect(self.refresh_message)
@@ -53,6 +56,9 @@ class VolumeControlWidget(QtWidgets.QWidget, Ui_VolumeControlForm):
 
         self.doubleSpinBox_target_volume.valueChanged.connect(self.refresh_message)
         self.doubleSpinBox_rate.valueChanged.connect(self.refresh_message)
+
+        self.tau_controller = AxisController(self.doubleSpinBox_tau)
+        self.tau_controller.link_axis(self.axis_tau)
 
     def timeout(self):
         t = time.time()
@@ -148,3 +154,4 @@ class VolumeControlWidget(QtWidgets.QWidget, Ui_VolumeControlForm):
         settings.volume_inactivity_threshold.set(self.doubleSpinBox_inactivity_threshold.value())
         settings.volume_ramp_time.set(self.doubleSpinBox_inactivity_ramp_time.value())
         settings.volume_increment_rate.set(self.doubleSpinBox_rate.value())
+        settings.tau_us.set(self.doubleSpinBox_tau.value())

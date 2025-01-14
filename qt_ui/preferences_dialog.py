@@ -4,7 +4,6 @@ from PyQt5.QtSerialPort import QSerialPortInfo
 from PyQt5.QtWidgets import QDialog, QAbstractButton, QDialogButtonBox, QAbstractItemView, QHeaderView
 
 from qt_ui.preferences_dialog_ui import Ui_PreferencesDialog
-from qt_ui.audio_test_dialog import AudioTestDialog
 from qt_ui.models.funscript_kit import FunscriptKitModel
 import qt_ui.settings
 
@@ -23,7 +22,6 @@ class PreferencesDialog(QDialog, Ui_PreferencesDialog):
         self.audio_api.currentIndexChanged.connect(self.repopulate_audio_devices)
         self.audio_output_device.currentIndexChanged.connect(self.refresh_audio_device_info)
         self.buttonBox.clicked.connect(self.buttonClicked)
-        self.commandLinkButton.clicked.connect(self.open_test_audio_dialog)
 
         # funscript mapping
         self.button_funscript_reset_defaults.clicked.connect(self.funscript_reset_defaults)
@@ -108,13 +106,12 @@ class PreferencesDialog(QDialog, Ui_PreferencesDialog):
         self.repopulate_audio_devices()
 
         self.audio_latency.setCurrentText(qt_ui.settings.audio_latency.get())
-        self.channel_count.setValue(qt_ui.settings.audio_channel_count.get())
-        self.channel_map.setText(qt_ui.settings.audio_channel_map.get())
 
         # focstim settings
         self.repopulate_serial_devices()
         self.focstim_port.setCurrentIndex(self.focstim_port.findData(qt_ui.settings.focstim_serial_port.get()))
         self.focstim_use_teleplot.setChecked(qt_ui.settings.focstim_use_teleplot.get())
+        self.focstim_teleplot_prefix.setText(qt_ui.settings.focstim_teleplot_prefix.get())
 
         # media sync settings
         self.mpc_address.setText(qt_ui.settings.media_sync_mpc_address.get())
@@ -125,7 +122,6 @@ class PreferencesDialog(QDialog, Ui_PreferencesDialog):
         self.kodi_address.setText(qt_ui.settings.media_sync_kodi_address.get())
 
         # display settings
-
         self.display_fps.setValue(int(qt_ui.settings.display_fps.get()))
         self.display_latency_ms.setValue(qt_ui.settings.display_latency.get())
 
@@ -149,6 +145,8 @@ class PreferencesDialog(QDialog, Ui_PreferencesDialog):
 
     def repopulate_serial_devices(self):
         selected_port_name = self.focstim_port.currentData()
+        if selected_port_name is None:
+            selected_port_name = qt_ui.settings.focstim_serial_port.get()
 
         self.focstim_port.clear()
         for port in QSerialPortInfo.availablePorts():
@@ -205,12 +203,11 @@ class PreferencesDialog(QDialog, Ui_PreferencesDialog):
         qt_ui.settings.audio_api.set(self.audio_api.currentText())
         qt_ui.settings.audio_output_device.set(self.audio_output_device.currentText())
         qt_ui.settings.audio_latency.set(self.audio_latency.currentText())
-        qt_ui.settings.audio_channel_count.set(self.channel_count.value())
-        qt_ui.settings.audio_channel_map.set(self.channel_map.text())
 
         # focstim
         qt_ui.settings.focstim_serial_port.set(str(self.focstim_port.currentData()))
         qt_ui.settings.focstim_use_teleplot.set(self.focstim_use_teleplot.isChecked())
+        qt_ui.settings.focstim_teleplot_prefix.set(self.focstim_teleplot_prefix.text())
 
         # media sync settings
         qt_ui.settings.media_sync_mpc_address.set(self.mpc_address.text())
@@ -226,17 +223,6 @@ class PreferencesDialog(QDialog, Ui_PreferencesDialog):
 
         # funscript mapping
         self.tableView.model().save_to_settings()
-
-    def open_test_audio_dialog(self):
-        api_index = self.audio_api.currentIndex()
-        device_name = self.audio_output_device.currentText()
-        device_index = -1
-        for device in sd.query_devices():
-            if device['hostapi'] == api_index and device['name'] == device_name:
-                device_index = device['index']
-
-        dialog = AudioTestDialog(self, device_index)
-        dialog.exec()
 
     def funscript_reset_defaults(self):
         self.tableView.model().reset_to_defaults()

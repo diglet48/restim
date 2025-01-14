@@ -6,8 +6,8 @@ from qt_ui import settings
 class DeviceType(Enum):
     NONE = 0
     AUDIO_THREE_PHASE = 1
-    AUDIO_FOUR_PHASE = 2
-    AUDIO_FIVE_PHASE = 3
+    # AUDIO_FOUR_PHASE = 2
+    # AUDIO_FIVE_PHASE = 3
     # MODIFY_EXISTING_THREEPHASE_AUDIO = 4
     FOCSTIM_THREE_PHASE = 5
 

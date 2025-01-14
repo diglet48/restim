@@ -9,14 +9,10 @@ class WizardPageDeviceType(QWizardPage, Ui_WizardPageDeviceType):
         self.setupUi(self)
 
         self.three_phase_radio.toggled.connect(self.completeChanged)
-        self.four_phase_radio.toggled.connect(self.completeChanged)
-        self.five_phase_radio.toggled.connect(self.completeChanged)
         self.focstim_radio.toggled.connect(self.completeChanged)
 
     def isComplete(self) -> bool:
         return any([
                 self.three_phase_radio.isChecked(),
-                self.four_phase_radio.isChecked(),
-                self.five_phase_radio.isChecked(),
                 self.focstim_radio.isChecked()
         ])

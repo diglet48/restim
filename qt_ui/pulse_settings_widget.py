@@ -13,7 +13,7 @@ from matplotlib.figure import Figure
 
 import stim_math.limits
 import stim_math.pulse
-from stim_math.axis import AbstractAxis, create_temporal_axis, create_constant_axis, WriteProtectedAxis
+from stim_math.axis import create_constant_axis
 
 from qt_ui import settings
 from qt_ui.axis_controller import AxisController, PercentAxisController
@@ -87,9 +87,6 @@ class PulseSettingsWidget(QtWidgets.QWidget):
         self.axis_pulse_width = create_constant_axis(settings.pulse_width.get())
         self.axis_pulse_interval_random = create_constant_axis(settings.pulse_interval_random.get() / 100)
         self.axis_pulse_rise_time = create_constant_axis(settings.pulse_rise_time.get())
-        self.axis_pulse_polarity = create_constant_axis(0.0)
-        self.axis_device_emulation_mode = create_constant_axis(0)
-        self.axis_pulse_phase_offset_increment = create_constant_axis(0)
 
         l = QtWidgets.QFormLayout(self)
         l.setObjectName("FormLayout")
@@ -111,14 +108,6 @@ class PulseSettingsWidget(QtWidgets.QWidget):
         gb = QtWidgets.QGroupBox("Pulse settings", self, checkable=False)
         gb_l = QtWidgets.QFormLayout(gb)
         gb_l.setObjectName("FormLayout pulse settings")
-
-        # polarity_combobox = QtWidgets.QComboBox()
-        # polarity_combobox.addItem('random', 0)
-        # polarity_combobox.addItem('+1', 1)
-        # polarity_combobox.addItem('-1', -1)
-        # polarity_combobox.setCurrentText(settings.pulse_polarity.get())
-        # polarity_label = QtWidgets.QLabel("polarity")
-        # gb_l.addRow(polarity_label, polarity_combobox)
 
         pulse_freq_slider = QtWidgets.QDoubleSpinBox(minimum=stim_math.limits.PulseFrequency.min,
                                                      maximum=stim_math.limits.PulseFrequency.max)
@@ -152,37 +141,8 @@ class PulseSettingsWidget(QtWidgets.QWidget):
         details_info = QtWidgets.QLabel("placeholder")
         gb_l.addRow(details_label, details_info)
 
-        # pulse_phase_offset_increment_slider = QtWidgets.QDoubleSpinBox(minimum=0, maximum=np.pi)
-        # pulse_phase_offset_increment_slider.setSingleStep(0.01)
-        # pulse_phase_offset_increment_slider.setValue(settings.pulse_phase_offset_increment.get())
-        # pulse_phase_offset_label = QtWidgets.QLabel("pulse phase increment [rad]")
-        # gb_l.addRow(pulse_phase_offset_label, pulse_phase_offset_increment_slider)
-
         gb.setLayout(gb_l)
         l.addWidget(gb)
-
-        # gb2 = QtWidgets.QGroupBox("device emulation", self, checkable=False)
-        # gb2_l = QtWidgets.QFormLayout(gb2)
-        # gb2_l.setObjectName("FormLayout pulse special modes")
-        #
-        # device_emulation_mode_combobox = QtWidgets.QComboBox()
-        # device_emulation_mode_combobox.addItem('continuous (best)', 0)
-        # device_emulation_mode_combobox.addItem('2 channel discrete (like mk312)', 1)
-        # device_emulation_mode_combobox.addItem('3 channel discrete (like neostim)', 2)
-        # device_emulation_mode_combobox.setCurrentText(settings.pulse_device_emulation_mode.get())
-        # emulation_label = QtWidgets.QLabel("device emulation mode")
-        # gb2_l.addRow(emulation_label, device_emulation_mode_combobox)
-        #
-        # gb2.setLayout(gb2_l)
-        # l.addWidget(gb2)
-
-        # carrier_slider.valueChanged.connect(self.settings_changed)
-        # pulse_freq_slider.valueChanged.connect(self.settings_changed)
-        # pulse_width_slider.valueChanged.connect(self.settings_changed)
-        # pulse_interval_random_slider.valueChanged.connect(self.settings_changed)
-        # polarity_combobox.currentIndexChanged.connect(self.settings_changed)
-        # device_emulation_mode_combobox.currentIndexChanged.connect(self.settings_changed)
-        # pulse_phase_offset_increment_slider.valueChanged.connect(self.settings_changed)
 
         self.carrier = carrier_slider
         self.pulse_freq_slider = pulse_freq_slider
@@ -190,9 +150,6 @@ class PulseSettingsWidget(QtWidgets.QWidget):
         self.details_info = details_info
         self.pulse_interval_random = pulse_interval_random_slider
         self.pulse_rise_time = pulse_rise_time_slider
-        # self.polarity = polarity_combobox
-        # self.device_emulation_mode = device_emulation_mode_combobox
-        # self.pulse_phase_offset_increment = pulse_phase_offset_increment_slider
 
 
         self.carrier_controller = AxisController(self.carrier)
@@ -222,10 +179,6 @@ class PulseSettingsWidget(QtWidgets.QWidget):
         self.carrier.setRange(min_carrier, max_carrier)
 
     def settings_changed(self):
-        # self.axis_pulse_polarity.add(self.pulse_polarity.value())
-        # self.axis_device_emulation_mode.add(self.device_emulation_mode.value())
-        # self.axis_pulse_phase_offset_increment.add(self.pulse_phase_offset_increment.value())
-
         # update text
         carrier_freq = self.carrier.value()
         pulse_freq = self.pulse_freq_slider.value()
@@ -247,7 +200,3 @@ class PulseSettingsWidget(QtWidgets.QWidget):
         settings.pulse_width.set(self.pulse_width_controller.last_user_entered_value)
         settings.pulse_interval_random.set(self.pulse_interval_random_controller.last_user_entered_value * 100)
         settings.pulse_rise_time.set(self.pulse_rise_time_controller.last_user_entered_value)
-        # settings.pulse_polarity.set(self.polarity.currentText())
-        # settings.pulse_device_emulation_mode.set(self.device_emulation_mode.currentText())
-        # settings.pulse_phase_offset_increment.set(self.pulse_phase_offset_increment.value())
-

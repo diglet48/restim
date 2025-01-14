@@ -27,9 +27,7 @@ from qt_ui import resources
 from qt_ui.models.funscript_kit import FunscriptKitModel
 from qt_ui.output_widgets.focstim_device import FOCStimDevice
 from qt_ui.widgets.icon_with_connection_status import IconWithConnectionStatus
-from stim_math.audio_gen.params import ThreephaseContinuousAlgorithmParams, ThreephasePositionParams, \
-    ThreephasePulsebasedAlgorithmParams, FivephaseContinuousAlgorithmParams, SafetyParams, VolumeParams
-from stim_math.axis import create_temporal_axis, create_precomputed_axis, WriteProtectedAxis
+from stim_math.axis import create_temporal_axis
 
 
 import sounddevice as sd
@@ -110,8 +108,6 @@ class Window(QMainWindow, Ui_MainWindow):
             self.tab_vibrate.vibration_2.left_right_bias,
             self.tab_vibrate.vibration_2.high_low_bias,
             self.tab_vibrate.vibration_2.random,
-
-            self.tab_fivephase.position
         )
 
         self.graphicsView.set_axis(self.alpha, self.beta, self.tab_threephase.transform_params)
@@ -150,11 +146,6 @@ class Window(QMainWindow, Ui_MainWindow):
         self.tab_volume.set_monitor_axis([
             self.alpha,
             self.beta,
-            self.tab_fivephase.position.e1,
-            self.tab_fivephase.position.e2,
-            self.tab_fivephase.position.e3,
-            self.tab_fivephase.position.e4,
-            self.tab_fivephase.position.e5,
         ])
 
         # stop audio when user modifies settings in media tab
@@ -168,8 +159,6 @@ class Window(QMainWindow, Ui_MainWindow):
         self.tab_pulse_settings.settings_changed()
         self.tab_threephase.settings_changed()
         self.tab_volume.updateVolume()
-        self.tab_fivephase.power_changed()
-        self.tab_fivephase.resistance_changed()
         self.tab_vibrate.settings_changed()
 
         self.wizard = DeviceSelectionWizard(self)
@@ -277,11 +266,6 @@ class Window(QMainWindow, Ui_MainWindow):
         self.tab_volume.set_monitor_axis([
             algorithm_factory.get_axis_alpha(),
             algorithm_factory.get_axis_beta(),
-            self.tab_fivephase.position.e1,
-            self.tab_fivephase.position.e2,
-            self.tab_fivephase.position.e3,
-            self.tab_fivephase.position.e4,
-            self.tab_fivephase.position.e5,
         ])
 
         # continuous tab
@@ -321,7 +305,6 @@ class Window(QMainWindow, Ui_MainWindow):
             self.tabWidget.setTabEnabled(self.tabWidget.indexOf(widget), state)
 
         all_tabs = {self.tab_threephase,
-                    self.tab_fivephase,
                     self.tab_pulse_settings,
                     self.tab_carrier,
                     self.tab_volume,
@@ -336,10 +319,6 @@ class Window(QMainWindow, Ui_MainWindow):
 
         if config.device_type == DeviceType.AUDIO_THREE_PHASE:
             pass
-        if config.device_type == DeviceType.AUDIO_FOUR_PHASE:
-            visible |= {self.tab_fivephase}
-        if config.device_type == DeviceType.AUDIO_FIVE_PHASE:
-            visible |= {self.tab_fivephase}
 
         if config.waveform_type == WaveformType.CONTINUOUS:
             visible |= {self.tab_carrier}
@@ -385,8 +364,6 @@ class Window(QMainWindow, Ui_MainWindow):
 
         if device.device_type in [
             DeviceType.AUDIO_THREE_PHASE,
-            DeviceType.AUDIO_FOUR_PHASE,
-            DeviceType.AUDIO_FIVE_PHASE,
         ]: # is audio device
             api_name = qt_ui.settings.audio_api.get() or sd.query_hostapis(sd.default.hostapi)['name']
             output_device_name = qt_ui.settings.audio_output_device.get() or sd.query_devices(sd.default.device[1])['name']
@@ -480,7 +457,6 @@ class Window(QMainWindow, Ui_MainWindow):
         self.tab_vibrate.save_settings()
         self.tab_pulse_settings.save_settings()
         self.tab_volume.save_settings()
-        self.tab_fivephase.save_settings()
 
     def closeEvent(self, event):
         logger.warning('Shutting down')

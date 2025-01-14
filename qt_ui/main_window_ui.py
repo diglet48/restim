@@ -93,11 +93,6 @@ class Ui_MainWindow(object):
         self.graphicsView_focus.setGeometry(QtCore.QRect(60, 50, 256, 192))
         self.graphicsView_focus.setObjectName("graphicsView_focus")
         self.tabWidget.addTab(self.tab_focus, "")
-        self.tab_fivephase = FivePhaseSettingsWidget()
-        self.tab_fivephase.setObjectName("tab_fivephase")
-        self.verticalLayout_3 = QtWidgets.QVBoxLayout(self.tab_fivephase)
-        self.verticalLayout_3.setObjectName("verticalLayout_3")
-        self.tabWidget.addTab(self.tab_fivephase, "")
         self.tab_carrier = CarrierSettingsWidget()
         self.tab_carrier.setObjectName("tab_carrier")
         self.tabWidget.addTab(self.tab_carrier, "")
@@ -198,7 +193,7 @@ class Ui_MainWindow(object):
 
         self.retranslateUi(MainWindow)
         self.stackedWidget.setCurrentIndex(0)
-        self.tabWidget.setCurrentIndex(5)
+        self.tabWidget.setCurrentIndex(0)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
     def retranslateUi(self, MainWindow):
@@ -213,7 +208,6 @@ class Ui_MainWindow(object):
         self.comboBox_patternSelect.setItemText(4, _translate("MainWindow", "C"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_threephase), _translate("MainWindow", "3-phase"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_focus), _translate("MainWindow", "Focus"))
-        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_fivephase), _translate("MainWindow", "4/5-phase"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_carrier), _translate("MainWindow", "Carrier settings"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_pulse_settings), _translate("MainWindow", "Pulse settings"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_a_b_testing), _translate("MainWindow", "A/B testing"))
@@ -238,7 +232,6 @@ class Ui_MainWindow(object):
         self.actionLog.setShortcut(_translate("MainWindow", "Ctrl+4"))
 from qt_ui.ab_test_widget import ABTestWidget
 from qt_ui.carrier_settings_widget import CarrierSettingsWidget
-from qt_ui.five_phase_settings_widget import FivePhaseSettingsWidget
 from qt_ui.media_settings_widget import MediaSettingsWidget
 from qt_ui.pulse_settings_widget import PulseSettingsWidget
 from qt_ui.three_phase_settings_widget import ThreePhaseSettingsWidget
