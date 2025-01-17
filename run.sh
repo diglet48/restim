@@ -1,10 +1,17 @@
-PYTHON_PATH="venv/bin/python"
+#!/bin/bash
 
-if ! [ -f $PYTHON_PATH ]; then
+VENV_PATH="./venv"
+
+if ! [ -f "$VENV_PATH" ]; then
   echo "setting up venv"
-  python3 -m venv venv
+  python3 -m venv "$VENV_PATH"
 fi
 
-$PYTHON_PATH -m pip install -r requirements.txt
+echo "activating venv"
+. "$VENV_PATH"/bin/activate
 
-$PYTHON_PATH ./restim.py
+echo "checking requirements"
+python3 -m pip install -r requirements.txt
+
+echo "starting restim"
+python3 ./restim.py
