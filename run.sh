@@ -2,7 +2,7 @@
 
 VENV_PATH="./venv"
 
-if ! [ -f "$VENV_PATH" ]; then
+if ! [ -d "$VENV_PATH" ]; then
   echo "setting up venv"
   python3 -m venv "$VENV_PATH"
 fi
