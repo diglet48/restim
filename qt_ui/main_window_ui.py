@@ -58,6 +58,12 @@ class Ui_MainWindow(object):
         self.progressBar_volume.setProperty("value", 24)
         self.progressBar_volume.setObjectName("progressBar_volume")
         self.verticalLayout_7.addWidget(self.progressBar_volume)
+        self.doubleSpinBox_volume = QtWidgets.QDoubleSpinBox(self.groupBox_3)
+        self.doubleSpinBox_volume.setDecimals(2)
+        self.doubleSpinBox_volume.setMaximum(100.0)
+        self.doubleSpinBox_volume.setSingleStep(0.1)
+        self.doubleSpinBox_volume.setObjectName("doubleSpinBox_volume")
+        self.verticalLayout_7.addWidget(self.doubleSpinBox_volume)
         self.verticalLayout.addWidget(self.groupBox_3)
         self.groupBox = QtWidgets.QGroupBox(self.frame)
         self.groupBox.setObjectName("groupBox")
@@ -193,7 +199,7 @@ class Ui_MainWindow(object):
 
         self.retranslateUi(MainWindow)
         self.stackedWidget.setCurrentIndex(0)
-        self.tabWidget.setCurrentIndex(0)
+        self.tabWidget.setCurrentIndex(5)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
     def retranslateUi(self, MainWindow):

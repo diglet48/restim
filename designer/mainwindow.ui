@@ -88,6 +88,19 @@
                 </property>
                </widget>
               </item>
+              <item>
+               <widget class="QDoubleSpinBox" name="doubleSpinBox_volume">
+                <property name="decimals">
+                 <number>2</number>
+                </property>
+                <property name="maximum">
+                 <double>100.000000000000000</double>
+                </property>
+                <property name="singleStep">
+                 <double>0.100000000000000</double>
+                </property>
+               </widget>
+              </item>
              </layout>
             </widget>
            </item>
@@ -161,7 +174,7 @@
            <bool>true</bool>
           </property>
           <property name="currentIndex">
-           <number>0</number>
+           <number>5</number>
           </property>
           <widget class="ThreePhaseSettingsWidget" name="tab_threephase">
            <attribute name="title">

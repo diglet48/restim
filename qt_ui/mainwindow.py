@@ -78,6 +78,9 @@ class Window(QMainWindow, Ui_MainWindow):
         line.setFrameShadow(QFrame.Sunken)
         self.toolBar.insertWidget(self.actionStart, line)
 
+        self.doubleSpinBox_volume.setValue(qt_ui.settings.volume_default_level.get())
+        self.tab_volume.link_volume_control(self.doubleSpinBox_volume)
+
         # default alpha/beta axis. Used by:
         # pattern generator
         # network stuff (intiface, tcode)

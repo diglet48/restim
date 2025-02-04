@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>556</width>
-    <height>450</height>
+    <width>496</width>
+    <height>518</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -24,19 +24,6 @@
        <widget class="QLabel" name="label_volume">
         <property name="text">
          <string>Volume [%]</string>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="1">
-       <widget class="QDoubleSpinBox" name="doubleSpinBox_volume">
-        <property name="decimals">
-         <number>2</number>
-        </property>
-        <property name="maximum">
-         <double>100.000000000000000</double>
-        </property>
-        <property name="singleStep">
-         <double>0.100000000000000</double>
         </property>
        </widget>
       </item>
@@ -91,6 +78,13 @@
        <widget class="QCheckBox" name="checkBox_ramp_enabled">
         <property name="text">
          <string/>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="1">
+       <widget class="QLabel" name="label_6">
+        <property name="text">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-style:italic;&quot;&gt;(moved to sidebar)&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
         </property>
        </widget>
       </item>
@@ -208,7 +202,6 @@
   </layout>
  </widget>
  <tabstops>
-  <tabstop>doubleSpinBox_volume</tabstop>
   <tabstop>doubleSpinBox_target_volume</tabstop>
   <tabstop>doubleSpinBox_rate</tabstop>
   <tabstop>checkBox_ramp_enabled</tabstop>
