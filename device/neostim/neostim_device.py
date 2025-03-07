@@ -549,7 +549,7 @@ class NeoStim(QObject):
 
     def error_occured(self, error):
         if error != 0:
-            logger.error('serial error:', self.port.errorString(), error)
+            logger.error(f'serial error: {self.port.errorString()} {error}')
             if self.port.isOpen():
                 self.stop()
 
