@@ -25,7 +25,10 @@ class Ui_WizardPageDeviceType(object):
         self.focstim_radio.setObjectName("focstim_radio")
         self.formLayout.setWidget(1, QtWidgets.QFormLayout.LabelRole, self.focstim_radio)
         spacerItem = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
-        self.formLayout.setItem(2, QtWidgets.QFormLayout.LabelRole, spacerItem)
+        self.formLayout.setItem(3, QtWidgets.QFormLayout.LabelRole, spacerItem)
+        self.neostim_radio = QtWidgets.QRadioButton(WizardPageDeviceType)
+        self.neostim_radio.setObjectName("neostim_radio")
+        self.formLayout.setWidget(2, QtWidgets.QFormLayout.LabelRole, self.neostim_radio)
 
         self.retranslateUi(WizardPageDeviceType)
         QtCore.QMetaObject.connectSlotsByName(WizardPageDeviceType)
@@ -36,3 +39,4 @@ class Ui_WizardPageDeviceType(object):
         WizardPageDeviceType.setTitle(_translate("WizardPageDeviceType", "Select device type"))
         self.three_phase_radio.setText(_translate("WizardPageDeviceType", "Audio-based three-phase"))
         self.focstim_radio.setText(_translate("WizardPageDeviceType", "FOC-Stim"))
+        self.neostim_radio.setText(_translate("WizardPageDeviceType", "NeoStim"))

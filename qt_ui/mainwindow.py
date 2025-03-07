@@ -15,7 +15,7 @@ from qt_ui.algorithm_factory import AlgorithmFactory
 from qt_ui.audio_write_dialog import AudioWriteDialog
 from qt_ui.main_window_ui import Ui_MainWindow
 import qt_ui.motion_generation
-from qt_ui.output_widgets.audio_stim_device import AudioStimDevice
+from device.audio.audio_stim_device import AudioStimDevice
 import net.websocketserver
 import net.tcpudpserver
 import qt_ui.funscript_conversion_dialog
@@ -25,15 +25,14 @@ import net.serialproxy
 import net.buttplug_wsdm_client
 from qt_ui import resources
 from qt_ui.models.funscript_kit import FunscriptKitModel
-from qt_ui.output_widgets.focstim_device import FOCStimDevice
+from device.focstim.focstim_device import FOCStimDevice
+from device.neostim.neostim_device import NeoStim
 from qt_ui.widgets.icon_with_connection_status import IconWithConnectionStatus
 from stim_math.axis import create_temporal_axis
 
 
 import sounddevice as sd
 
-# from qt_ui.device_selection_wizard_1 import DeviceSelectionWizard1, DeviceType
-# from qt_ui.device_selection_wizard import DeviceSelectionWizard
 from qt_ui.device_wizard.wizard import DeviceSelectionWizard
 from qt_ui.device_wizard.enums import DeviceConfiguration, DeviceType, WaveformType
 
@@ -111,6 +110,8 @@ class Window(QMainWindow, Ui_MainWindow):
             self.tab_vibrate.vibration_2.left_right_bias,
             self.tab_vibrate.vibration_2.high_low_bias,
             self.tab_vibrate.vibration_2.random,
+
+            # TODO: neostim
         )
 
         self.graphicsView.set_axis(self.alpha, self.beta, self.tab_threephase.transform_params)
@@ -314,24 +315,27 @@ class Window(QMainWindow, Ui_MainWindow):
                     self.tab_vibrate,
                     self.tab_details,
                     self.tab_focus,
-                    self.tab_a_b_testing}
+                    self.tab_a_b_testing,
+                    self.tab_neostim}
 
         visible = {self.tab_threephase, self.tab_volume, self.tab_vibrate, self.tab_details}
 
         config = DeviceConfiguration.from_settings()
 
         if config.device_type == DeviceType.AUDIO_THREE_PHASE:
-            pass
-
-        if config.waveform_type == WaveformType.CONTINUOUS:
-            visible |= {self.tab_carrier}
-        if config.waveform_type == WaveformType.PULSE_BASED:
-            visible |= {self.tab_pulse_settings}
-        if config.waveform_type == WaveformType.A_B_TESTING:
-            visible |= {self.tab_a_b_testing}
-
-        # if config.device_type == DeviceType.MODIFY_EXISTING_THREEPHASE_AUDIO:
-        #     visible -= {self.tab_volume, self.tab_vibrate, self.tab_details}
+            if config.waveform_type == WaveformType.CONTINUOUS:
+                visible |= {self.tab_carrier}
+            if config.waveform_type == WaveformType.PULSE_BASED:
+                visible |= {self.tab_pulse_settings}
+            if config.waveform_type == WaveformType.A_B_TESTING:
+                visible |= {self.tab_a_b_testing}
+        if config.device_type == DeviceType.FOCSTIM_THREE_PHASE:
+            if config.waveform_type == WaveformType.PULSE_BASED:
+                visible |= {self.tab_pulse_settings}
+                visible -= {self.tab_vibrate}
+        if config.device_type == DeviceType.NEOSTIM_THREE_PHASE:
+            visible |= {self.tab_neostim}
+            visible -= {self.tab_vibrate}
 
         for tab in all_tabs:
             set_visible(tab, tab in visible)
@@ -388,6 +392,14 @@ class Window(QMainWindow, Ui_MainWindow):
             serial_port_name = qt_ui.settings.focstim_serial_port.get()
             use_teleplot = qt_ui.settings.focstim_use_teleplot.get()
             output_device.start(serial_port_name, use_teleplot, algorithm)
+            if output_device.is_connected_and_running():
+                self.output_device = output_device
+                self.playstate = PlayState.PLAYING
+                self.refresh_play_button_icon()
+        elif device.device_type == DeviceType.NEOSTIM_THREE_PHASE:
+            output_device = NeoStim()
+            serial_port_name = qt_ui.settings.neostim_serial_port.get()
+            output_device.start(serial_port_name, algorithm)
             if output_device.is_connected_and_running():
                 self.output_device = output_device
                 self.playstate = PlayState.PLAYING

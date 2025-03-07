@@ -1,7 +1,7 @@
 import functools
 
 from PyQt5.QtSerialPort import QSerialPortInfo
-from PyQt5.QtWidgets import QDialog, QAbstractButton, QDialogButtonBox, QAbstractItemView, QHeaderView
+from PyQt5.QtWidgets import QDialog, QAbstractButton, QDialogButtonBox, QAbstractItemView, QHeaderView, QComboBox
 
 from qt_ui.preferences_dialog_ui import Ui_PreferencesDialog
 from qt_ui.models.funscript_kit import FunscriptKitModel
@@ -53,8 +53,9 @@ class PreferencesDialog(QDialog, Ui_PreferencesDialog):
             functools.partial(self.kodi_address.setText, qt_ui.settings.media_sync_kodi_address.default_value)
         )
 
-        # focstim reload serial devices
+        # focstim/neostim reload serial devices
         self.refresh_serial_devices.clicked.connect(self.repopulate_serial_devices)
+        self.neostim_refresh_serial_devices.clicked.connect(self.repopulate_serial_devices)
 
     def exec(self):
         self.loadSettings()
@@ -113,6 +114,9 @@ class PreferencesDialog(QDialog, Ui_PreferencesDialog):
         self.focstim_use_teleplot.setChecked(qt_ui.settings.focstim_use_teleplot.get())
         self.focstim_teleplot_prefix.setText(qt_ui.settings.focstim_teleplot_prefix.get())
 
+        # neostim settings
+        self.neostim_port.setCurrentIndex(self.focstim_port.findData(qt_ui.settings.neostim_serial_port.get()))
+
         # media sync settings
         self.mpc_address.setText(qt_ui.settings.media_sync_mpc_address.get())
         self.heresphere_address.setText(qt_ui.settings.media_sync_heresphere_address.get())
@@ -144,28 +148,32 @@ class PreferencesDialog(QDialog, Ui_PreferencesDialog):
                     self.audio_output_device.setCurrentIndex(self.audio_output_device.count() - 1)
 
     def repopulate_serial_devices(self):
-        selected_port_name = self.focstim_port.currentData()
-        if selected_port_name is None:
-            selected_port_name = qt_ui.settings.focstim_serial_port.get()
+        def refresh(control: QComboBox, setting: qt_ui.settings.Setting):
+            selected_port_name = control.currentData()
+            if selected_port_name is None:
+                selected_port_name = setting.get()
 
-        self.focstim_port.clear()
-        for port in QSerialPortInfo.availablePorts():
-            self.focstim_port.addItem(
-                f"{port.portName()} {port.description()}",
-                port.portName()
-            )
-
-        if selected_port_name:
-            index = self.focstim_port.findData(selected_port_name)
-            if index != -1:
-                self.focstim_port.setCurrentIndex(index)
-            else:
-                # if the port is no longer available, create a dummy port and add that.
-                self.focstim_port.addItem(
-                    f"{selected_port_name}",
-                    selected_port_name
+            control.clear()
+            for port in QSerialPortInfo.availablePorts():
+                control.addItem(
+                    f"{port.portName()} {port.description()}",
+                    port.portName()
                 )
-                self.focstim_port.setCurrentIndex(self.focstim_port.count() - 1)
+
+            if selected_port_name:
+                index = control.findData(selected_port_name)
+                if index != -1:
+                    control.setCurrentIndex(index)
+                else:
+                    # if the port is no longer available, create a dummy port and add that.
+                    control.addItem(
+                        f"{selected_port_name}",
+                        selected_port_name
+                    )
+                    control.setCurrentIndex(self.focstim_port.count() - 1)
+
+        refresh(self.focstim_port, qt_ui.settings.focstim_serial_port)
+        refresh(self.neostim_port, qt_ui.settings.neostim_serial_port)
 
 
     def refresh_audio_device_info(self):
@@ -208,6 +216,9 @@ class PreferencesDialog(QDialog, Ui_PreferencesDialog):
         qt_ui.settings.focstim_serial_port.set(str(self.focstim_port.currentData()))
         qt_ui.settings.focstim_use_teleplot.set(self.focstim_use_teleplot.isChecked())
         qt_ui.settings.focstim_teleplot_prefix.set(self.focstim_teleplot_prefix.text())
+
+        # neoStim
+        qt_ui.settings.neostim_serial_port.set(str(self.neostim_port.currentData()))
 
         # media sync settings
         qt_ui.settings.media_sync_mpc_address.set(self.mpc_address.text())

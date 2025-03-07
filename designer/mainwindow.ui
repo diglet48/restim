@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>767</width>
-    <height>564</height>
+    <width>848</width>
+    <height>635</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -15,7 +15,7 @@
   </property>
   <property name="windowIcon">
    <iconset>
-    <normaloff>../resources/favicon.png</normaloff>../resources/favicon.png</iconset>
+    <normaloff>../../../.designer/resources/favicon.png</normaloff>../../../.designer/resources/favicon.png</iconset>
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QHBoxLayout" name="horizontalLayout">
@@ -174,7 +174,7 @@
            <bool>true</bool>
           </property>
           <property name="currentIndex">
-           <number>5</number>
+           <number>4</number>
           </property>
           <widget class="ThreePhaseSettingsWidget" name="tab_threephase">
            <attribute name="title">
@@ -207,6 +207,11 @@
           <widget class="PulseSettingsWidget" name="tab_pulse_settings">
            <attribute name="title">
             <string>Pulse settings</string>
+           </attribute>
+          </widget>
+          <widget class="NeoStimSettingsWidget" name="tab_neostim">
+           <attribute name="title">
+            <string>NeoStim</string>
            </attribute>
           </widget>
           <widget class="ABTestWidget" name="tab_a_b_testing">
@@ -290,7 +295,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>767</width>
+     <width>848</width>
      <height>21</height>
     </rect>
    </property>
@@ -397,7 +402,7 @@
    <property name="icon">
     <iconset>
      <normaloff>:/newPrefix/play_poly.svg</normaloff>
-     <normalon>../resources/stop-sign_poly.svg</normalon>:/newPrefix/play_poly.svg</iconset>
+     <normalon>../../../.designer/resources/stop-sign_poly.svg</normalon>:/newPrefix/play_poly.svg</iconset>
    </property>
    <property name="text">
     <string>Start</string>
@@ -481,6 +486,12 @@
    <class>ABTestWidget</class>
    <extends>QWidget</extends>
    <header>qt_ui/ab_test_widget.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>NeoStimSettingsWidget</class>
+   <extends>QWidget</extends>
+   <header>qt_ui/neostim_settings_widget.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

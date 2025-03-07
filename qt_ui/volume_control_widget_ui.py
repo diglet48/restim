@@ -14,7 +14,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_VolumeControlForm(object):
     def setupUi(self, VolumeControlForm):
         VolumeControlForm.setObjectName("VolumeControlForm")
-        VolumeControlForm.resize(556, 450)
+        VolumeControlForm.resize(496, 518)
         self.verticalLayout = QtWidgets.QVBoxLayout(VolumeControlForm)
         self.verticalLayout.setObjectName("verticalLayout")
         self.groupBox = QtWidgets.QGroupBox(VolumeControlForm)

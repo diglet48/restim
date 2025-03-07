@@ -10,6 +10,7 @@ class DeviceType(Enum):
     # AUDIO_FIVE_PHASE = 3
     # MODIFY_EXISTING_THREEPHASE_AUDIO = 4
     FOCSTIM_THREE_PHASE = 5
+    NEOSTIM_THREE_PHASE = 6
 
 
 class WaveformType(Enum):
@@ -27,9 +28,10 @@ class DeviceConfiguration:
 
     def save(self):
         settings.device_config_device_type.set(self.device_type.value)
-        settings.device_config_waveform_type.set(self.waveform_type.value)
-        settings.device_config_min_freq.set(self.min_frequency)
-        settings.device_config_max_freq.set(self.max_frequency)
+        if self.device_type in (DeviceType.AUDIO_THREE_PHASE, DeviceType.FOCSTIM_THREE_PHASE):
+            settings.device_config_waveform_type.set(self.waveform_type.value)
+            settings.device_config_min_freq.set(self.min_frequency)
+            settings.device_config_max_freq.set(self.max_frequency)
 
     @staticmethod
     def from_settings():

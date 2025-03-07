@@ -7,7 +7,7 @@ import sounddevice as sd
 
 from stim_math.audio_gen.base_classes import AudioGenerationAlgorithm
 from qt_ui import settings
-from qt_ui.output_widgets.output_device import OutputDevice
+from device.output_device import OutputDevice
 
 logger = logging.getLogger('restim.audio')
 

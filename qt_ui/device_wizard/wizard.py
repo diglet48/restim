@@ -5,6 +5,7 @@ from PyQt5.QtWidgets import QWizard
 from qt_ui.device_wizard.type_select import WizardPageDeviceType
 from qt_ui.device_wizard.waveform_select import WizardPageWaveformType
 from qt_ui.device_wizard.safety_limits import WizardPageSafetyLimits
+from qt_ui.device_wizard.neostim_waveform_select import WizardPageNeoStimWaveformSelect
 from qt_ui.device_wizard.enums import DeviceType, WaveformType, DeviceConfiguration
 
 
@@ -15,6 +16,7 @@ class WizardPage(Enum):
     Page_device = 1
     Page_waveform = 2
     Page_limits = 3
+    Page_neostim_waveform = 4
 
 
 class DeviceSelectionWizard(QWizard):
@@ -32,7 +34,10 @@ class DeviceSelectionWizard(QWizard):
         self.page_waveform_type = WizardPageWaveformType()
         self.setPage(WizardPage.Page_waveform.value, self.page_waveform_type)
         self.page_safety_limits = WizardPageSafetyLimits()
+        self.page_safety_limits.setFinalPage(True)
         self.setPage(WizardPage.Page_limits.value, self.page_safety_limits)
+        self.page_neostim_waveform_select = WizardPageNeoStimWaveformSelect()
+        self.setPage(WizardPage.Page_neostim_waveform.value, self.page_neostim_waveform_select)
 
         self.set_configuration(DeviceConfiguration.from_settings())
 
@@ -50,28 +55,31 @@ class DeviceSelectionWizard(QWizard):
         self.set_configuration(config)
         super(DeviceSelectionWizard, self).exec()
 
-    # def nextId(self) -> int:
-    #     if self.currentId() == WizardPage.Page_device.value:
-    #         if self.page_device_type.three_phase_radio.isChecked():
-    #             return WizardPage.Page_waveform.value
-    #         else:
-    #             return WizardPage.Page_limits.value
-    #     elif self.currentId() == WizardPage.Page_waveform.value:
-    #         return WizardPage.Page_limits.value
-    #     return -1
+    def nextId(self):
+        if self.currentId() is None:
+            return WizardPage.Page_device.value
+        if self.currentId() == WizardPage.Page_device.value:
+            if self.page_device_type.neostim_radio.isChecked():
+                return WizardPage.Page_neostim_waveform.value
+            else:
+                return WizardPage.Page_waveform.value
+        if self.currentId() == WizardPage.Page_waveform.value:
+            return WizardPage.Page_limits.value
+        return -1
 
     def validateCurrentPage(self) -> bool:
-        # Enable/disable the relevant waveform types.
-        if self.page_device_type.three_phase_radio.isChecked():
-            self.page_waveform_type.pulse_based_radio.setEnabled(True)
-            self.page_waveform_type.continuous_radio.setEnabled(True)
-            self.page_waveform_type.a_b_radio.setEnabled(True)
-        elif self.page_device_type.focstim_radio.isChecked():
-            self.page_waveform_type.pulse_based_radio.setEnabled(True)
-            self.page_waveform_type.continuous_radio.setEnabled(False)
-            self.page_waveform_type.a_b_radio.setEnabled(False)
-        else:
-            return False
+        if self.currentId() == WizardPage.Page_device.value:
+            # Enable/disable the relevant waveform types.
+            if self.page_device_type.three_phase_radio.isChecked():
+                self.page_waveform_type.pulse_based_radio.setEnabled(True)
+                self.page_waveform_type.continuous_radio.setEnabled(True)
+                self.page_waveform_type.a_b_radio.setEnabled(True)
+            elif self.page_device_type.focstim_radio.isChecked():
+                self.page_waveform_type.pulse_based_radio.setEnabled(True)
+                self.page_waveform_type.continuous_radio.setEnabled(False)
+                self.page_waveform_type.a_b_radio.setEnabled(False)
+            elif self.page_device_type.neostim_radio.isChecked():
+                pass
 
         return super(DeviceSelectionWizard, self).validateCurrentPage()
 
@@ -99,6 +107,12 @@ class DeviceSelectionWizard(QWizard):
                 WaveformType.PULSE_BASED,
                 min_freq, max_freq
             )
+        elif self.page_device_type.neostim_radio.isChecked():
+            return DeviceConfiguration(
+                DeviceType.NEOSTIM_THREE_PHASE,
+                None,
+                None, None
+            )
         else:
             assert(False)
 
@@ -107,6 +121,8 @@ class DeviceSelectionWizard(QWizard):
             self.page_device_type.three_phase_radio.setChecked(True)
         if config.device_type == DeviceType.FOCSTIM_THREE_PHASE:
             self.page_device_type.focstim_radio.setChecked(True)
+        if config.device_type == DeviceType.NEOSTIM_THREE_PHASE:
+            self.page_device_type.neostim_radio.setChecked(True)
 
         if config.waveform_type == WaveformType.CONTINUOUS:
             self.page_waveform_type.continuous_radio.setChecked(True)

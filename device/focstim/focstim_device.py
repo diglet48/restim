@@ -9,7 +9,7 @@ from PyQt5.QtCore import QIODevice, QTimer
 
 import qt_ui.settings
 from net.tcode import TCodeCommand
-from qt_ui.output_widgets.output_device import OutputDevice
+from device.output_device import OutputDevice
 from stim_math.audio_gen.base_classes import RemoteGenerationAlgorithm
 
 logger = logging.getLogger('restim.focstim')
