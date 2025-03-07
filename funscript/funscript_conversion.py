@@ -2,7 +2,7 @@ import numpy as np
 from funscript.funscript import Funscript
 
 
-def convert_1d_to_2d(funscript: Funscript):
+def convert_1d_to_2d(funscript: Funscript, random_direction_change_probability=0.1):
     at, pos = funscript.x, funscript.y
 
     dir = 1
@@ -35,7 +35,7 @@ def convert_1d_to_2d(funscript: Funscript):
         center = (end_p + start_p) / 2
         r = (start_p - end_p) / 2
 
-        if np.random.random() > 0.9:
+        if np.random.random() < random_direction_change_probability:
             dir = dir * -1
 
         x = center + r * np.cos(theta)

@@ -118,6 +118,8 @@ additional_search_paths = Setting('additional_search_paths', [], list)
 
 file_dialog_last_dir = Setting('file_dialog_last_dir', '', str)
 
+funscript_conversion_random_direction_change_probability = Setting('funscript/random_direction_change_probability', 0.1, float)
+
 display_fps = Setting('display/fps', 60, float)
 display_latency = Setting('display/latency', 200, float)
 
