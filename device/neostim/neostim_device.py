@@ -473,11 +473,11 @@ class NeoStim(QObject):
         if firmware_version == FIRMWARE_VERSION:
             if not self.checked_firmware_version:
                 self.checked_firmware_version = True
-                logger.info(f'found firmware version: {firmware_version.decode('utf-8')}', )
+                logger.info(f'found firmware version: {firmware_version.decode("utf-8")}')
                 # defer signal generation until compatible firmware version is confirmed.
                 self.algorithm.device_connected_and_ready()
         else:
-            logger.error(f'Incompatible firmware version. Got "{firmware_version.decode('utf-8')}" expected "{FIRMWARE_VERSION.decode('utf-8')}"')
+            logger.error(f'Incompatible firmware version. Got "{firmware_version.decode("utf-8")}" expected "{FIRMWARE_VERSION.decode("utf-8")}"')
             self.stop()
 
     def handle_read_voltages(self, vbat_mv, vcap_mv, ipri_ma):
