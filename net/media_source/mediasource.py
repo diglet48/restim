@@ -5,6 +5,7 @@ import logging
 from PyQt5.QtCore import QObject
 
 from net.media_source.interface import MediaSourceInterface, MediaConnectionState
+from qt_ui import settings
 
 logger = logging.getLogger('restim.media')
 
@@ -141,6 +142,11 @@ class MediaSource(QObject, MediaSourceInterface, metaclass=A):
 
     def map_timestamp(self, timestamp):
         if self.is_playing():
+            # Apply heresphere latency adjustment for HereSphere
+            if self.__class__.__name__ == 'HereSphere':
+                latency_sec = settings.media_sync_heresphere_latency.get() / 1000.0
+                timestamp = timestamp + latency_sec
+
             adj_timestamp = timestamp - self.last_state.media_play_timestamp + self.last_state.cursor
             return adj_timestamp
         else:
