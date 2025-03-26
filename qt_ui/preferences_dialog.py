@@ -120,6 +120,7 @@ class PreferencesDialog(QDialog, Ui_PreferencesDialog):
         # media sync settings
         self.mpc_address.setText(qt_ui.settings.media_sync_mpc_address.get())
         self.heresphere_address.setText(qt_ui.settings.media_sync_heresphere_address.get())
+        self.heresphere_latency.setValue(qt_ui.settings.media_sync_heresphere_latency.get())
         self.vlc_address.setText(qt_ui.settings.media_sync_vlc_address.get())
         self.vlc_username.setText(qt_ui.settings.media_sync_vlc_username.get())
         self.vlc_password.setText(qt_ui.settings.media_sync_vlc_password.get())
@@ -223,6 +224,7 @@ class PreferencesDialog(QDialog, Ui_PreferencesDialog):
         # media sync settings
         qt_ui.settings.media_sync_mpc_address.set(self.mpc_address.text())
         qt_ui.settings.media_sync_heresphere_address.set(self.heresphere_address.text())
+        qt_ui.settings.media_sync_heresphere_latency.set(self.heresphere_latency.value())
         qt_ui.settings.media_sync_vlc_address.set(self.vlc_address.text())
         qt_ui.settings.media_sync_vlc_username.set(self.vlc_username.text())
         qt_ui.settings.media_sync_vlc_password.set(self.vlc_password.text())
