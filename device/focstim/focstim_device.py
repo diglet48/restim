@@ -1,11 +1,11 @@
 import logging
-import socket
 from dataclasses import dataclass
 import re
 
 from PyQt5.Qt import QObject
 from PyQt5.QtSerialPort import QSerialPort
 from PyQt5.QtCore import QIODevice, QTimer
+from PyQt5.QtNetwork import QUdpSocket
 
 import qt_ui.settings
 from net.tcode import TCodeCommand
@@ -14,7 +14,8 @@ from stim_math.audio_gen.base_classes import RemoteGenerationAlgorithm
 
 logger = logging.getLogger('restim.focstim')
 
-teleplotAddr = ("127.0.0.1", 47269)
+teleplot_addr = "127.0.0.1"
+teleplot_port = 47269
 
 FOCSTIM_VERSION_STRING = '0.5'
 
@@ -76,7 +77,8 @@ class FOCStimDevice(QObject, OutputDevice):
     def start(self, com_port, use_teleplot, algorithm: RemoteGenerationAlgorithm):
         self.algorithm = algorithm
         if use_teleplot:
-            self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            self.sock = QUdpSocket()
+            self.sock.connectToHost(teleplot_addr, teleplot_port, QIODevice.OpenModeFlag.WriteOnly)
 
         self.port = QSerialPort(self)
         self.port.setPortName(com_port)
@@ -163,9 +165,10 @@ class FOCStimDevice(QObject, OutputDevice):
                     parts = line[1:].split(b' ')
                     parts = [self.teleplot_prefix + part for part in parts]
                     try:
-                        self.sock.sendto(b'\r\n'.join(parts), teleplotAddr)
-                    except OSError:
-                        pass
+                        payload = b'\r\n'.join(parts)
+                        self.sock.write(payload)
+                    except OSError as e:
+                        raise e
                 break
 
             # line is status message?
