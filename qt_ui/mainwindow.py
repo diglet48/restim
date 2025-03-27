@@ -53,6 +53,7 @@ class Window(QMainWindow, Ui_MainWindow):
         self.setupUi(self)
 
         self.playstate = PlayState.STOPPED
+        self.tab_volume.set_play_state(self.playstate)
         self.refresh_play_button_icon()
 
         # set the first tab as active tab, in case we forgot to set it in designer
@@ -78,7 +79,7 @@ class Window(QMainWindow, Ui_MainWindow):
         self.toolBar.insertWidget(self.actionStart, line)
 
         self.doubleSpinBox_volume.setValue(qt_ui.settings.volume_default_level.get())
-        self.tab_volume.link_volume_control(self.doubleSpinBox_volume)
+        self.tab_volume.link_volume_controls(self.doubleSpinBox_volume, self.progressBar_volume)
 
         # default alpha/beta axis. Used by:
         # pattern generator
@@ -89,8 +90,8 @@ class Window(QMainWindow, Ui_MainWindow):
         self.tcode_command_router = TCodeCommandRouter(
             self.alpha,
             self.beta,
-            self.tab_volume.api_volume,
-            self.tab_volume.external_volume,
+            self.tab_volume.axis_api_volume,
+            self.tab_volume.axis_external_volume,
 
             self.tab_carrier.axis_carrier,  # this gets set to the device-specific axis later
 
@@ -126,7 +127,6 @@ class Window(QMainWindow, Ui_MainWindow):
             self.tab_threephase.transform_params,
         )
         # self.tab_details.set_config_manager(self.threephase_parameters)
-        self.progressBar_volume.set_axis(self.tab_volume.volume)
 
         self.comboBox_patternSelect.currentTextChanged.connect(self.motion_generator.patternChanged)
         self.motion_generator.patternChanged(self.comboBox_patternSelect.currentText())
@@ -162,7 +162,7 @@ class Window(QMainWindow, Ui_MainWindow):
         # self.tab_carrier.settings_changed()
         self.tab_pulse_settings.settings_changed()
         self.tab_threephase.settings_changed()
-        self.tab_volume.updateVolume()
+        self.tab_volume.refresh_master_volume()
         self.tab_vibrate.settings_changed()
 
         self.wizard = DeviceSelectionWizard(self)
@@ -264,13 +264,13 @@ class Window(QMainWindow, Ui_MainWindow):
         # main pane
         self.graphicsView.alpha = algorithm_factory.get_axis_alpha()
         self.graphicsView.beta = algorithm_factory.get_axis_beta()
-        self.progressBar_volume.volume.api = algorithm_factory.get_axis_volume_api()
 
         # volume tab
         self.tab_volume.set_monitor_axis([
             algorithm_factory.get_axis_alpha(),
             algorithm_factory.get_axis_beta(),
         ])
+        self.tab_volume.volume.api = algorithm_factory.get_axis_volume_api()
 
         # continuous tab
         self.tab_carrier.carrier_controller.link_axis(algorithm_factory.get_axis_continuous_carrier_frequency())
@@ -389,6 +389,7 @@ class Window(QMainWindow, Ui_MainWindow):
             if output_device.is_connected_and_running():
                 self.output_device = output_device
                 self.playstate = PlayState.PLAYING
+                self.tab_volume.set_play_state(self.playstate)
                 self.refresh_play_button_icon()
         elif device.device_type == DeviceType.FOCSTIM_THREE_PHASE:
             output_device = FOCStimDevice()
@@ -398,6 +399,7 @@ class Window(QMainWindow, Ui_MainWindow):
             if output_device.is_connected_and_running():
                 self.output_device = output_device
                 self.playstate = PlayState.PLAYING
+                self.tab_volume.set_play_state(self.playstate)
                 self.refresh_play_button_icon()
         elif device.device_type == DeviceType.NEOSTIM_THREE_PHASE:
             output_device = NeoStim()
@@ -406,6 +408,7 @@ class Window(QMainWindow, Ui_MainWindow):
             if output_device.is_connected_and_running():
                 self.output_device = output_device
                 self.playstate = PlayState.PLAYING
+                self.tab_volume.set_play_state(self.playstate)
                 self.refresh_play_button_icon()
         else:
             raise RuntimeError("Unknown device type")
@@ -415,6 +418,7 @@ class Window(QMainWindow, Ui_MainWindow):
             self.output_device.stop()
             self.output_device = None
         self.playstate = new_playstate
+        self.tab_volume.set_play_state(self.playstate)
         self.refresh_play_button_icon()
 
     def autostart_timeout(self):
@@ -460,7 +464,7 @@ class Window(QMainWindow, Ui_MainWindow):
         """
         self.tcode_command_router.reload_kit()
         self.graphicsView.refreshSettings()
-        self.progressBar_volume.refreshSettings()
+        self.tab_volume.refreshSettings()
         self.buttplug_wsdm_client.refreshSettings()
         self.funscript_mapping_changed()  # reload funscript axis
         self.tab_a_b_testing.refreshSettings()

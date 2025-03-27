@@ -122,6 +122,27 @@ class Ui_VolumeControlForm(object):
 
         self.verticalLayout.addWidget(self.groupBox_2)
 
+        self.groupBox_4 = QGroupBox(VolumeControlForm)
+        self.groupBox_4.setObjectName(u"groupBox_4")
+        self.formLayout_4 = QFormLayout(self.groupBox_4)
+        self.formLayout_4.setObjectName(u"formLayout_4")
+        self.label_7 = QLabel(self.groupBox_4)
+        self.label_7.setObjectName(u"label_7")
+
+        self.formLayout_4.setWidget(0, QFormLayout.LabelRole, self.label_7)
+
+        self.doubleSpinBox_slow_start = QDoubleSpinBox(self.groupBox_4)
+        self.doubleSpinBox_slow_start.setObjectName(u"doubleSpinBox_slow_start")
+        self.doubleSpinBox_slow_start.setDecimals(1)
+        self.doubleSpinBox_slow_start.setMaximum(100.000000000000000)
+        self.doubleSpinBox_slow_start.setSingleStep(0.100000000000000)
+        self.doubleSpinBox_slow_start.setValue(1.000000000000000)
+
+        self.formLayout_4.setWidget(0, QFormLayout.FieldRole, self.doubleSpinBox_slow_start)
+
+
+        self.verticalLayout.addWidget(self.groupBox_4)
+
         self.groupBox_3 = QGroupBox(VolumeControlForm)
         self.groupBox_3.setObjectName(u"groupBox_3")
         self.formLayout_3 = QFormLayout(self.groupBox_3)
@@ -171,6 +192,8 @@ class Ui_VolumeControlForm(object):
         self.label_2.setText(QCoreApplication.translate("VolumeControlForm", u"Inactivity threshold [seconds]", None))
         self.label_3.setText(QCoreApplication.translate("VolumeControlForm", u"Reduce volume by [%]", None))
         self.label_4.setText(QCoreApplication.translate("VolumeControlForm", u"Ramp time [seconds]", None))
+        self.groupBox_4.setTitle(QCoreApplication.translate("VolumeControlForm", u"Slow start", None))
+        self.label_7.setText(QCoreApplication.translate("VolumeControlForm", u"Ramp time [seconds]", None))
         self.groupBox_3.setTitle(QCoreApplication.translate("VolumeControlForm", u"Volume-frequency adjustment (FOC-Stim only)", None))
 #if QT_CONFIG(tooltip)
         self.label_5.setToolTip(QCoreApplication.translate("VolumeControlForm", u"<html><head/><body><p>Available on FOC-Stim only. Time constant of the nerves. </p><p>Automatically adjusts the volume when the carrier frequency changes.</p><p>Increase if lower frequencies feel too strong.</p><p>default = 355\u00b5s</p></body></html>", None))

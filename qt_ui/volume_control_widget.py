@@ -8,9 +8,12 @@ from PySide6.QtWidgets import QDoubleSpinBox
 
 from qt_ui.axis_controller import AxisController
 from qt_ui.volume_control_widget_ui import Ui_VolumeControlForm
+from qt_ui.widgets.volume_widget import VolumeWidget
 from stim_math.audio_gen.params import VolumeParams
 from stim_math.axis import create_temporal_axis, AbstractAxis, create_constant_axis
 from qt_ui import settings
+
+update_interval_seconds = 0.1
 
 
 class VolumeControlWidget(QtWidgets.QWidget, Ui_VolumeControlForm):
@@ -18,39 +21,50 @@ class VolumeControlWidget(QtWidgets.QWidget, Ui_VolumeControlForm):
         QtWidgets.QWidget.__init__(self, parent)
         self.setupUi(self)
 
-        self.api_volume = create_temporal_axis(1.0)
-        self.inactivity_volume = create_temporal_axis(1.0)
-        self.master_volume = create_temporal_axis(settings.volume_default_level.get())
-        self.external_volume = create_temporal_axis(1.0)
+        # volume set by tcode or funscript
+        self.axis_api_volume = create_temporal_axis(1.0)
+        # volume multiplier for the 'inactivity' feature
+        self.axis_inactivity_volume = create_temporal_axis(1.0)
+        # master volume, volume set in application. Slowly increases if ramp is used.
+        self.axis_master_volume = create_temporal_axis(settings.volume_default_level.get())
+        # volume set by tcode, used by external applications
+        self.axis_external_volume = create_temporal_axis(1.0)
+
         self.axis_tau = create_constant_axis(settings.tau_us.get())
         self.volume = VolumeParams(
-            api=self.api_volume,
-            master=self.master_volume,
-            inactivity=self.inactivity_volume,
-            external=self.external_volume,
+            api=self.axis_api_volume,
+            master=self.axis_master_volume,
+            inactivity=self.axis_inactivity_volume,
+            external=self.axis_external_volume,
         )
         self.monitor_axis = []
 
         timer = QtCore.QTimer(self)
         timer.timeout.connect(self.timeout)
-        timer.start(int(1000 / 10.0))
+        timer.start(int(update_interval_seconds * 1000))
         self.last_update_time = time.time()
         self.remainder = 0
+        self.latency = 0
 
         self.doubleSpinBox_volume = None
+        self.volume_widget: VolumeWidget = None
         self.doubleSpinBox_tau.setValue(settings.tau_us.get())
 
         self.last_axis_update_time = time.time()
         self.last_axis_values = (0, 0)
-        self.inactivity_volume_progress = 0
+        self.inactivity_multiplier = 1
+        self.slow_start_multiplier = 0
+        self.playing = False
 
         self.doubleSpinBox_inactivity_threshold.setValue(settings.volume_inactivity_threshold.get())
         self.doubleSpinBox_inactivity_ramp_time.setValue(settings.volume_ramp_time.get())
         self.doubleSpinBox_rate.setValue(settings.volume_increment_rate.get())
 
-        self.doubleSpinBox_inactivity_threshold.valueChanged.connect(self.settings_changed)
-        self.doubleSpinBox_inactivity_ramp_time.valueChanged.connect(self.settings_changed)
-        self.doubleSpinBox_rate.valueChanged.connect(self.settings_changed)
+        self.doubleSpinBox_inactivity_threshold.valueChanged.connect(self.ramp_values_changed)
+        self.doubleSpinBox_inactivity_ramp_time.valueChanged.connect(self.ramp_values_changed)
+        self.doubleSpinBox_rate.valueChanged.connect(self.ramp_values_changed)
+
+        self.doubleSpinBox_slow_start.setValue(settings.volume_slow_start_time.get())
 
         self.doubleSpinBox_target_volume.valueChanged.connect(self.refresh_message)
         self.doubleSpinBox_rate.valueChanged.connect(self.refresh_message)
@@ -58,12 +72,13 @@ class VolumeControlWidget(QtWidgets.QWidget, Ui_VolumeControlForm):
         self.tau_controller = AxisController(self.doubleSpinBox_tau)
         self.tau_controller.link_axis(self.axis_tau)
 
-    def link_volume_control(self, volume_control: QDoubleSpinBox):
-        self.doubleSpinBox_volume = volume_control
+    def link_volume_controls(self, volume_spinbox: QDoubleSpinBox, volume_bar: VolumeWidget):
+        self.doubleSpinBox_volume = volume_spinbox
 
-        self.doubleSpinBox_volume.valueChanged.connect(self.updateVolume)
+        self.doubleSpinBox_volume.valueChanged.connect(self.refresh_master_volume)
         self.doubleSpinBox_volume.valueChanged.connect(self.refresh_message)
 
+        self.volume_widget = volume_bar
 
     def timeout(self):
         t = time.time()
@@ -72,6 +87,22 @@ class VolumeControlWidget(QtWidgets.QWidget, Ui_VolumeControlForm):
 
         self.timeout_ramp(dt)
         self.timeout_inactivity(dt)
+
+        master_volume = self.volume.master.last_value()
+        if self.playing:
+            inactivity_volume = self.inactivity_multiplier * self.slow_start_multiplier
+        else:
+            # when not playing, fake the display so the user sees the volume after the start ramp
+            inactivity_volume = self.inactivity_multiplier
+        api_volume = self.volume.api.interpolate(time.time() - self.latency)
+        external_volume = self.volume.external.interpolate(time.time() - self.latency)
+        self.volume_widget.set_value_and_tooltip(
+            int(master_volume * api_volume * inactivity_volume * external_volume * 100),
+            f"master volume: {master_volume * 100:.0f}%\n" +
+            f"tcode/funscript volume: {api_volume * 100:.0f}%\n" +
+            f"inactivity volume: {inactivity_volume * 100:.0f}%\n" +
+            f"external volume: {external_volume * 100:.0f}%"
+        )
 
     def timeout_ramp(self, dt: float):
         if not self.checkBox_ramp_enabled.isChecked():
@@ -105,6 +136,17 @@ class VolumeControlWidget(QtWidgets.QWidget, Ui_VolumeControlForm):
     def set_monitor_axis(self, axis: list[AbstractAxis]):
         self.monitor_axis = axis
 
+    def set_play_state(self, play_state):
+        from qt_ui.mainwindow import PlayState
+
+        if play_state == PlayState.PLAYING:
+            if self.playing == False:
+                self.slow_start_multiplier = 0
+                self.playing = True
+        else:
+            self.slow_start_multiplier = 0
+            self.playing = False
+
     def timeout_inactivity(self, dt: float):
         axis_values = []
         for axis in self.monitor_axis:
@@ -114,27 +156,38 @@ class VolumeControlWidget(QtWidgets.QWidget, Ui_VolumeControlForm):
         self.last_axis_values = axis_values
         active = self.last_axis_update_time >= (time.time() - self.doubleSpinBox_inactivity_threshold.value())
 
-        if not active:
-            try:
-                self.inactivity_volume_progress = np.clip(
-                    self.inactivity_volume_progress + (dt / self.doubleSpinBox_inactivity_ramp_time.value()),
-                    0, 1
-                )
-            except ZeroDivisionError:
-                self.inactivity_volume_progress = 1
-        else: # active
-            try:
-                self.inactivity_volume_progress = np.clip(
-                    self.inactivity_volume_progress - (dt / self.doubleSpinBox_inactivity_ramp_time.value()),
-                    0, 1
-                )
-            except ZeroDivisionError:
-                self.inactivity_volume_progress = 0
+        try:
+            inactivity_dy = self.doubleSpinBox_inactivity_volume.value() / 100.0 / self.doubleSpinBox_inactivity_ramp_time.value()
+        except ZeroDivisionError:
+            inactivity_dy = 1
+        if active:
+            self.inactivity_multiplier = np.clip(
+                self.inactivity_multiplier + inactivity_dy * dt,
+                1 - self.doubleSpinBox_inactivity_volume.value() / 100,
+                1.0)
+        else:
+            self.inactivity_multiplier = np.clip(
+                self.inactivity_multiplier - inactivity_dy * dt,
+                1 - self.doubleSpinBox_inactivity_volume.value() / 100,
+                1.0)
 
-        self.inactivity_volume.add(1 - self.inactivity_volume_progress * self.doubleSpinBox_inactivity_volume.value() / 100)
+        try:
+            slow_start_dy = 1 / self.doubleSpinBox_slow_start.value()
+        except ZeroDivisionError:
+            slow_start_dy = 100
+        if self.playing:
+            self.slow_start_multiplier = np.clip(
+                self.slow_start_multiplier + slow_start_dy * dt,
+                0,
+                1
+            )
+        else:
+            self.slow_start_multiplier = 0
 
-    def updateVolume(self, _=None):
-        self.master_volume.add(np.clip(self.doubleSpinBox_volume.value() / 100, 0.0, 1.0))
+        self.axis_inactivity_volume.add(self.inactivity_multiplier * self.slow_start_multiplier)
+
+    def refresh_master_volume(self, _=None):
+        self.axis_master_volume.add(np.clip(self.doubleSpinBox_volume.value() / 100, 0.0, 1.0))
 
     def refresh_message(self, _=None):
         try:
@@ -152,11 +205,17 @@ class VolumeControlWidget(QtWidgets.QWidget, Ui_VolumeControlForm):
             message = f"time until target: never."
         self.checkBox_ramp_enabled.setText(message)
 
-    def settings_changed(self):
+    def ramp_values_changed(self):
         self.refresh_message()
+
+    def refreshSettings(self):
+        self.latency = settings.display_latency.get() / 1000.0
 
     def save_settings(self):
         settings.volume_inactivity_threshold.set(self.doubleSpinBox_inactivity_threshold.value())
         settings.volume_ramp_time.set(self.doubleSpinBox_inactivity_ramp_time.value())
         settings.volume_increment_rate.set(self.doubleSpinBox_rate.value())
+        settings.volume_slow_start_time.set(self.doubleSpinBox_slow_start.value())
         settings.tau_us.set(self.doubleSpinBox_tau.value())
+
+
