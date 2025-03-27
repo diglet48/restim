@@ -1,6 +1,6 @@
-from PyQt5.QtCore import QItemSelectionModel
-from PyQt5.QtCore import QModelIndex
-from PyQt5.QtWidgets import QDialog, QAbstractItemView, QFileDialog
+from PySide6.QtCore import QItemSelectionModel
+from PySide6.QtCore import QModelIndex
+from PySide6.QtWidgets import QDialog, QAbstractItemView, QFileDialog
 
 
 from qt_ui.additional_search_paths_dialog_ui import Ui_AdditionalSearchPathsDialog

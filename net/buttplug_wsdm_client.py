@@ -1,9 +1,9 @@
 import json
 import logging
 
-from PyQt5 import QtCore, QtWebSockets
-from PyQt5.QtCore import QUrl, QTimer
-from PyQt5.QtNetwork import QAbstractSocket
+from PySide6 import QtCore, QtWebSockets
+from PySide6.QtCore import QUrl, QTimer
+from PySide6.QtNetwork import QAbstractSocket
 
 from net.serialproxy import FunscriptExpander
 from net.tcode import TCodeCommand, InvalidTCodeException
@@ -32,7 +32,7 @@ class ButtplugWsdmClient(QtCore.QObject):
         self.expander = FunscriptExpander()
 
         self.client = QtWebSockets.QWebSocket("restim")
-        self.client.error.connect(self.error)
+        self.client.errorOccurred.connect(self.error)
         self.client.connected.connect(self.connected)
         self.client.textMessageReceived.connect(self.textMessageReceived)
         self.client.binaryMessageReceived.connect(self.binaryMessageReceived)
@@ -82,4 +82,4 @@ class ButtplugWsdmClient(QtCore.QObject):
 
         self.timer.setInterval(10)
 
-    new_tcode_command = QtCore.pyqtSignal(TCodeCommand)
+    new_tcode_command = QtCore.Signal(TCodeCommand)

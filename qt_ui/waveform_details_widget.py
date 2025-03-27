@@ -11,7 +11,7 @@ from stim_math.axis import AbstractAxis
 from stim_math.threephase_coordinate_transform import ThreePhaseCoordinateTransform, \
     ThreePhaseCoordinateTransformMapToEdge
 
-from PyQt5 import QtCore, QtWidgets
+from PySide6 import QtCore, QtWidgets
 
 from qt_ui.waveform_details_widget_ui import Ui_WaveformDetails
 

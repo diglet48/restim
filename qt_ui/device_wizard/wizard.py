@@ -1,7 +1,7 @@
 from enum import Enum
 import logging
 
-from PyQt5.QtWidgets import QWizard
+from PySide6.QtWidgets import QWizard
 from qt_ui.device_wizard.type_select import WizardPageDeviceType
 from qt_ui.device_wizard.waveform_select import WizardPageWaveformType
 from qt_ui.device_wizard.safety_limits import WizardPageSafetyLimits

@@ -3,5 +3,5 @@ websockets
 sounddevice
 soundfile
 matplotlib!=3.9.*
-PyQt5
+PySide6
 crc

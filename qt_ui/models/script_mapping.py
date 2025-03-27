@@ -4,8 +4,8 @@ import json.decoder
 import typing
 import logging
 
-from PyQt5.QtCore import QAbstractItemModel, QModelIndex, Qt
-from PyQt5.QtGui import QColor
+from PySide6.QtCore import QAbstractItemModel, QModelIndex, Qt
+from PySide6.QtGui import QColor
 
 import qt_ui.device_wizard
 import qt_ui.device_wizard.axes

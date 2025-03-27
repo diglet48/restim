@@ -1,6 +1,6 @@
 import typing
 from dataclasses import dataclass
-from PyQt5.QtCore import QModelIndex, Qt, QAbstractTableModel
+from PySide6.QtCore import QModelIndex, Qt, QAbstractTableModel
 
 from qt_ui.device_wizard.axes import AxisEnum, all_axis
 from qt_ui.settings import get_settings_instance
@@ -114,22 +114,22 @@ class FunscriptKitModel(QAbstractTableModel):
         return 6
 
     def data(self, index: QModelIndex, role: int = ...) -> typing.Any:
-        if role == Qt.CheckStateRole:
+        if role == Qt.ItemDataRole.CheckStateRole:
             item: FunscriptKitItem = self.children[index.row()]
             col = index.column()
             if col == 5:
                 if item.auto_loading:
-                    return Qt.Checked
+                    return Qt.CheckState.Checked
                 else:
-                    return Qt.Unchecked
+                    return Qt.CheckState.Unchecked
 
-        if role in (Qt.DisplayRole, Qt.EditRole):
+        if role in (Qt.ItemDataRole.DisplayRole, Qt.ItemDataRole.EditRole):
             item: FunscriptKitItem = self.children[index.row()]
             col = index.column()
             if col == 0:
-                if role == Qt.EditRole:
+                if role == Qt.ItemDataRole.EditRole:
                     return item.axis
-                if role == Qt.DisplayRole:
+                if role == Qt.ItemDataRole.DisplayRole:
                     return item.axis.display_name()
             if col == 1:
                 if item.allow_funscript_control:
@@ -143,38 +143,39 @@ class FunscriptKitModel(QAbstractTableModel):
             if col == 4:
                 return item.limit_max
             if col == 5:
-                if role == Qt.EditRole:
+                if role == Qt.ItemDataRole.EditRole:
                     return None #item.auto_loading
-                if role == Qt.DisplayRole:
+                if role == Qt.ItemDataRole.DisplayRole:
                     return None
 
-    def flags(self, index: QModelIndex) -> Qt.ItemFlags:
+    def flags(self, index: QModelIndex) -> Qt.ItemFlag:
         item: FunscriptKitItem = self.children[index.row()]
         if index.column() == 0:
-            return Qt.ItemIsSelectable | Qt.ItemIsEnabled
+            return Qt.ItemFlag.ItemIsSelectable | Qt.ItemFlag.ItemIsEnabled
         if index.column() == 1:
             if item.allow_funscript_control:
-                return Qt.ItemIsEditable | Qt.ItemIsSelectable | Qt.ItemIsEnabled
+                return Qt.ItemFlag.ItemIsEditable | Qt.ItemFlag.ItemIsSelectable | Qt.ItemFlag.ItemIsEnabled
             else:
-                return Qt.ItemIsSelectable
+                return Qt.ItemFlag.ItemIsSelectable
         if index.column() == 5:
-            return Qt.ItemIsSelectable | Qt.ItemIsEnabled | Qt.ItemIsUserCheckable
-        return Qt.ItemIsEditable | Qt.ItemIsSelectable | Qt.ItemIsEnabled
+            return Qt.ItemFlag.ItemIsSelectable | Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsUserCheckable
+        return Qt.ItemFlag.ItemIsEditable | Qt.ItemFlag.ItemIsSelectable | Qt.ItemFlag.ItemIsEnabled
 
     def setData(self, index: QModelIndex, value: typing.Any, role: int = ...) -> bool:
-        if role == Qt.CheckStateRole:
+        if role == Qt.ItemDataRole.CheckStateRole:
+            value = Qt.CheckState(value)
             item: FunscriptKitItem = self.children[index.row()]
             col = index.column()
             if col == 5:
-                if value == Qt.Checked:
+                if value == Qt.CheckState.Checked:
                     item.auto_loading = True
                     return True
-                if value == Qt.Unchecked:
+                if value == Qt.CheckState.Unchecked:
                     item.auto_loading = False
                     return True
             return False
 
-        if role == Qt.EditRole:
+        if role == Qt.ItemDataRole.EditRole:
             item: FunscriptKitItem = self.children[index.row()]
             col = index.column()
             if col == 0:
@@ -208,7 +209,7 @@ class FunscriptKitModel(QAbstractTableModel):
         return False
 
     def headerData(self, section: int, orientation: Qt.Orientation, role: int = ...) -> typing.Any:
-        if role == Qt.DisplayRole and orientation == Qt.Horizontal:
+        if role == Qt.ItemDataRole.DisplayRole and orientation == Qt.Orientation.Horizontal:
             if section == 0:
                 return 'Axis'
             if section == 1:

@@ -4,10 +4,10 @@ import time
 
 import soundfile as sf
 
-from PyQt5 import QtGui, QtCore
-from PyQt5.QtCore import QThread, QUrl
-from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
-from PyQt5.QtWidgets import QDialog, QAbstractButton, QDialogButtonBox, QFileDialog
+from PySide6 import QtGui, QtCore
+from PySide6.QtCore import QThread, QUrl
+from PySide6.QtMultimedia import QMediaPlayer
+from PySide6.QtWidgets import QDialog, QAbstractButton, QDialogButtonBox, QFileDialog
 
 from qt_ui.algorithm_factory import AlgorithmFactory
 from qt_ui.audio_write_dialog_ui import Ui_AudioWriteDialog
@@ -65,8 +65,8 @@ class AudioWriteDialog(QDialog, Ui_AudioWriteDialog):
                 self.duration_spinbox.setEnabled(True)
             self.media_player = QMediaPlayer()
             self.media_player.durationChanged.connect(duration_changed)
-            self.media_player.error.connect(on_error)
-            self.media_player.setMedia(QMediaContent(QUrl.fromUserInput(self.media_filename)))
+            self.media_player.errorOccurred.connect(on_error)
+            self.media_player.setSource(QUrl.fromUserInput(self.media_filename))
 
         self.commandLinkButton.clicked.connect(self.gen_audio)
         self.buttonBox.clicked.connect(self.buttonClicked)
@@ -141,7 +141,7 @@ class AudioWriteDialog(QDialog, Ui_AudioWriteDialog):
                 if not self.isInterruptionRequested():
                     logger.info(f'bake {duration_in_s:.1f} seconds of audio in {elapsed_time:.1f} seconds ({duration_in_s / elapsed_time:.1f}x realtime)')
 
-            progress = QtCore.pyqtSignal(int)
+            progress = QtCore.Signal(int)
 
         self.worker = Worker(self)
         self.worker.progress.connect(self.progressBar.setValue)

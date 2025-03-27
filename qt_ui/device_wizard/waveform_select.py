@@ -1,7 +1,8 @@
-from PyQt5 import Qt
-from PyQt5.QtWidgets import QWizardPage
+from PySide6.QtCore import Qt
+from PySide6.QtWidgets import QWizardPage, QSizePolicy
 
 from qt_ui.device_wizard.waveform_select_ui import Ui_WizardPageWaveformType
+
 
 
 class WizardPageWaveformType(QWizardPage, Ui_WizardPageWaveformType):
@@ -14,9 +15,9 @@ class WizardPageWaveformType(QWizardPage, Ui_WizardPageWaveformType):
         self.a_b_radio.toggled.connect(self.completeChanged)
 
         self.svg_continuous.load(":/restim/wizard/continuous.svg")
-        self.svg_continuous.setSizePolicy(Qt.QSizePolicy.Fixed, Qt.QSizePolicy.Fixed)
+        self.svg_continuous.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         self.svg_pulse.load(":/restim/wizard/pulse_based.svg")
-        self.svg_pulse.setSizePolicy(Qt.QSizePolicy.Fixed, Qt.QSizePolicy.Fixed)
+        self.svg_pulse.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
 
     def isComplete(self) -> bool:
         return any([

@@ -9,8 +9,8 @@ import numpy as np
 from dataclasses import dataclass
 
 
-from PyQt5.QtCore import QIODevice, QObject
-from PyQt5.QtSerialPort import QSerialPort
+from PySide6.QtCore import QIODevice, QObject
+from PySide6.QtSerialPort import QSerialPort
 
 
 logger = logging.getLogger('restim.neostim')

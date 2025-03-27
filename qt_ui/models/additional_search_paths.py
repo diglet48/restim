@@ -1,4 +1,4 @@
-from PyQt5.QtCore import Qt, QModelIndex, QStringListModel
+from PySide6.QtCore import Qt, QModelIndex, QStringListModel
 
 from qt_ui import settings
 

@@ -1,6 +1,7 @@
 import time
 
-from PyQt5 import QtCore, QtWidgets
+from PySide6 import QtCore, QtWidgets
+from PySide6.QtWidgets import QStyleFactory
 
 from qt_ui import settings
 
@@ -9,7 +10,12 @@ from stim_math.audio_gen.params import VolumeParams
 
 class VolumeWidget(QtWidgets.QProgressBar):
     def __init__(self, parent):
-        QtWidgets.QWidget.__init__(self, parent)
+        QtWidgets.QProgressBar.__init__(self, parent)
+
+        # use fusion style on windows 11 because the
+        # default progress bar styling is awful.
+        if self.style().name() == 'windows11':
+            self.setStyle(QStyleFactory.create("Fusion"))
 
         self.volume: VolumeParams = None
 

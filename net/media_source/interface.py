@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from enum import Enum
 
-from PyQt5 import QtCore
+from PySide6 import QtCore
 
 
 class MediaConnectionState(Enum):
@@ -81,4 +81,4 @@ class MediaSourceInterface(ABC):
     - the connection status changes
     - the loaded file changes
     """
-    connectionStatusChanged = QtCore.pyqtSignal()
+    connectionStatusChanged = QtCore.Signal()

@@ -2,11 +2,11 @@ import os
 import sys
 from enum import Enum
 
-from PyQt5 import QtGui
-from PyQt5.QtCore import QTimer
-from PyQt5.QtGui import QIcon
-from PyQt5.QtWidgets import (
-    QApplication, QMainWindow, QWidget, QSizePolicy, QFrame
+from PySide6 import QtGui
+from PySide6.QtCore import QTimer
+from PySide6.QtGui import QIcon
+from PySide6.QtWidgets import (
+    QApplication, QMainWindow, QWidget, QSizePolicy, QFrame, QStyleFactory
 )
 import logging
 
@@ -296,6 +296,9 @@ class Window(QMainWindow, Ui_MainWindow):
         self.tab_vibrate.vib2_high_low_bias_controller.link_axis(algorithm_factory.get_axis_vib2_high_low_bias())
         self.tab_vibrate.vib2_random_controller.link_axis(algorithm_factory.get_axis_vib2_random())
 
+        # neostim tab
+        # TODO
+
         if all((not self.page_media.is_internal(),
                 self.page_media.has_media_file_loaded(),
                 self.page_media.autostart_enabled(),
@@ -496,8 +499,6 @@ def run():
 
     sys.excepthook = excepthook
 
-    os.environ["QT_ENABLE_HIGHDPI_SCALING"] = "1"   # windows
-    os.environ["QT_SCALE_FACTOR_ROUNDING_POLICY"] = "PassThrough"
     app = QApplication(sys.argv)
     win = Window()
     win.show()

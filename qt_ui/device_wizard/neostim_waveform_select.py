@@ -1,5 +1,5 @@
-from PyQt5 import Qt
-from PyQt5.QtWidgets import QWizardPage
+from PySide6.QtCore import Qt
+from PySide6.QtWidgets import QWizardPage
 
 from qt_ui.device_wizard.neostim_waveform_select_ui import Ui_WizardPageNeoStim
 

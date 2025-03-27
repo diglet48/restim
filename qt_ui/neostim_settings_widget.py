@@ -1,6 +1,6 @@
 from __future__ import unicode_literals
 
-from PyQt5 import QtWidgets
+from PySide6 import QtWidgets
 
 from qt_ui.neostim_settings_widget_ui import Ui_NeoStimSettingsWidget
 from stim_math.axis import create_constant_axis, create_temporal_axis

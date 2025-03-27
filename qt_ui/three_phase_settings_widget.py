@@ -2,7 +2,7 @@ from __future__ import unicode_literals
 import numpy as np
 
 
-from PyQt5 import QtCore, QtWidgets
+from PySide6 import QtCore, QtWidgets
 from qt_ui import settings
 
 from qt_ui.three_phase_settings_widget_ui import Ui_ThreePhaseSettingsWidget
@@ -109,7 +109,7 @@ class ThreePhaseSettingsWidget(QtWidgets.QWidget, Ui_ThreePhaseSettingsWidget):
         # connect buttons signals/slots
         self.reset_defaults_button.clicked.connect(self.reset_defaults)
 
-    threePhaseTransformChanged = QtCore.pyqtSignal()
+    threePhaseTransformChanged = QtCore.Signal()
 
     def settings_changed(self):
         # update ui

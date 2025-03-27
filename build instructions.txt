@@ -1,26 +1,26 @@
 # useful commands
 
-pyqt5-tools designer
 
+./venv/Scripts/pyside6-designer.exe
 
-pyuic5  -o .\qt_ui\main_window_ui.py .\designer\mainwindow.ui
-pyuic5  -o .\qt_ui\waveform_details_widget_ui.py .\designer\waveformdetailswidget.ui
-pyuic5  -o .\qt_ui\funscript_conversion_ui.py .\designer\funscriptconversiondialog.ui
-pyuic5  -o .\qt_ui\volume_control_widget_ui.py .\designer\volumecontrolwidget.ui
-pyuic5  -o .\qt_ui\preferences_dialog_ui.py .\designer\preferencesdialog.ui
-pyuic5  -o .\qt_ui\additional_search_paths_dialog_ui.py .\designer\additionalsearchpathsdialog.ui
-pyuic5  -o .\qt_ui\three_phase_settings_widget_ui.py .\designer\threephasesettingswidget.ui
-pyuic5  -o .\qt_ui\media_settings_widget_ui.py .\designer\mediasettingswidget.ui
-pyuic5  -o .\qt_ui\audio_write_dialog_ui.py .\designer\audiowritedialog.ui
-pyuic5  -o .\qt_ui\ab_test_widget_ui.py .\designer\abtestwidget.ui
-pyuic5  -o .\qt_ui\neostim_settings_widget_ui.py .\designer\neostimsettingswidget.ui
+./venv/Scripts/pyside6-uic.exe  -o ./qt_ui/main_window_ui.py ./designer/mainwindow.ui
+./venv/Scripts/pyside6-uic.exe  -o ./qt_ui/waveform_details_widget_ui.py ./designer/waveformdetailswidget.ui
+./venv/Scripts/pyside6-uic.exe  -o ./qt_ui/funscript_conversion_ui.py ./designer/funscriptconversiondialog.ui
+./venv/Scripts/pyside6-uic.exe  -o ./qt_ui/volume_control_widget_ui.py ./designer/volumecontrolwidget.ui
+./venv/Scripts/pyside6-uic.exe  -o ./qt_ui/preferences_dialog_ui.py ./designer/preferencesdialog.ui
+./venv/Scripts/pyside6-uic.exe  -o ./qt_ui/additional_search_paths_dialog_ui.py ./designer/additionalsearchpathsdialog.ui
+./venv/Scripts/pyside6-uic.exe  -o ./qt_ui/three_phase_settings_widget_ui.py ./designer/threephasesettingswidget.ui
+./venv/Scripts/pyside6-uic.exe  -o ./qt_ui/media_settings_widget_ui.py ./designer/mediasettingswidget.ui
+./venv/Scripts/pyside6-uic.exe  -o ./qt_ui/audio_write_dialog_ui.py ./designer/audiowritedialog.ui
+./venv/Scripts/pyside6-uic.exe  -o ./qt_ui/ab_test_widget_ui.py ./designer/abtestwidget.ui
+./venv/Scripts/pyside6-uic.exe  -o ./qt_ui/neostim_settings_widget_ui.py ./designer/neostimsettingswidget.ui
 
-pyuic5  -o .\qt_ui\device_wizard\type_select_ui.py .\designer\device_wizard\type_select.ui
-pyuic5  -o .\qt_ui\device_wizard\waveform_select_ui.py .\designer\device_wizard\waveform_select.ui
-pyuic5  -o .\qt_ui\device_wizard\safety_limits_ui.py .\designer\device_wizard\safety_limits.ui
-pyuic5  -o .\qt_ui\device_wizard\neostim_waveform_select_ui.py .\designer\device_wizard\neostim_waveform_select.ui
+./venv/Scripts/pyside6-uic.exe  -o ./qt_ui/device_wizard/type_select_ui.py ./designer/device_wizard/type_select.ui
+./venv/Scripts/pyside6-uic.exe  -o ./qt_ui/device_wizard/waveform_select_ui.py ./designer/device_wizard/waveform_select.ui
+./venv/Scripts/pyside6-uic.exe  -o ./qt_ui/device_wizard/safety_limits_ui.py ./designer/device_wizard/safety_limits.ui
+./venv/Scripts/pyside6-uic.exe  -o ./qt_ui/device_wizard/neostim_waveform_select_ui.py ./designer/device_wizard/neostim_waveform_select.ui
 
-pyrcc5 .\resources\restim.qrc -o restim_rc.py
+./venv/Scripts/pyside6-rcc.exe ./resources/restim.qrc -o restim_rc.py
 
 # build instructions
 

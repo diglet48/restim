@@ -1,7 +1,7 @@
-from PyQt5 import QtCore
-from PyQt5.QtCore import Qt, QRect, QPoint
-from PyQt5.QtGui import QIconEngine, QIcon, QPixmap, QPainter
-from PyQt5.QtWidgets import QWidget
+from PySide6 import QtCore
+from PySide6.QtCore import Qt, QRect, QPoint
+from PySide6.QtGui import QIconEngine, QIcon, QPixmap, QPainter
+from PySide6.QtWidgets import QWidget
 
 
 class IconWithConnectionStatus(QIconEngine):

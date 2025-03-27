@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QWizardPage
+from PySide6.QtWidgets import QWizardPage
 
 from qt_ui.device_wizard.type_select_ui import Ui_WizardPageDeviceType
 

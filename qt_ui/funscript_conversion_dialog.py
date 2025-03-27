@@ -1,7 +1,7 @@
 import re
 import traceback
 
-from PyQt5.QtWidgets import QDialog, QFileDialog
+from PySide6.QtWidgets import QDialog, QFileDialog
 
 from qt_ui.funscript_conversion_ui import Ui_FunscriptConversionDialog
 from qt_ui.file_dialog import FileDialog

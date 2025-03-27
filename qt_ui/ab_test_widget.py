@@ -1,7 +1,7 @@
 from __future__ import unicode_literals
 
-from PyQt5 import QtCore, QtWidgets
-from PyQt5.QtCore import QTimer
+from PySide6 import QtCore, QtWidgets
+from PySide6.QtCore import QTimer
 
 from qt_ui.ab_test_widget_ui import Ui_ABTestWidget
 
@@ -123,7 +123,7 @@ class ABTestWidget(QtWidgets.QWidget, Ui_ABTestWidget):
     def refreshSettings(self):
         self.display_latency = settings.display_latency.get()
 
-    test_waveform_changed_triggered = QtCore.pyqtSignal(bool)
+    test_waveform_changed_triggered = QtCore.Signal(bool)
 
     def test_waveform_changed(self, is_a: bool):
         self.test_waveform_changed_triggered.emit(is_a)

@@ -2,9 +2,9 @@ import re
 import numpy as np
 import logging
 
-from PyQt5 import QtCore
-from PyQt5.QtSerialPort import QSerialPort
-from PyQt5.QtCore import QIODevice
+from PySide6 import QtCore
+from PySide6.QtSerialPort import QSerialPort
+from PySide6.QtCore import QIODevice
 
 from net.tcode import TCodeCommand, InvalidTCodeException
 from qt_ui import settings
@@ -81,4 +81,4 @@ class SerialProxy(QtCore.QObject):
             except InvalidTCodeException as e:
                 pass
 
-    new_tcode_command = QtCore.pyqtSignal(TCodeCommand)
+    new_tcode_command = QtCore.Signal(TCodeCommand)

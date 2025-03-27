@@ -1,12 +1,10 @@
 import time
-import functools
 import logging
 
-from PyQt5 import QtCore
-from PyQt5.QtCore import QUrl, QXmlStreamReader
-from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
-from PyQt5.QtNetwork import QNetworkRequest, QNetworkAccessManager, QNetworkReply, QAuthenticator
-from PyQt5.QtXmlPatterns import QXmlQuery
+from PySide6 import QtCore
+from PySide6.QtCore import QUrl, QXmlStreamReader
+from PySide6.QtMultimedia import QMediaPlayer
+from PySide6.QtNetwork import QNetworkRequest, QNetworkAccessManager, QNetworkReply, QAuthenticator
 
 from net.media_source.mediasource import MediaSource, MediaStatusReport, MediaConnectionState
 from qt_ui import settings
@@ -107,8 +105,8 @@ class VLC(MediaSource):
             logger.warning('error detecting media duration: %s', self.media_player.errorString())
 
         self.media_player.durationChanged.connect(duration_changed)
-        self.media_player.error.connect(on_error)
-        self.media_player.setMedia(QMediaContent(QUrl.fromLocalFile(the_file)))
+        self.media_player.errorOccurred.connect(on_error)
+        self.media_player.setSource(QUrl.fromLocalFile(the_file))
 
     def enable(self):
         self._enabled = True
@@ -144,7 +142,7 @@ class VLC(MediaSource):
         </root>
         """
 
-        if reply.error():
+        if reply.error() != QNetworkReply.NetworkError.NoError:
             logger.debug('network error: %s', reply.errorString())
             self.media_info = None
             self.playlist_id = None
@@ -153,19 +151,27 @@ class VLC(MediaSource):
                 connectionState=MediaConnectionState.NOT_CONNECTED,
                 errorString=reply.errorString())
 
-        # TODO: QXmlQuery is deprecated in Qt6
-        query = QXmlQuery()
-        query.setFocus(reply)
-        query.setQuery("string(//rate)")
-        rate = query.evaluateToString().strip()
-        query.setQuery("string(//state)")
-        state = query.evaluateToString().strip()
-        query.setQuery("string(//position)")
-        position = query.evaluateToString().strip()
-        query.setQuery("string(//currentplid)")
-        currentplid = query.evaluateToString().strip()
-        query.setQuery("string(//length)")
-        length = query.evaluateToString().strip()
+        rate = None
+        state = None
+        position = None
+        currentplid = None
+        length = None
+        xml = QXmlStreamReader(reply)
+        if xml.readNextStartElement():  # root node
+            while xml.readNextStartElement():  # read playlist or media library element
+                name = xml.name()
+                if name == 'rate':
+                    rate = xml.readElementText()
+                elif name == 'state':
+                    state = xml.readElementText()
+                elif name == 'position':
+                    position = xml.readElementText()
+                elif name == 'currentplid':
+                    currentplid = xml.readElementText()
+                elif name == 'length':
+                    length = xml.readElementText()
+                else:
+                    xml.skipCurrentElement()
 
         if currentplid == '-1':
             currentplid = None

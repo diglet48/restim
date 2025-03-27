@@ -1,7 +1,7 @@
 import functools
 
-from PyQt5.QtSerialPort import QSerialPortInfo
-from PyQt5.QtWidgets import QDialog, QAbstractButton, QDialogButtonBox, QAbstractItemView, QHeaderView, QComboBox
+from PySide6.QtSerialPort import QSerialPortInfo
+from PySide6.QtWidgets import QDialog, QAbstractButton, QDialogButtonBox, QAbstractItemView, QHeaderView, QComboBox
 
 from qt_ui.preferences_dialog_ui import Ui_PreferencesDialog
 from qt_ui.models.funscript_kit import FunscriptKitModel

@@ -3,8 +3,8 @@ from __future__ import unicode_literals
 import time
 import numpy as np
 import math
-from PyQt5 import QtCore, QtWidgets
-from PyQt5.QtWidgets import QDoubleSpinBox
+from PySide6 import QtCore, QtWidgets
+from PySide6.QtWidgets import QDoubleSpinBox
 
 from qt_ui.axis_controller import AxisController
 from qt_ui.volume_control_widget_ui import Ui_VolumeControlForm

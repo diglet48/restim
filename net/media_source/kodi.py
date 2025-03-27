@@ -2,10 +2,10 @@ import json
 import logging
 import time
 
-from PyQt5 import QtCore
-from PyQt5.QtCore import QUrl
-from PyQt5.QtNetwork import QAbstractSocket
-from PyQt5.QtWebSockets import QWebSocket
+from PySide6 import QtCore
+from PySide6.QtCore import QUrl
+from PySide6.QtNetwork import QAbstractSocket
+from PySide6.QtWebSockets import QWebSocket
 
 from net.media_source.mediasource import MediaSource, MediaStatusReport, MediaConnectionState
 from qt_ui import settings
@@ -46,7 +46,7 @@ class Kodi(MediaSource):
         self.websocket.open(QUrl.fromUserInput(settings.media_sync_kodi_address.get()))
 
         self.websocket.connected.connect(self.connected)
-        self.websocket.error.connect(self.error)
+        self.websocket.errorOccurred.connect(self.error)
         self.websocket.textMessageReceived.connect(self.textMessageReceived)
 
     def connected(self):

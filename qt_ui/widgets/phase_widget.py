@@ -1,21 +1,18 @@
 from dataclasses import dataclass
-import matplotlib
 import time
 import math
 import numpy as np
 
-from PyQt5.QtCore import QPoint, QPointF
-from PyQt5.QtWidgets import QGraphicsView, QGraphicsEllipseItem, QGraphicsItem
+from PySide6.QtCore import QPoint, QPointF
+from PySide6.QtWidgets import QGraphicsView, QGraphicsEllipseItem, QGraphicsItem
 
 from qt_ui import resources, settings
 from stim_math.threephase_coordinate_transform import ThreePhaseCoordinateTransform, \
     ThreePhaseCoordinateTransformMapToEdge
 
-# Make sure that we are using QT5
-matplotlib.use('Qt5Agg')
-from PyQt5.QtGui import QColor, QMouseEvent, QPainterPath, QPainter
-from PyQt5 import QtCore, QtWidgets, QtSvg, QtGui
-from PyQt5.QtCore import Qt
+from PySide6.QtGui import QColor, QMouseEvent, QPainterPath, QPainter
+from PySide6 import QtCore, QtWidgets, QtSvg, QtGui, QtSvgWidgets
+from PySide6.QtCore import Qt
 
 from stim_math.axis import create_temporal_axis, Axis, AbstractAxis
 from stim_math.audio_gen.params import ThreephasePositionTransformParams
@@ -38,7 +35,7 @@ class PhaseWidgetBase(QtWidgets.QGraphicsView):
     A QGraphicsView that displays an SVG of the phase diagram in the background, with mouse support.
     """
     def __init__(self, parent):
-        QtWidgets.QWidget.__init__(self, parent)
+        QtWidgets.QGraphicsView.__init__(self, parent)
 
         self.setAlignment(Qt.AlignCenter)
         self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
@@ -46,8 +43,7 @@ class PhaseWidgetBase(QtWidgets.QGraphicsView):
 
         scene = QtWidgets.QGraphicsScene()
         self.setScene(scene)
-        svg = QtSvg.QGraphicsSvgItem(resources.phase_diagram_bg)
-        svg.setCacheMode(QGraphicsItem.NoCache)  # Improves clarity. Must be Qt bug. Remove in Qt6?
+        svg = QtSvgWidgets.QGraphicsSvgItem(resources.phase_diagram_bg)
         scene.addItem(svg)
         svg.setPos(-svg.boundingRect().width()/2.0, -svg.boundingRect().height()/2.0)
         self.svg = svg
@@ -130,7 +126,7 @@ class PhaseWidgetWithPoint(PhaseWidgetBase):
         self.stored_tcode_position.beta = beta
         self.mousePositionChanged.emit(alpha, beta)
 
-    mousePositionChanged = QtCore.pyqtSignal(float, float)
+    mousePositionChanged = QtCore.Signal(float, float)
 
 
 class PhaseWidgetAlphaBeta(PhaseWidgetWithPoint):
@@ -375,7 +371,7 @@ class Path(QtWidgets.QGraphicsPathItem):
         if not self._enabled:
             return
 
-        painter.setRenderHint(painter.Antialiasing)
+        # painter.setRenderHint(painter.Antialiasing)
 
         pen = painter.pen()
         pen.setWidth(1)
@@ -493,4 +489,4 @@ class PhaseWidgetCalibration(PhaseWidgetBase):
         x, y = ab_to_item_pos(a, b)
         self.path.setSource(QtCore.QPointF(x, y))
 
-    calibrationParametersChanged = QtCore.pyqtSignal(float, float)
+    calibrationParametersChanged = QtCore.Signal(float, float)

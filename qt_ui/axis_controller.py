@@ -1,7 +1,7 @@
 from __future__ import unicode_literals
 import time
 
-from PyQt5 import QtCore, QtWidgets
+from PySide6 import QtCore, QtWidgets
 
 from stim_math.axis import AbstractAxis, WriteProtectedAxis
 
@@ -59,7 +59,7 @@ class AxisController(QtCore.QObject):
         self.set_control_value(self.internal_axis.interpolate(time.time()))
         self.control.setEnabled(True)
 
-    modified_by_user = QtCore.pyqtSignal()
+    modified_by_user = QtCore.Signal()
 
 
 class PercentAxisController(AxisController):
@@ -113,4 +113,4 @@ class GroupboxAxisController(QtCore.QObject):
         self.control.setChecked(self.last_user_entered_value)
         self.internal_axis = internal_axis
 
-    modified_by_user = QtCore.pyqtSignal()
+    modified_by_user = QtCore.Signal()

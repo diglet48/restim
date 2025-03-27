@@ -2,9 +2,9 @@ import re
 import time
 import logging
 
-from PyQt5 import QtCore
-from PyQt5.QtCore import QUrl
-from PyQt5.QtNetwork import QNetworkRequest, QNetworkAccessManager, QNetworkReply
+from PySide6 import QtCore
+from PySide6.QtCore import QUrl
+from PySide6.QtNetwork import QNetworkRequest, QNetworkAccessManager, QNetworkReply
 
 from net.media_source.mediasource import MediaSource, MediaStatusReport, MediaConnectionState
 from qt_ui import settings
@@ -13,7 +13,7 @@ logger = logging.getLogger('restim.media.MPC_HC')
 
 
 def parse_reply(reply: QNetworkReply):
-    if reply.error():
+    if reply.error() != QNetworkReply.NetworkError.NoError:
         logger.debug('network error: %s', reply.errorString())
         return MediaStatusReport(
             timestamp=time.time(),

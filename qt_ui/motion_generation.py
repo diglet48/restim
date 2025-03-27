@@ -2,7 +2,7 @@ import numpy as np
 import time
 import logging
 
-from PyQt5 import QtCore
+from PySide6 import QtCore
 
 from stim_math.axis import AbstractAxis
 

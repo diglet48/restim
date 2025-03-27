@@ -1,8 +1,8 @@
 import re
 import logging
 
-from PyQt5 import QtCore, QtWebSockets, QtNetwork
-from PyQt5.QtNetwork import QHostAddress
+from PySide6 import QtCore, QtWebSockets, QtNetwork
+from PySide6.QtNetwork import QHostAddress
 
 from net.tcode import TCodeCommand, InvalidTCodeException
 from qt_ui import settings
@@ -24,7 +24,7 @@ class WebSocketServer(QtCore.QObject):
             return
 
         address = QHostAddress.LocalHost if localhost_only else QHostAddress.Any
-        self.server = QtWebSockets.QWebSocketServer("restim t-code server", 1)  #not secure
+        self.server = QtWebSockets.QWebSocketServer("restim t-code server", QtWebSockets.QWebSocketServer.SslMode.NonSecureMode)  #not secure
         b = self.server.listen(address, port)
         if b:
             logger.info(f"websocket server active at localhost:{port}")
@@ -50,4 +50,4 @@ class WebSocketServer(QtCore.QObject):
     def clientDisconnected(self):
         self.connections = [con for con in self.connections if con.state() == QtNetwork.QAbstractSocket.UnconnectedState]
 
-    new_tcode_command = QtCore.pyqtSignal(TCodeCommand)
+    new_tcode_command = QtCore.Signal(TCodeCommand)

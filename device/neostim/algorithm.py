@@ -1,7 +1,7 @@
 import struct
 import time
 
-from PyQt5.QtCore import QObject, QTimer
+from PySide6.QtCore import QObject, QTimer
 
 import numpy as np
 

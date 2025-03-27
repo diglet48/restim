@@ -2,10 +2,9 @@ import logging
 from dataclasses import dataclass
 import re
 
-from PyQt5.Qt import QObject
-from PyQt5.QtSerialPort import QSerialPort
-from PyQt5.QtCore import QIODevice, QTimer
-from PyQt5.QtNetwork import QUdpSocket
+from PySide6.QtSerialPort import QSerialPort
+from PySide6.QtCore import QIODevice, QTimer, QObject
+from PySide6.QtNetwork import QUdpSocket
 
 import qt_ui.settings
 from net.tcode import TCodeCommand

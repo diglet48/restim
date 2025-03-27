@@ -1,7 +1,7 @@
-from PyQt5 import QtGui, QtCore
-from PyQt5.QtCore import Qt, QTimer, QItemSelectionModel, QSize, QRect
-from PyQt5.QtGui import QCursor, QMouseEvent
-from PyQt5.QtWidgets import QTableView, QStyledItemDelegate, QWidget, QComboBox, QStyleOptionComboBox, QApplication, \
+from PySide6 import QtGui, QtCore
+from PySide6.QtCore import Qt, QTimer, QItemSelectionModel, QSize, QRect
+from PySide6.QtGui import QCursor, QMouseEvent
+from PySide6.QtWidgets import QTableView, QStyledItemDelegate, QWidget, QComboBox, QStyleOptionComboBox, QApplication, \
     QStyle, QStyleOptionButton, QTreeView
 import functools
 
@@ -28,24 +28,24 @@ class ComboBoxDelegate(QStyledItemDelegate):
 
     def setEditorData(self, editor: QWidget, index: QtCore.QModelIndex) -> None:
         combobox: QComboBox = editor
-        combobox.setCurrentIndex(combobox.findData(index.data(Qt.EditRole)))
+        combobox.setCurrentIndex(combobox.findData(index.data(Qt.ItemDataRole.EditRole)))
         combobox.showPopup()
 
     def setModelData(self, editor: QWidget, model: QtCore.QAbstractItemModel, index: QtCore.QModelIndex) -> None:
         combobox: QComboBox = editor
-        model.setData(index, combobox.currentData(), Qt.EditRole)
+        model.setData(index, combobox.currentData(), Qt.ItemDataRole.EditRole)
 
     def paint(self, painter: 'QtGui.QPainter', option: 'QStyleOptionViewItem', index: QtCore.QModelIndex) -> None:
-        if not (index.flags() & Qt.ItemIsEditable):
+        if not (index.flags() & Qt.ItemFlag.ItemIsEditable):
             return super(ComboBoxDelegate, self).paint(painter, option, index)
 
         box = QStyleOptionComboBox()
         box.state = option.state
         box.rect = option.rect
-        box.currentText = index.data(Qt.DisplayRole)
+        box.currentText = index.data(Qt.ItemDataRole.DisplayRole)
 
-        QApplication.style().drawComplexControl(QStyle.CC_ComboBox, box, painter)
-        QApplication.style().drawControl(QStyle.CE_ComboBoxLabel, box, painter)
+        QApplication.style().drawComplexControl(QStyle.ComplexControl.CC_ComboBox, box, painter)
+        QApplication.style().drawControl(QStyle.ControlElement.CE_ComboBoxLabel, box, painter)
 
     def sizeHint(self, option: 'QStyleOptionViewItem', index: QtCore.QModelIndex) -> QtCore.QSize:
         box = QStyleOptionComboBox()
@@ -55,8 +55,8 @@ class ComboBoxDelegate(QStyledItemDelegate):
         size = QSize(0, 0)
         for text, data in self.text_and_data:
             box.currentText = text
-            rect = QApplication.style().itemTextRect(option.fontMetrics, option.rect, Qt.AlignCenter, True, text)
-            size = size.expandedTo(QApplication.style().sizeFromContents(QStyle.CT_ComboBox, box, rect.size(), option.widget))
+            rect = QApplication.style().itemTextRect(option.fontMetrics, option.rect, Qt.AlignmentFlag.AlignCenter, True, text)
+            size = size.expandedTo(QApplication.style().sizeFromContents(QStyle.ContentsType.CT_ComboBox, box, rect.size(), option.widget))
 
         return size
 
@@ -67,7 +67,7 @@ class TableViewWithComboBox(QTableView):
 
     # immediately open the combobox on first mouse press
     def mousePressEvent(self, e: QtGui.QMouseEvent) -> None:
-        if e.button() == Qt.LeftButton:
+        if e.button() == Qt.MouseButton.LeftButton:
             index = self.indexAt(e.pos())
 
             delegate = self.itemDelegateForColumn(index.column())
@@ -75,7 +75,7 @@ class TableViewWithComboBox(QTableView):
                 selection = self.selectionModel()
                 if selection:
                     other_index = self.model().index(index.row(), index.column())
-                    selection.setCurrentIndex(other_index, QItemSelectionModel.ClearAndSelect)
+                    selection.setCurrentIndex(other_index, QItemSelectionModel.SelectionFlag.ClearAndSelect)
 
                 timer = QTimer()
                 timer.timeout.connect(functools.partial(self.edit, index))
@@ -94,7 +94,7 @@ class TreeViewWithComboBox(QTreeView):
 
     # immediately open the combobox on first mouse press
     def mousePressEvent(self, e: QtGui.QMouseEvent) -> None:
-        if e.button() == Qt.LeftButton:
+        if e.button() == Qt.MouseButton.LeftButton:
             index = self.indexAt(e.pos())
 
             delegate = self.itemDelegateForColumn(index.column())
@@ -102,7 +102,7 @@ class TreeViewWithComboBox(QTreeView):
                 selection = self.selectionModel()
                 if selection:
                     other_index = self.model().index(index.row(), index.column())
-                    selection.setCurrentIndex(other_index, QItemSelectionModel.ClearAndSelect)
+                    selection.setCurrentIndex(other_index, QItemSelectionModel.SelectionFlag.ClearAndSelect)
 
                 timer = QTimer()
                 timer.timeout.connect(functools.partial(self.edit, index))
@@ -144,17 +144,17 @@ class ButtonDelegate(QStyledItemDelegate):
                 self.mouse_hover = mouse_hover
                 model.dataChanged.emit(index, index)
 
-            if event.button() == Qt.LeftButton:
+            if event.button() == Qt.MouseButton.LeftButton:
                 if event.type() == QtCore.QEvent.Type.MouseButtonRelease:
                     if mouse_hover[0]:
-                        is_removable = index.data(Qt.DisplayRole)
+                        is_removable = index.data(Qt.ItemDataRole.DisplayRole)
                         if is_removable:
                             model.removeRow(index.row(), index.parent())
 
         return False
 
     def paint(self, painter: 'QtGui.QPainter', option: 'QStyleOptionViewItem', index: QtCore.QModelIndex) -> None:
-        is_removable = index.data(Qt.DisplayRole)
+        is_removable = index.data(Qt.ItemDataRole.DisplayRole)
         if is_removable:
             button = QStyleOptionButton()
             button.rect = self.button_rect(0, option.rect)
@@ -163,11 +163,11 @@ class ButtonDelegate(QStyledItemDelegate):
             button.state = option.state
             cursor = QCursor.pos()
             if button.rect.contains(option.styleObject.viewport().mapFromGlobal(cursor)):
-                button.features = button.DefaultButton
+                button.features = button.ButtonFeature.DefaultButton
             else:
-                button.features = button.Flat
+                button.features = button.ButtonFeature.Flat
 
-            QApplication.style().drawControl(QStyle.CE_PushButton, button, painter)
+            QApplication.style().drawControl(QStyle.ControlElement.CE_PushButton, button, painter)
 
     def sizeHint(self, option: 'QStyleOptionViewItem', index: QtCore.QModelIndex) -> QtCore.QSize:
         return QSize(self.button_size, self.button_size)

@@ -2,7 +2,7 @@ import functools
 import os
 import pathlib
 
-from PyQt5.QtCore import Qt
+from PySide6.QtCore import Qt
 
 from funscript.collect_funscripts import Resource
 from net.media_source.vlc import VLC
@@ -10,9 +10,9 @@ from net.media_source.kodi import Kodi
 from qt_ui.additional_search_paths_dialog import AdditionalSearchPathsDialog
 from qt_ui.device_wizard.axes import AxisEnum
 
-from PyQt5 import QtCore, QtWidgets
-from PyQt5.QtGui import QIcon
-from PyQt5.QtWidgets import QAbstractItemView, QFileDialog
+from PySide6 import QtCore, QtWidgets
+from PySide6.QtGui import QIcon
+from PySide6.QtWidgets import QAbstractItemView, QFileDialog
 
 from net.media_source.heresphere import HereSphere
 from net.media_source.interface import MediaConnectionState
@@ -217,6 +217,6 @@ class MediaSettingsWidget(QtWidgets.QWidget, Ui_MediaSettingsWidget, metaclass=_
     def current_media_sync(self):
         return self.media_sync[self.current_index]
 
-    dialogOpened = QtCore.pyqtSignal()  # emitted whenever a dialog is opened which promps audio stop.
-    connectionStatusChanged = QtCore.pyqtSignal(MediaConnectionState)  # emitted whenever video player connection status changes.
-    funscriptMappingChanged = QtCore.pyqtSignal()  # emitted whenever new funscript files are added, removed or modified
+    dialogOpened = QtCore.Signal()  # emitted whenever a dialog is opened which promps audio stop.
+    connectionStatusChanged = QtCore.Signal(MediaConnectionState)  # emitted whenever video player connection status changes.
+    funscriptMappingChanged = QtCore.Signal()  # emitted whenever new funscript files are added, removed or modified

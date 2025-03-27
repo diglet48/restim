@@ -2,9 +2,9 @@ import json
 import time
 import logging
 
-from PyQt5 import QtCore
-from PyQt5.QtCore import QUrl
-from PyQt5.QtNetwork import QTcpSocket
+from PySide6 import QtCore
+from PySide6.QtCore import QUrl
+from PySide6.QtNetwork import QTcpSocket
 
 from net.media_source.mediasource import MediaSource, MediaStatusReport, MediaConnectionState
 from qt_ui import settings
@@ -38,7 +38,7 @@ class HereSphere(MediaSource):
 
         self.socket = QTcpSocket()
 
-        self.socket.error.connect(self.onError)
+        self.socket.errorOccurred.connect(self.onError)
         self.socket.readyRead.connect(self.readyRead)
 
     def keep_alive(self):
@@ -88,7 +88,7 @@ class HereSphere(MediaSource):
 
             elif self.socket.bytesAvailable() == (4 + length):
                 data = self.socket.read(4 + length)[4:]
-                js = json.loads(data.decode('utf-8'))
+                js = json.loads(bytes(data).decode('utf-8'))
                 state = parse_reply(js)
                 self.set_state(state)
 

@@ -1,8 +1,8 @@
 import re
 import logging
 
-from PyQt5 import QtCore, QtNetwork
-from PyQt5.QtNetwork import QHostAddress
+from PySide6 import QtCore, QtNetwork
+from PySide6.QtNetwork import QHostAddress
 
 from net.tcode import TCodeCommand, InvalidTCodeException
 from qt_ui import settings
@@ -86,4 +86,4 @@ class TcpUdpServer(QtCore.QObject):
     def clientDisconnected(self):
         self.tcp_connections = [con for con in self.tcp_connections if con.state() == QtNetwork.QAbstractSocket.UnconnectedState]
 
-    new_tcode_command = QtCore.pyqtSignal(TCodeCommand)
+    new_tcode_command = QtCore.Signal(TCodeCommand)

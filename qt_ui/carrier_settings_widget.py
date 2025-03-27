@@ -1,5 +1,5 @@
 from __future__ import unicode_literals
-from PyQt5 import QtCore, QtWidgets
+from PySide6 import QtCore, QtWidgets
 
 import stim_math.limits
 from stim_math.axis import AbstractAxis, create_temporal_axis

@@ -4,7 +4,7 @@ import numpy as np
 
 # Make sure that we are using QT5
 matplotlib.use('Qt5Agg')
-from PyQt5 import QtWidgets
+from PySide6 import QtWidgets
 
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
