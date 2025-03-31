@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>848</width>
-    <height>635</height>
+    <width>843</width>
+    <height>663</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -38,8 +38,14 @@
       </property>
       <widget class="QWidget" name="page_control">
        <layout class="QHBoxLayout" name="horizontalLayout_2">
+        <property name="topMargin">
+         <number>0</number>
+        </property>
+        <property name="bottomMargin">
+         <number>0</number>
+        </property>
         <item>
-         <widget class="QFrame" name="frame">
+         <widget class="QFrame" name="left_frame">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
             <horstretch>0</horstretch>
@@ -54,7 +60,7 @@
           </property>
           <layout class="QVBoxLayout" name="verticalLayout">
            <item>
-            <widget class="PhaseWidgetAlphaBeta" name="graphicsView">
+            <widget class="QStackedWidget" name="stackedWidget_visual">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
                <horstretch>0</horstretch>
@@ -73,10 +79,61 @@
                <height>200</height>
               </size>
              </property>
+             <property name="frameShape">
+              <enum>QFrame::Shape::NoFrame</enum>
+             </property>
+             <property name="lineWidth">
+              <number>0</number>
+             </property>
+             <property name="currentIndex">
+              <number>1</number>
+             </property>
+             <widget class="QWidget" name="page_threephase">
+              <widget class="ThreephaseWidgetAlphaBeta" name="graphicsView_threephase">
+               <property name="geometry">
+                <rect>
+                 <x>0</x>
+                 <y>0</y>
+                 <width>200</width>
+                 <height>200</height>
+                </rect>
+               </property>
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="minimumSize">
+                <size>
+                 <width>200</width>
+                 <height>200</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>200</width>
+                 <height>200</height>
+                </size>
+               </property>
+              </widget>
+             </widget>
+             <widget class="QWidget" name="page_fourphase">
+              <widget class="FourphaseWidgetStereographic" name="graphicsView_fourphase">
+               <property name="geometry">
+                <rect>
+                 <x>0</x>
+                 <y>0</y>
+                 <width>200</width>
+                 <height>200</height>
+                </rect>
+               </property>
+              </widget>
+             </widget>
             </widget>
            </item>
            <item>
-            <widget class="QGroupBox" name="groupBox_3">
+            <widget class="QGroupBox" name="groupBox_volume">
              <property name="title">
               <string>volume</string>
              </property>
@@ -105,7 +162,7 @@
             </widget>
            </item>
            <item>
-            <widget class="QGroupBox" name="groupBox">
+            <widget class="QGroupBox" name="groupBox_pattern">
              <property name="title">
               <string>Pattern generator</string>
              </property>
@@ -174,30 +231,17 @@
            <bool>true</bool>
           </property>
           <property name="currentIndex">
-           <number>4</number>
+           <number>0</number>
           </property>
           <widget class="ThreePhaseSettingsWidget" name="tab_threephase">
            <attribute name="title">
             <string>3-phase</string>
            </attribute>
           </widget>
-          <widget class="QWidget" name="tab_focus">
-           <property name="enabled">
-            <bool>true</bool>
-           </property>
+          <widget class="FourPhaseSettingsWidget" name="tab_fourphase">
            <attribute name="title">
-            <string>Focus</string>
+            <string>4-phase</string>
            </attribute>
-           <widget class="PhaseWidgetFocus" name="graphicsView_focus">
-            <property name="geometry">
-             <rect>
-              <x>60</x>
-              <y>50</y>
-              <width>256</width>
-              <height>192</height>
-             </rect>
-            </property>
-           </widget>
           </widget>
           <widget class="CarrierSettingsWidget" name="tab_carrier">
            <attribute name="title">
@@ -256,36 +300,6 @@
        </layout>
       </widget>
       <widget class="MediaSettingsWidget" name="page_media"/>
-      <widget class="QWidget" name="page_device">
-       <widget class="QLabel" name="label_3">
-        <property name="geometry">
-         <rect>
-          <x>100</x>
-          <y>90</y>
-          <width>261</width>
-          <height>31</height>
-         </rect>
-        </property>
-        <property name="text">
-         <string>Restim doesn't have device configruation yet :(</string>
-        </property>
-       </widget>
-      </widget>
-      <widget class="QWidget" name="page_log">
-       <widget class="QLabel" name="label_2">
-        <property name="geometry">
-         <rect>
-          <x>80</x>
-          <y>70</y>
-          <width>221</width>
-          <height>31</height>
-         </rect>
-        </property>
-        <property name="text">
-         <string>Restim doesn't have a log yet :(</string>
-        </property>
-       </widget>
-      </widget>
      </widget>
     </item>
    </layout>
@@ -295,7 +309,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>848</width>
+     <width>843</width>
      <height>33</height>
     </rect>
    </property>
@@ -432,9 +446,9 @@
    <container>1</container>
   </customwidget>
   <customwidget>
-   <class>PhaseWidgetAlphaBeta</class>
+   <class>ThreephaseWidgetAlphaBeta</class>
    <extends>QGraphicsView</extends>
-   <header>qt_ui/widgets/phase_widget.h</header>
+   <header>qt_ui/widgets/threephase_widget.h</header>
   </customwidget>
   <customwidget>
    <class>WaveformDetailsWidget</class>
@@ -452,11 +466,6 @@
    <class>VolumeWidget</class>
    <extends>QProgressBar</extends>
    <header>qt_ui/widgets/volume_widget.h</header>
-  </customwidget>
-  <customwidget>
-   <class>PhaseWidgetFocus</class>
-   <extends>QGraphicsView</extends>
-   <header>qt_ui/widgets/phase_widget.h</header>
   </customwidget>
   <customwidget>
    <class>ThreePhaseSettingsWidget</class>
@@ -492,6 +501,17 @@
    <class>NeoStimSettingsWidget</class>
    <extends>QWidget</extends>
    <header>qt_ui/neostim_settings_widget.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>FourphaseWidgetStereographic</class>
+   <extends>QGraphicsView</extends>
+   <header>qt_ui/widgets/fourphase_widget_stereographic.h</header>
+  </customwidget>
+  <customwidget>
+   <class>FourPhaseSettingsWidget</class>
+   <extends>QWidget</extends>
+   <header>qt_ui/four_phase_settings_widget.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

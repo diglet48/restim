@@ -1,6 +1,7 @@
 from __future__ import annotations  # multiple return values
 import numpy as np
 
+from device.focstim.fourphase_algorithm import FOCStimFourphaseAlgorithm
 from device.neostim.algorithm import NeoStimAlgorithm
 from qt_ui.device_wizard.enums import DeviceConfiguration, DeviceType, WaveformType
 from stim_math.audio_gen.base_classes import AudioGenerationAlgorithm
@@ -44,12 +45,9 @@ class AlgorithmFactory:
             else:
                 raise RuntimeError('unknown waveform type')
         elif device.device_type == DeviceType.FOCSTIM_THREE_PHASE:
-            if device.waveform_type == WaveformType.CONTINUOUS:
-                raise RuntimeError('unsupported device/waveform combination')
-            elif device.waveform_type == WaveformType.PULSE_BASED:
-                return self.create_focstim_3phase_pulsebased(device)
-            else:
-                raise RuntimeError('unknown waveform type')
+            return self.create_focstim_3phase_pulsebased(device)
+        elif device.device_type == DeviceType.FOCSTIM_FOUR_PHASE:
+            return self.create_focstim_4phase_pulsebased(device)
         elif device.device_type == DeviceType.NEOSTIM_THREE_PHASE:
             return self.create_neostim(device)
         else:
@@ -184,6 +182,37 @@ class AlgorithmFactory:
         )
         return algorithm
 
+    def create_focstim_4phase_pulsebased(self, device: DeviceConfiguration) -> AudioGenerationAlgorithm:
+        algorithm = FOCStimFourphaseAlgorithm(
+            self.media_sync,
+            FourphaseFOCStimParams(
+                position=FourphasePositionParams(
+                    self.get_axis_alpha(),
+                    self.get_axis_beta(),
+                    self.get_axis_gamma(),
+                ),
+                # transform=self.mainwindow.tab_threephase.transform_params,
+                calibrate=self.mainwindow.tab_fourphase.calibrate_params,
+                volume=VolumeParams(
+                    api=self.get_axis_volume_api(),
+                    master=self.get_axis_volume_master(),
+                    inactivity=self.get_axis_volume_inactivity(),
+                    external=self.get_axis_volume_external(),
+                ),
+                carrier_frequency=self.get_axis_pulse_carrier_frequency(),
+                pulse_frequency=self.get_axis_pulse_frequency(),
+                pulse_width=self.get_axis_pulse_width(),
+                pulse_interval_random=self.get_axis_pulse_interval_random(),
+                pulse_rise_time=self.get_axis_pulse_rise_time(),
+                tau=self.get_axis_tau(),
+            ),
+            safety_limits=SafetyParams(
+                device.min_frequency,
+                device.max_frequency,
+            )
+        )
+        return algorithm
+
     def create_neostim(self, device: DeviceConfiguration) -> NeoStimAlgorithm:
         algorithm = NeoStimAlgorithm(
             self.media_sync,
@@ -216,6 +245,9 @@ class AlgorithmFactory:
 
     def get_axis_beta(self):
         return self.get_axis_from_script_mapping(AxisEnum.POSITION_BETA) or self.mainwindow.beta
+
+    def get_axis_gamma(self):
+        return self.get_axis_from_script_mapping(AxisEnum.POSITION_GAMMA) or self.mainwindow.gamma
 
     def get_axis_volume_api(self):
         return self.get_axis_from_script_mapping(AxisEnum.VOLUME_API) or self.mainwindow.tab_volume.volume.api

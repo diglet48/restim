@@ -9,10 +9,24 @@ class ThreephasePositionParams:
     beta: AbstractAxis     # float [-1, 1]
 
 @dataclass
+class FourphasePositionParams:
+    alpha: AbstractAxis    # float [-1, 1]
+    beta: AbstractAxis     # float [-1, 1]
+    gamma: AbstractAxis     # float [-1, 1]
+
+@dataclass
 class ThreephaseCalibrationParams:
     neutral: AbstractAxis   # float
     right: AbstractAxis     # float
     center: AbstractAxis    # float
+
+@dataclass
+class FourphaseCalibrationParams:
+    center: AbstractAxis   # float
+    a: AbstractAxis        # float
+    b: AbstractAxis        # float
+    c: AbstractAxis        # float
+    d: AbstractAxis        # float
 
 @dataclass
 class ThreephasePositionTransformParams:
@@ -105,6 +119,19 @@ class FOCStimParams:
     position: ThreephasePositionParams
     transform: ThreephasePositionTransformParams
     calibrate: ThreephaseCalibrationParams
+    volume: VolumeParams
+    carrier_frequency: AbstractAxis # Hz
+    pulse_frequency: AbstractAxis   # Hz
+    pulse_width: AbstractAxis       # carrier cycles
+    pulse_interval_random: AbstractAxis
+    pulse_rise_time: AbstractAxis
+    tau: AbstractAxis               # µs
+
+@dataclass
+class FourphaseFOCStimParams:
+    position: FourphasePositionParams
+    # transform: ThreephasePositionTransformParams
+    calibrate: FourphaseCalibrationParams
     volume: VolumeParams
     carrier_frequency: AbstractAxis # Hz
     pulse_frequency: AbstractAxis   # Hz

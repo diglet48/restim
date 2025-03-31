@@ -17,13 +17,13 @@ from PySide6.QtGui import (QAction, QBrush, QColor, QConicalGradient,
     QPainter, QPalette, QPixmap, QRadialGradient,
     QTransform)
 from PySide6.QtWidgets import (QApplication, QComboBox, QDoubleSpinBox, QFrame,
-    QGroupBox, QHBoxLayout, QLabel, QMainWindow,
-    QMenu, QMenuBar, QSizePolicy, QSpacerItem,
-    QStackedWidget, QTabWidget, QToolBar, QVBoxLayout,
-    QWidget)
+    QGroupBox, QHBoxLayout, QMainWindow, QMenu,
+    QMenuBar, QSizePolicy, QSpacerItem, QStackedWidget,
+    QTabWidget, QToolBar, QVBoxLayout, QWidget)
 
 from qt_ui.ab_test_widget import ABTestWidget
 from qt_ui.carrier_settings_widget import CarrierSettingsWidget
+from qt_ui.four_phase_settings_widget import FourPhaseSettingsWidget
 from qt_ui.media_settings_widget import MediaSettingsWidget
 from qt_ui.neostim_settings_widget import NeoStimSettingsWidget
 from qt_ui.pulse_settings_widget import PulseSettingsWidget
@@ -31,7 +31,8 @@ from qt_ui.three_phase_settings_widget import ThreePhaseSettingsWidget
 from qt_ui.vibration_settings_widget import VibrationSettingsWidget
 from qt_ui.volume_control_widget import VolumeControlWidget
 from qt_ui.waveform_details_widget import WaveformDetailsWidget
-from qt_ui.widgets.phase_widget import (PhaseWidgetAlphaBeta, PhaseWidgetFocus)
+from qt_ui.widgets.fourphase_widget_stereographic import FourphaseWidgetStereographic
+from qt_ui.widgets.threephase_widget import ThreephaseWidgetAlphaBeta
 from qt_ui.widgets.volume_widget import VolumeWidget
 import restim_rc
 
@@ -39,7 +40,7 @@ class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         if not MainWindow.objectName():
             MainWindow.setObjectName(u"MainWindow")
-        MainWindow.resize(848, 635)
+        MainWindow.resize(843, 663)
         icon = QIcon()
         icon.addFile(u"../../../.designer/resources/favicon.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
         MainWindow.setWindowIcon(icon)
@@ -91,40 +92,59 @@ class Ui_MainWindow(object):
         self.page_control.setObjectName(u"page_control")
         self.horizontalLayout_2 = QHBoxLayout(self.page_control)
         self.horizontalLayout_2.setObjectName(u"horizontalLayout_2")
-        self.frame = QFrame(self.page_control)
-        self.frame.setObjectName(u"frame")
+        self.horizontalLayout_2.setContentsMargins(-1, 0, -1, 0)
+        self.left_frame = QFrame(self.page_control)
+        self.left_frame.setObjectName(u"left_frame")
         sizePolicy = QSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Preferred)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.frame.sizePolicy().hasHeightForWidth())
-        self.frame.setSizePolicy(sizePolicy)
-        self.frame.setFrameShape(QFrame.Shape.StyledPanel)
-        self.frame.setFrameShadow(QFrame.Shadow.Raised)
-        self.verticalLayout = QVBoxLayout(self.frame)
+        sizePolicy.setHeightForWidth(self.left_frame.sizePolicy().hasHeightForWidth())
+        self.left_frame.setSizePolicy(sizePolicy)
+        self.left_frame.setFrameShape(QFrame.Shape.StyledPanel)
+        self.left_frame.setFrameShadow(QFrame.Shadow.Raised)
+        self.verticalLayout = QVBoxLayout(self.left_frame)
         self.verticalLayout.setObjectName(u"verticalLayout")
-        self.graphicsView = PhaseWidgetAlphaBeta(self.frame)
-        self.graphicsView.setObjectName(u"graphicsView")
+        self.stackedWidget_visual = QStackedWidget(self.left_frame)
+        self.stackedWidget_visual.setObjectName(u"stackedWidget_visual")
         sizePolicy1 = QSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
         sizePolicy1.setHorizontalStretch(0)
         sizePolicy1.setVerticalStretch(0)
-        sizePolicy1.setHeightForWidth(self.graphicsView.sizePolicy().hasHeightForWidth())
-        self.graphicsView.setSizePolicy(sizePolicy1)
-        self.graphicsView.setMinimumSize(QSize(200, 200))
-        self.graphicsView.setMaximumSize(QSize(200, 200))
+        sizePolicy1.setHeightForWidth(self.stackedWidget_visual.sizePolicy().hasHeightForWidth())
+        self.stackedWidget_visual.setSizePolicy(sizePolicy1)
+        self.stackedWidget_visual.setMinimumSize(QSize(200, 200))
+        self.stackedWidget_visual.setMaximumSize(QSize(200, 200))
+        self.stackedWidget_visual.setFrameShape(QFrame.Shape.NoFrame)
+        self.stackedWidget_visual.setLineWidth(0)
+        self.page_threephase = QWidget()
+        self.page_threephase.setObjectName(u"page_threephase")
+        self.graphicsView_threephase = ThreephaseWidgetAlphaBeta(self.page_threephase)
+        self.graphicsView_threephase.setObjectName(u"graphicsView_threephase")
+        self.graphicsView_threephase.setGeometry(QRect(0, 0, 200, 200))
+        sizePolicy1.setHeightForWidth(self.graphicsView_threephase.sizePolicy().hasHeightForWidth())
+        self.graphicsView_threephase.setSizePolicy(sizePolicy1)
+        self.graphicsView_threephase.setMinimumSize(QSize(200, 200))
+        self.graphicsView_threephase.setMaximumSize(QSize(200, 200))
+        self.stackedWidget_visual.addWidget(self.page_threephase)
+        self.page_fourphase = QWidget()
+        self.page_fourphase.setObjectName(u"page_fourphase")
+        self.graphicsView_fourphase = FourphaseWidgetStereographic(self.page_fourphase)
+        self.graphicsView_fourphase.setObjectName(u"graphicsView_fourphase")
+        self.graphicsView_fourphase.setGeometry(QRect(0, 0, 200, 200))
+        self.stackedWidget_visual.addWidget(self.page_fourphase)
 
-        self.verticalLayout.addWidget(self.graphicsView)
+        self.verticalLayout.addWidget(self.stackedWidget_visual)
 
-        self.groupBox_3 = QGroupBox(self.frame)
-        self.groupBox_3.setObjectName(u"groupBox_3")
-        self.verticalLayout_7 = QVBoxLayout(self.groupBox_3)
+        self.groupBox_volume = QGroupBox(self.left_frame)
+        self.groupBox_volume.setObjectName(u"groupBox_volume")
+        self.verticalLayout_7 = QVBoxLayout(self.groupBox_volume)
         self.verticalLayout_7.setObjectName(u"verticalLayout_7")
-        self.progressBar_volume = VolumeWidget(self.groupBox_3)
+        self.progressBar_volume = VolumeWidget(self.groupBox_volume)
         self.progressBar_volume.setObjectName(u"progressBar_volume")
         self.progressBar_volume.setValue(24)
 
         self.verticalLayout_7.addWidget(self.progressBar_volume)
 
-        self.doubleSpinBox_volume = QDoubleSpinBox(self.groupBox_3)
+        self.doubleSpinBox_volume = QDoubleSpinBox(self.groupBox_volume)
         self.doubleSpinBox_volume.setObjectName(u"doubleSpinBox_volume")
         self.doubleSpinBox_volume.setDecimals(2)
         self.doubleSpinBox_volume.setMaximum(100.000000000000000)
@@ -133,13 +153,13 @@ class Ui_MainWindow(object):
         self.verticalLayout_7.addWidget(self.doubleSpinBox_volume)
 
 
-        self.verticalLayout.addWidget(self.groupBox_3)
+        self.verticalLayout.addWidget(self.groupBox_volume)
 
-        self.groupBox = QGroupBox(self.frame)
-        self.groupBox.setObjectName(u"groupBox")
-        self.verticalLayout_2 = QVBoxLayout(self.groupBox)
+        self.groupBox_pattern = QGroupBox(self.left_frame)
+        self.groupBox_pattern.setObjectName(u"groupBox_pattern")
+        self.verticalLayout_2 = QVBoxLayout(self.groupBox_pattern)
         self.verticalLayout_2.setObjectName(u"verticalLayout_2")
-        self.comboBox_patternSelect = QComboBox(self.groupBox)
+        self.comboBox_patternSelect = QComboBox(self.groupBox_pattern)
         self.comboBox_patternSelect.addItem("")
         self.comboBox_patternSelect.addItem("")
         self.comboBox_patternSelect.addItem("")
@@ -149,7 +169,7 @@ class Ui_MainWindow(object):
 
         self.verticalLayout_2.addWidget(self.comboBox_patternSelect)
 
-        self.doubleSpinBox = QDoubleSpinBox(self.groupBox)
+        self.doubleSpinBox = QDoubleSpinBox(self.groupBox_pattern)
         self.doubleSpinBox.setObjectName(u"doubleSpinBox")
         self.doubleSpinBox.setSingleStep(0.100000000000000)
         self.doubleSpinBox.setValue(1.000000000000000)
@@ -157,14 +177,14 @@ class Ui_MainWindow(object):
         self.verticalLayout_2.addWidget(self.doubleSpinBox)
 
 
-        self.verticalLayout.addWidget(self.groupBox)
+        self.verticalLayout.addWidget(self.groupBox_pattern)
 
         self.verticalSpacer = QSpacerItem(20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
 
         self.verticalLayout.addItem(self.verticalSpacer)
 
 
-        self.horizontalLayout_2.addWidget(self.frame)
+        self.horizontalLayout_2.addWidget(self.left_frame)
 
         self.tabWidget = QTabWidget(self.page_control)
         self.tabWidget.setObjectName(u"tabWidget")
@@ -172,13 +192,9 @@ class Ui_MainWindow(object):
         self.tab_threephase = ThreePhaseSettingsWidget()
         self.tab_threephase.setObjectName(u"tab_threephase")
         self.tabWidget.addTab(self.tab_threephase, "")
-        self.tab_focus = QWidget()
-        self.tab_focus.setObjectName(u"tab_focus")
-        self.tab_focus.setEnabled(True)
-        self.graphicsView_focus = PhaseWidgetFocus(self.tab_focus)
-        self.graphicsView_focus.setObjectName(u"graphicsView_focus")
-        self.graphicsView_focus.setGeometry(QRect(60, 50, 256, 192))
-        self.tabWidget.addTab(self.tab_focus, "")
+        self.tab_fourphase = FourPhaseSettingsWidget()
+        self.tab_fourphase.setObjectName(u"tab_fourphase")
+        self.tabWidget.addTab(self.tab_fourphase, "")
         self.tab_carrier = CarrierSettingsWidget()
         self.tab_carrier.setObjectName(u"tab_carrier")
         self.tabWidget.addTab(self.tab_carrier, "")
@@ -211,25 +227,13 @@ class Ui_MainWindow(object):
         self.page_media = MediaSettingsWidget()
         self.page_media.setObjectName(u"page_media")
         self.stackedWidget.addWidget(self.page_media)
-        self.page_device = QWidget()
-        self.page_device.setObjectName(u"page_device")
-        self.label_3 = QLabel(self.page_device)
-        self.label_3.setObjectName(u"label_3")
-        self.label_3.setGeometry(QRect(100, 90, 261, 31))
-        self.stackedWidget.addWidget(self.page_device)
-        self.page_log = QWidget()
-        self.page_log.setObjectName(u"page_log")
-        self.label_2 = QLabel(self.page_log)
-        self.label_2.setObjectName(u"label_2")
-        self.label_2.setGeometry(QRect(80, 70, 221, 31))
-        self.stackedWidget.addWidget(self.page_log)
 
         self.horizontalLayout.addWidget(self.stackedWidget)
 
         MainWindow.setCentralWidget(self.centralwidget)
         self.menuBar = QMenuBar(MainWindow)
         self.menuBar.setObjectName(u"menuBar")
-        self.menuBar.setGeometry(QRect(0, 0, 848, 33))
+        self.menuBar.setGeometry(QRect(0, 0, 843, 33))
         self.menuTools = QMenu(self.menuBar)
         self.menuTools.setObjectName(u"menuTools")
         MainWindow.setMenuBar(self.menuBar)
@@ -251,7 +255,8 @@ class Ui_MainWindow(object):
         self.retranslateUi(MainWindow)
 
         self.stackedWidget.setCurrentIndex(0)
-        self.tabWidget.setCurrentIndex(4)
+        self.stackedWidget_visual.setCurrentIndex(1)
+        self.tabWidget.setCurrentIndex(0)
 
 
         QMetaObject.connectSlotsByName(MainWindow)
@@ -279,8 +284,8 @@ class Ui_MainWindow(object):
 #if QT_CONFIG(shortcut)
         self.actionLog.setShortcut(QCoreApplication.translate("MainWindow", u"Ctrl+4", None))
 #endif // QT_CONFIG(shortcut)
-        self.groupBox_3.setTitle(QCoreApplication.translate("MainWindow", u"volume", None))
-        self.groupBox.setTitle(QCoreApplication.translate("MainWindow", u"Pattern generator", None))
+        self.groupBox_volume.setTitle(QCoreApplication.translate("MainWindow", u"volume", None))
+        self.groupBox_pattern.setTitle(QCoreApplication.translate("MainWindow", u"Pattern generator", None))
         self.comboBox_patternSelect.setItemText(0, QCoreApplication.translate("MainWindow", u"Mouse", None))
         self.comboBox_patternSelect.setItemText(1, QCoreApplication.translate("MainWindow", u"Circle", None))
         self.comboBox_patternSelect.setItemText(2, QCoreApplication.translate("MainWindow", u"A", None))
@@ -288,7 +293,7 @@ class Ui_MainWindow(object):
         self.comboBox_patternSelect.setItemText(4, QCoreApplication.translate("MainWindow", u"C", None))
 
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_threephase), QCoreApplication.translate("MainWindow", u"3-phase", None))
-        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_focus), QCoreApplication.translate("MainWindow", u"Focus", None))
+        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_fourphase), QCoreApplication.translate("MainWindow", u"4-phase", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_carrier), QCoreApplication.translate("MainWindow", u"Carrier settings", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_pulse_settings), QCoreApplication.translate("MainWindow", u"Pulse settings", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_neostim), QCoreApplication.translate("MainWindow", u"NeoStim", None))
@@ -296,8 +301,6 @@ class Ui_MainWindow(object):
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_volume), QCoreApplication.translate("MainWindow", u"Volume", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_vibrate), QCoreApplication.translate("MainWindow", u"Vibration", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_details), QCoreApplication.translate("MainWindow", u"Details", None))
-        self.label_3.setText(QCoreApplication.translate("MainWindow", u"Restim doesn't have device configruation yet :(", None))
-        self.label_2.setText(QCoreApplication.translate("MainWindow", u"Restim doesn't have a log yet :(", None))
         self.menuTools.setTitle(QCoreApplication.translate("MainWindow", u"Tools", None))
         self.toolBar.setWindowTitle(QCoreApplication.translate("MainWindow", u"toolBar", None))
     # retranslateUi

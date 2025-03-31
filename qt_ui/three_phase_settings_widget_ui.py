@@ -20,7 +20,7 @@ from PySide6.QtWidgets import (QApplication, QCheckBox, QComboBox, QDoubleSpinBo
     QSizePolicy, QSpacerItem, QStackedWidget, QVBoxLayout,
     QWidget)
 
-from qt_ui.widgets.phase_widget import PhaseWidgetCalibration
+from qt_ui.widgets.threephase_widget import ThreephaseWidgetCalibration
 
 class Ui_ThreePhaseSettingsWidget(object):
     def setupUi(self, ThreePhaseSettingsWidget):
@@ -72,7 +72,7 @@ class Ui_ThreePhaseSettingsWidget(object):
 
         self.formLayout.setWidget(2, QFormLayout.FieldRole, self.center)
 
-        self.phase_widget_calibration = PhaseWidgetCalibration(self.groupBox)
+        self.phase_widget_calibration = ThreephaseWidgetCalibration(self.groupBox)
         self.phase_widget_calibration.setObjectName(u"phase_widget_calibration")
 
         self.formLayout.setWidget(3, QFormLayout.FieldRole, self.phase_widget_calibration)

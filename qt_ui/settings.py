@@ -96,6 +96,11 @@ threephase_map_to_edge_length = Setting('threephase_transform/map_to_edge_length
 threephase_map_to_edge_invert = Setting('threephase_transform/map_to_edge_invert', False, bool)
 threephase_exponent = NonPersistentSetting(0.0)
 
+fourphase_calibration_a = Setting('calibration_four/a', 0.0, float)
+fourphase_calibration_b = Setting('calibration_four/b', 0.0, float)
+fourphase_calibration_c = Setting('calibration_four/c', 0.0, float)
+fourphase_calibration_d = Setting('calibration_four/d', 0.0, float)
+fourphase_calibration_center = Setting('calibration_four/center', 0.0, float)
 
 device_config_device_type = Setting('device_configuration/device_type', 0, int)
 device_config_waveform_type = Setting('device_configuration/waveform_type', 1, int)

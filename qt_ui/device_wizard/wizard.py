@@ -2,6 +2,8 @@ from enum import Enum
 import logging
 
 from PySide6.QtWidgets import QWizard
+
+from qt_ui.device_wizard.focstim_waveform_select import WizardPageFocStimWaveformSelect
 from qt_ui.device_wizard.type_select import WizardPageDeviceType
 from qt_ui.device_wizard.waveform_select import WizardPageWaveformType
 from qt_ui.device_wizard.safety_limits import WizardPageSafetyLimits
@@ -17,6 +19,7 @@ class WizardPage(Enum):
     Page_waveform = 2
     Page_limits = 3
     Page_neostim_waveform = 4
+    Page_focstim_waveform = 5
 
 
 class DeviceSelectionWizard(QWizard):
@@ -38,6 +41,9 @@ class DeviceSelectionWizard(QWizard):
         self.setPage(WizardPage.Page_limits.value, self.page_safety_limits)
         self.page_neostim_waveform_select = WizardPageNeoStimWaveformSelect()
         self.setPage(WizardPage.Page_neostim_waveform.value, self.page_neostim_waveform_select)
+        self.page_focstim_waveform_select = WizardPageFocStimWaveformSelect()
+        self.setPage(WizardPage.Page_focstim_waveform.value, self.page_focstim_waveform_select)
+
 
         self.set_configuration(DeviceConfiguration.from_settings())
 
@@ -59,25 +65,30 @@ class DeviceSelectionWizard(QWizard):
         if self.currentId() is None:
             return WizardPage.Page_device.value
         if self.currentId() == WizardPage.Page_device.value:
-            if self.page_device_type.neostim_radio.isChecked():
+            if self.page_device_type.audio_based_radio.isChecked():
+                return WizardPage.Page_waveform.value
+            elif self.page_device_type.focstim_radio.isChecked():
+                return WizardPage.Page_focstim_waveform.value
+            elif self.page_device_type.neostim_radio.isChecked():
                 return WizardPage.Page_neostim_waveform.value
             else:
-                return WizardPage.Page_waveform.value
+                raise RuntimeError("unknown device type")
+
         if self.currentId() == WizardPage.Page_waveform.value:
+            return WizardPage.Page_limits.value
+        elif self.currentId() == WizardPage.Page_focstim_waveform.value:
             return WizardPage.Page_limits.value
         return -1
 
     def validateCurrentPage(self) -> bool:
         if self.currentId() == WizardPage.Page_device.value:
             # Enable/disable the relevant waveform types.
-            if self.page_device_type.three_phase_radio.isChecked():
+            if self.page_device_type.audio_based_radio.isChecked():
                 self.page_waveform_type.pulse_based_radio.setEnabled(True)
                 self.page_waveform_type.continuous_radio.setEnabled(True)
                 self.page_waveform_type.a_b_radio.setEnabled(True)
             elif self.page_device_type.focstim_radio.isChecked():
-                self.page_waveform_type.pulse_based_radio.setEnabled(True)
-                self.page_waveform_type.continuous_radio.setEnabled(False)
-                self.page_waveform_type.a_b_radio.setEnabled(False)
+                pass
             elif self.page_device_type.neostim_radio.isChecked():
                 pass
 
@@ -87,7 +98,7 @@ class DeviceSelectionWizard(QWizard):
         min_freq = self.page_safety_limits.min_frequency_spinbox.value()
         max_freq = self.page_safety_limits.max_frequency_spinbox.value()
 
-        if self.page_device_type.three_phase_radio.isChecked():
+        if self.page_device_type.audio_based_radio.isChecked():
             if self.page_waveform_type.continuous_radio.isChecked():
                 alg = WaveformType.CONTINUOUS
             elif self.page_waveform_type.pulse_based_radio.isChecked():
@@ -102,11 +113,20 @@ class DeviceSelectionWizard(QWizard):
                 min_freq, max_freq
             )
         elif self.page_device_type.focstim_radio.isChecked():
-            return DeviceConfiguration(
-                DeviceType.FOCSTIM_THREE_PHASE,
-                WaveformType.PULSE_BASED,
-                min_freq, max_freq
-            )
+            if self.page_focstim_waveform_select.three_phase_radio.isChecked():
+                return DeviceConfiguration(
+                    DeviceType.FOCSTIM_THREE_PHASE,
+                    WaveformType.PULSE_BASED,
+                    min_freq, max_freq
+                )
+            elif self.page_focstim_waveform_select.four_phase_radio.isChecked():
+                return DeviceConfiguration(
+                    DeviceType.FOCSTIM_FOUR_PHASE,
+                    WaveformType.PULSE_BASED,
+                    min_freq, max_freq
+                )
+            else:
+                assert False
         elif self.page_device_type.neostim_radio.isChecked():
             return DeviceConfiguration(
                 DeviceType.NEOSTIM_THREE_PHASE,
@@ -118,18 +138,19 @@ class DeviceSelectionWizard(QWizard):
 
     def set_configuration(self, config: DeviceConfiguration):
         if config.device_type == DeviceType.AUDIO_THREE_PHASE:
-            self.page_device_type.three_phase_radio.setChecked(True)
+            self.page_device_type.audio_based_radio.setChecked(True)
         if config.device_type == DeviceType.FOCSTIM_THREE_PHASE:
             self.page_device_type.focstim_radio.setChecked(True)
+            self.page_focstim_waveform_select.three_phase_radio.setChecked(True)
+        if config.device_type == DeviceType.FOCSTIM_FOUR_PHASE:
+            self.page_device_type.focstim_radio.setChecked(True)
+            self.page_focstim_waveform_select.four_phase_radio.setChecked(True)
         if config.device_type == DeviceType.NEOSTIM_THREE_PHASE:
             self.page_device_type.neostim_radio.setChecked(True)
 
-        if config.waveform_type == WaveformType.CONTINUOUS:
-            self.page_waveform_type.continuous_radio.setChecked(True)
-        elif config.waveform_type == WaveformType.PULSE_BASED:
-            self.page_waveform_type.pulse_based_radio.setChecked(True)
-        elif config.waveform_type == WaveformType.A_B_TESTING:
-            self.page_waveform_type.a_b_radio.setChecked(True)
+        self.page_waveform_type.continuous_radio.setChecked(config.waveform_type == WaveformType.CONTINUOUS)
+        self.page_waveform_type.pulse_based_radio.setChecked(config.waveform_type == WaveformType.PULSE_BASED)
+        self.page_waveform_type.a_b_radio.setChecked(config.waveform_type == WaveformType.A_B_TESTING)
 
         self.page_safety_limits.min_frequency_spinbox.setValue(config.min_frequency)
         self.page_safety_limits.max_frequency_spinbox.setValue(config.max_frequency)

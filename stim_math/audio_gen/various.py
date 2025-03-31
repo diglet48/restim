@@ -5,7 +5,8 @@ from stim_math.sine_generator import AngleGeneratorWithVaryingIPI
 from stim_math.threephase_coordinate_transform import ThreePhaseCoordinateTransform, \
     ThreePhaseCoordinateTransformMapToEdge
 
-from stim_math.audio_gen.params import VibrationParams, ThreephasePositionParams, ThreephasePositionTransformParams
+from stim_math.audio_gen.params import VibrationParams, ThreephasePositionParams, ThreephasePositionTransformParams, \
+    FourphasePositionParams
 
 
 class VibrationAlgorithm:
@@ -109,3 +110,21 @@ class ThreePhasePosition:
             beta /= norm
 
         return alpha, beta
+
+
+class FourPhasePosition:
+    def __init__(self, position: FourphasePositionParams):
+        self.position_params = position
+
+    def get_position(self, command_timeline):
+        alpha = self.position_params.alpha.interpolate(command_timeline)
+        beta = self.position_params.beta.interpolate(command_timeline)
+        gamma = self.position_params.gamma.interpolate(command_timeline)
+
+        # normalize (alpha, beta) to be within the unit circle.
+        norm = np.clip(np.linalg.norm((alpha, beta, gamma), axis=0), 1.0, None)
+        alpha /= norm
+        beta /= norm
+        gamma /= norm
+
+        return alpha, beta, gamma

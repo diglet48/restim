@@ -11,6 +11,7 @@ class DeviceType(Enum):
     # MODIFY_EXISTING_THREEPHASE_AUDIO = 4
     FOCSTIM_THREE_PHASE = 5
     NEOSTIM_THREE_PHASE = 6
+    FOCSTIM_FOUR_PHASE = 7
 
 
 class WaveformType(Enum):

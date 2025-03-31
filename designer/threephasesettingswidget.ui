@@ -81,7 +81,7 @@
        </widget>
       </item>
       <item row="3" column="1">
-       <widget class="PhaseWidgetCalibration" name="phase_widget_calibration"/>
+       <widget class="ThreephaseWidgetCalibration" name="phase_widget_calibration"/>
       </item>
       <item row="3" column="0">
        <widget class="QLabel" name="label_10">
@@ -350,7 +350,7 @@
    <item>
     <spacer name="verticalSpacer">
      <property name="orientation">
-      <enum>Qt::Vertical</enum>
+      <enum>Qt::Orientation::Vertical</enum>
      </property>
      <property name="sizeHint" stdset="0">
       <size>
@@ -364,9 +364,9 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>PhaseWidgetCalibration</class>
+   <class>ThreephaseWidgetCalibration</class>
    <extends>QGraphicsView</extends>
-   <header>qt_ui/widgets.phase_widget.h</header>
+   <header>qt_ui/widgets/threephase_widget.h</header>
   </customwidget>
  </customwidgets>
  <resources/>

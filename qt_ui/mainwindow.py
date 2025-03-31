@@ -14,7 +14,8 @@ from net.media_source.interface import MediaConnectionState
 from qt_ui.algorithm_factory import AlgorithmFactory
 from qt_ui.audio_write_dialog import AudioWriteDialog
 from qt_ui.main_window_ui import Ui_MainWindow
-import qt_ui.motion_generation
+import qt_ui.patterns.threephase_patterns
+import qt_ui.patterns.fourphase_patterns
 from device.audio.audio_stim_device import AudioStimDevice
 import net.websocketserver
 import net.tcpudpserver
@@ -58,9 +59,6 @@ class Window(QMainWindow, Ui_MainWindow):
 
         # set the first tab as active tab, in case we forgot to set it in designer
         self.tabWidget.setCurrentIndex(0)
-        # hide the focus tab
-        self.tabWidget.setTabVisible(self.tabWidget.indexOf(self.tab_focus), False)
-        self.tabWidget.setTabEnabled(self.tabWidget.indexOf(self.tab_focus), False)
 
         icon = QtGui.QIcon()
         icon.addPixmap(QtGui.QPixmap(resources.favicon), QtGui.QIcon.Normal, QtGui.QIcon.Off)
@@ -86,10 +84,12 @@ class Window(QMainWindow, Ui_MainWindow):
         # network stuff (intiface, tcode)
         self.alpha = create_temporal_axis(0.0)
         self.beta = create_temporal_axis(0.0)
+        self.gamma = create_temporal_axis(0.0)
 
         self.tcode_command_router = TCodeCommandRouter(
             self.alpha,
             self.beta,
+            self.gamma,
             self.tab_volume.axis_api_volume,
             self.tab_volume.axis_external_volume,
 
@@ -115,11 +115,18 @@ class Window(QMainWindow, Ui_MainWindow):
             # TODO: neostim
         )
 
-        self.graphicsView.set_axis(self.alpha, self.beta, self.tab_threephase.transform_params)
-        self.motion_generator = qt_ui.motion_generation.MotionGenerator(self, self.alpha, self.beta)
+        # threephase view
+        self.motion_3 = qt_ui.patterns.threephase_patterns.ThreephaseMotionGenerator(self, self.alpha, self.beta)
+        self.graphicsView_threephase.set_transform_params(self.tab_threephase.transform_params)
+        self.graphicsView_threephase.mousePositionChanged.connect(self.motion_3.mouse_event)
+        self.motion_3.position_updated.connect(self.graphicsView_threephase.set_cursor_position_ab)
 
-        self.graphicsView.mousePositionChanged.connect(self.motion_generator.updateMousePosition)
+        # fourphase view
+        self.motion_4 = qt_ui.patterns.fourphase_patterns.FourphaseMotionGenerator(self, self.alpha, self.beta, self.gamma)
+        self.graphicsView_fourphase.mousePositionChanged.connect(self.motion_4.mouse_event)
+        self.motion_4.position_updated.connect(self.graphicsView_fourphase.set_cursor_position_abc)
 
+        # TODO: implement details for 4-phase
         self.tab_details.set_axis(
             self.alpha,
             self.beta,
@@ -128,10 +135,11 @@ class Window(QMainWindow, Ui_MainWindow):
         )
         # self.tab_details.set_config_manager(self.threephase_parameters)
 
-        self.comboBox_patternSelect.currentTextChanged.connect(self.motion_generator.patternChanged)
-        self.motion_generator.patternChanged(self.comboBox_patternSelect.currentText())
-        self.doubleSpinBox.valueChanged.connect(self.motion_generator.velocityChanged)
-        self.motion_generator.velocityChanged(self.doubleSpinBox.value())
+        self.comboBox_patternSelect.currentIndexChanged.connect(self.pattern_selection_changed)
+        self.motion_3.set_pattern(self.comboBox_patternSelect.currentText())
+        self.doubleSpinBox.valueChanged.connect(self.motion_3.set_velocity)
+        self.doubleSpinBox.valueChanged.connect(self.motion_4.set_velocity)
+        self.motion_3.set_velocity(self.doubleSpinBox.value())
 
         self.output_device = None
 
@@ -150,6 +158,7 @@ class Window(QMainWindow, Ui_MainWindow):
         self.tab_volume.set_monitor_axis([
             self.alpha,
             self.beta,
+            self.gamma,
         ])
 
         # stop audio when user modifies settings in media tab
@@ -261,9 +270,18 @@ class Window(QMainWindow, Ui_MainWindow):
             load_funscripts=not self.page_media.is_internal(),
         )
 
-        # main pane
-        self.graphicsView.alpha = algorithm_factory.get_axis_alpha()
-        self.graphicsView.beta = algorithm_factory.get_axis_beta()
+        # 3-phase visualization
+        self.motion_3.set_scripts(
+            algorithm_factory.get_axis_alpha(),
+            algorithm_factory.get_axis_beta(),
+        )
+
+        # 4-phase visualization
+        self.motion_4.set_scripts(
+            algorithm_factory.get_axis_alpha(),
+            algorithm_factory.get_axis_beta(),
+            algorithm_factory.get_axis_gamma(),
+        )
 
         # volume tab
         self.tab_volume.set_monitor_axis([
@@ -312,12 +330,12 @@ class Window(QMainWindow, Ui_MainWindow):
             self.tabWidget.setTabEnabled(self.tabWidget.indexOf(widget), state)
 
         all_tabs = {self.tab_threephase,
+                    self.tab_fourphase,
                     self.tab_pulse_settings,
                     self.tab_carrier,
                     self.tab_volume,
                     self.tab_vibrate,
                     self.tab_details,
-                    self.tab_focus,
                     self.tab_a_b_testing,
                     self.tab_neostim}
 
@@ -325,6 +343,7 @@ class Window(QMainWindow, Ui_MainWindow):
 
         config = DeviceConfiguration.from_settings()
 
+        # determine tab visibility
         if config.device_type == DeviceType.AUDIO_THREE_PHASE:
             if config.waveform_type == WaveformType.CONTINUOUS:
                 visible |= {self.tab_carrier}
@@ -333,23 +352,54 @@ class Window(QMainWindow, Ui_MainWindow):
             if config.waveform_type == WaveformType.A_B_TESTING:
                 visible |= {self.tab_a_b_testing}
         if config.device_type == DeviceType.FOCSTIM_THREE_PHASE:
-            if config.waveform_type == WaveformType.PULSE_BASED:
-                visible |= {self.tab_pulse_settings}
-                visible -= {self.tab_vibrate}
+            visible |= {self.tab_pulse_settings}
+            visible -= {self.tab_vibrate}
+        if config.device_type == DeviceType.FOCSTIM_FOUR_PHASE:
+            visible |= {self.tab_pulse_settings, self.tab_fourphase}
+            visible -= {self.tab_vibrate, self.tab_threephase, self.tab_details}
         if config.device_type == DeviceType.NEOSTIM_THREE_PHASE:
             visible |= {self.tab_neostim}
-            visible -= {self.tab_vibrate}
+            visible -= {self.tab_vibrate, self.tab_details}
 
         for tab in all_tabs:
             set_visible(tab, tab in visible)
 
+        # set safety limits
         self.tab_carrier.set_safety_limits(config.min_frequency, config.max_frequency)
         self.tab_pulse_settings.set_safety_limits(config.min_frequency, config.max_frequency)
         self.tab_a_b_testing.set_safety_limits(config.min_frequency, config.max_frequency)
+
+        # configure tcode router
         if config.waveform_type == WaveformType.CONTINUOUS:
             self.tcode_command_router.set_carrier_axis(self.tab_carrier.axis_carrier)
         if config.waveform_type == WaveformType.PULSE_BASED:
             self.tcode_command_router.set_carrier_axis(self.tab_pulse_settings.axis_carrier_frequency)
+
+        # populate motion generator and patterns combobox
+        if config.device_type in (DeviceType.AUDIO_THREE_PHASE, DeviceType.NEOSTIM_THREE_PHASE, DeviceType.FOCSTIM_THREE_PHASE):
+            self.motion_3.set_enable(True)
+            self.motion_4.set_enable(False)
+            self.comboBox_patternSelect.clear()
+            for pattern in self.motion_3.patterns:
+                self.comboBox_patternSelect.addItem(pattern.name(), pattern)
+            self.stackedWidget_visual.setCurrentIndex(
+                self.stackedWidget_visual.indexOf(self.page_threephase)
+            )
+
+        if config.device_type == DeviceType.FOCSTIM_FOUR_PHASE:
+            self.motion_3.set_enable(False)
+            self.motion_4.set_enable(True)
+            self.comboBox_patternSelect.clear()
+            for pattern in self.motion_4.patterns:
+                self.comboBox_patternSelect.addItem(pattern.name(), pattern)
+            self.stackedWidget_visual.setCurrentIndex(
+                self.stackedWidget_visual.indexOf(self.page_fourphase)
+            )
+
+    def pattern_selection_changed(self, index):
+        pattern = self.comboBox_patternSelect.currentData()
+        self.motion_3.set_pattern(pattern)
+        self.motion_4.set_pattern(pattern)
 
     def signal_start_stop(self):
         if self.playstate == PlayState.STOPPED:
@@ -391,7 +441,7 @@ class Window(QMainWindow, Ui_MainWindow):
                 self.playstate = PlayState.PLAYING
                 self.tab_volume.set_play_state(self.playstate)
                 self.refresh_play_button_icon()
-        elif device.device_type == DeviceType.FOCSTIM_THREE_PHASE:
+        elif device.device_type in (DeviceType.FOCSTIM_THREE_PHASE, DeviceType.FOCSTIM_FOUR_PHASE):
             output_device = FOCStimDevice()
             serial_port_name = qt_ui.settings.focstim_serial_port.get()
             use_teleplot = qt_ui.settings.focstim_use_teleplot.get()
@@ -463,7 +513,6 @@ class Window(QMainWindow, Ui_MainWindow):
         by the preferences dialog
         """
         self.tcode_command_router.reload_kit()
-        self.graphicsView.refreshSettings()
         self.tab_volume.refreshSettings()
         self.buttplug_wsdm_client.refreshSettings()
         self.funscript_mapping_changed()  # reload funscript axis
@@ -475,6 +524,7 @@ class Window(QMainWindow, Ui_MainWindow):
         for performance reasons.
         """
         self.tab_threephase.save_settings()
+        self.tab_fourphase.save_settings()
         self.tab_carrier.save_settings()
         self.tab_vibrate.save_settings()
         self.tab_pulse_settings.save_settings()

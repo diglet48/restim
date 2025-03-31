@@ -24,6 +24,8 @@ class TCodeCommandRouter:
     def __init__(self,
                  alpha: AbstractAxis,
                  beta: AbstractAxis,
+                 gamma: AbstractAxis,
+
                  volume_api: AbstractAxis,
                  volume_external: AbstractAxis,
 
@@ -48,6 +50,7 @@ class TCodeCommandRouter:
                  ):
         self.alpha = alpha
         self.beta = beta
+        self.gamma = gamma
         self.volume_api = volume_api
         self.volume_external = volume_external
         self.carrier_frequency = carrier_frequency
@@ -73,6 +76,7 @@ class TCodeCommandRouter:
         axis_enum_to_axis = {
             AxisEnum.POSITION_ALPHA: self.alpha,
             AxisEnum.POSITION_BETA: self.beta,
+            AxisEnum.POSITION_GAMMA: self.gamma,
             AxisEnum.VOLUME_API: self.volume_api,
             AxisEnum.VOLUME_EXTERNAL: self.volume_external,
             AxisEnum.CARRIER_FREQUENCY: self.carrier_frequency,

@@ -25,11 +25,11 @@ class Ui_WizardPageDeviceType(object):
         WizardPageDeviceType.resize(490, 477)
         self.formLayout = QFormLayout(WizardPageDeviceType)
         self.formLayout.setObjectName(u"formLayout")
-        self.three_phase_radio = QRadioButton(WizardPageDeviceType)
-        self.three_phase_radio.setObjectName(u"three_phase_radio")
-        self.three_phase_radio.setChecked(True)
+        self.audio_based_radio = QRadioButton(WizardPageDeviceType)
+        self.audio_based_radio.setObjectName(u"audio_based_radio")
+        self.audio_based_radio.setChecked(True)
 
-        self.formLayout.setWidget(0, QFormLayout.LabelRole, self.three_phase_radio)
+        self.formLayout.setWidget(0, QFormLayout.LabelRole, self.audio_based_radio)
 
         self.focstim_radio = QRadioButton(WizardPageDeviceType)
         self.focstim_radio.setObjectName(u"focstim_radio")
@@ -54,7 +54,7 @@ class Ui_WizardPageDeviceType(object):
     def retranslateUi(self, WizardPageDeviceType):
         WizardPageDeviceType.setWindowTitle(QCoreApplication.translate("WizardPageDeviceType", u"WizardPage", None))
         WizardPageDeviceType.setTitle(QCoreApplication.translate("WizardPageDeviceType", u"Select device type", None))
-        self.three_phase_radio.setText(QCoreApplication.translate("WizardPageDeviceType", u"Audio-based three-phase", None))
+        self.audio_based_radio.setText(QCoreApplication.translate("WizardPageDeviceType", u"Audio-based three-phase", None))
         self.focstim_radio.setText(QCoreApplication.translate("WizardPageDeviceType", u"FOC-Stim", None))
         self.neostim_radio.setText(QCoreApplication.translate("WizardPageDeviceType", u"NeoStim", None))
     # retranslateUi

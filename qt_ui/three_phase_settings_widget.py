@@ -67,6 +67,7 @@ class ThreePhaseSettingsWidget(QtWidgets.QWidget, Ui_ThreePhaseSettingsWidget):
         self.right.setValue(settings.threephase_calibration_right.get())
         self.center.setValue(settings.threephase_calibration_center.get())
 
+
         self.groupBox_2.setChecked(settings.threephase_transform_enabled.get())
         self.rotation.setValue(settings.threephase_transform_rotate.get())
         self.mirror.setChecked(settings.threephase_transform_mirror.get())
@@ -108,6 +109,8 @@ class ThreePhaseSettingsWidget(QtWidgets.QWidget, Ui_ThreePhaseSettingsWidget):
 
         # connect buttons signals/slots
         self.reset_defaults_button.clicked.connect(self.reset_defaults)
+
+        self.phase_widget_calibration.refresh()
 
     threePhaseTransformChanged = QtCore.Signal()
 
