@@ -5,6 +5,7 @@ import logging
 
 from PySide6 import QtCore
 
+import qt_ui.settings
 from stim_math.axis import AbstractAxis, WriteProtectedAxis
 
 logger = logging.getLogger('restim.motion_generation')
@@ -23,20 +24,27 @@ class ThreephasePattern(ABC):
 
 
 class MousePattern(ThreephasePattern):
-    def __init__(self):
+    def __init__(self, alpha: AbstractAxis, beta: AbstractAxis):
         super().__init__()
-        self.x = 0
+        self.alpha = alpha
+        self.beta = beta
+        self.x = 0.00001    # hack to force display update on load
         self.y = 0
 
     def name(self):
         return "mouse"
 
     def mouse_event(self, x, y):
+        self.alpha.add(x)
+        self.beta.add(y)
         self.x = x
         self.y = y
 
     def update(self, dt: float):
         return self.x, self.y
+
+    def last_position_is_mouse_position(self):
+        return (self.x, self.y) == (self.alpha.last_value(), self.beta.last_value())
 
 
 class CirclePattern(ThreephasePattern):
@@ -61,7 +69,7 @@ class ThreephaseMotionGenerator(QtCore.QObject):
         self.script_alpha = None
         self.script_beta = None
 
-        self.mouse_pattern = MousePattern()
+        self.mouse_pattern = MousePattern(alpha, beta)
         self.patterns = [
             self.mouse_pattern,
             CirclePattern(),
@@ -70,15 +78,13 @@ class ThreephaseMotionGenerator(QtCore.QObject):
 
         self.velocity = 1
         self.last_update_time = time.time()
-        self.latency = 0    # TODO
+        self.latency = 0
 
         self.timer = QtCore.QTimer(self)
         self.timer.timeout.connect(self.timeout)
         self.timer.setInterval(int(1000 / 60.0))
 
-        # def refreshSettings(self):
-        #     self.timer.setInterval(int(1000 // np.clip(settings.display_fps.get(), 1.0, 500.0)))
-        #     self.latency = settings.display_latency.get() / 1000.0
+        self.refreshSettings()
 
     def set_enable(self, enable):
         if enable:
@@ -105,12 +111,23 @@ class ThreephaseMotionGenerator(QtCore.QObject):
         self.last_update_time = time.time()
 
         if not self.any_scripts_loaded():
-            # update pattern, update display
-            a, b = self.pattern.update(dt * self.velocity)
-            self.alpha.add(a)
-            self.beta.add(b)
-            # TODO: latency?
-            self.position_updated.emit(a, b)
+            if issubclass(self.pattern.__class__, MousePattern):
+                if self.pattern.last_position_is_mouse_position():
+                    # mouse position, display update already handled by control.
+                    pass
+                else:
+                    # tcode position, send lagged position
+                    a = self.alpha.interpolate(time.time() - self.latency)
+                    b = self.beta.interpolate(time.time() - self.latency)
+                    self.position_updated.emit(a, b)
+            else:
+                # update pattern, display lagged position
+                a, b = self.pattern.update(dt * self.velocity)
+                self.alpha.add(a)
+                self.beta.add(b)
+                a = self.alpha.interpolate(time.time() - self.latency)
+                b = self.beta.interpolate(time.time() - self.latency)
+                self.position_updated.emit(a, b)
         else:
             # update display with data from funscript
             a = self.script_alpha.interpolate(time.time() - self.latency)
@@ -123,6 +140,10 @@ class ThreephaseMotionGenerator(QtCore.QObject):
             self.alpha.add(a)
             self.beta.add(b)
             self.position_updated.emit(a, b)
+
+    def refreshSettings(self):
+        self.timer.setInterval(int(1000 // np.clip(qt_ui.settings.display_fps.get(), 1.0, 500.0)))
+        self.latency = qt_ui.settings.display_latency.get() / 1000.0
 
     position_updated = QtCore.Signal(float, float)  # a, b
 

@@ -517,6 +517,8 @@ class Window(QMainWindow, Ui_MainWindow):
         self.buttplug_wsdm_client.refreshSettings()
         self.funscript_mapping_changed()  # reload funscript axis
         self.tab_a_b_testing.refreshSettings()
+        self.motion_3.refreshSettings()
+        self.motion_4.refreshSettings()
 
     def save_settings(self):
         """

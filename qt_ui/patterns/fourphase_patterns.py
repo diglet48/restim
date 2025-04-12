@@ -5,6 +5,7 @@ import time
 
 from PySide6 import QtCore
 
+import qt_ui.settings
 from stim_math.axis import AbstractAxis, WriteProtectedAxis
 
 from qt_ui.widgets.fourphase_widget_stereographic import v1, v2, v3, v4
@@ -24,9 +25,12 @@ class FourphasePattern(ABC):
 
 
 class MousePattern(FourphasePattern):
-    def __init__(self):
+    def __init__(self, alpha: AbstractAxis, beta: AbstractAxis, gamma: AbstractAxis):
         super().__init__()
-        self.x = 1
+        self.alpha = alpha
+        self.beta = beta
+        self.gamma = gamma
+        self.x = 0.00001    # hack to force display update on load
         self.y = 0
         self.z = 0
 
@@ -34,12 +38,18 @@ class MousePattern(FourphasePattern):
         return "mouse"
 
     def mouse_event(self, x, y, z):
+        self.alpha.add(x)
+        self.beta.add(y)
+        self.gamma.add(z)
         self.x = x
         self.y = y
         self.z = z
 
     def update(self, dt: float):
         return self.x, self.y, self.z
+
+    def last_position_is_mouse_position(self):
+        return (self.x, self.y) == (self.alpha.last_value(), self.beta.last_value())
 
 
 class OrbitPattern(FourphasePattern):
@@ -125,7 +135,7 @@ class FourphaseMotionGenerator(QtCore.QObject):
         self.script_beta = None
         self.script_gamma = None
 
-        self.mouse_pattern = MousePattern()
+        self.mouse_pattern = MousePattern(alpha, beta, gamma)
         self.patterns = [
             self.mouse_pattern,
             SequencePattern('seq ABCD', [v1, v2, v3, v4]),
@@ -153,6 +163,7 @@ class FourphaseMotionGenerator(QtCore.QObject):
         self.timer = QtCore.QTimer(self)
         self.timer.timeout.connect(self.timeout)
         self.timer.setInterval(int(1000 / 60.0))
+        self.refreshSettings()
 
     def set_enable(self, enable):
         if enable:
@@ -180,20 +191,32 @@ class FourphaseMotionGenerator(QtCore.QObject):
         self.last_update_time = time.time()
 
         if not self.any_scripts_loaded():
-            # update pattern, update display
-            a, b, c = self.pattern.update(dt * self.velocity)
-            self.alpha.add(a)
-            self.beta.add(b)
-            self.gamma.add(c)
-            # TODO: latency?
-            self.position_updated.emit(a, b, c)
+            if issubclass(self.pattern.__class__, MousePattern):
+                if self.pattern.last_position_is_mouse_position():
+                    # mouse position, display update already handled.
+                    pass
+                else:
+                    # tcode position, send lagged position
+                    a = self.alpha.interpolate(time.time() - self.latency)
+                    b = self.beta.interpolate(time.time() - self.latency)
+                    c = self.gamma.interpolate(time.time() - self.latency)
+                    self.position_updated.emit(a, b, c)
+            else:
+                # update pattern, display lagged position
+                a, b, c = self.pattern.update(dt * self.velocity)
+                self.alpha.add(a)
+                self.beta.add(b)
+                self.gamma.add(c)
+                a = self.alpha.interpolate(time.time() - self.latency)
+                b = self.beta.interpolate(time.time() - self.latency)
+                c = self.gamma.interpolate(time.time() - self.latency)
+                self.position_updated.emit(a, b, c)
         else:
             # update display with data from funscript
             a = self.script_alpha.interpolate(time.time() - self.latency)
             b = self.script_beta.interpolate(time.time() - self.latency)
             c = self.script_gamma.interpolate(time.time() - self.latency)
             self.position_updated.emit(a, b, c)
-
 
     def mouse_event(self, a, b, c):
         if self.pattern == self.mouse_pattern and not self.any_scripts_loaded():
@@ -202,5 +225,9 @@ class FourphaseMotionGenerator(QtCore.QObject):
             self.beta.add(b)
             self.gamma.add(c)
             self.position_updated.emit(a, b, c)
+
+    def refreshSettings(self):
+        self.timer.setInterval(int(1000 // np.clip(qt_ui.settings.display_fps.get(), 1.0, 500.0)))
+        self.latency = qt_ui.settings.display_latency.get() / 1000.0
 
     position_updated = QtCore.Signal(float, float, float)  # a, b, c
