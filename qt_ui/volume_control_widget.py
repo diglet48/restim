@@ -10,7 +10,7 @@ from qt_ui.axis_controller import AxisController
 from qt_ui.volume_control_widget_ui import Ui_VolumeControlForm
 from qt_ui.widgets.volume_widget import VolumeWidget
 from stim_math.audio_gen.params import VolumeParams
-from stim_math.axis import create_temporal_axis, AbstractAxis, create_constant_axis
+from stim_math.axis import create_temporal_axis, AbstractAxis, create_constant_axis, WriteProtectedAxis
 from qt_ui import settings
 
 update_interval_seconds = 0.1
@@ -21,8 +21,10 @@ class VolumeControlWidget(QtWidgets.QWidget, Ui_VolumeControlForm):
         QtWidgets.QWidget.__init__(self, parent)
         self.setupUi(self)
 
-        # volume set by tcode or funscript
+        # volume set by tcode
         self.axis_api_volume = create_temporal_axis(1.0)
+        # volume set by funscript
+        self.axis_funscript_volume = create_temporal_axis(1.0)
         # volume multiplier for the 'inactivity' feature
         self.axis_inactivity_volume = create_temporal_axis(1.0)
         # master volume, volume set in application. Slowly increases if ramp is used.
@@ -31,12 +33,7 @@ class VolumeControlWidget(QtWidgets.QWidget, Ui_VolumeControlForm):
         self.axis_external_volume = create_temporal_axis(1.0)
 
         self.axis_tau = create_constant_axis(settings.tau_us.get())
-        self.volume = VolumeParams(
-            api=self.axis_api_volume,
-            master=self.axis_master_volume,
-            inactivity=self.axis_inactivity_volume,
-            external=self.axis_external_volume,
-        )
+
         self.monitor_axis = []
 
         timer = QtCore.QTimer(self)
@@ -88,14 +85,18 @@ class VolumeControlWidget(QtWidgets.QWidget, Ui_VolumeControlForm):
         self.timeout_ramp(dt)
         self.timeout_inactivity(dt)
 
-        master_volume = self.volume.master.last_value()
+        master_volume = self.axis_master_volume.last_value()
         if self.playing:
             inactivity_volume = self.inactivity_multiplier * self.slow_start_multiplier
         else:
             # when not playing, fake the display so the user sees the volume after the start ramp
             inactivity_volume = self.inactivity_multiplier
-        api_volume = self.volume.api.interpolate(time.time() - self.latency)
-        external_volume = self.volume.external.interpolate(time.time() - self.latency)
+
+        if issubclass(self.axis_funscript_volume.__class__, WriteProtectedAxis):
+            api_volume = self.axis_funscript_volume.interpolate(time.time() - self.latency)
+        else:
+            api_volume = self.axis_api_volume.interpolate(time.time() - self.latency)
+        external_volume = self.axis_external_volume.interpolate(time.time() - self.latency)
         self.volume_widget.set_value_and_tooltip(
             int(master_volume * api_volume * inactivity_volume * external_volume * 100),
             f"master volume: {master_volume * 100:.0f}%\n" +

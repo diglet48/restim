@@ -288,7 +288,7 @@ class Window(QMainWindow, Ui_MainWindow):
             algorithm_factory.get_axis_alpha(),
             algorithm_factory.get_axis_beta(),
         ])
-        self.tab_volume.volume.api = algorithm_factory.get_axis_volume_api()
+        self.tab_volume.axis_funscript_volume = algorithm_factory.get_axis_volume_api()
 
         # continuous tab
         self.tab_carrier.carrier_controller.link_axis(algorithm_factory.get_axis_continuous_carrier_frequency())

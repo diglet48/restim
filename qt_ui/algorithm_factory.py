@@ -250,22 +250,22 @@ class AlgorithmFactory:
         return self.get_axis_from_script_mapping(AxisEnum.POSITION_GAMMA) or self.mainwindow.gamma
 
     def get_axis_volume_api(self):
-        return self.get_axis_from_script_mapping(AxisEnum.VOLUME_API) or self.mainwindow.tab_volume.volume.api
+        return self.get_axis_from_script_mapping(AxisEnum.VOLUME_API) or self.mainwindow.tab_volume.axis_api_volume
 
     def get_axis_volume_master(self):
         if self.create_for_bake:
             return create_constant_axis(1.0)    # ramp does NOT work in bake mode
-        return self.mainwindow.tab_volume.volume.master
+        return self.mainwindow.tab_volume.axis_master_volume
 
     def get_axis_volume_inactivity(self):
         if self.create_for_bake:
             return create_constant_axis(1.0)    # inactivity does NOT work in bake mode
-        return self.mainwindow.tab_volume.volume.inactivity
+        return self.mainwindow.tab_volume.axis_inactivity_volume
 
     def get_axis_volume_external(self):
         if self.create_for_bake:
             return create_constant_axis(1.0)    # external volume does NOT work in bake mode
-        return self.mainwindow.tab_volume.volume.external
+        return self.mainwindow.tab_volume.axis_external_volume
 
     def get_axis_tau(self):
         return self.mainwindow.tab_volume.axis_tau
