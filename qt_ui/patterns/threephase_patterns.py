@@ -130,8 +130,14 @@ class ThreephaseMotionGenerator(QtCore.QObject):
                 self.position_updated.emit(a, b)
         else:
             # update display with data from funscript
-            a = self.script_alpha.interpolate(time.time() - self.latency)
-            b = self.script_beta.interpolate(time.time() - self.latency)
+            if self.script_alpha:
+                a = self.script_alpha.interpolate(time.time() - self.latency)
+            else:
+                a = self.alpha.interpolate(time.time() - self.latency)
+            if self.script_beta:
+                b = self.script_beta.interpolate(time.time() - self.latency)
+            else:
+                b = self.beta.interpolate(time.time() - self.latency)
             self.position_updated.emit(a, b)
 
     def mouse_event(self, a, b):
