@@ -32,6 +32,7 @@ class Ui_ABTestWidget(object):
         self.gridLayout.setObjectName(u"gridLayout")
         self.b_volume = QDoubleSpinBox(self.groupBox)
         self.b_volume.setObjectName(u"b_volume")
+        self.b_volume.setKeyboardTracking(False)
         self.b_volume.setMaximum(100.000000000000000)
         self.b_volume.setSingleStep(0.100000000000000)
         self.b_volume.setValue(99.989999999999995)
@@ -40,12 +41,13 @@ class Ui_ABTestWidget(object):
 
         self.b_signal_label = QLabel(self.groupBox)
         self.b_signal_label.setObjectName(u"b_signal_label")
-        self.b_signal_label.setAlignment(Qt.AlignCenter)
+        self.b_signal_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout.addWidget(self.b_signal_label, 0, 2, 1, 1)
 
         self.b_carrier = QDoubleSpinBox(self.groupBox)
         self.b_carrier.setObjectName(u"b_carrier")
+        self.b_carrier.setKeyboardTracking(False)
         self.b_carrier.setMinimum(1.000000000000000)
         self.b_carrier.setMaximum(9999999.000000000000000)
         self.b_carrier.setSingleStep(10.000000000000000)
@@ -64,6 +66,7 @@ class Ui_ABTestWidget(object):
 
         self.a_volume = QDoubleSpinBox(self.groupBox)
         self.a_volume.setObjectName(u"a_volume")
+        self.a_volume.setKeyboardTracking(False)
         self.a_volume.setMaximum(100.000000000000000)
         self.a_volume.setSingleStep(0.100000000000000)
         self.a_volume.setValue(100.000000000000000)
@@ -77,12 +80,14 @@ class Ui_ABTestWidget(object):
 
         self.b_pulse_width = QDoubleSpinBox(self.groupBox)
         self.b_pulse_width.setObjectName(u"b_pulse_width")
+        self.b_pulse_width.setKeyboardTracking(False)
         self.b_pulse_width.setSingleStep(0.100000000000000)
 
         self.gridLayout.addWidget(self.b_pulse_width, 5, 2, 1, 1)
 
         self.a_rise_time = QDoubleSpinBox(self.groupBox)
         self.a_rise_time.setObjectName(u"a_rise_time")
+        self.a_rise_time.setKeyboardTracking(False)
         self.a_rise_time.setMaximum(100.000000000000000)
         self.a_rise_time.setSingleStep(0.100000000000000)
 
@@ -90,6 +95,7 @@ class Ui_ABTestWidget(object):
 
         self.b_rise_time = QDoubleSpinBox(self.groupBox)
         self.b_rise_time.setObjectName(u"b_rise_time")
+        self.b_rise_time.setKeyboardTracking(False)
         self.b_rise_time.setMaximum(100.000000000000000)
         self.b_rise_time.setSingleStep(0.100000000000000)
 
@@ -97,6 +103,7 @@ class Ui_ABTestWidget(object):
 
         self.a_pulse_width = QDoubleSpinBox(self.groupBox)
         self.a_pulse_width.setObjectName(u"a_pulse_width")
+        self.a_pulse_width.setKeyboardTracking(False)
         self.a_pulse_width.setSingleStep(0.100000000000000)
 
         self.gridLayout.addWidget(self.a_pulse_width, 5, 1, 1, 1)
@@ -128,6 +135,7 @@ class Ui_ABTestWidget(object):
 
         self.a_carrier = QDoubleSpinBox(self.groupBox)
         self.a_carrier.setObjectName(u"a_carrier")
+        self.a_carrier.setKeyboardTracking(False)
         self.a_carrier.setMinimum(1.000000000000000)
         self.a_carrier.setMaximum(9999999.000000000000000)
         self.a_carrier.setSingleStep(10.000000000000000)
@@ -136,6 +144,7 @@ class Ui_ABTestWidget(object):
 
         self.b_pulse_frequency = QDoubleSpinBox(self.groupBox)
         self.b_pulse_frequency.setObjectName(u"b_pulse_frequency")
+        self.b_pulse_frequency.setKeyboardTracking(False)
 
         self.gridLayout.addWidget(self.b_pulse_frequency, 4, 2, 1, 1)
 
@@ -146,12 +155,13 @@ class Ui_ABTestWidget(object):
 
         self.a_signal_label = QLabel(self.groupBox)
         self.a_signal_label.setObjectName(u"a_signal_label")
-        self.a_signal_label.setAlignment(Qt.AlignCenter)
+        self.a_signal_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.gridLayout.addWidget(self.a_signal_label, 0, 1, 1, 1)
 
         self.a_pulse_frequency = QDoubleSpinBox(self.groupBox)
         self.a_pulse_frequency.setObjectName(u"a_pulse_frequency")
+        self.a_pulse_frequency.setKeyboardTracking(False)
 
         self.gridLayout.addWidget(self.a_pulse_frequency, 4, 1, 1, 1)
 
@@ -162,18 +172,21 @@ class Ui_ABTestWidget(object):
 
         self.a_pulse_interval_random = QDoubleSpinBox(self.groupBox)
         self.a_pulse_interval_random.setObjectName(u"a_pulse_interval_random")
+        self.a_pulse_interval_random.setKeyboardTracking(False)
         self.a_pulse_interval_random.setMaximum(100.000000000000000)
 
         self.gridLayout.addWidget(self.a_pulse_interval_random, 8, 1, 1, 1)
 
         self.b_pulse_interval_random = QDoubleSpinBox(self.groupBox)
         self.b_pulse_interval_random.setObjectName(u"b_pulse_interval_random")
+        self.b_pulse_interval_random.setKeyboardTracking(False)
         self.b_pulse_interval_random.setMaximum(100.000000000000000)
 
         self.gridLayout.addWidget(self.b_pulse_interval_random, 8, 2, 1, 1)
 
         self.a_train_duration = QDoubleSpinBox(self.groupBox)
         self.a_train_duration.setObjectName(u"a_train_duration")
+        self.a_train_duration.setKeyboardTracking(False)
         self.a_train_duration.setMaximum(100.000000000000000)
         self.a_train_duration.setSingleStep(0.100000000000000)
 
@@ -181,6 +194,7 @@ class Ui_ABTestWidget(object):
 
         self.b_train_duration = QDoubleSpinBox(self.groupBox)
         self.b_train_duration.setObjectName(u"b_train_duration")
+        self.b_train_duration.setKeyboardTracking(False)
         self.b_train_duration.setMaximum(100.000000000000000)
         self.b_train_duration.setSingleStep(0.100000000000000)
 

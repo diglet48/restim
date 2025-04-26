@@ -29,6 +29,9 @@
       </item>
       <item row="0" column="1">
        <widget class="QDoubleSpinBox" name="a_power">
+        <property name="keyboardTracking">
+         <bool>false</bool>
+        </property>
         <property name="minimum">
          <double>-10.000000000000000</double>
         </property>
@@ -63,6 +66,9 @@
       </item>
       <item row="1" column="1">
        <widget class="QDoubleSpinBox" name="b_power">
+        <property name="keyboardTracking">
+         <bool>false</bool>
+        </property>
         <property name="minimum">
          <double>-10.000000000000000</double>
         </property>
@@ -76,6 +82,9 @@
       </item>
       <item row="2" column="1">
        <widget class="QDoubleSpinBox" name="c_power">
+        <property name="keyboardTracking">
+         <bool>false</bool>
+        </property>
         <property name="minimum">
          <double>-10.000000000000000</double>
         </property>
@@ -89,6 +98,9 @@
       </item>
       <item row="3" column="1">
        <widget class="QDoubleSpinBox" name="d_power">
+        <property name="keyboardTracking">
+         <bool>false</bool>
+        </property>
         <property name="minimum">
          <double>-10.000000000000000</double>
         </property>
@@ -109,6 +121,9 @@
       </item>
       <item row="4" column="1">
        <widget class="QDoubleSpinBox" name="center_power">
+        <property name="keyboardTracking">
+         <bool>false</bool>
+        </property>
         <property name="minimum">
          <double>-10.000000000000000</double>
         </property>

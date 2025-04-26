@@ -37,6 +37,7 @@ class Ui_FourPhaseSettingsWidget(object):
 
         self.a_power = QDoubleSpinBox(self.groupBox)
         self.a_power.setObjectName(u"a_power")
+        self.a_power.setKeyboardTracking(False)
         self.a_power.setMinimum(-10.000000000000000)
         self.a_power.setMaximum(10.000000000000000)
         self.a_power.setSingleStep(0.100000000000000)
@@ -60,6 +61,7 @@ class Ui_FourPhaseSettingsWidget(object):
 
         self.b_power = QDoubleSpinBox(self.groupBox)
         self.b_power.setObjectName(u"b_power")
+        self.b_power.setKeyboardTracking(False)
         self.b_power.setMinimum(-10.000000000000000)
         self.b_power.setMaximum(10.000000000000000)
         self.b_power.setSingleStep(0.100000000000000)
@@ -68,6 +70,7 @@ class Ui_FourPhaseSettingsWidget(object):
 
         self.c_power = QDoubleSpinBox(self.groupBox)
         self.c_power.setObjectName(u"c_power")
+        self.c_power.setKeyboardTracking(False)
         self.c_power.setMinimum(-10.000000000000000)
         self.c_power.setMaximum(10.000000000000000)
         self.c_power.setSingleStep(0.100000000000000)
@@ -76,6 +79,7 @@ class Ui_FourPhaseSettingsWidget(object):
 
         self.d_power = QDoubleSpinBox(self.groupBox)
         self.d_power.setObjectName(u"d_power")
+        self.d_power.setKeyboardTracking(False)
         self.d_power.setMinimum(-10.000000000000000)
         self.d_power.setMaximum(10.000000000000000)
         self.d_power.setSingleStep(0.100000000000000)
@@ -89,6 +93,7 @@ class Ui_FourPhaseSettingsWidget(object):
 
         self.center_power = QDoubleSpinBox(self.groupBox)
         self.center_power.setObjectName(u"center_power")
+        self.center_power.setKeyboardTracking(False)
         self.center_power.setMinimum(-10.000000000000000)
         self.center_power.setMaximum(10.000000000000000)
         self.center_power.setSingleStep(0.100000000000000)

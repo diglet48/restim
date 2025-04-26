@@ -42,6 +42,7 @@ class Ui_VolumeControlForm(object):
 
         self.doubleSpinBox_target_volume = QDoubleSpinBox(self.groupBox)
         self.doubleSpinBox_target_volume.setObjectName(u"doubleSpinBox_target_volume")
+        self.doubleSpinBox_target_volume.setKeyboardTracking(False)
         self.doubleSpinBox_target_volume.setMaximum(100.000000000000000)
         self.doubleSpinBox_target_volume.setSingleStep(0.100000000000000)
         self.doubleSpinBox_target_volume.setValue(100.000000000000000)
@@ -55,6 +56,7 @@ class Ui_VolumeControlForm(object):
 
         self.doubleSpinBox_rate = QDoubleSpinBox(self.groupBox)
         self.doubleSpinBox_rate.setObjectName(u"doubleSpinBox_rate")
+        self.doubleSpinBox_rate.setKeyboardTracking(False)
         self.doubleSpinBox_rate.setMaximum(10000.000000000000000)
         self.doubleSpinBox_rate.setSingleStep(0.100000000000000)
         self.doubleSpinBox_rate.setValue(1.000000000000000)
@@ -90,6 +92,7 @@ class Ui_VolumeControlForm(object):
 
         self.doubleSpinBox_inactivity_threshold = QDoubleSpinBox(self.groupBox_2)
         self.doubleSpinBox_inactivity_threshold.setObjectName(u"doubleSpinBox_inactivity_threshold")
+        self.doubleSpinBox_inactivity_threshold.setKeyboardTracking(False)
         self.doubleSpinBox_inactivity_threshold.setMaximum(100.000000000000000)
         self.doubleSpinBox_inactivity_threshold.setSingleStep(0.100000000000000)
 
@@ -102,6 +105,7 @@ class Ui_VolumeControlForm(object):
 
         self.doubleSpinBox_inactivity_volume = QDoubleSpinBox(self.groupBox_2)
         self.doubleSpinBox_inactivity_volume.setObjectName(u"doubleSpinBox_inactivity_volume")
+        self.doubleSpinBox_inactivity_volume.setKeyboardTracking(False)
         self.doubleSpinBox_inactivity_volume.setMaximum(100.000000000000000)
         self.doubleSpinBox_inactivity_volume.setSingleStep(0.100000000000000)
 
@@ -114,6 +118,7 @@ class Ui_VolumeControlForm(object):
 
         self.doubleSpinBox_inactivity_ramp_time = QDoubleSpinBox(self.groupBox_2)
         self.doubleSpinBox_inactivity_ramp_time.setObjectName(u"doubleSpinBox_inactivity_ramp_time")
+        self.doubleSpinBox_inactivity_ramp_time.setKeyboardTracking(False)
         self.doubleSpinBox_inactivity_ramp_time.setMaximum(100.000000000000000)
         self.doubleSpinBox_inactivity_ramp_time.setSingleStep(0.100000000000000)
 
@@ -133,6 +138,7 @@ class Ui_VolumeControlForm(object):
 
         self.doubleSpinBox_slow_start = QDoubleSpinBox(self.groupBox_4)
         self.doubleSpinBox_slow_start.setObjectName(u"doubleSpinBox_slow_start")
+        self.doubleSpinBox_slow_start.setKeyboardTracking(False)
         self.doubleSpinBox_slow_start.setDecimals(1)
         self.doubleSpinBox_slow_start.setMaximum(100.000000000000000)
         self.doubleSpinBox_slow_start.setSingleStep(0.100000000000000)
@@ -154,6 +160,7 @@ class Ui_VolumeControlForm(object):
 
         self.doubleSpinBox_tau = QDoubleSpinBox(self.groupBox_3)
         self.doubleSpinBox_tau.setObjectName(u"doubleSpinBox_tau")
+        self.doubleSpinBox_tau.setKeyboardTracking(False)
         self.doubleSpinBox_tau.setDecimals(0)
         self.doubleSpinBox_tau.setMinimum(0.000000000000000)
         self.doubleSpinBox_tau.setMaximum(1000.000000000000000)

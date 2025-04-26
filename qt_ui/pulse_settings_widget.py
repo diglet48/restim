@@ -101,6 +101,7 @@ class PulseSettingsWidget(QtWidgets.QWidget):
         carrier_slider.setSingleStep(10.0)
         carrier_slider.setValue(settings.pulse_carrier_frequency.get())
         carrier_slider_label = QtWidgets.QLabel("carrier frequency [Hz]")
+        carrier_slider.setKeyboardTracking(False)
         gbc_l.addRow(carrier_slider_label, carrier_slider)
         gbc.setLayout(gbc_l)
         l.addWidget(gbc)
@@ -113,6 +114,7 @@ class PulseSettingsWidget(QtWidgets.QWidget):
                                                      maximum=stim_math.limits.PulseFrequency.max)
         pulse_freq_slider.setSingleStep(1.0)
         pulse_freq_slider.setValue(settings.pulse_frequency.get())
+        pulse_freq_slider.setKeyboardTracking(False)
         pulse_freq_slider_label = QtWidgets.QLabel("pulse frequency [Hz]")
         gb_l.addRow(pulse_freq_slider_label, pulse_freq_slider)
 
@@ -120,12 +122,14 @@ class PulseSettingsWidget(QtWidgets.QWidget):
                                                        maximum=stim_math.limits.PulseWidth.max)
         pulse_width_slider.setSingleStep(0.1)
         pulse_width_slider.setValue(settings.pulse_width.get())
+        pulse_width_slider.setKeyboardTracking(False)
         pulse_width_label = QtWidgets.QLabel("pulse width [carrier cycles]")
         gb_l.addRow(pulse_width_label, pulse_width_slider)
 
         pulse_interval_random_slider = QtWidgets.QDoubleSpinBox(minimum=0, maximum=100)
         pulse_interval_random_slider.setSingleStep(1)
         pulse_interval_random_slider.setValue(settings.pulse_interval_random.get())
+        pulse_interval_random_slider.setKeyboardTracking(False)
         pulse_interval_random_label = QtWidgets.QLabel("pulse interval random [%]")
         gb_l.addRow(pulse_interval_random_label, pulse_interval_random_slider)
 
@@ -133,6 +137,7 @@ class PulseSettingsWidget(QtWidgets.QWidget):
                                                           maximum=stim_math.limits.PulseRiseTime.max)
         pulse_rise_time_slider.setSingleStep(0.1)
         pulse_rise_time_slider.setValue(settings.pulse_rise_time.get())
+        pulse_rise_time_slider.setKeyboardTracking(False)
         pulse_rise_time_label = QtWidgets.QLabel("rise time [carrier cycles]")
         gb_l.addRow(pulse_rise_time_label, pulse_rise_time_slider)
 

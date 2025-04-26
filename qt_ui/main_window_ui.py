@@ -146,6 +146,7 @@ class Ui_MainWindow(object):
 
         self.doubleSpinBox_volume = QDoubleSpinBox(self.groupBox_volume)
         self.doubleSpinBox_volume.setObjectName(u"doubleSpinBox_volume")
+        self.doubleSpinBox_volume.setKeyboardTracking(False)
         self.doubleSpinBox_volume.setDecimals(2)
         self.doubleSpinBox_volume.setMaximum(100.000000000000000)
         self.doubleSpinBox_volume.setSingleStep(0.100000000000000)
@@ -171,6 +172,7 @@ class Ui_MainWindow(object):
 
         self.doubleSpinBox = QDoubleSpinBox(self.groupBox_pattern)
         self.doubleSpinBox.setObjectName(u"doubleSpinBox")
+        self.doubleSpinBox.setKeyboardTracking(False)
         self.doubleSpinBox.setSingleStep(0.100000000000000)
         self.doubleSpinBox.setValue(1.000000000000000)
 
@@ -256,7 +258,7 @@ class Ui_MainWindow(object):
 
         self.stackedWidget.setCurrentIndex(0)
         self.stackedWidget_visual.setCurrentIndex(1)
-        self.tabWidget.setCurrentIndex(0)
+        self.tabWidget.setCurrentIndex(6)
 
 
         QMetaObject.connectSlotsByName(MainWindow)

@@ -50,6 +50,7 @@ class Ui_ThreePhaseSettingsWidget(object):
 
         self.neutral = QDoubleSpinBox(self.groupBox)
         self.neutral.setObjectName(u"neutral")
+        self.neutral.setKeyboardTracking(False)
         self.neutral.setMinimum(-15.000000000000000)
         self.neutral.setMaximum(15.000000000000000)
         self.neutral.setSingleStep(0.100000000000000)
@@ -58,6 +59,7 @@ class Ui_ThreePhaseSettingsWidget(object):
 
         self.right = QDoubleSpinBox(self.groupBox)
         self.right.setObjectName(u"right")
+        self.right.setKeyboardTracking(False)
         self.right.setMinimum(-15.000000000000000)
         self.right.setMaximum(15.000000000000000)
         self.right.setSingleStep(0.100000000000000)
@@ -66,6 +68,7 @@ class Ui_ThreePhaseSettingsWidget(object):
 
         self.center = QDoubleSpinBox(self.groupBox)
         self.center.setObjectName(u"center")
+        self.center.setKeyboardTracking(False)
         self.center.setMinimum(-15.000000000000000)
         self.center.setMaximum(15.000000000000000)
         self.center.setSingleStep(0.100000000000000)
@@ -110,6 +113,7 @@ class Ui_ThreePhaseSettingsWidget(object):
 
         self.rotation = QDoubleSpinBox(self.page)
         self.rotation.setObjectName(u"rotation")
+        self.rotation.setKeyboardTracking(False)
         self.rotation.setDecimals(0)
         self.rotation.setMinimum(-360.000000000000000)
         self.rotation.setMaximum(360.000000000000000)
@@ -134,6 +138,7 @@ class Ui_ThreePhaseSettingsWidget(object):
 
         self.limit_top = QDoubleSpinBox(self.page)
         self.limit_top.setObjectName(u"limit_top")
+        self.limit_top.setKeyboardTracking(False)
         self.limit_top.setMinimum(-1.000000000000000)
         self.limit_top.setMaximum(1.000000000000000)
         self.limit_top.setSingleStep(0.100000000000000)
@@ -148,6 +153,7 @@ class Ui_ThreePhaseSettingsWidget(object):
 
         self.limit_bottom = QDoubleSpinBox(self.page)
         self.limit_bottom.setObjectName(u"limit_bottom")
+        self.limit_bottom.setKeyboardTracking(False)
         self.limit_bottom.setMinimum(-1.000000000000000)
         self.limit_bottom.setMaximum(1.000000000000000)
         self.limit_bottom.setSingleStep(0.100000000000000)
@@ -162,6 +168,7 @@ class Ui_ThreePhaseSettingsWidget(object):
 
         self.limit_left = QDoubleSpinBox(self.page)
         self.limit_left.setObjectName(u"limit_left")
+        self.limit_left.setKeyboardTracking(False)
         self.limit_left.setMinimum(-1.000000000000000)
         self.limit_left.setMaximum(1.000000000000000)
         self.limit_left.setSingleStep(0.100000000000000)
@@ -176,6 +183,7 @@ class Ui_ThreePhaseSettingsWidget(object):
 
         self.limit_right = QDoubleSpinBox(self.page)
         self.limit_right.setObjectName(u"limit_right")
+        self.limit_right.setKeyboardTracking(False)
         self.limit_right.setMinimum(-1.000000000000000)
         self.limit_right.setMaximum(1.000000000000000)
         self.limit_right.setSingleStep(0.100000000000000)
@@ -200,6 +208,7 @@ class Ui_ThreePhaseSettingsWidget(object):
 
         self.mapToEdge_start = QDoubleSpinBox(self.page_2)
         self.mapToEdge_start.setObjectName(u"mapToEdge_start")
+        self.mapToEdge_start.setKeyboardTracking(False)
         self.mapToEdge_start.setMinimum(-360.000000000000000)
         self.mapToEdge_start.setMaximum(360.000000000000000)
         self.mapToEdge_start.setSingleStep(10.000000000000000)
@@ -213,6 +222,7 @@ class Ui_ThreePhaseSettingsWidget(object):
 
         self.mapToEdge_length = QDoubleSpinBox(self.page_2)
         self.mapToEdge_length.setObjectName(u"mapToEdge_length")
+        self.mapToEdge_length.setKeyboardTracking(False)
         self.mapToEdge_length.setMaximum(360.000000000000000)
         self.mapToEdge_length.setSingleStep(10.000000000000000)
 
@@ -246,6 +256,7 @@ class Ui_ThreePhaseSettingsWidget(object):
 
         self.exponent = QDoubleSpinBox(self.groupBox_3)
         self.exponent.setObjectName(u"exponent")
+        self.exponent.setKeyboardTracking(False)
         self.exponent.setMaximum(1.000000000000000)
         self.exponent.setSingleStep(0.100000000000000)
 
@@ -261,7 +272,7 @@ class Ui_ThreePhaseSettingsWidget(object):
 
         self.retranslateUi(ThreePhaseSettingsWidget)
 
-        self.stackedWidget.setCurrentIndex(1)
+        self.stackedWidget.setCurrentIndex(0)
 
 
         QMetaObject.connectSlotsByName(ThreePhaseSettingsWidget)

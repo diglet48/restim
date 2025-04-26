@@ -43,6 +43,9 @@
       </item>
       <item row="0" column="1">
        <widget class="QDoubleSpinBox" name="neutral">
+        <property name="keyboardTracking">
+         <bool>false</bool>
+        </property>
         <property name="minimum">
          <double>-15.000000000000000</double>
         </property>
@@ -56,6 +59,9 @@
       </item>
       <item row="1" column="1">
        <widget class="QDoubleSpinBox" name="right">
+        <property name="keyboardTracking">
+         <bool>false</bool>
+        </property>
         <property name="minimum">
          <double>-15.000000000000000</double>
         </property>
@@ -69,6 +75,9 @@
       </item>
       <item row="2" column="1">
        <widget class="QDoubleSpinBox" name="center">
+        <property name="keyboardTracking">
+         <bool>false</bool>
+        </property>
         <property name="minimum">
          <double>-15.000000000000000</double>
         </property>
@@ -119,7 +128,7 @@
       <item>
        <widget class="QStackedWidget" name="stackedWidget">
         <property name="currentIndex">
-         <number>1</number>
+         <number>0</number>
         </property>
         <widget class="QWidget" name="page">
          <layout class="QFormLayout" name="formLayout_4">
@@ -132,6 +141,9 @@
           </item>
           <item row="1" column="1">
            <widget class="QDoubleSpinBox" name="rotation">
+            <property name="keyboardTracking">
+             <bool>false</bool>
+            </property>
             <property name="decimals">
              <number>0</number>
             </property>
@@ -169,6 +181,9 @@
           </item>
           <item row="3" column="1">
            <widget class="QDoubleSpinBox" name="limit_top">
+            <property name="keyboardTracking">
+             <bool>false</bool>
+            </property>
             <property name="minimum">
              <double>-1.000000000000000</double>
             </property>
@@ -192,6 +207,9 @@
           </item>
           <item row="4" column="1">
            <widget class="QDoubleSpinBox" name="limit_bottom">
+            <property name="keyboardTracking">
+             <bool>false</bool>
+            </property>
             <property name="minimum">
              <double>-1.000000000000000</double>
             </property>
@@ -215,6 +233,9 @@
           </item>
           <item row="5" column="1">
            <widget class="QDoubleSpinBox" name="limit_left">
+            <property name="keyboardTracking">
+             <bool>false</bool>
+            </property>
             <property name="minimum">
              <double>-1.000000000000000</double>
             </property>
@@ -238,6 +259,9 @@
           </item>
           <item row="6" column="1">
            <widget class="QDoubleSpinBox" name="limit_right">
+            <property name="keyboardTracking">
+             <bool>false</bool>
+            </property>
             <property name="minimum">
              <double>-1.000000000000000</double>
             </property>
@@ -272,6 +296,9 @@
           </item>
           <item row="0" column="1">
            <widget class="QDoubleSpinBox" name="mapToEdge_start">
+            <property name="keyboardTracking">
+             <bool>false</bool>
+            </property>
             <property name="minimum">
              <double>-360.000000000000000</double>
             </property>
@@ -292,6 +319,9 @@
           </item>
           <item row="1" column="1">
            <widget class="QDoubleSpinBox" name="mapToEdge_length">
+            <property name="keyboardTracking">
+             <bool>false</bool>
+            </property>
             <property name="maximum">
              <double>360.000000000000000</double>
             </property>
@@ -336,6 +366,9 @@
       </item>
       <item row="0" column="1">
        <widget class="QDoubleSpinBox" name="exponent">
+        <property name="keyboardTracking">
+         <bool>false</bool>
+        </property>
         <property name="maximum">
          <double>1.000000000000000</double>
         </property>
