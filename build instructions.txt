@@ -15,6 +15,7 @@
 ./venv/Scripts/pyside6-uic.exe  -o ./qt_ui/audio_write_dialog_ui.py ./designer/audiowritedialog.ui
 ./venv/Scripts/pyside6-uic.exe  -o ./qt_ui/ab_test_widget_ui.py ./designer/abtestwidget.ui
 ./venv/Scripts/pyside6-uic.exe  -o ./qt_ui/neostim_settings_widget_ui.py ./designer/neostimsettingswidget.ui
+./venv/Scripts/pyside6-uic.exe  -o ./qt_ui/simfile_conversion_dialog_ui.py ./designer/simfileconversiondialog.ui
 
 ./venv/Scripts/pyside6-uic.exe  -o ./qt_ui/device_wizard/type_select_ui.py ./designer/device_wizard/type_select.ui
 ./venv/Scripts/pyside6-uic.exe  -o ./qt_ui/device_wizard/waveform_select_ui.py ./designer/device_wizard/waveform_select.ui

@@ -319,14 +319,21 @@
      <height>33</height>
     </rect>
    </property>
+   <widget class="QMenu" name="menuSetup">
+    <property name="title">
+     <string>Setup</string>
+    </property>
+    <addaction name="actionDevice_selection_wizard"/>
+    <addaction name="actionPreferences"/>
+   </widget>
    <widget class="QMenu" name="menuTools">
     <property name="title">
      <string>Tools</string>
     </property>
-    <addaction name="actionDevice_selection_wizard"/>
     <addaction name="actionFunscript_conversion"/>
-    <addaction name="actionPreferences"/>
+    <addaction name="actionSimfile_conversion"/>
    </widget>
+   <addaction name="menuSetup"/>
    <addaction name="menuTools"/>
   </widget>
   <widget class="QToolBar" name="toolBar">
@@ -441,6 +448,11 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+4</string>
+   </property>
+  </action>
+  <action name="actionSimfile_conversion">
+   <property name="text">
+    <string>Simfile conversion</string>
    </property>
   </action>
  </widget>

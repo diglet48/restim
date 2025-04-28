@@ -126,6 +126,9 @@ file_dialog_last_dir = Setting('file_dialog_last_dir', '', str)
 
 funscript_conversion_random_direction_change_probability = Setting('funscript/random_direction_change_probability', 0.1, float)
 
+simfile_conversion_atk_sus_rel_index = Setting('simfile/atk_sus_rel_index', 1, int)
+simfile_conversion_output_debug_scripts = Setting('simfile/output_debug_scripts', False, bool)
+
 display_fps = Setting('display/fps', 60, float)
 display_latency = Setting('display/latency', 200, float)
 

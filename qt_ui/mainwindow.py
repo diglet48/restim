@@ -20,6 +20,7 @@ from device.audio.audio_stim_device import AudioStimDevice
 import net.websocketserver
 import net.tcpudpserver
 import qt_ui.funscript_conversion_dialog
+import qt_ui.simfile_conversion_dialog
 import qt_ui.preferences_dialog
 import qt_ui.settings
 import net.serialproxy
@@ -179,6 +180,9 @@ class Window(QMainWindow, Ui_MainWindow):
 
         self.dialog = qt_ui.funscript_conversion_dialog.FunscriptConversionDialog()
         self.actionFunscript_conversion.triggered.connect(self.open_funscript_conversion_dialog)
+
+        self.simfile_conversion_dialog = qt_ui.simfile_conversion_dialog.SimfileConversionDialog()
+        self.actionSimfile_conversion.triggered.connect(self.open_simfile_conversion_dialog)
 
         self.settings_dialog = qt_ui.preferences_dialog.PreferencesDialog()
         self.actionPreferences.triggered.connect(self.open_preferences_dialog)
@@ -494,6 +498,10 @@ class Window(QMainWindow, Ui_MainWindow):
     def open_funscript_conversion_dialog(self):
         self.signal_stop(PlayState.STOPPED)
         self.dialog.exec()
+
+    def open_simfile_conversion_dialog(self):
+        self.signal_stop(PlayState.STOPPED)
+        self.simfile_conversion_dialog.exec()
 
     def open_preferences_dialog(self):
         self.signal_stop(PlayState.STOPPED)
