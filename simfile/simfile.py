@@ -1,7 +1,6 @@
 import pathlib
 
 from msdparser import parse_msd
-import numpy as np
 
 from dataclasses import dataclass
 
