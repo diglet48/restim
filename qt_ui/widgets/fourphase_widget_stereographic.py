@@ -11,6 +11,7 @@ COEF_1 = 1
 COEF_2 = np.sqrt(8) / 3           # sqrt(1 - coef_1**2/3)
 COEF_3 = np.sqrt(2) / np.sqrt(3)  # sqrt(1 - coef_1**2/3 - coef_2**2/2)
 
+O = np.array([0, 0, 0])
 v1 = np.array([COEF_1, 0, 0])
 v2 = np.array([-COEF_1 / 3, COEF_2, 0])
 v3 = np.array([-COEF_1 / 3, -COEF_2 / 2, COEF_3])

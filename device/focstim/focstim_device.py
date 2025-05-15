@@ -139,7 +139,10 @@ class FOCStimDevice(QObject, OutputDevice):
         self.old_dict = {}
         self.port.write(b'\r\n')
         self.transmit_dirty_params(0)    # re-transmit all params.
-        self.port.write(b'DSTART\r\n')
+        if self.algorithm.outputs() == 3:
+            self.port.write(b'DSTART\r\n')
+        else:
+            self.port.write(b'DSTART4\r\n')
         self.ping_timer.start()
         self.update_timer.start()
 

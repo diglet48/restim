@@ -4,6 +4,8 @@ from msdparser import parse_msd
 
 from dataclasses import dataclass
 
+# simfile documentation: https://outfox.wiki/en/dev/mode-support/sm-support
+
 @dataclass
 class BPM:
     bpms: list[(float, float)]

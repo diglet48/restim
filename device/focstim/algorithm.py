@@ -19,6 +19,9 @@ class FOCStimAlgorithm(RemoteGenerationAlgorithm):
         self.safety_limits = safety_limits
         self.position_params = ThreePhasePosition(params.position, params.transform)
 
+    def outputs(self):
+        return 3
+
     def parameter_dict(self) -> dict:
         def remap(value, min_value, max_value):
             p = (value - min_value) / (max_value - min_value)
