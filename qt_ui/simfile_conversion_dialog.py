@@ -92,18 +92,18 @@ class SimfileConversionDialog(QDialog, Ui_SimfileConversionDialog):
         t = x * (4 * 60 / bpm) - offset
 
         if self.checkBox_debug_scripts.isChecked():
-            self.plainTextEdit.appendPlainText(f'writing {os.path.split(self.funscript_path('e1'))[1]}')
+            self.plainTextEdit.appendPlainText(f"writing {os.path.split(self.funscript_path('e1'))[1]}")
             Funscript(t, a).save_to_path(self.funscript_path('e1'))
-            self.plainTextEdit.appendPlainText(f'writing {os.path.split(self.funscript_path('e2'))[1]}')
+            self.plainTextEdit.appendPlainText(f"writing {os.path.split(self.funscript_path('e2'))[1]}")
             Funscript(t, b).save_to_path(self.funscript_path('e2'))
-            self.plainTextEdit.appendPlainText(f'writing {os.path.split(self.funscript_path('e3'))[1]}')
+            self.plainTextEdit.appendPlainText(f"writing {os.path.split(self.funscript_path('e3'))[1]}")
             Funscript(t, c).save_to_path(self.funscript_path('e3'))
-            self.plainTextEdit.appendPlainText(f'writing {os.path.split(self.funscript_path('e4'))[1]}')
+            self.plainTextEdit.appendPlainText(f"writing {os.path.split(self.funscript_path('e4'))[1]}")
             Funscript(t, d).save_to_path(self.funscript_path('e4'))
 
-        self.plainTextEdit.appendPlainText(f'writing {os.path.split(self.funscript_path('alpha'))[1]}')
+        self.plainTextEdit.appendPlainText(f"writing {os.path.split(self.funscript_path('alpha'))[1]}")
         Funscript(t, alpha).save_to_path(self.funscript_path('alpha'))
-        self.plainTextEdit.appendPlainText(f'writing {os.path.split(self.funscript_path('beta'))[1]}')
+        self.plainTextEdit.appendPlainText(f"writing {os.path.split(self.funscript_path('beta'))[1]}")
         Funscript(t, beta).save_to_path(self.funscript_path('beta'))
 
     def funscript_path(self, affix):
