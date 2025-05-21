@@ -350,6 +350,98 @@ class Ui_PreferencesDialog(object):
         self.verticalLayout_8.addItem(self.verticalSpacer_5)
 
         self.tabWidget.addTab(self.tab_neostim, "")
+        self.tab_coyote = QWidget()
+        self.tab_coyote.setObjectName(u"tab_coyote")
+        self.verticalLayout_coyote = QVBoxLayout(self.tab_coyote)
+        self.verticalLayout_coyote.setObjectName(u"verticalLayout_coyote")
+        self.formLayout_coyote = QFormLayout()
+        self.formLayout_coyote.setObjectName(u"formLayout_coyote")
+        self.label_coyote_device_name = QLabel(self.tab_coyote)
+        self.label_coyote_device_name.setObjectName(u"label_coyote_device_name")
+
+        self.formLayout_coyote.setWidget(0, QFormLayout.LabelRole, self.label_coyote_device_name)
+
+        self.coyote_device_name = QLineEdit(self.tab_coyote)
+        self.coyote_device_name.setObjectName(u"coyote_device_name")
+
+        self.formLayout_coyote.setWidget(0, QFormLayout.FieldRole, self.coyote_device_name)
+
+        self.label_coyote_channel_a_limit = QLabel(self.tab_coyote)
+        self.label_coyote_channel_a_limit.setObjectName(u"label_coyote_channel_a_limit")
+
+        self.formLayout_coyote.setWidget(1, QFormLayout.LabelRole, self.label_coyote_channel_a_limit)
+
+        self.coyote_channel_a_limit = QSpinBox(self.tab_coyote)
+        self.coyote_channel_a_limit.setObjectName(u"coyote_channel_a_limit")
+        self.coyote_channel_a_limit.setMinimum(0)
+        self.coyote_channel_a_limit.setMaximum(200)
+
+        self.formLayout_coyote.setWidget(1, QFormLayout.FieldRole, self.coyote_channel_a_limit)
+
+        self.label_coyote_channel_b_limit = QLabel(self.tab_coyote)
+        self.label_coyote_channel_b_limit.setObjectName(u"label_coyote_channel_b_limit")
+
+        self.formLayout_coyote.setWidget(2, QFormLayout.LabelRole, self.label_coyote_channel_b_limit)
+
+        self.coyote_channel_b_limit = QSpinBox(self.tab_coyote)
+        self.coyote_channel_b_limit.setObjectName(u"coyote_channel_b_limit")
+        self.coyote_channel_b_limit.setMinimum(0)
+        self.coyote_channel_b_limit.setMaximum(200)
+
+        self.formLayout_coyote.setWidget(2, QFormLayout.FieldRole, self.coyote_channel_b_limit)
+
+        self.label_coyote_channel_a_freq_balance = QLabel(self.tab_coyote)
+        self.label_coyote_channel_a_freq_balance.setObjectName(u"label_coyote_channel_a_freq_balance")
+
+        self.formLayout_coyote.setWidget(3, QFormLayout.LabelRole, self.label_coyote_channel_a_freq_balance)
+
+        self.coyote_channel_a_freq_balance = QSpinBox(self.tab_coyote)
+        self.coyote_channel_a_freq_balance.setObjectName(u"coyote_channel_a_freq_balance")
+        self.coyote_channel_a_freq_balance.setMinimum(0)
+        self.coyote_channel_a_freq_balance.setMaximum(255)
+
+        self.formLayout_coyote.setWidget(3, QFormLayout.FieldRole, self.coyote_channel_a_freq_balance)
+
+        self.label_coyote_channel_b_freq_balance = QLabel(self.tab_coyote)
+        self.label_coyote_channel_b_freq_balance.setObjectName(u"label_coyote_channel_b_freq_balance")
+
+        self.formLayout_coyote.setWidget(4, QFormLayout.LabelRole, self.label_coyote_channel_b_freq_balance)
+
+        self.coyote_channel_b_freq_balance = QSpinBox(self.tab_coyote)
+        self.coyote_channel_b_freq_balance.setObjectName(u"coyote_channel_b_freq_balance")
+        self.coyote_channel_b_freq_balance.setMinimum(0)
+        self.coyote_channel_b_freq_balance.setMaximum(255)
+
+        self.formLayout_coyote.setWidget(4, QFormLayout.FieldRole, self.coyote_channel_b_freq_balance)
+
+        self.label_coyote_channel_a_intensity_balance = QLabel(self.tab_coyote)
+        self.label_coyote_channel_a_intensity_balance.setObjectName(u"label_coyote_channel_a_intensity_balance")
+
+        self.formLayout_coyote.setWidget(5, QFormLayout.LabelRole, self.label_coyote_channel_a_intensity_balance)
+
+        self.coyote_channel_a_intensity_balance = QSpinBox(self.tab_coyote)
+        self.coyote_channel_a_intensity_balance.setObjectName(u"coyote_channel_a_intensity_balance")
+        self.coyote_channel_a_intensity_balance.setMinimum(0)
+        self.coyote_channel_a_intensity_balance.setMaximum(255)
+
+        self.formLayout_coyote.setWidget(5, QFormLayout.FieldRole, self.coyote_channel_a_intensity_balance)
+
+        self.label_coyote_channel_b_intensity_balance = QLabel(self.tab_coyote)
+        self.label_coyote_channel_b_intensity_balance.setObjectName(u"label_coyote_channel_b_intensity_balance")
+
+        self.formLayout_coyote.setWidget(6, QFormLayout.LabelRole, self.label_coyote_channel_b_intensity_balance)
+
+        self.coyote_channel_b_intensity_balance = QSpinBox(self.tab_coyote)
+        self.coyote_channel_b_intensity_balance.setObjectName(u"coyote_channel_b_intensity_balance")
+        self.coyote_channel_b_intensity_balance.setMinimum(0)
+        self.coyote_channel_b_intensity_balance.setMaximum(255)
+
+        self.formLayout_coyote.setWidget(6, QFormLayout.FieldRole, self.coyote_channel_b_intensity_balance)
+
+
+        self.verticalLayout_coyote.addLayout(self.formLayout_coyote)
+
+        self.tabWidget.addTab(self.tab_coyote, "")
         self.tab_media_settings = QWidget()
         self.tab_media_settings.setObjectName(u"tab_media_settings")
         self.verticalLayout_6 = QVBoxLayout(self.tab_media_settings)
@@ -627,6 +719,15 @@ class Ui_PreferencesDialog(object):
         self.neostim_refresh_serial_devices.setText(QCoreApplication.translate("PreferencesDialog", u"Refresh", None))
         self.label_17.setText(QCoreApplication.translate("PreferencesDialog", u"Serial port", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_neostim), QCoreApplication.translate("PreferencesDialog", u"NeoStim", None))
+        self.label_coyote_device_name.setText(QCoreApplication.translate("PreferencesDialog", u"Device Name", None))
+        self.coyote_device_name.setText(QCoreApplication.translate("PreferencesDialog", u"47L121000", None))
+        self.label_coyote_channel_a_limit.setText(QCoreApplication.translate("PreferencesDialog", u"Channel A Limit", None))
+        self.label_coyote_channel_b_limit.setText(QCoreApplication.translate("PreferencesDialog", u"Channel B Limit", None))
+        self.label_coyote_channel_a_freq_balance.setText(QCoreApplication.translate("PreferencesDialog", u"Channel A Freq Balance", None))
+        self.label_coyote_channel_b_freq_balance.setText(QCoreApplication.translate("PreferencesDialog", u"Channel B Freq Balance", None))
+        self.label_coyote_channel_a_intensity_balance.setText(QCoreApplication.translate("PreferencesDialog", u"Channel A Intensity Balance", None))
+        self.label_coyote_channel_b_intensity_balance.setText(QCoreApplication.translate("PreferencesDialog", u"Channel B Intensity Balance", None))
+        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_coyote), QCoreApplication.translate("PreferencesDialog", u"Coyote", None))
         self.groupBox_3.setTitle(QCoreApplication.translate("PreferencesDialog", u"MPC-HC", None))
         self.label_31.setText(QCoreApplication.translate("PreferencesDialog", u"address:port", None))
         self.mpc_reload.setText(QCoreApplication.translate("PreferencesDialog", u"...", None))

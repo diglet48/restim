@@ -3,6 +3,7 @@ import numpy as np
 
 from device.focstim.fourphase_algorithm import FOCStimFourphaseAlgorithm
 from device.neostim.algorithm import NeoStimAlgorithm
+from device.coyote.algorithm import CoyoteAlgorithm
 from qt_ui.device_wizard.enums import DeviceConfiguration, DeviceType, WaveformType
 from stim_math.audio_gen.base_classes import AudioGenerationAlgorithm
 from device.focstim.algorithm import FOCStimAlgorithm
@@ -34,7 +35,7 @@ class AlgorithmFactory:
         self.load_funscripts = load_funscripts
         self.create_for_bake = create_for_bake
 
-    def create_algorithm(self, device: DeviceConfiguration) -> AudioGenerationAlgorithm | NeoStimAlgorithm:
+    def create_algorithm(self, device: DeviceConfiguration) -> AudioGenerationAlgorithm | NeoStimAlgorithm | CoyoteAlgorithm:
         if device.device_type == DeviceType.AUDIO_THREE_PHASE:
             if device.waveform_type == WaveformType.CONTINUOUS:
                 return self.create_3phase_continuous(device)
@@ -50,6 +51,8 @@ class AlgorithmFactory:
             return self.create_focstim_4phase_pulsebased(device)
         elif device.device_type == DeviceType.NEOSTIM_THREE_PHASE:
             return self.create_neostim(device)
+        elif device.device_type == DeviceType.COYOTE_THREE_PHASE:
+            return self.create_coyote(device)
         else:
             raise RuntimeError('unknown device type')
 
@@ -239,6 +242,82 @@ class AlgorithmFactory:
             ),
         )
         return algorithm
+    
+    def create_coyote(self, device: DeviceConfiguration) -> AudioGenerationAlgorithm:
+        """
+        Create direct algorithm for Coyote device with proper frequency handling.
+
+        Each channel can take:
+        - Vibration axis if available (assumed already in reasonable range or scaled directly).
+        - Pulse frequency (1-100 mapped directly into channel's range).
+        - Carrier frequency (global, used if pulse frequency is missing).
+        - Fallback to constant 100 if none exist.
+
+        Pulse width and rise time are **always required** by the algorithm, so fallbacks are handled here.
+        """
+
+        # Fetch frequency axes
+        carrier_frequency = self.get_axis_from_script_mapping(AxisEnum.CARRIER_FREQUENCY, limits=(0, 100))
+        pulse_frequency = self.get_axis_from_script_mapping(AxisEnum.PULSE_FREQUENCY, limits=(0, 100))
+        fallback_frequency = create_constant_axis(100)
+
+        # Fetch pulse shape axes (always needed, so provide defaults: 100% width, rise: 0%)
+        # pulse_width = self.get_axis_from_script_mapping(AxisEnum.PULSE_WIDTH, limits=(0, 100)) or create_constant_axis(100)
+        # pulse_rise_time = self.get_axis_from_script_mapping(AxisEnum.PULSE_RISE_TIME, limits=(0, 100)) or create_constant_axis(0)
+
+        # Vibration axes (optional, not yet used)
+        # vibration_1 = self.get_axis_from_script_mapping(AxisEnum.VIBRATION_1_FREQUENCY)  # Consider for Channel A effects?
+        # vibration_2 = self.get_axis_from_script_mapping(AxisEnum.VIBRATION_2_FREQUENCY)  # Consider for Channel B effects?
+
+        # Prefer pulse frequency → fallback to carrier frequency → fallback to constant 100
+        script_frequency = pulse_frequency or carrier_frequency or create_constant_axis(100)
+
+        # Get frequency limits from kit
+        carrier_freq_limits = self.kit.limits_for_axis(AxisEnum.CARRIER_FREQUENCY)
+        pulse_freq_limits = self.kit.limits_for_axis(AxisEnum.PULSE_FREQUENCY)
+
+        # Create the algorithm
+        algorithm = CoyoteAlgorithm(
+            self.media_sync,
+            CoyoteAlgorithmParams(
+                position=ThreephasePositionParams(
+                    self.get_axis_alpha(),
+                    self.get_axis_beta(),
+                ),
+                transform=self.mainwindow.tab_threephase.transform_params,
+                calibrate=self.mainwindow.tab_threephase.calibrate_params,
+                volume=VolumeParams(
+                    api=self.get_axis_volume_api(),
+                    master=self.get_axis_volume_master(),
+                    inactivity=self.get_axis_volume_inactivity(),
+                    external=self.get_axis_volume_external(),
+                ),
+                carrier_frequency=self.get_axis_pulse_carrier_frequency(),
+                pulse_frequency=self.get_axis_pulse_frequency(),
+                pulse_width=self.get_axis_pulse_width(),
+                pulse_interval_random=self.get_axis_pulse_interval_random(),
+                pulse_rise_time=self.get_axis_pulse_rise_time(),
+                channel_a=CoyoteChannelParams(
+                    minimum_frequency=settings.coyote_channel_a_freq_min,
+                    maximum_frequency=settings.coyote_channel_a_freq_max,
+                    maximum_strength=settings.coyote_channel_a_strength_max,
+                    vibration=self.get_axis_vib1_all()
+                ),
+                channel_b=CoyoteChannelParams(
+                    minimum_frequency=settings.coyote_channel_b_freq_min,
+                    maximum_frequency=settings.coyote_channel_b_freq_max,
+                    maximum_strength=settings.coyote_channel_b_strength_max,
+                    vibration=self.get_axis_vib2_all()
+                )
+            ),
+            safety_limits=SafetyParams(
+                device.min_frequency,
+                device.max_frequency,
+            ),
+            carrier_freq_limits=carrier_freq_limits,
+            pulse_freq_limits=pulse_freq_limits
+        )
+        return algorithm
 
     def get_axis_alpha(self):
         return self.get_axis_from_script_mapping(AxisEnum.POSITION_ALPHA) or self.mainwindow.alpha
@@ -399,13 +478,13 @@ class AlgorithmFactory:
     def get_axis_neostim_debug(self):
         return self.mainwindow.tab_neostim.axis_debug
 
-    def get_axis_from_script_mapping(self, axis: AxisEnum) -> AbstractAxis | None:
+    def get_axis_from_script_mapping(self, axis: AxisEnum, limits: Optional[(int, int)] = None) -> AbstractAxis | None:
         if not self.load_funscripts:
             return None
 
         funscript_item = self.script_mapping.get_config_for_axis(axis)
         if funscript_item:
-            limit_min, limit_max = self.kit.limits_for_axis(axis)
+            limit_min, limit_max = limits or self.kit.limits_for_axis(axis)
             # TODO: not very memory efficient if multiple algorithms reference the same script.
             # but worst-case it only wastes a few MB or so...
             return create_precomputed_axis(funscript_item.script.x,

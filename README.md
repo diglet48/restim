@@ -9,6 +9,7 @@ Refer to the [wiki](https://github.com/diglet48/restim/wiki) for help.
 * Stereostim (three-phase only) and other audio-based devices (Mk312, 2B, ...)
 * FOC-Stim
 * NeoDK (coming soon)
+* Coyote 3.0 (experimental)
 
 ## Main features
 

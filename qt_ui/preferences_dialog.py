@@ -117,6 +117,15 @@ class PreferencesDialog(QDialog, Ui_PreferencesDialog):
         # neostim settings
         self.neostim_port.setCurrentIndex(self.focstim_port.findData(qt_ui.settings.neostim_serial_port.get()))
 
+        # Coyote 3
+        self.coyote_device_name.setText(qt_ui.settings.coyote_device_name.get())
+        self.coyote_channel_a_limit.setValue(qt_ui.settings.coyote_channel_a_limit.get())
+        self.coyote_channel_b_limit.setValue(qt_ui.settings.coyote_channel_b_limit.get())
+        self.coyote_channel_a_freq_balance.setValue(qt_ui.settings.coyote_channel_a_freq_balance.get())
+        self.coyote_channel_b_freq_balance.setValue(qt_ui.settings.coyote_channel_b_freq_balance.get())
+        self.coyote_channel_a_intensity_balance.setValue(qt_ui.settings.coyote_channel_a_intensity_balance.get())
+        self.coyote_channel_b_intensity_balance.setValue(qt_ui.settings.coyote_channel_b_intensity_balance.get())
+
         # media sync settings
         self.mpc_address.setText(qt_ui.settings.media_sync_mpc_address.get())
         self.heresphere_address.setText(qt_ui.settings.media_sync_heresphere_address.get())
@@ -219,6 +228,15 @@ class PreferencesDialog(QDialog, Ui_PreferencesDialog):
 
         # neoStim
         qt_ui.settings.neostim_serial_port.set(str(self.neostim_port.currentData()))
+
+        # Coyote 3
+        qt_ui.settings.coyote_device_name.set(self.coyote_device_name.text())
+        qt_ui.settings.coyote_channel_a_limit.set(self.coyote_channel_a_limit.value())
+        qt_ui.settings.coyote_channel_b_limit.set(self.coyote_channel_b_limit.value())
+        qt_ui.settings.coyote_channel_a_freq_balance.set(self.coyote_channel_a_freq_balance.value())
+        qt_ui.settings.coyote_channel_b_freq_balance.set(self.coyote_channel_b_freq_balance.value())
+        qt_ui.settings.coyote_channel_a_intensity_balance.set(self.coyote_channel_a_intensity_balance.value())
+        qt_ui.settings.coyote_channel_b_intensity_balance.set(self.coyote_channel_b_intensity_balance.value())
 
         # media sync settings
         qt_ui.settings.media_sync_mpc_address.set(self.mpc_address.text())
