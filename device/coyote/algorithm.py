@@ -128,6 +128,10 @@ class ChannelState:
         self.last_pulse_width = 0.0
         self.last_pulse_rise_time = 0.0
 
+        # Track current phase (0.0-1.0) within the envelope period for phase-locked pulse generation
+        self.envelope_phase = 0.0  # Always in [0.0, 1.0)
+
+
     @property
     def is_empty(self) -> bool:
         """
@@ -218,69 +222,60 @@ def frequency_to_duration(frequency: float) -> int:
 
     return result
 
+def generate_discrete_envelope(num_pulses: int, attack: int, sustain: int, release: int) -> np.ndarray:
+    """
+    Generate a discrete ADSR/trapezoidal envelope array (values in [0, 1]) sampled at the pulse frequency.
+    Args:
+        num_pulses: Number of pulses in one envelope cycle
+        attack: Number of pulses for attack (ramp up)
+        sustain: Number of pulses for sustain (max value)
+        release: Number of pulses for release (ramp down)
+    Returns:
+        Numpy array of length num_pulses, values in [0, 1]
+    """
+    envelope = np.zeros(num_pulses)
+    # Attack
+    if attack > 0:
+        envelope[:attack] = np.linspace(0, 1, attack, endpoint=False)
+    # Sustain
+    if sustain > 0:
+        envelope[attack:attack+sustain] = 1.0
+    # Release
+    if release > 0:
+        envelope[attack+sustain:] = np.linspace(1, 0, num_pulses - (attack + sustain))
+    return envelope
+
+# Replace old generate_envelope with a new function that creates a discrete envelope for Coyote
+
 def generate_envelope(
-    t: float, 
-    pulse_freq: float, 
-    pulse_width_cycles: float, 
-    pulse_rise_time_cycles: float,
-    num_cycles: int = 1
+    t: float,
+    pulse_freq: float,
+    carrier_freq: float,
+    num_points: int = 100,
+    preview_pulses: int = 6
 ) -> Tuple[np.ndarray, float]:
     """
-    Generate an envelope shape that determines how pulses' durations are modulated.
-    
-    This function is similar to the envelope generation in the pulse-based algorithm, 
-    but it's used to modulate duration instead of amplitude. It creates a continuous
-    envelope shape that provides a wave-like sensation when applied to pulse durations.
-    
-    Note: The pulse_freq parameter that's passed in should already incorporate 
-    any scaling from the carrier frequency. This allows the relationship between 
-    pulse and carrier frequencies to affect the envelope's timing characteristics.
-    
+    Generate a high-resolution envelope for EnvelopeGraph, matching the audio-based UI.
     Args:
-        t: Current time in seconds (used for phase calculation)
-        pulse_freq: Base frequency for the envelope (Hz), already scaled by carrier frequency
-        pulse_width_cycles: Width of each pulse in carrier cycles (shape factor)
-        pulse_rise_time_cycles: Fade in/out time in carrier cycles (smoothness)
-        num_cycles: Number of complete cycles to generate in the envelope
+        t: Current time in seconds (for phase alignment)
+        pulse_freq: Pulse frequency (Hz)
+        carrier_freq: Carrier frequency (Hz)
+        num_points: Number of points for the preview graph
+        preview_pulses: Number of pulses to visualize in the preview window
     Returns:
         Tuple of (envelope array, period in seconds)
     """
-    # Validate and clip parameters using the same limits as pulse-based algorithm
-    pulse_freq = np.clip(pulse_freq, limits.PulseFrequency.min, limits.PulseFrequency.max)
-    pulse_width_cycles = np.clip(pulse_width_cycles, limits.PulseWidth.min, limits.PulseWidth.max)
-    pulse_rise_time_cycles = np.clip(pulse_rise_time_cycles, limits.PulseRiseTime.min, limits.PulseRiseTime.max)
-    
-    # Calculate envelope period (seconds per cycle)
-    envelope_period = 1.0 / pulse_freq if pulse_freq > 0 else 1.0
-    total_period = envelope_period * num_cycles
-    
-    # Use higher resolution for more accurate envelope shapes
-    points_per_cycle = max(100, int(envelope_period * 200))
-    num_points = points_per_cycle * num_cycles
-    
-    t_points = np.linspace(0, total_period, num_points, endpoint=False)
-    
-    # Convert parameters to shaping factors
-    width_factor = pulse_width_cycles / 10.0  # Wider pulses = more time at peaks
-    rise_factor = pulse_rise_time_cycles / 10.0  # More rise time = smoother transitions
-    
-    # Create base sine wave across multiple cycles
-    envelope = np.sin(2 * np.pi * t_points / envelope_period)
-    
-    # Shape the envelope based on pulse width
-    envelope_sign = np.sign(envelope)
-    envelope = envelope_sign * np.power(np.abs(envelope), 1.0 / width_factor)
-    
-    # Apply smoothing based on rise time
-    if rise_factor > 0:
-        # Choose window size based on rise factor
-        window_size = int(points_per_cycle * rise_factor)
-        if window_size > 2:  # Need at least 3 points for a valid window
-            window = np.hanning(window_size)
-            envelope = np.convolve(envelope, window / np.sum(window), mode='same')
-            envelope /= max(np.max(np.abs(envelope)), 1e-6)  # Renormalize after smoothing
-    
-    return envelope, total_period
+    if num_points < 3:
+        num_points = 3
+    preview_duration = preview_pulses / pulse_freq if pulse_freq > 0 else 1.0
+    envelope = np.zeros(num_points)
+    for i in range(num_points):
+        t_i = t + (i / (num_points - 1)) * preview_duration
+        phase = 2 * np.pi * carrier_freq * t_i
+        envelope[i] = np.abs(np.sin(phase))
+    period = preview_duration
+    return envelope, period
+
 
 def compute_volume(media: AbstractMediaSync, volume_params: VolumeParams, t: float) -> float:
     """
@@ -455,34 +450,59 @@ class CoyoteAlgorithm:
         Returns:
             Integer intensity 0-100
         """
-        # Two-channel bias mapping: beta partitions channels, total strength by volume & calibration
-        # Partition between A and B via beta (-1..+1 → A_frac=0..1)
-        A_frac = np.clip(0.5 + 0.5 * beta, 0, 1)
-        B_frac = 1.0 - A_frac
-        # Total stimulation strength (shared constant sum)
+        # Vertices
+        sqrt3 = np.sqrt(3)
+        x, y = alpha, beta
+        xN, yN = 1.0, 0.0
+        xL, yL = -0.5, sqrt3 / 2
+        xR, yR = -0.5, -sqrt3 / 2
+
+        # Barycentric coordinates
+        denom = (yL - yR) * (xN - xR) + (xR - xL) * (yN - yR)
+        w_N = ((yL - yR) * (x - xR) + (xR - xL) * (y - yR)) / denom
+        w_L = ((yR - yN) * (x - xR) + (xN - xR) * (y - yR)) / denom
+        w_R = 1.0 - w_N - w_L
+
+        # Clamp
+        w_N = np.clip(w_N, 0, 1)
+        w_L = np.clip(w_L, 0, 1)
+        w_R = np.clip(w_R, 0, 1)
+
+        if channel_id == 'A':
+            intensity = w_L + w_N
+        elif channel_id == 'B':
+            intensity = w_R + w_N
+        else:
+            intensity = w_N
+
+        # Clamp to [0, 1] after sum
+        intensity = np.clip(intensity, 0, 1)
+
+        # Apply volume and calibration scaling
+        intensity *= volume
         center_calib = ThreePhaseCenterCalibration(self.params.calibrate.center.last_value())
         scale = center_calib.get_scale(alpha, beta)
-        total_strength = volume * scale
-        # Channel intensity based on partition fraction
-        intensity = (A_frac if channel_id == 'A' else B_frac) * total_strength
-        
+        intensity *= scale
+
         # Convert to 0-100 range
         result = int(np.clip(intensity * 100, 0, 100))
         return result
     
     def _generate_single_pulse(self,
-                          base_time: float,
-                          pulse_index: int,
-                          base_intensity: int,
-                          envelope: np.ndarray,
-                          envelope_period: float,
-                          pulse_freq: float,
-                          carrier_freq: float,
-                          min_duration: int,
-                          max_duration: int,
-                          pulse_interval_random: float,
-                          carrier_norm: float = 0.5,
-                          pulse_norm: float = 0.5) -> CoyotePulse:
+                           base_time: float,
+                           pulse_index: int,
+                           base_intensity: int,
+                           envelope: np.ndarray,
+                           envelope_period: float,
+                           pulse_freq: float,
+                           carrier_freq: float,
+                           pulse_width: float,
+                           pulse_rise_time: float,
+                           min_duration: int,
+                           max_duration: int,
+                           pulse_interval_random: float,
+                           carrier_norm: float = 0.5,
+                           pulse_norm: float = 0.5) -> CoyotePulse:
         """
         Generate a single pulse with envelope-modulated duration.
         
@@ -521,58 +541,90 @@ class CoyoteAlgorithm:
             
         pulse_time = base_time + pulse_index * pulse_interval_sec
         
-        # Find corresponding position in envelope
-        # Apply phase offset to shift the envelope (similar to pulse-based algorithm)
-        # phase = ((pulse_time % envelope_period) / envelope_period + phase_offset / (2 * np.pi)) % 1.0
-        # env_idx = int(phase * len(envelope))
-        # env_value = envelope[env_idx]
+        # Sequence-based envelope: compute phase in envelope period and use attack envelope function
+        # Interpolate axes at pulse_time
+        rise_time = float(self.params.pulse_rise_time.interpolate(pulse_time))
+        width_time = float(self.params.pulse_width.interpolate(pulse_time))
+        # For now, set fall_time = rise_time (symmetrical attack/decay); can add separate fall axis if needed
+        fall_time = rise_time
+        envelope_period = rise_time + width_time + fall_time
+        if envelope_period <= 0:
+            envelope_period = 1e-6  # Prevent div by zero
+        # Compute phase in envelope period
+        phase = (pulse_time % envelope_period) / envelope_period
+        rise_frac = rise_time / envelope_period
+        width_frac = width_time / envelope_period
+        fall_frac = fall_time / envelope_period
+        def envelope_func(phase, rise, width, fall):
+            if phase < rise:
+                return phase / max(rise, 1e-6)
+            elif phase < rise + width:
+                return 1.0
+            elif phase < rise + width + fall:
+                return 1.0 - (phase - rise - width) / max(fall, 1e-6)
+            else:
+                return 0.0
+        env_value = envelope_func(phase, rise_frac, width_frac, fall_frac)
 
-        # # Apply polarity to the envelope value
-        # # This emulates the effect of polarity in the pulse-based algorithm
-        # if pulse_polarity < 0:
-        #     env_value = -env_value
+        # --- Duration calculation ---
+        # 1. Base duration from pulse_width and carrier_freq (classic TENS logic)
+        base_duration = pulse_width / carrier_freq * 1000 if carrier_freq > 0 else COYOTE_MIN_PULSE_DURATION
+        # 2. Add rise time shaping: treat rise time as a ramp proportion of the pulse
+        #    For Coyote, we can't shape the pulse itself, but we can modulate intensity to simulate a ramp
+        #    We'll scale intensity by a ramp factor if rise_time > 0
+        ramp_factor = 1.0
+        if pulse_rise_time > 0 and pulse_width > 0:
+            ramp_fraction = min(pulse_rise_time / pulse_width, 1.0)
+            # Simulate a linear ramp: average intensity over the pulse is reduced
+            ramp_factor = 1.0 - 0.5 * ramp_fraction  # crude approximation
 
-        # Get envelope value at the current time
-        phase = ((pulse_time % envelope_period) / envelope_period / (2 * np.pi)) % 1.0
-        env_idx = int(phase * len(envelope))
-        env_value = envelope[env_idx]
-
-        # Use pulse_norm to interpolate between min and max duration
-        # pulse_norm=0 (lowest frequency) → max_duration (longest pulses)
-        # pulse_norm=1 (highest frequency) → min_duration (shortest pulses)
-        if min_duration < max_duration:  # Just to be safe
-            # First, establish base duration range based on pulse_norm
-            base_duration_range = (max_duration - min_duration)
-            base_min = max_duration - pulse_norm * base_duration_range
-            base_max = base_min + (base_duration_range * 0.5)  # Half the original range
-            
-            # Now map envelope value (-1 to +1) to normalized [0, 1]
-            normalized_env = (env_value + 1.0) / 2.0
-            
-            # Apply envelope modulation within the pulse_norm established range
-            effective_duration = int(base_min + normalized_env * (base_max - base_min))
-        else:
-            effective_duration = min_duration  # Fallback
+        # 3. Use envelope to modulate both duration and intensity (hybrid stereostim effect)
+        min_dur = max(min_duration, COYOTE_MIN_PULSE_DURATION)
+        max_dur = min(max_duration, COYOTE_MAX_PULSE_DURATION)
+        env_norm = np.clip(env_value, 0, 1)
         
-        # Ensure we stay within device limits
-        effective_duration = np.clip(effective_duration, COYOTE_MIN_PULSE_DURATION, COYOTE_MAX_PULSE_DURATION)
-        
-        # Calculate equivalent frequency for the device output
+        # Duration: envelope controls frequency/texture
+        effective_duration = int(np.clip(
+            min_dur + (1 - env_norm) * (max_dur - min_dur),
+            min_dur, max_dur
+        ))
+        effective_duration = int(np.clip(effective_duration, COYOTE_MIN_PULSE_DURATION, COYOTE_MAX_PULSE_DURATION))
+
+        # Intensity: modulate by envelope and ramp, always relative to base_intensity (from alpha/beta)
+        max_intensity = min(base_intensity, 100)
+        # Weighted blend: channel mapping dominates, envelope/ramp add texture
+        blend_weight = 0.3  # 0 = pure base_intensity, 1 = pure envelope/ramp
+        shaped = env_norm * ramp_factor
+        effective_intensity = int(np.clip(
+            max_intensity * (blend_weight * shaped + (1 - blend_weight)),
+            0, max_intensity
+        ))
+        # This ensures base intensity is always recognizable and envelope/ramp provide subtle shaping
+
+        # --- Frequency reporting (for UI/debug) ---
         effective_freq = 1000.0 / effective_duration if effective_duration > 0 else 100.0
-        
+
+        # --- Optionally: Add randomization to pulse interval (not duration) ---
+        # This is handled elsewhere, but can be used for advanced effects
+
+        # --- Comments on packet timing ---
+        # Max pulse duration: COYOTE_MAX_PULSE_DURATION (240 ms)
+        # One packet (4 pulses) at max duration: 960 ms
+        # This is the slowest possible output: ~1 packet/sec
+        # At min duration (5 ms), one packet is 20 ms: fastest possible
+        # The FIFO buffer and update logic ensure smooth, continuous output
+
         pulse = CoyotePulse(
             frequency=int(effective_freq),
-            intensity=base_intensity,
+            intensity=effective_intensity,
             duration=effective_duration
         )
-        
-        # Log first few pulses and occasional ones after for debugging
         if pulse_index < 4 or pulse_index % 10 == 0:
             time_since_start = (pulse_time - self.start_time) * 1000
             logger.debug(f"Pulse {pulse_index}: in {time_since_start:.1f}ms, env={env_value:.2f}, "
-                        f"duration={effective_duration}ms, freq={effective_freq:.1f}Hz, intensity={base_intensity}%")
-        
+                        f"duration={effective_duration}ms, freq={effective_freq:.1f}Hz, intensity={effective_intensity}% (env-modulated)")
         return pulse
+
     
     def _fill_channel_buffer(self, 
                           channel_id: str, 
@@ -626,6 +678,7 @@ class CoyoteAlgorithm:
                 min_duration=0,  # Will be calculated below
                 max_duration=0   # Will be calculated below
             )
+            state.envelope_phase = 0.0  # Start at phase 0 for new buffer
         
         # Calculate how many new pulses to generate
         if initialize:
@@ -646,103 +699,71 @@ class CoyoteAlgorithm:
             elapsed_time = sum(p.duration for p in state.pulse_buffer) / 1000.0
             base_time = state.start_time + elapsed_time
         
-        # Generate new pulses with per-pulse parameter interpolation
-        current_pulse_time = base_time  # Track the time for each pulse
-        for i in range(new_pulses_needed):
-            pulse_idx = pulse_idx_offset + i
-            
-            # Interpolate parameters at the exact time of this pulse
-            pulse_time = current_pulse_time
-            
-            # Interpolate parameters at the exact time of this pulse
-            carrier_freq = self.params.carrier_frequency.interpolate(pulse_time)
-            pulse_freq = self.params.pulse_frequency.interpolate(pulse_time)
-            pulse_width = self.params.pulse_width.interpolate(pulse_time)
-            pulse_rise_time = self.params.pulse_rise_time.interpolate(pulse_time)
-            pulse_interval_random = self.params.pulse_interval_random.interpolate(pulse_time)
-            
-            # Clip parameters
-            carrier_freq = np.clip(carrier_freq, 
-                                self.min_carrier_freq,
-                                self.max_carrier_freq)
-            pulse_freq = np.clip(pulse_freq, 
-                                self.min_pulse_freq,
-                                self.max_pulse_freq)
-            pulse_width = np.clip(pulse_width, limits.PulseWidth.min, limits.PulseWidth.max)
-            pulse_rise_time = np.clip(pulse_rise_time, limits.PulseRiseTime.min, limits.PulseRiseTime.max)
-            
-            # Normalize carrier and pulse frequencies within their respective ranges
-            if self.carrier_freq_range > 0:
-                carrier_norm = (carrier_freq - self.min_carrier_freq) / self.carrier_freq_range
-            else:
-                carrier_norm = 0.5
-                
-            if self.pulse_freq_range > 0:
-                pulse_norm = (pulse_freq - self.min_pulse_freq) / self.pulse_freq_range
-            else:
-                pulse_norm = 0.5
+        # --- Refactored: Phase-locked, envelope-synchronized pulse train generation ---
+        # 1. Determine envelope period and average pulse frequency
+        envelope = self.shared_envelope
+        envelope_period = self.shared_envelope_period
+        min_duration = frequency_to_duration(max_freq)
+        max_duration = frequency_to_duration(min_freq)
 
-            # Calculate min and max durations from channel frequency limits
-            min_duration = frequency_to_duration(max_freq)  # Shortest duration (highest frequency)
-            max_duration = frequency_to_duration(min_freq)  # Longest duration (lowest frequency)
-            
-            # Ensure durations stay within device limits
-            min_duration = np.clip(min_duration, COYOTE_MIN_PULSE_DURATION, COYOTE_MAX_PULSE_DURATION)
-            max_duration = np.clip(max_duration, COYOTE_MIN_PULSE_DURATION, COYOTE_MAX_PULSE_DURATION)
-            
-            # Update state duration range
-            if i == 0:  # Only need to update this once per buffer fill
-                state.min_duration = min_duration
-                state.max_duration = max_duration
-                state.last_pulse_freq = pulse_freq
-                state.last_pulse_width = pulse_width
-                state.last_pulse_rise_time = pulse_rise_time
-            
-            # Get or generate envelope
-            # Calculate modified pulse frequency based on carrier normalization
-            modified_pulse_freq = pulse_freq * (0.5 + carrier_norm)
-            
-            # Check if we need a new envelope
-            if (self.shared_envelope.size == 0 or 
-                abs(modified_pulse_freq - self.last_shared_pulse_freq) > 0.1 or
-                abs(pulse_width - self.last_shared_pulse_width) > 0.01 or
-                abs(pulse_rise_time - self.last_shared_pulse_rise_time) > 0.01):
-                
-                logger.debug(f"Generating new envelope: carrier={carrier_freq:.1f}Hz, "
-                            f"pulse_freq={pulse_freq:.1f}Hz, width={pulse_width:.2f}, "
-                            f"rise={pulse_rise_time:.2f}")
-                
-                self.shared_envelope, self.shared_envelope_period = generate_envelope(
-                    pulse_time, 
-                    modified_pulse_freq, 
-                    pulse_width, 
-                    pulse_rise_time,
-                    num_cycles=4
+        # 2. Determine how many pulses fit in one envelope period
+        # Use the average pulse frequency (Hz) to determine N
+        avg_pulse_freq = self.params.pulse_frequency.interpolate(current_time)
+        if avg_pulse_freq <= 0:
+            avg_pulse_freq = 1.0  # Prevent div by zero
+        N = max(1, int(round(envelope_period * avg_pulse_freq)))
+
+        # 3. Generate pulses for enough envelope periods to fill the buffer
+        pulses_to_generate = new_pulses_needed
+        period_idx = 0
+        pulses_generated = 0
+        while pulses_to_generate > 0:
+            envelope_start_time = base_time + period_idx * envelope_period
+            for i in range(N):
+                if pulses_to_generate <= 0:
+                    break
+                # Phase-locked: continue from previous phase
+                phase = (state.envelope_phase + pulses_generated / N) % 1.0
+                pulse_time = envelope_start_time + phase * envelope_period
+                subtle_jitter = 0.0
+                pulse_time_jittered = pulse_time + subtle_jitter
+                carrier_freq = self.params.carrier_frequency.interpolate(pulse_time_jittered)
+                pulse_freq = self.params.pulse_frequency.interpolate(pulse_time_jittered)
+                pulse_width = self.params.pulse_width.interpolate(pulse_time_jittered)
+                pulse_rise_time = self.params.pulse_rise_time.interpolate(pulse_time_jittered)
+                pulse_interval_random = self.params.pulse_interval_random.interpolate(pulse_time_jittered)
+                carrier_freq = np.clip(carrier_freq, self.min_carrier_freq, self.max_carrier_freq)
+                pulse_freq = np.clip(pulse_freq, self.min_pulse_freq, self.max_pulse_freq)
+                pulse_width = np.clip(pulse_width, limits.PulseWidth.min, limits.PulseWidth.max)
+                pulse_rise_time = np.clip(pulse_rise_time, limits.PulseRiseTime.min, limits.PulseRiseTime.max)
+                carrier_norm = (carrier_freq - self.min_carrier_freq) / self.carrier_freq_range if self.carrier_freq_range > 0 else 0.5
+                pulse_norm = (pulse_freq - self.min_pulse_freq) / self.pulse_freq_range if self.pulse_freq_range > 0 else 0.5
+                env_idx = int(phase * (len(envelope) - 1))
+                env_value = envelope[env_idx] if len(envelope) > 0 else 1.0
+                pulse = self._generate_single_pulse(
+                    base_time=pulse_time_jittered,
+                    pulse_index=i,
+                    base_intensity=intensity,
+                    envelope=envelope,
+                    envelope_period=envelope_period,
+                    pulse_freq=pulse_freq,
+                    carrier_freq=carrier_freq,
+                    pulse_width=pulse_width,
+                    pulse_rise_time=pulse_rise_time,
+                    min_duration=min_duration,
+                    max_duration=max_duration,
+                    pulse_interval_random=pulse_interval_random,
+                    carrier_norm=carrier_norm,
+                    pulse_norm=pulse_norm
                 )
-                
-                # Store parameter values for comparison
-                self.last_shared_pulse_freq = modified_pulse_freq
-                self.last_shared_pulse_width = pulse_width
-                self.last_shared_pulse_rise_time = pulse_rise_time
-                
-            pulse = self._generate_single_pulse(
-                base_time=base_time,
-                pulse_index=pulse_idx,
-                base_intensity=intensity,
-                envelope=self.shared_envelope,
-                envelope_period=self.shared_envelope_period,
-                pulse_freq=pulse_freq,
-                carrier_freq=carrier_freq,
-                min_duration=min_duration,
-                max_duration=max_duration,
-                pulse_interval_random=pulse_interval_random,
-                carrier_norm=carrier_norm,
-                pulse_norm=pulse_norm
-            )
-            state.pulse_buffer.append(pulse)
-            
-            # Update pulse time for next pulse using the actual duration
-            current_pulse_time += pulse.duration / 1000.0
+                state.pulse_buffer.append(pulse)
+                pulses_to_generate -= 1
+                pulses_generated += 1
+            period_idx += 1
+        # Update envelope phase for continuity
+        state.envelope_phase = (state.envelope_phase + pulses_generated / N) % 1.0
+        # --- End refactor ---
+
         
         if initialize:
             logger.info(f"Generated initial buffer with {len(state.pulse_buffer)} pulses")
@@ -750,12 +771,8 @@ class CoyoteAlgorithm:
             logger.debug(f"Added {new_pulses_needed} pulses to buffer, now has {len(state.pulse_buffer)} pulses")
         
         return state
-
-    def _get_channel_packet(self, 
-                            channel_id: str,
-                            current_time: float,
-                            intensity: int,
-                            channel_params) -> Tuple[List[CoyotePulse], float]:
+    
+    def _get_channel_packet(self, channel_id: str, current_time: float, intensity: int, channel_params):
         """
         Get a packet of pulses for a channel, handling buffer management.
         
@@ -833,8 +850,8 @@ class CoyoteAlgorithm:
         Generate one packet of pulses for both channels.
         
         This method is the main entry point for generating Coyote pulse packets.
-        It serves a similar role to the generate_audio method in the pulse-based
-        algorithm, but adapted for the Coyote's packet-based protocol.
+        It serves a similar role to the generate_audio method in the pulse-based algorithm, 
+        but adapted for the Coyote's packet-based protocol.
         
         Args:
             current_time: Current system time in seconds
@@ -903,4 +920,18 @@ class CoyoteAlgorithm:
             Tuple of (envelope array, envelope period in seconds)
             If no data is available, returns (empty array, 0)
         """
-        return self.shared_envelope, self.shared_envelope_period
+        # Always return a high-resolution preview envelope for UI widgets
+        # Use current time and interpolated parameters for preview
+        t = time.time()
+        pulse_freq = self.params.pulse_frequency.interpolate(t)
+        carrier_freq = self.params.carrier_frequency.interpolate(t)
+        preview_points = 100
+        preview_pulses = 6
+        envelope, period = generate_envelope(
+            t=t,
+            pulse_freq=pulse_freq,
+            carrier_freq=carrier_freq,
+            num_points=preview_points,
+            preview_pulses=preview_pulses
+        )
+        return envelope, period

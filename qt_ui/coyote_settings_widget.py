@@ -469,8 +469,9 @@ class EnvelopeGraph(QWidget):
         Set new envelope data to display
         
         Args:
-            envelope_data: numpy array of envelope values (-1 to 1)
-            envelope_period: period of the envelope in seconds
+            envelope_data: numpy array of envelope values (0 to 1)
+                0 = minimum envelope, 1 = maximum envelope
+            envelope_period: period of the envelope in seconds (duration of one full envelope cycle)
         """
         if envelope_data is None or not isinstance(envelope_data, np.ndarray) or len(envelope_data) == 0:
             return
@@ -532,111 +533,76 @@ class EnvelopeGraph(QWidget):
         # Get dimensions
         width = self.view.viewport().width()
         height = self.view.viewport().height()
-        center_y = height / 2
         
-        # Calculate scaling
-        vertical_scale = (height - 2 * self.margin) / 2
+        # Calculate scaling for [0, 1] envelope (y=0 at bottom, y=1 at top)
+        graph_top = self.margin
+        graph_bottom = height - self.margin
+        graph_height = graph_bottom - graph_top
         
         # Draw simple grid
-        self._drawGrid(width, height, center_y)
+        self._drawGrid(width, height, graph_top, graph_bottom)
         
         # Draw envelope
-        self._drawEnvelope(width, height, center_y, vertical_scale)
+        self._drawEnvelope(width, height, graph_top, graph_bottom, graph_height)
         
         # Draw pulses
-        self._drawPulses(width, height, center_y, vertical_scale, current_time)
+        self._drawPulses(width, height, graph_top, graph_bottom, graph_height, current_time)
         
         # Draw frequency label
         self._drawFrequencyLabel(width, height)
     
-    def _drawGrid(self, width, height, center_y):
-        """Draw minimal grid lines"""
-        # Center line
-        center_line = QGraphicsLineItem(self.margin, center_y, width - self.margin, center_y)
-        center_line.setPen(QPen(QColor(200, 200, 200, 150), 1, Qt.DashLine))
-        self.scene.addItem(center_line)
+    def _drawGrid(self, width, height, graph_top, graph_bottom):
+        # No axes, no grid lines, nothing drawn
+        pass
     
-    def _drawEnvelope(self, width, height, center_y, vertical_scale):
-        """Draw envelope curve"""
-        # Ensure we have data
+    def _drawEnvelope(self, width, height, graph_top, graph_bottom, graph_height):
+        """Draw envelope curve (0 at bottom, 1 at top)"""
         if len(self.envelope_data) == 0:
             return
-            
-        # Calculate usable width
         usable_width = width - 2 * self.margin
-        
-        # Create envelope path
         path = QPainterPath()
-        
-        # Calculate number of points (1 point per 3 pixels for performance)
         num_points = min(len(self.envelope_data), int(usable_width / 3))
         if num_points < 2:
             return
-            
-        # Calculate step size for envelope data
         step = (len(self.envelope_data) - 1) / (num_points - 1)
-        
-        # Start path
         x = self.margin
-        y = center_y - (self.envelope_data[0] * vertical_scale)
+        y = graph_bottom - (self.envelope_data[0] * graph_height)
         path.moveTo(x, y)
-        
-        # Add points
         for i in range(1, num_points):
             x = self.margin + (i / (num_points - 1)) * usable_width
             idx = int(i * step)
             if idx >= len(self.envelope_data):
                 idx = len(self.envelope_data) - 1
-            y = center_y - (self.envelope_data[idx] * vertical_scale)
+            y = graph_bottom - (self.envelope_data[idx] * graph_height)
             path.lineTo(x, y)
-        
-        # Add path to scene
         pen = QPen(self.envelope_color, 2)
         self.scene.addPath(path, pen)
     
-    def _drawPulses(self, width, height, center_y, vertical_scale, current_time):
+    def _drawPulses(self, width, height, graph_top, graph_bottom, graph_height, current_time):
         """Draw pulse dots on the envelope"""
         if not self.recent_pulses or len(self.envelope_data) == 0 or self.envelope_period <= 0:
             return
-            
         usable_width = width - 2 * self.margin
-        
-        # Draw each pulse
         for pulse in self.recent_pulses:
-            # Calculate age
             age = current_time - pulse['timestamp']
-            
-            # Calculate position
             phase = (age % self.envelope_period) / self.envelope_period
             phase_reversed = 1.0 - phase  # Newer pulses on right
-            
-            # Set x position
             x = self.margin + phase_reversed * usable_width
-            
-            # Find envelope height at this position
-            if len(self.envelope_data) > 1:  # Prevent div by zero
+            if len(self.envelope_data) > 1:
                 env_idx = min(int(phase_reversed * (len(self.envelope_data) - 1)), len(self.envelope_data) - 1)
                 env_value = self.envelope_data[env_idx]
-                y = center_y - (env_value * vertical_scale)
+                y = graph_bottom - (env_value * graph_height)
             else:
-                y = center_y
-            
-            # Calculate dot size based on intensity
+                y = (graph_top + graph_bottom) / 2
             intensity = pulse['intensity']
             size = 4 + (12 * intensity / 100.0)
-            
-            # Create dot
             channel = pulse['channel']
             dot = QGraphicsEllipseItem(x - size/2, y - size/2, size, size)
             dot.setBrush(QBrush(self.pulse_colors[channel]))
             dot.setPen(QPen(Qt.NoPen))
-            
-            # Add tooltip
             dot.setToolTip(f"Channel: {'A' if channel == 0 else 'B'}\n"
                            f"Intensity: {intensity}%\n"
                            f"Duration: {pulse['duration']} ms")
-            
-            # Add to scene
             dot.setAcceptHoverEvents(True)
             self.scene.addItem(dot)
     
