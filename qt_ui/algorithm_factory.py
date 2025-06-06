@@ -1,9 +1,10 @@
 from __future__ import annotations  # multiple return values
 import numpy as np
 
+from device.neostim.algorithm import NeoStimAlgorithm
 from qt_ui.device_wizard.enums import DeviceConfiguration, DeviceType, WaveformType
 from stim_math.audio_gen.base_classes import AudioGenerationAlgorithm
-from stim_math.audio_gen.focstim import FOCStimAlgorithm
+from device.focstim.algorithm import FOCStimAlgorithm
 from stim_math.audio_gen.pulse_based import DefaultThreePhasePulseBasedAlgorithm, ABTestThreePhasePulseBasedAlgorithm
 from stim_math.audio_gen.continuous import ThreePhaseAlgorithm
 from stim_math.audio_gen.params import *
@@ -32,7 +33,7 @@ class AlgorithmFactory:
         self.load_funscripts = load_funscripts
         self.create_for_bake = create_for_bake
 
-    def create_algorithm(self, device: DeviceConfiguration) -> AudioGenerationAlgorithm:
+    def create_algorithm(self, device: DeviceConfiguration) -> AudioGenerationAlgorithm | NeoStimAlgorithm:
         if device.device_type == DeviceType.AUDIO_THREE_PHASE:
             if device.waveform_type == WaveformType.CONTINUOUS:
                 return self.create_3phase_continuous(device)
@@ -49,6 +50,8 @@ class AlgorithmFactory:
                 return self.create_focstim_3phase_pulsebased(device)
             else:
                 raise RuntimeError('unknown waveform type')
+        elif device.device_type == DeviceType.NEOSTIM_THREE_PHASE:
+            return self.create_neostim(device)
         else:
             raise RuntimeError('unknown device type')
 
@@ -178,6 +181,33 @@ class AlgorithmFactory:
                 device.min_frequency,
                 device.max_frequency,
             )
+        )
+        return algorithm
+
+    def create_neostim(self, device: DeviceConfiguration) -> NeoStimAlgorithm:
+        algorithm = NeoStimAlgorithm(
+            self.media_sync,
+            NeoStimParams(
+                position=ThreephasePositionParams(
+                    self.get_axis_alpha(),
+                    self.get_axis_beta(),
+                ),
+                transform=self.mainwindow.tab_threephase.transform_params,
+                calibrate=self.mainwindow.tab_threephase.calibrate_params,
+                volume=VolumeParams(
+                    api=self.get_axis_volume_api(),
+                    master=self.get_axis_volume_master(),
+                    inactivity=self.get_axis_volume_inactivity(),
+                    external=self.get_axis_volume_external(),
+                ),
+                voltage=self.get_axis_neostim_voltage(),
+                pulse_frequency=self.get_axis_neostim_pulse_frequency(),
+                duty_cycle_at_max_power=self.get_axis_neostim_duty_cycle_at_max_power(),
+                carrier_frequency=self.get_axis_neostim_carrier_frequency(),
+                inversion_time=self.get_axis_neostim_inversion_time(),
+                switch_time=self.get_axis_neostim_switch_time(),
+                debug=self.get_axis_neostim_debug(),
+            ),
         )
         return algorithm
 
@@ -315,6 +345,27 @@ class AlgorithmFactory:
     def get_axis_vib2_random(self):
         return self.get_axis_from_script_mapping(AxisEnum.VIBRATION_2_RANDOM) or \
                self.mainwindow.tab_vibrate.vibration_2.random
+
+    def get_axis_neostim_voltage(self):
+        return self.mainwindow.tab_neostim.axis_voltage
+
+    def get_axis_neostim_carrier_frequency(self):
+        return self.mainwindow.tab_neostim.axis_carrier_frequency
+
+    def get_axis_neostim_pulse_frequency(self):
+        return self.mainwindow.tab_neostim.axis_pulse_frequency
+
+    def get_axis_neostim_duty_cycle_at_max_power(self):
+        return self.mainwindow.tab_neostim.axis_duty_cycle_at_max_power
+
+    def get_axis_neostim_inversion_time(self):
+        return self.mainwindow.tab_neostim.axis_inversion_time
+
+    def get_axis_neostim_switch_time(self):
+        return self.mainwindow.tab_neostim.axis_switch_time
+
+    def get_axis_neostim_debug(self):
+        return self.mainwindow.tab_neostim.axis_debug
 
     def get_axis_from_script_mapping(self, axis: AxisEnum) -> AbstractAxis | None:
         if not self.load_funscripts:

@@ -1,22 +1,28 @@
 # Restim
 
-Restim is a realtime e-stim signal generator, for DIY stereostim boxes in three-phase electrode arrangements.
+Restim is a realtime e-stim signal generator for multi-electrode setups.
 
 Refer to the [wiki](https://github.com/diglet48/restim/wiki) for help.
+
+## Supported hardware
+
+* Stereostim (three-phase only) and other audio-based devices (Mk312, 2B, ...)
+* FOC-Stim
+* NeoDK (coming soon)
 
 ## Main features
 
 * Control e-stim signals with funscript or user interface.
 * Synchronize e-stim with video or games.
-* No more "recommended electrode placement". Calibrate signal for your preferred electrode configuration.
+* Calibrate signal for your preferred electrode configuration.
 
 ## Installation
 
-Windows: download the latest release package: https://github.com/diglet48/restim/releases
+**Windows**: download the latest release package: https://github.com/diglet48/restim/releases
 
-Other platforms: run from source, requires python 3:
+**Linux/mac**: make sure python 3.10 or newer is installed on your system.
+Download the Restim source code, and execute `run.sh`
 
-```
-python3 -m pip install -r requirements.txt
-python3 restim.py
-```
+**Developers**: install PyCharm and python 3.10 or newer.
+Open Settings, python interpreter, and configure a new venv.
+Navigate to requirements.txt and install the dependencies. Then run restim.py.

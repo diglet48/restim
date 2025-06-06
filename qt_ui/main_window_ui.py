@@ -14,7 +14,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(767, 564)
+        MainWindow.resize(1022, 642)
         icon = QtGui.QIcon()
         icon.addPixmap(QtGui.QPixmap(".\\designer\\../resources/favicon.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         MainWindow.setWindowIcon(icon)
@@ -58,6 +58,12 @@ class Ui_MainWindow(object):
         self.progressBar_volume.setProperty("value", 24)
         self.progressBar_volume.setObjectName("progressBar_volume")
         self.verticalLayout_7.addWidget(self.progressBar_volume)
+        self.doubleSpinBox_volume = QtWidgets.QDoubleSpinBox(self.groupBox_3)
+        self.doubleSpinBox_volume.setDecimals(2)
+        self.doubleSpinBox_volume.setMaximum(100.0)
+        self.doubleSpinBox_volume.setSingleStep(0.1)
+        self.doubleSpinBox_volume.setObjectName("doubleSpinBox_volume")
+        self.verticalLayout_7.addWidget(self.doubleSpinBox_volume)
         self.verticalLayout.addWidget(self.groupBox_3)
         self.groupBox = QtWidgets.QGroupBox(self.frame)
         self.groupBox.setObjectName("groupBox")
@@ -99,6 +105,9 @@ class Ui_MainWindow(object):
         self.tab_pulse_settings = PulseSettingsWidget()
         self.tab_pulse_settings.setObjectName("tab_pulse_settings")
         self.tabWidget.addTab(self.tab_pulse_settings, "")
+        self.tab_neostim = NeoStimSettingsWidget()
+        self.tab_neostim.setObjectName("tab_neostim")
+        self.tabWidget.addTab(self.tab_neostim, "")
         self.tab_a_b_testing = ABTestWidget()
         self.tab_a_b_testing.setObjectName("tab_a_b_testing")
         self.tabWidget.addTab(self.tab_a_b_testing, "")
@@ -135,7 +144,7 @@ class Ui_MainWindow(object):
         self.horizontalLayout.addWidget(self.stackedWidget)
         MainWindow.setCentralWidget(self.centralwidget)
         self.menuBar = QtWidgets.QMenuBar(MainWindow)
-        self.menuBar.setGeometry(QtCore.QRect(0, 0, 767, 21))
+        self.menuBar.setGeometry(QtCore.QRect(0, 0, 1022, 21))
         self.menuBar.setObjectName("menuBar")
         self.menuTools = QtWidgets.QMenu(self.menuBar)
         self.menuTools.setObjectName("menuTools")
@@ -193,7 +202,7 @@ class Ui_MainWindow(object):
 
         self.retranslateUi(MainWindow)
         self.stackedWidget.setCurrentIndex(0)
-        self.tabWidget.setCurrentIndex(0)
+        self.tabWidget.setCurrentIndex(4)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
     def retranslateUi(self, MainWindow):
@@ -210,6 +219,7 @@ class Ui_MainWindow(object):
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_focus), _translate("MainWindow", "Focus"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_carrier), _translate("MainWindow", "Carrier settings"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_pulse_settings), _translate("MainWindow", "Pulse settings"))
+        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_neostim), _translate("MainWindow", "NeoStim"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_a_b_testing), _translate("MainWindow", "A/B testing"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_volume), _translate("MainWindow", "Volume"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_vibrate), _translate("MainWindow", "Vibration"))
@@ -233,6 +243,7 @@ class Ui_MainWindow(object):
 from qt_ui.ab_test_widget import ABTestWidget
 from qt_ui.carrier_settings_widget import CarrierSettingsWidget
 from qt_ui.media_settings_widget import MediaSettingsWidget
+from qt_ui.neostim_settings_widget import NeoStimSettingsWidget
 from qt_ui.pulse_settings_widget import PulseSettingsWidget
 from qt_ui.three_phase_settings_widget import ThreePhaseSettingsWidget
 from qt_ui.vibration_settings_widget import VibrationSettingsWidget

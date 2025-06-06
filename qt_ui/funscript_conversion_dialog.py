@@ -7,6 +7,7 @@ from qt_ui.funscript_conversion_ui import Ui_FunscriptConversionDialog
 from qt_ui.file_dialog import FileDialog
 from funscript.funscript import Funscript
 from funscript.funscript_conversion import convert_1d_to_2d
+from qt_ui import settings
 
 KEY_FILEPICKER_LAST_DIR = "funscript_conversion/last_dir"
 
@@ -17,8 +18,10 @@ class FunscriptConversionDialog(QDialog, Ui_FunscriptConversionDialog):
         self.setupUi(self)
 
         self.toolButton.clicked.connect(self.open_file_dialog)
-
         self.pushButton.clicked.connect(self.convert)
+        self.random_direction_change_probability.setValue(
+            settings.funscript_conversion_random_direction_change_probability.get() * 100
+        )
 
     def open_file_dialog(self):
         dialog = FileDialog(self)
@@ -38,11 +41,14 @@ class FunscriptConversionDialog(QDialog, Ui_FunscriptConversionDialog):
         self.lineEdit_beta.setText(re.sub(r"\.funscript$", ".beta.funscript", filename))
 
     def convert(self):
+        self.save_settings()
+
         self.textEdit.clear()
         self.textEdit.append('converting ' + self.lineEdit_funscript.text() + '...')
         try:
             original_funscript = Funscript.from_file(self.lineEdit_funscript.text())
-            t, alpha, beta = convert_1d_to_2d(original_funscript)
+            random_direction_change_probability = self.random_direction_change_probability.value() / 100
+            t, alpha, beta = convert_1d_to_2d(original_funscript, random_direction_change_probability)
             alpha_funscript = Funscript(t, alpha)
             beta_funscript = Funscript(t, beta)
             alpha_funscript.save_to_path(self.lineEdit_alpha.text())
@@ -51,3 +57,9 @@ class FunscriptConversionDialog(QDialog, Ui_FunscriptConversionDialog):
         except Exception as e:
             traceback.print_exception(e)
             self.textEdit.setText(''.join(traceback.format_exception(e)))
+
+
+    def save_settings(self):
+        settings.funscript_conversion_random_direction_change_probability.set(
+            self.random_direction_change_probability.value() / 100
+        )

@@ -14,3 +14,6 @@ ab_transform = np.array([[1, 0, 1],
 
 ab_transform_inv = np.linalg.inv(ab_transform).astype(np.float32)
 
+n_vec = ab_transform[0, :2]
+l_vec = ab_transform[1, :2]
+r_vec = ab_transform[2, :2]

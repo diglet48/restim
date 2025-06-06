@@ -4,6 +4,7 @@ import time
 import numpy as np
 import math
 from PyQt5 import QtCore, QtWidgets
+from PyQt5.QtWidgets import QDoubleSpinBox
 
 from qt_ui.axis_controller import AxisController
 from qt_ui.volume_control_widget_ui import Ui_VolumeControlForm
@@ -19,7 +20,7 @@ class VolumeControlWidget(QtWidgets.QWidget, Ui_VolumeControlForm):
 
         self.api_volume = create_temporal_axis(1.0)
         self.inactivity_volume = create_temporal_axis(1.0)
-        self.master_volume = create_temporal_axis(self.doubleSpinBox_volume.value())
+        self.master_volume = create_temporal_axis(settings.volume_default_level.get())
         self.external_volume = create_temporal_axis(1.0)
         self.axis_tau = create_constant_axis(settings.tau_us.get())
         self.volume = VolumeParams(
@@ -36,11 +37,8 @@ class VolumeControlWidget(QtWidgets.QWidget, Ui_VolumeControlForm):
         self.last_update_time = time.time()
         self.remainder = 0
 
-        self.doubleSpinBox_volume.setValue(settings.volume_default_level.get())
+        self.doubleSpinBox_volume = None
         self.doubleSpinBox_tau.setValue(settings.tau_us.get())
-
-        self.doubleSpinBox_volume.valueChanged.connect(self.updateVolume)
-        self.doubleSpinBox_volume.valueChanged.connect(self.refresh_message)
 
         self.last_axis_update_time = time.time()
         self.last_axis_values = (0, 0)
@@ -59,6 +57,13 @@ class VolumeControlWidget(QtWidgets.QWidget, Ui_VolumeControlForm):
 
         self.tau_controller = AxisController(self.doubleSpinBox_tau)
         self.tau_controller.link_axis(self.axis_tau)
+
+    def link_volume_control(self, volume_control: QDoubleSpinBox):
+        self.doubleSpinBox_volume = volume_control
+
+        self.doubleSpinBox_volume.valueChanged.connect(self.updateVolume)
+        self.doubleSpinBox_volume.valueChanged.connect(self.refresh_message)
+
 
     def timeout(self):
         t = time.time()

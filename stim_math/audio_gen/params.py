@@ -115,6 +115,35 @@ class FOCStimParams:
 
 
 @dataclass
+class NeoStimDebugParams:
+    use_a: bool
+    use_b: bool
+    use_ab: bool
+    use_ac: bool
+    use_bc: bool
+    defeat_randomization: bool
+    triplet_power: float
+    emulate_ab_c: bool
+    emulation_power: float
+
+
+
+@dataclass
+class NeoStimParams:
+    position: ThreephasePositionParams
+    transform: ThreephasePositionTransformParams
+    calibrate: ThreephaseCalibrationParams
+    volume: VolumeParams
+    voltage: AbstractAxis           # volts
+    pulse_frequency: AbstractAxis   # Hz
+    duty_cycle_at_max_power: AbstractAxis # %
+    carrier_frequency: AbstractAxis # Hz
+    inversion_time: AbstractAxis    # µs
+    switch_time: AbstractAxis       # µs
+    debug: AbstractAxis         # NeoStimDebugSettings
+
+
+@dataclass
 class SafetyParams:
     minimum_carrier_frequency: float
     maximum_carrier_frequency: float

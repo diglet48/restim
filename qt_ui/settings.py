@@ -109,6 +109,7 @@ media_sync_vlc_username = Setting('media_sync/vlc_username', '', str)
 media_sync_vlc_password = Setting('media_sync/vlc_password', '1234', str)
 media_sync_kodi_address = Setting('media_sync/kodi_address', 'ws://127.0.0.1:9090', str)
 media_sync_stop_audio_automatically = Setting('media_sync/stop_audio_automatically', True, bool)
+media_sync_heresphere_latency = Setting('media_sync/heresphere_latency', 0, float)
 
 audio_api = Setting("audio/api-name", "", str)
 audio_output_device = Setting("audio/device-name", "", str)
@@ -117,6 +118,8 @@ audio_latency = Setting("audio/latency", 'high', str)
 additional_search_paths = Setting('additional_search_paths', [], list)
 
 file_dialog_last_dir = Setting('file_dialog_last_dir', '', str)
+
+funscript_conversion_random_direction_change_probability = Setting('funscript/random_direction_change_probability', 0.1, float)
 
 display_fps = Setting('display/fps', 60, float)
 display_latency = Setting('display/latency', 200, float)
@@ -144,3 +147,4 @@ focstim_serial_port = Setting("focstim/serial_port", '', str)
 focstim_use_teleplot = Setting("focstim/use-teleplot", True, bool)
 focstim_teleplot_prefix = Setting("focstim/teleplot_prefix", "", str)
 
+neostim_serial_port = Setting("neostim/serial_port", '', str)

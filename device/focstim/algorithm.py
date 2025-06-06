@@ -8,7 +8,7 @@ from stim_math.audio_gen.various import ThreePhasePosition
 from stim_math.axis import AbstractMediaSync
 
 FOC_MIN_FREQUENCY = 500
-FOC_MAX_FREQUENCY = 1500
+FOC_MAX_FREQUENCY = 2000
 
 
 class FOCStimAlgorithm(RemoteGenerationAlgorithm):
@@ -69,4 +69,5 @@ class FOCStimAlgorithm(RemoteGenerationAlgorithm):
         :return:                volume of the pulse, such that it has equal subjective intensity as a pulse at max carrier frequency.
         """
         # this formula follows from Qt = Q0 * (1 + pw/tau)
+        # return 1
         return (frequency * tau + 0.5) / (max_frequency * tau + 0.5)

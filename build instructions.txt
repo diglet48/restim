@@ -13,10 +13,12 @@ pyuic5  -o .\qt_ui\three_phase_settings_widget_ui.py .\designer\threephasesettin
 pyuic5  -o .\qt_ui\media_settings_widget_ui.py .\designer\mediasettingswidget.ui
 pyuic5  -o .\qt_ui\audio_write_dialog_ui.py .\designer\audiowritedialog.ui
 pyuic5  -o .\qt_ui\ab_test_widget_ui.py .\designer\abtestwidget.ui
+pyuic5  -o .\qt_ui\neostim_settings_widget_ui.py .\designer\neostimsettingswidget.ui
 
 pyuic5  -o .\qt_ui\device_wizard\type_select_ui.py .\designer\device_wizard\type_select.ui
 pyuic5  -o .\qt_ui\device_wizard\waveform_select_ui.py .\designer\device_wizard\waveform_select.ui
 pyuic5  -o .\qt_ui\device_wizard\safety_limits_ui.py .\designer\device_wizard\safety_limits.ui
+pyuic5  -o .\qt_ui\device_wizard\neostim_waveform_select_ui.py .\designer\device_wizard\neostim_waveform_select.ui
 
 pyrcc5 .\resources\restim.qrc -o restim_rc.py
 

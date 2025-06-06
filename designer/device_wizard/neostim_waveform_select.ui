@@ -1,40 +1,34 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>WizardPageDeviceType</class>
- <widget class="QWizardPage" name="WizardPageDeviceType">
+ <class>WizardPageNeoStim</class>
+ <widget class="QWizardPage" name="WizardPageNeoStim">
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>490</width>
-    <height>477</height>
+    <width>611</width>
+    <height>497</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>WizardPage</string>
   </property>
-  <property name="title">
-   <string>Select device type</string>
-  </property>
-  <layout class="QFormLayout" name="formLayout">
-   <item row="0" column="0">
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
     <widget class="QRadioButton" name="three_phase_radio">
      <property name="text">
-      <string>Audio-based three-phase</string>
-     </property>
-     <property name="checked">
-      <bool>true</bool>
+      <string>Three-phase</string>
      </property>
     </widget>
    </item>
-   <item row="1" column="0">
-    <widget class="QRadioButton" name="focstim_radio">
+   <item>
+    <widget class="QLabel" name="label">
      <property name="text">
-      <string>FOC-Stim</string>
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;A = neutral&lt;br/&gt;B = left&lt;br/&gt;C+D = right. Short these outputs together on your box.&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
      </property>
     </widget>
    </item>
-   <item row="3" column="0">
+   <item>
     <spacer name="verticalSpacer">
      <property name="orientation">
       <enum>Qt::Vertical</enum>
@@ -46,13 +40,6 @@
       </size>
      </property>
     </spacer>
-   </item>
-   <item row="2" column="0">
-    <widget class="QRadioButton" name="neostim_radio">
-     <property name="text">
-      <string>NeoStim</string>
-     </property>
-    </widget>
    </item>
   </layout>
  </widget>
