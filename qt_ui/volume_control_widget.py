@@ -52,6 +52,8 @@ class VolumeControlWidget(QtWidgets.QWidget, Ui_VolumeControlForm):
         self.doubleSpinBox_inactivity_ramp_time.valueChanged.connect(self.settings_changed)
         self.doubleSpinBox_rate.valueChanged.connect(self.settings_changed)
 
+        self.doubleSpinBox_target_volume.setValue(settings.target_volume.get())
+
         self.doubleSpinBox_target_volume.valueChanged.connect(self.refresh_message)
         self.doubleSpinBox_rate.valueChanged.connect(self.refresh_message)
 
