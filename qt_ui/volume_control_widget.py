@@ -54,7 +54,7 @@ class VolumeControlWidget(QtWidgets.QWidget, Ui_VolumeControlForm):
         self.playing = False
 
         self.doubleSpinBox_inactivity_threshold.setValue(settings.volume_inactivity_threshold.get())
-        self.doubleSpinBox_inactivity_ramp_time.setValue(settings.volume_ramp_time.get())
+        self.doubleSpinBox_inactivity_ramp_time.setValue(settings.volume_inactivity_time.get())
         self.doubleSpinBox_ramp_rate.setValue(settings.volume_ramp_increment_rate.get())
         self.doubleSpinBox_ramp_target.setValue(settings.volume_ramp_target.get() * 100)
 
@@ -209,7 +209,7 @@ class VolumeControlWidget(QtWidgets.QWidget, Ui_VolumeControlForm):
     def save_settings(self):
         settings.volume_inactivity_threshold.set(self.doubleSpinBox_inactivity_threshold.value())
         settings.volume_ramp_target.set(self.doubleSpinBox_ramp_target.value() / 100)
-        settings.volume_ramp_time.set(self.doubleSpinBox_inactivity_ramp_time.value())
+        settings.volume_inactivity_time.set(self.doubleSpinBox_inactivity_ramp_time.value())
         settings.volume_ramp_increment_rate.set(self.doubleSpinBox_ramp_rate.value())
         settings.volume_slow_start_time.set(self.doubleSpinBox_slow_start.value())
         settings.tau_us.set(self.doubleSpinBox_tau.value())
