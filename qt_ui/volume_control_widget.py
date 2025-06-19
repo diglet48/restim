@@ -55,16 +55,13 @@ class VolumeControlWidget(QtWidgets.QWidget, Ui_VolumeControlForm):
 
         self.doubleSpinBox_inactivity_threshold.setValue(settings.volume_inactivity_threshold.get())
         self.doubleSpinBox_inactivity_ramp_time.setValue(settings.volume_ramp_time.get())
-        self.doubleSpinBox_rate.setValue(settings.volume_increment_rate.get())
-
-        self.doubleSpinBox_inactivity_threshold.valueChanged.connect(self.ramp_values_changed)
-        self.doubleSpinBox_inactivity_ramp_time.valueChanged.connect(self.ramp_values_changed)
-        self.doubleSpinBox_rate.valueChanged.connect(self.ramp_values_changed)
+        self.doubleSpinBox_ramp_rate.setValue(settings.volume_ramp_increment_rate.get())
+        self.doubleSpinBox_ramp_target.setValue(settings.volume_ramp_target.get() * 100)
 
         self.doubleSpinBox_slow_start.setValue(settings.volume_slow_start_time.get())
 
-        self.doubleSpinBox_target_volume.valueChanged.connect(self.refresh_message)
-        self.doubleSpinBox_rate.valueChanged.connect(self.refresh_message)
+        self.doubleSpinBox_ramp_target.valueChanged.connect(self.refresh_message)
+        self.doubleSpinBox_ramp_rate.valueChanged.connect(self.refresh_message)
 
         self.tau_controller = AxisController(self.doubleSpinBox_tau)
         self.tau_controller.link_axis(self.axis_tau)
@@ -110,7 +107,7 @@ class VolumeControlWidget(QtWidgets.QWidget, Ui_VolumeControlForm):
             self.remainder = 0
             return
 
-        rate_per_second = self.doubleSpinBox_rate.value() / 60
+        rate_per_second = self.doubleSpinBox_ramp_rate.value() / 60
 
         # linear. volume = v0 + r * t
         # change = rate_per_second * dt
@@ -119,7 +116,7 @@ class VolumeControlWidget(QtWidgets.QWidget, Ui_VolumeControlForm):
         change = self.doubleSpinBox_volume.value() * rate_per_second * dt / 100
 
         value = self.doubleSpinBox_volume.value()
-        target = self.doubleSpinBox_target_volume.value()
+        target = self.doubleSpinBox_ramp_target.value()
 
         if target >= value:
             change += self.remainder
@@ -192,9 +189,9 @@ class VolumeControlWidget(QtWidgets.QWidget, Ui_VolumeControlForm):
 
     def refresh_message(self, _=None):
         try:
-            target = self.doubleSpinBox_target_volume.value()
+            target = self.doubleSpinBox_ramp_target.value()
             volume = self.doubleSpinBox_volume.value()
-            rate_per_second = self.doubleSpinBox_rate.value() / 60
+            rate_per_second = self.doubleSpinBox_ramp_rate.value() / 60
             if target / volume:
                 time_left = math.log(target / volume) / rate_per_second * 100
             else:
@@ -206,16 +203,14 @@ class VolumeControlWidget(QtWidgets.QWidget, Ui_VolumeControlForm):
             message = f"time until target: never."
         self.checkBox_ramp_enabled.setText(message)
 
-    def ramp_values_changed(self):
-        self.refresh_message()
-
     def refreshSettings(self):
         self.latency = settings.display_latency.get() / 1000.0
 
     def save_settings(self):
         settings.volume_inactivity_threshold.set(self.doubleSpinBox_inactivity_threshold.value())
+        settings.volume_ramp_target.set(self.doubleSpinBox_ramp_target.value() / 100)
         settings.volume_ramp_time.set(self.doubleSpinBox_inactivity_ramp_time.value())
-        settings.volume_increment_rate.set(self.doubleSpinBox_rate.value())
+        settings.volume_ramp_increment_rate.set(self.doubleSpinBox_ramp_rate.value())
         settings.volume_slow_start_time.set(self.doubleSpinBox_slow_start.value())
         settings.tau_us.set(self.doubleSpinBox_tau.value())
 
