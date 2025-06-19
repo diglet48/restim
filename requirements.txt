@@ -6,3 +6,4 @@ matplotlib!=3.9.*
 PySide6
 crc
 msdparser
+#protoletariat

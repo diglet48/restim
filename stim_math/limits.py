@@ -25,3 +25,12 @@ class PulseRiseTime:
 
 # the minimum 'on' or 'off' time for amplitude modulation
 minimum_amplitude_modulation_feature_length = 3
+
+
+class CarrierFrequencyFOC:
+    min = 500   # Hz
+    max = 2000
+
+class WaveformAmpltiudeFOC:
+    min = 0.01  # Amperes
+    max = 0.15

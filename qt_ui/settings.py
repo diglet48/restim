@@ -106,6 +106,7 @@ device_config_device_type = Setting('device_configuration/device_type', 0, int)
 device_config_waveform_type = Setting('device_configuration/waveform_type', 1, int)
 device_config_min_freq = Setting('device_configuration/min_frequency', 500, float)
 device_config_max_freq = Setting('device_configuration/max_frequency', 1000, float)
+device_config_waveform_amplitude_amps = Setting('device_configuration/waveform_amplitude_amps', 0.120, float)
 
 media_sync_default_source = Setting('media_sync/default_source', 'Internal', str)
 media_sync_mpc_address = Setting('media_sync/mpc_address', 'http://127.0.0.1:13579', str)

@@ -174,3 +174,10 @@ class NeoStimParams:
 class SafetyParams:
     minimum_carrier_frequency: float
     maximum_carrier_frequency: float
+
+@dataclass
+class SafetyParamsFOC:
+    minimum_carrier_frequency: float
+    maximum_carrier_frequency: float
+    waveform_amplitude_amps: float
+

@@ -26,6 +26,7 @@ class DeviceConfiguration:
     waveform_type: WaveformType
     min_frequency: float
     max_frequency: float
+    waveform_amplitude_amps: float
 
     def save(self):
         settings.device_config_device_type.set(self.device_type.value)
@@ -33,6 +34,7 @@ class DeviceConfiguration:
             settings.device_config_waveform_type.set(self.waveform_type.value)
             settings.device_config_min_freq.set(self.min_frequency)
             settings.device_config_max_freq.set(self.max_frequency)
+            settings.device_config_waveform_amplitude_amps.set(self.waveform_amplitude_amps)
 
     @staticmethod
     def from_settings():
@@ -41,4 +43,5 @@ class DeviceConfiguration:
             WaveformType(settings.device_config_waveform_type.get()),
             settings.device_config_min_freq.get(),
             settings.device_config_max_freq.get(),
+            settings.device_config_waveform_amplitude_amps.get(),
         )

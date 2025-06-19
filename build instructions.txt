@@ -1,7 +1,8 @@
-# useful commands
-
+# open GUI editor
 
 ./venv/Scripts/pyside6-designer.exe
+
+# regenerate UI files
 
 ./venv/Scripts/pyside6-uic.exe  -o ./qt_ui/main_window_ui.py ./designer/mainwindow.ui
 ./venv/Scripts/pyside6-uic.exe  -o ./qt_ui/waveform_details_widget_ui.py ./designer/waveformdetailswidget.ui
@@ -20,22 +21,19 @@
 ./venv/Scripts/pyside6-uic.exe  -o ./qt_ui/device_wizard/type_select_ui.py ./designer/device_wizard/type_select.ui
 ./venv/Scripts/pyside6-uic.exe  -o ./qt_ui/device_wizard/waveform_select_ui.py ./designer/device_wizard/waveform_select.ui
 ./venv/Scripts/pyside6-uic.exe  -o ./qt_ui/device_wizard/safety_limits_ui.py ./designer/device_wizard/safety_limits.ui
+./venv/Scripts/pyside6-uic.exe  -o ./qt_ui/device_wizard/safety_limits_foc_ui.py ./designer/device_wizard/safety_limits_foc.ui
 ./venv/Scripts/pyside6-uic.exe  -o ./qt_ui/device_wizard/neostim_waveform_select_ui.py ./designer/device_wizard/neostim_waveform_select.ui
 ./venv/Scripts/pyside6-uic.exe  -o ./qt_ui/device_wizard/focstim_waveform_select_ui.py ./designer/device_wizard/focstim_waveform_select.ui
 
 ./venv/Scripts/pyside6-rcc.exe ./resources/restim.qrc -o restim_rc.py
 
-# build instructions
+# generate proto files
 
-For 64 bit:
+.\venv\Scripts\protol.exe --in-place --python-out=device/focstim/ protoc --proto-path=../FOC-Stim/proto/focstim/ --python_out=device/focstim/ --pyi_out=device/focstim focstim_rpc.proto constants.proto messages.proto notifications.proto
+
+# build release package
 
 git clone
 setup venv with pycharm
 ./venv/Scripts/pip.exe install pyinstaller
 ./venv/Scripts/pyinstaller.exe --clean --onefile --paths "." --add-data "resources/phase diagram bg.svg;resources/" --add-data "resources/favicon.png;resources/" --icon resources/favicon.ico --distpath dist-onefile restim.py
-
-for 32 bit:
-
-setup 32-bit venv with pycharm
-./venv-32/Scripts/pip.exe install pyinstaller
-./venv-32/Scripts/pyinstaller.exe --clean --onefile --paths "." --add-data "resources/phase diagram bg.svg;resources/" --add-data "resources/favicon.png;resources/" --icon resources/favicon.ico --distpath dist-onefile-32 restim.py --name restim-32
