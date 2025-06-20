@@ -165,3 +165,9 @@ class ResponseDebugStm32DeepSleep(_message.Message):
 
     def __init__(self) -> None:
         ...
+
+class RequestDebugEnterBootloader(_message.Message):
+    __slots__ = ()
+
+    def __init__(self) -> None:
+        ...

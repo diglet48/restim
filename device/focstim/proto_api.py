@@ -9,7 +9,8 @@ from device.focstim.constants_pb2 import AxisType, OutputMode
 from device.focstim.focstim_rpc_pb2 import Request, RpcMessage, Response
 from device.focstim.hdlc import HDLC
 from device.focstim.messages_pb2 import RequestFirmwareVersion, RequestAxisSet, RequestAxisMoveTo, RequestTimestampSet, \
-    RequestSignalStart, RequestSignalStop, RequestCapabilitiesGet, RequestDebugStm32DeepSleep
+    RequestSignalStart, RequestSignalStop, RequestCapabilitiesGet, RequestDebugStm32DeepSleep, \
+    RequestDebugEnterBootloader
 from device.focstim.notifications_pb2 import NotificationBoot, NotificationPotentiometer, NotificationCurrents, \
     NotificationModelEstimation, NotificationSystemStats, NotificationSignalStats, NotificationBattery, \
     NotificationDebugString
@@ -204,6 +205,12 @@ class FOCStimProtoAPI(QObject):
         return self.send_request(Request(
             id=self.next_request_id(),
             request_debug_stm32_deep_sleep=RequestDebugStm32DeepSleep()
+        ))
+
+    def request_debug_enter_bootloader(self) -> Future:
+        return self.send_request(Request(
+            id=self.next_request_id(),
+            request_debug_enter_bootloader=RequestDebugEnterBootloader()
         ))
 
     on_notification_boot = Signal(NotificationBoot)

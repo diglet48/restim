@@ -30,7 +30,7 @@ class Notification(_message.Message):
         ...
 
 class Request(_message.Message):
-    __slots__ = ('id', 'request_firmware_version', 'request_capabilities_get', 'request_signal_start', 'request_signal_stop', 'request_axis_move_to', 'request_timestamp_set', 'request_timestamp_get', 'request_debug_stm32_deep_sleep')
+    __slots__ = ('id', 'request_firmware_version', 'request_capabilities_get', 'request_signal_start', 'request_signal_stop', 'request_axis_move_to', 'request_timestamp_set', 'request_timestamp_get', 'request_debug_stm32_deep_sleep', 'request_debug_enter_bootloader')
     ID_FIELD_NUMBER: _ClassVar[int]
     REQUEST_FIRMWARE_VERSION_FIELD_NUMBER: _ClassVar[int]
     REQUEST_CAPABILITIES_GET_FIELD_NUMBER: _ClassVar[int]
@@ -40,6 +40,7 @@ class Request(_message.Message):
     REQUEST_TIMESTAMP_SET_FIELD_NUMBER: _ClassVar[int]
     REQUEST_TIMESTAMP_GET_FIELD_NUMBER: _ClassVar[int]
     REQUEST_DEBUG_STM32_DEEP_SLEEP_FIELD_NUMBER: _ClassVar[int]
+    REQUEST_DEBUG_ENTER_BOOTLOADER_FIELD_NUMBER: _ClassVar[int]
     id: int
     request_firmware_version: _messages_pb2.RequestFirmwareVersion
     request_capabilities_get: _messages_pb2.RequestCapabilitiesGet
@@ -49,8 +50,9 @@ class Request(_message.Message):
     request_timestamp_set: _messages_pb2.RequestTimestampSet
     request_timestamp_get: _messages_pb2.RequestTimestampGet
     request_debug_stm32_deep_sleep: _messages_pb2.RequestDebugStm32DeepSleep
+    request_debug_enter_bootloader: _messages_pb2.RequestDebugEnterBootloader
 
-    def __init__(self, id: _Optional[int]=..., request_firmware_version: _Optional[_Union[_messages_pb2.RequestFirmwareVersion, _Mapping]]=..., request_capabilities_get: _Optional[_Union[_messages_pb2.RequestCapabilitiesGet, _Mapping]]=..., request_signal_start: _Optional[_Union[_messages_pb2.RequestSignalStart, _Mapping]]=..., request_signal_stop: _Optional[_Union[_messages_pb2.RequestSignalStop, _Mapping]]=..., request_axis_move_to: _Optional[_Union[_messages_pb2.RequestAxisMoveTo, _Mapping]]=..., request_timestamp_set: _Optional[_Union[_messages_pb2.RequestTimestampSet, _Mapping]]=..., request_timestamp_get: _Optional[_Union[_messages_pb2.RequestTimestampGet, _Mapping]]=..., request_debug_stm32_deep_sleep: _Optional[_Union[_messages_pb2.RequestDebugStm32DeepSleep, _Mapping]]=...) -> None:
+    def __init__(self, id: _Optional[int]=..., request_firmware_version: _Optional[_Union[_messages_pb2.RequestFirmwareVersion, _Mapping]]=..., request_capabilities_get: _Optional[_Union[_messages_pb2.RequestCapabilitiesGet, _Mapping]]=..., request_signal_start: _Optional[_Union[_messages_pb2.RequestSignalStart, _Mapping]]=..., request_signal_stop: _Optional[_Union[_messages_pb2.RequestSignalStop, _Mapping]]=..., request_axis_move_to: _Optional[_Union[_messages_pb2.RequestAxisMoveTo, _Mapping]]=..., request_timestamp_set: _Optional[_Union[_messages_pb2.RequestTimestampSet, _Mapping]]=..., request_timestamp_get: _Optional[_Union[_messages_pb2.RequestTimestampGet, _Mapping]]=..., request_debug_stm32_deep_sleep: _Optional[_Union[_messages_pb2.RequestDebugStm32DeepSleep, _Mapping]]=..., request_debug_enter_bootloader: _Optional[_Union[_messages_pb2.RequestDebugEnterBootloader, _Mapping]]=...) -> None:
         ...
 
 class Response(_message.Message):
