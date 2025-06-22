@@ -9,8 +9,6 @@ from funscript.funscript import Funscript
 from funscript.funscript_conversion import convert_1d_to_2d
 from qt_ui import settings
 
-KEY_FILEPICKER_LAST_DIR = "funscript_conversion/last_dir"
-
 
 class FunscriptConversionDialog(QDialog, Ui_FunscriptConversionDialog):
     def __init__(self, parent=None):

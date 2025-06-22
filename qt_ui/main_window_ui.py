@@ -3,7 +3,7 @@
 ################################################################################
 ## Form generated from reading UI file 'mainwindow.ui'
 ##
-## Created by: Qt User Interface Compiler version 6.8.3
+## Created by: Qt User Interface Compiler version 6.9.0
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
@@ -83,6 +83,8 @@ class Ui_MainWindow(object):
         self.actionLog.setIcon(icon5)
         self.actionSimfile_conversion = QAction(MainWindow)
         self.actionSimfile_conversion.setObjectName(u"actionSimfile_conversion")
+        self.actionFunscript_decomposition = QAction(MainWindow)
+        self.actionFunscript_decomposition.setObjectName(u"actionFunscript_decomposition")
         self.centralwidget = QWidget(MainWindow)
         self.centralwidget.setObjectName(u"centralwidget")
         self.horizontalLayout = QHBoxLayout(self.centralwidget)
@@ -256,6 +258,7 @@ class Ui_MainWindow(object):
         self.menuSetup.addAction(self.actionPreferences)
         self.menuTools.addAction(self.actionFunscript_conversion)
         self.menuTools.addAction(self.actionSimfile_conversion)
+        self.menuTools.addAction(self.actionFunscript_decomposition)
         self.toolBar.addAction(self.actionControl)
         self.toolBar.addAction(self.actionMedia)
         self.toolBar.addAction(self.actionStart)
@@ -293,6 +296,7 @@ class Ui_MainWindow(object):
         self.actionLog.setShortcut(QCoreApplication.translate("MainWindow", u"Ctrl+4", None))
 #endif // QT_CONFIG(shortcut)
         self.actionSimfile_conversion.setText(QCoreApplication.translate("MainWindow", u"Simfile conversion", None))
+        self.actionFunscript_decomposition.setText(QCoreApplication.translate("MainWindow", u"Funscript decomposition", None))
         self.groupBox_volume.setTitle(QCoreApplication.translate("MainWindow", u"volume", None))
         self.groupBox_pattern.setTitle(QCoreApplication.translate("MainWindow", u"Pattern generator", None))
         self.comboBox_patternSelect.setItemText(0, QCoreApplication.translate("MainWindow", u"Mouse", None))

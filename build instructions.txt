@@ -7,6 +7,7 @@
 ./venv/Scripts/pyside6-uic.exe  -o ./qt_ui/main_window_ui.py ./designer/mainwindow.ui
 ./venv/Scripts/pyside6-uic.exe  -o ./qt_ui/waveform_details_widget_ui.py ./designer/waveformdetailswidget.ui
 ./venv/Scripts/pyside6-uic.exe  -o ./qt_ui/funscript_conversion_ui.py ./designer/funscriptconversiondialog.ui
+./venv/Scripts/pyside6-uic.exe  -o ./qt_ui/funscript_decomposition_ui.py ./designer/funscriptdecompositiondialog.ui
 ./venv/Scripts/pyside6-uic.exe  -o ./qt_ui/volume_control_widget_ui.py ./designer/volumecontrolwidget.ui
 ./venv/Scripts/pyside6-uic.exe  -o ./qt_ui/preferences_dialog_ui.py ./designer/preferencesdialog.ui
 ./venv/Scripts/pyside6-uic.exe  -o ./qt_ui/additional_search_paths_dialog_ui.py ./designer/additionalsearchpathsdialog.ui

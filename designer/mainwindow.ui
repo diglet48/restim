@@ -332,6 +332,7 @@
     </property>
     <addaction name="actionFunscript_conversion"/>
     <addaction name="actionSimfile_conversion"/>
+    <addaction name="actionFunscript_decomposition"/>
    </widget>
    <addaction name="menuSetup"/>
    <addaction name="menuTools"/>
@@ -453,6 +454,11 @@
   <action name="actionSimfile_conversion">
    <property name="text">
     <string>Simfile conversion</string>
+   </property>
+  </action>
+  <action name="actionFunscript_decomposition">
+   <property name="text">
+    <string>Funscript decomposition</string>
    </property>
   </action>
  </widget>

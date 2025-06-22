@@ -21,6 +21,7 @@ import net.websocketserver
 import net.tcpudpserver
 import qt_ui.funscript_conversion_dialog
 import qt_ui.simfile_conversion_dialog
+import qt_ui.funscript_decomposition_dialog
 import qt_ui.preferences_dialog
 import qt_ui.settings
 import net.serialproxy
@@ -183,6 +184,9 @@ class Window(QMainWindow, Ui_MainWindow):
 
         self.simfile_conversion_dialog = qt_ui.simfile_conversion_dialog.SimfileConversionDialog()
         self.actionSimfile_conversion.triggered.connect(self.open_simfile_conversion_dialog)
+
+        self.funscript_decomposition_dialog = qt_ui.funscript_decomposition_dialog.FunscriptDecompositionDialog()
+        self.actionFunscript_decomposition.triggered.connect(self.open_funscript_decomposition_dialog)
 
         self.settings_dialog = qt_ui.preferences_dialog.PreferencesDialog()
         self.actionPreferences.triggered.connect(self.open_preferences_dialog)
@@ -503,6 +507,10 @@ class Window(QMainWindow, Ui_MainWindow):
     def open_simfile_conversion_dialog(self):
         self.signal_stop(PlayState.STOPPED)
         self.simfile_conversion_dialog.exec()
+
+    def open_funscript_decomposition_dialog(self):
+        self.signal_stop(PlayState.STOPPED)
+        self.funscript_decomposition_dialog.exec()
 
     def open_preferences_dialog(self):
         self.signal_stop(PlayState.STOPPED)
