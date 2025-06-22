@@ -6,4 +6,5 @@ matplotlib!=3.9.*
 PySide6
 crc
 msdparser
-#protoletariat
+# protoletariat		# dev only
+protobuf>=6.0.0
