@@ -19,10 +19,11 @@ logger = logging.getLogger('restim.focstim')
 
 
 class Future(QObject):
-    def __init__(self, parent, timeout=None):
+    def __init__(self, parent, id):
         super().__init__(parent)
         self.completed = False
         self.timer = None
+        self.id = id
 
     def complete(self, response: Response):
         if not self.completed:

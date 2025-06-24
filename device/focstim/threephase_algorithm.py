@@ -21,8 +21,9 @@ class FOCStimThreephaseAlgorithm(RemoteGenerationAlgorithm):
         self.safety_limits = safety_limits
         self.position_params = ThreePhasePosition(params.position, params.transform)
 
-        assert safety_limits.waveform_amplitude_amps >= limits.WaveformAmpltiudeFOC.min
-        assert safety_limits.waveform_amplitude_amps <= limits.WaveformAmpltiudeFOC.max
+        epsilon = 0.0001
+        assert safety_limits.waveform_amplitude_amps >= (limits.WaveformAmpltiudeFOC.min - epsilon)
+        assert safety_limits.waveform_amplitude_amps <= (limits.WaveformAmpltiudeFOC.max + epsilon)
 
     def outputs(self):
         return 3

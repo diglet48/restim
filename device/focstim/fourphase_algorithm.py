@@ -25,7 +25,6 @@ class FOCStimFourphaseAlgorithm(RemoteGenerationAlgorithm):
         assert safety_limits.waveform_amplitude_amps >= (limits.WaveformAmpltiudeFOC.min - epsilon)
         assert safety_limits.waveform_amplitude_amps <= (limits.WaveformAmpltiudeFOC.max + epsilon)
 
-
     # todo: more descriptive name
     def outputs(self):
         return 4
