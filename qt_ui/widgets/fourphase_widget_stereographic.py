@@ -55,6 +55,9 @@ class StereographicProjection:
         return x, y, z
 
     def abc_to_xy(self, abc):
+        norm = np.linalg.norm(abc)
+        if norm:
+            abc = abc / norm
         return self.xyz_to_xy(self.abc_to_xyz(abc))
 
     def xy_to_abc(self, xy):
@@ -229,7 +232,9 @@ class FourphaseWidgetStereographic(QGraphicsView):
     def set_cursor_position_abc(self, a, b, c):
         abc = a, b, c
         xy = projection.abc_to_xy(abc)
+        norm = np.clip(np.linalg.norm(abc), 0, 1)
         self.set_cursor_position_xy(xy)
+        self.set_cursor_visibility(norm)
 
     def set_cursor_position_xy(self, xy):
         xyz = projection.xy_to_xyz(xy)
@@ -245,5 +250,21 @@ class FourphaseWidgetStereographic(QGraphicsView):
         self.cursor_2.setX(xy[0] - DOT_WIDTH/2 * size)
         self.cursor_2.setY(xy[1] - DOT_WIDTH/2 * size)
         self.update()
+
+    def set_cursor_visibility(self, alpha=1.0):
+        pen = self.cursor_1.pen()
+        color = pen.color()
+        color.setAlphaF(alpha)
+        pen.setColor(color)
+
+        brush = self.cursor_1.brush()
+        color = brush.color()
+        color.setAlphaF(alpha)
+        brush.setColor(color)
+
+        self.cursor_1.setPen(pen)
+        self.cursor_1.setBrush(brush)
+        self.cursor_2.setPen(pen)
+        self.cursor_2.setBrush(brush)
 
     mousePositionChanged = QtCore.Signal(float, float, float)  # a, b, c
