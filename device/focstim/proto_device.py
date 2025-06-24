@@ -163,7 +163,7 @@ class FOCStimProtoDevice(QObject, OutputDevice):
 
     def get_firmware_version(self):
         logger.info("get firmware version...")
-        def on_firmware_timeout():
+        def on_firmware_timeout(id):
             logger.error("timeout requesting firmware version")
             self.stop()
 
@@ -186,7 +186,7 @@ class FOCStimProtoDevice(QObject, OutputDevice):
 
     def get_capabilities(self):
         logger.info("get device capabilities...")
-        def on_capabilities_timeout():
+        def on_capabilities_timeout(id):
             logger.error("timeout requesting capabilities")
             self.stop()
 
@@ -206,7 +206,7 @@ class FOCStimProtoDevice(QObject, OutputDevice):
         # send initial parameters
         self.transmit_dirty_params(0)
 
-        def on_signal_start_timeout():
+        def on_signal_start_timeout(id):
             logger.error("timeout starting signal")
             self.stop()
 
@@ -241,16 +241,17 @@ class FOCStimProtoDevice(QObject, OutputDevice):
         logger.error(f"connection error: {self.transport.errorString()}")
         self.stop()
 
-    def generic_timeout(self):
+    def generic_timeout(self, id):
         if self.transport.isOpen():
-            logger.error("FOC-Stim unresponsive")
+            logger.error(f"FOC-Stim request {id} timed out")
+            logger.error(f"pending requests: f{self.api.pending_requests.keys()}")
             self.stop()
 
     def transmit_dirty_params(self, interval=30):
-        # msg = f"""
-        #          latency2:{(time.time() - self.last_update) * 1000}
-        #         """
-        # self.teleplot_socket.write(msg.encode('utf-8'))
+        msg = f"""
+                 event_loop_latency:{(time.time() - self.last_update) * 1000}
+                """
+        self.teleplot_socket.write(msg.encode('utf-8'))
         self.last_update = time.time()
 
         if len(self.api.pending_requests) > 20:
@@ -261,7 +262,10 @@ class FOCStimProtoDevice(QObject, OutputDevice):
 
         transmit_time = time.time()
         def completed(_):
-            pass
+            elapsed = time.time() - transmit_time
+            if elapsed > 0.4:
+                logger.warning(f"slow command response: {elapsed} seconds.")
+
             # if self.teleplot_socket:
             #     msg = f"""
             #              latency:{(time.time() - transmit_time) * 1000}

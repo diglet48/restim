@@ -34,7 +34,7 @@ class Future(QObject):
     def timeout(self):
         if not self.completed:
             self.completed = True
-            self.on_timeout.emit()
+            self.on_timeout.emit(self.id)
 
     def set_timeout(self, timeout_ms):
         self.timer = QTimer()
@@ -49,7 +49,7 @@ class Future(QObject):
         self.timer = None
 
     on_result = Signal(Response)
-    on_timeout = Signal()
+    on_timeout = Signal(int)
 
 
 class FOCStimProtoAPI(QObject):
@@ -71,7 +71,7 @@ class FOCStimProtoAPI(QObject):
         self.pending_requests.clear()
 
     def send_request(self, request: Request) -> Future:
-        fut = Future(self)
+        fut = Future(self, request.id)
         message = RpcMessage(
             request=request
         )
