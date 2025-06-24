@@ -1,5 +1,6 @@
 <RCC>
   <qresource prefix="restim">
+    <file>favicon.png</file>
     <file>wizard/continuous.svg</file>
     <file>wizard/pulse_based.svg</file>
     <file>media_players/kodi.png</file>
