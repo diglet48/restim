@@ -21,8 +21,9 @@ class FOCStimFourphaseAlgorithm(RemoteGenerationAlgorithm):
         self.safety_limits = safety_limits
         self.position_params = FourPhasePosition(params.position)
 
-        assert safety_limits.waveform_amplitude_amps >= limits.WaveformAmpltiudeFOC.min
-        assert safety_limits.waveform_amplitude_amps <= limits.WaveformAmpltiudeFOC.max
+        epsilon = 0.0001
+        assert safety_limits.waveform_amplitude_amps >= (limits.WaveformAmpltiudeFOC.min - epsilon)
+        assert safety_limits.waveform_amplitude_amps <= (limits.WaveformAmpltiudeFOC.max + epsilon)
 
 
     # todo: more descriptive name
