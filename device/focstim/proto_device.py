@@ -351,7 +351,7 @@ class FOCStimProtoDevice(QObject, OutputDevice):
             if self.teleplot_socket:
                 msg = f"""
                     temp_stm32:{notif.esc1.temp_stm32}
-                    temp_stm32:{notif.esc1.temp_board}
+                    temp_board:{notif.esc1.temp_board}
                     v_bus:{notif.esc1.v_bus}
                 """
                 self.teleplot_socket.write(msg.encode('utf-8'))
