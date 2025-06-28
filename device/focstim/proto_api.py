@@ -77,6 +77,7 @@ class FOCStimProtoAPI(QObject):
         )
         message_serialized = message.SerializeToString()
         stream = self.hdlc.encode(message_serialized)
+        logger.info(f"> {stream}")
         bytes_written = self.transport.write(stream)
         self.bytes_written += bytes_written
         if bytes_written != len(stream):
@@ -123,6 +124,7 @@ class FOCStimProtoAPI(QObject):
     def ready_read(self):
         while self.transport.bytesAvailable():
             block = bytes(self.transport.read(256))
+            logger.info(f"< {block}")
             self.bytes_read += len(block)
             # logger.info(f'incoming bytes: {block}')
             for frame in self.hdlc.parse(block):
