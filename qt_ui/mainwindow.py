@@ -453,8 +453,9 @@ class Window(QMainWindow, Ui_MainWindow):
             output_device = FOCStimProtoDevice()
             serial_port_name = qt_ui.settings.focstim_serial_port.get()
             use_teleplot = qt_ui.settings.focstim_use_teleplot.get()
-            output_device.start_serial(serial_port_name, use_teleplot, algorithm)
-            # output_device.start_tcp('192.168.2.17', 55533, use_teleplot, algorithm)
+            dump_notifications = qt_ui.settings.focstim_dump_notifications_to_file.get()
+            output_device.start_serial(serial_port_name, use_teleplot, dump_notifications, algorithm)
+            # output_device.start_tcp('192.168.2.17', 55533, use_teleplot, dump_notifications, algorithm)
             if output_device.is_connected_and_running():
                 self.output_device = output_device
                 self.playstate = PlayState.PLAYING

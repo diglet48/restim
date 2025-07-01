@@ -1,5 +1,9 @@
 import logging
 import time
+import datetime
+import os
+
+import stream # pystream-protobuf
 
 import google.protobuf.text_format
 from PySide6.QtSerialPort import QSerialPort
@@ -11,7 +15,7 @@ import qt_ui.settings
 from device.focstim.proto_api import FOCStimProtoAPI
 from device.focstim.notifications_pb2 import NotificationBoot, NotificationPotentiometer, NotificationCurrents, \
     NotificationModelEstimation, NotificationSystemStats, NotificationSignalStats, NotificationDebugString, \
-    NotificationBattery
+    NotificationBattery, NotificationDebugAS5311
 from device.output_device import OutputDevice
 from stim_math.audio_gen.base_classes import RemoteGenerationAlgorithm
 
@@ -34,6 +38,8 @@ class FOCStimProtoDevice(QObject, OutputDevice):
         self.old_dict = {}
         self.teleplot_socket = None
         self.teleplot_prefix = qt_ui.settings.focstim_teleplot_prefix.get().encode('ascii')
+        self.notification_log = None
+        self.dump_notifications = False
 
         self.firmware = ResponseFirmwareVersion()
         self.capabilities = ResponseCapabilitiesGet()
@@ -80,10 +86,11 @@ class FOCStimProtoDevice(QObject, OutputDevice):
             self.teleplot_socket = QUdpSocket()
             self.teleplot_socket.connectToHost(teleplot_addr, teleplot_port, QIODevice.OpenModeFlag.WriteOnly)
 
-    def start_tcp(self, host_address, port, use_teleplot, algorithm: RemoteGenerationAlgorithm):
+    def start_tcp(self, host_address, port, use_teleplot, dump_notifications, algorithm: RemoteGenerationAlgorithm):
         assert self.api is None
         self.algorithm = algorithm
         self.start_teleplot(use_teleplot)
+        self.dump_notifications = dump_notifications
 
         logger.info(f"connecting to FOC-Stim at {host_address}:{port}")
         self.transport = QTcpSocket(self)
@@ -91,10 +98,11 @@ class FOCStimProtoDevice(QObject, OutputDevice):
         self.transport.errorOccurred.connect(self.on_connection_error)
         self.transport.connectToHost(host_address, port)
 
-    def start_serial(self, com_port, use_teleplot, algorithm: RemoteGenerationAlgorithm):
+    def start_serial(self, com_port, use_teleplot, dump_notifications, algorithm: RemoteGenerationAlgorithm):
         assert self.api is None
         self.algorithm = algorithm
         self.start_teleplot(use_teleplot)
+        self.dump_notifications = dump_notifications
 
         logger.info(f"Connecting to FOC-Stim at {com_port}")
         self.transport = QSerialPort(self)
@@ -141,6 +149,8 @@ class FOCStimProtoDevice(QObject, OutputDevice):
                 self.api.cancel_outstanding_requests()
                 self.transport.flush()
         self.transport.close()
+        if self.notification_log:
+            self.notification_log.close()
 
     def is_connected_and_running(self) -> bool:
         return self.transport and self.transport.isOpen()
@@ -148,7 +158,18 @@ class FOCStimProtoDevice(QObject, OutputDevice):
     def on_transport_connected(self):
         logger.info("connection established")
 
-        self.api = FOCStimProtoAPI(self, self.transport)
+        if self.dump_notifications:
+            now = datetime.datetime.now()
+            datestr = now.strftime("%Y-%m-%d %H%M%S")
+            try:
+                os.mkdir('trace/')
+            except FileExistsError:
+                pass
+            self.notification_log = stream.open(f'trace/focstim-notifications {datestr}.binpb', 'wb')
+        else:
+            self.notification_log = None
+
+        self.api = FOCStimProtoAPI(self, self.transport, self.notification_log)
         self.api.on_notification_boot.connect(self.handle_notification_boot)
         self.api.on_notification_potentiometer.connect(self.handle_notification_potentiometer)
         self.api.on_notification_currents.connect(self.handle_notification_currents)
@@ -157,6 +178,7 @@ class FOCStimProtoDevice(QObject, OutputDevice):
         self.api.on_notification_signal_stats.connect(self.handle_notification_signal_stats)
         self.api.on_notification_battery.connect(self.handle_notification_battery)
         self.api.on_notification_debug_string.connect(self.handle_notification_debug_string)
+        self.api.on_notification_debug_as5311.connect(self.handle_notification_debug_as5311)
 
         # grab firmware version
         self.get_firmware_version()
@@ -385,3 +407,13 @@ class FOCStimProtoDevice(QObject, OutputDevice):
 
     def handle_notification_debug_string(self, notif: NotificationDebugString):
         logger.warning(notif.message)
+
+    def handle_notification_debug_as5311(self, notif: NotificationDebugAS5311):
+        if self.teleplot_socket:
+            msg = f"""
+                as5311_raw:{notif.raw}
+                as5311_um:{notif.tracked * (2000.0 / 4096) }
+                as5311_flags:{notif.flags}
+            """
+            self.teleplot_socket.write(msg.encode('utf-8'))
+

@@ -13,7 +13,7 @@ from device.focstim.messages_pb2 import RequestFirmwareVersion, RequestAxisSet, 
     RequestDebugEnterBootloader
 from device.focstim.notifications_pb2 import NotificationBoot, NotificationPotentiometer, NotificationCurrents, \
     NotificationModelEstimation, NotificationSystemStats, NotificationSignalStats, NotificationBattery, \
-    NotificationDebugString
+    NotificationDebugString, NotificationDebugAS5311
 
 logger = logging.getLogger('restim.focstim')
 
@@ -53,9 +53,10 @@ class Future(QObject):
 
 
 class FOCStimProtoAPI(QObject):
-    def __init__(self, parent, transport):
+    def __init__(self, parent, transport, notification_log_target=None):
         super().__init__(parent)
         self.transport = transport
+        self.notification_log_target = notification_log_target
         self.bytes_written = 0
         self.bytes_read = 0
 
@@ -101,6 +102,10 @@ class FOCStimProtoAPI(QObject):
                 logger.warning(f"no cb registered for {message.response}")
 
         elif message.HasField('notification'):
+            message.notification.timestamp = time.time_ns()
+            if self.notification_log_target:
+                self.notification_log_target.write(message.notification)
+
             if message.notification.HasField('notification_boot'):
                 self.on_notification_boot.emit(message.notification.notification_boot)
             elif message.notification.HasField('notification_potentiometer'):
@@ -117,6 +122,8 @@ class FOCStimProtoAPI(QObject):
                 self.on_notification_battery.emit(message.notification.notification_battery)
             elif message.notification.HasField('notification_debug_string'):
                 self.on_notification_debug_string.emit(message.notification.notification_debug_string)
+            elif message.notification.HasField('notification_debug_as5311'):
+                self.on_notification_debug_as5311.emit(message.notification.notification_debug_as5311)
             else:
                 logger.warning(f'unhandled notification: {message.notification}')
 
@@ -222,3 +229,4 @@ class FOCStimProtoAPI(QObject):
     on_notification_signal_stats = Signal(NotificationSignalStats)
     on_notification_battery = Signal(NotificationBattery)
     on_notification_debug_string = Signal(NotificationDebugString)
+    on_notification_debug_as5311 = Signal(NotificationDebugAS5311)

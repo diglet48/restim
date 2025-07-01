@@ -143,3 +143,15 @@ class NotificationDebugString(_message.Message):
 
     def __init__(self, message: _Optional[str]=...) -> None:
         ...
+
+class NotificationDebugAS5311(_message.Message):
+    __slots__ = ('raw', 'tracked', 'flags')
+    RAW_FIELD_NUMBER: _ClassVar[int]
+    TRACKED_FIELD_NUMBER: _ClassVar[int]
+    FLAGS_FIELD_NUMBER: _ClassVar[int]
+    raw: int
+    tracked: int
+    flags: int
+
+    def __init__(self, raw: _Optional[int]=..., tracked: _Optional[int]=..., flags: _Optional[int]=...) -> None:
+        ...

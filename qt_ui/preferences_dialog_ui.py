@@ -3,7 +3,7 @@
 ################################################################################
 ## Form generated from reading UI file 'preferencesdialog.ui'
 ##
-## Created by: Qt User Interface Compiler version 6.8.3
+## Created by: Qt User Interface Compiler version 6.9.0
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
@@ -46,23 +46,23 @@ class Ui_PreferencesDialog(object):
         self.label = QLabel(self.gb_websocket_server)
         self.label.setObjectName(u"label")
 
-        self.formLayout_4.setWidget(0, QFormLayout.LabelRole, self.label)
+        self.formLayout_4.setWidget(0, QFormLayout.ItemRole.LabelRole, self.label)
 
         self.label_6 = QLabel(self.gb_websocket_server)
         self.label_6.setObjectName(u"label_6")
 
-        self.formLayout_4.setWidget(1, QFormLayout.LabelRole, self.label_6)
+        self.formLayout_4.setWidget(1, QFormLayout.ItemRole.LabelRole, self.label_6)
 
         self.websocket_localhost_only = QCheckBox(self.gb_websocket_server)
         self.websocket_localhost_only.setObjectName(u"websocket_localhost_only")
 
-        self.formLayout_4.setWidget(1, QFormLayout.FieldRole, self.websocket_localhost_only)
+        self.formLayout_4.setWidget(1, QFormLayout.ItemRole.FieldRole, self.websocket_localhost_only)
 
         self.websocket_port = QSpinBox(self.gb_websocket_server)
         self.websocket_port.setObjectName(u"websocket_port")
         self.websocket_port.setMaximum(65535)
 
-        self.formLayout_4.setWidget(0, QFormLayout.FieldRole, self.websocket_port)
+        self.formLayout_4.setWidget(0, QFormLayout.ItemRole.FieldRole, self.websocket_port)
 
 
         self.verticalLayout_2.addWidget(self.gb_websocket_server)
@@ -75,23 +75,23 @@ class Ui_PreferencesDialog(object):
         self.label_3 = QLabel(self.gb_tcp_server)
         self.label_3.setObjectName(u"label_3")
 
-        self.formLayout_2.setWidget(0, QFormLayout.LabelRole, self.label_3)
+        self.formLayout_2.setWidget(0, QFormLayout.ItemRole.LabelRole, self.label_3)
 
         self.label_10 = QLabel(self.gb_tcp_server)
         self.label_10.setObjectName(u"label_10")
 
-        self.formLayout_2.setWidget(1, QFormLayout.LabelRole, self.label_10)
+        self.formLayout_2.setWidget(1, QFormLayout.ItemRole.LabelRole, self.label_10)
 
         self.tcp_localhost_only = QCheckBox(self.gb_tcp_server)
         self.tcp_localhost_only.setObjectName(u"tcp_localhost_only")
 
-        self.formLayout_2.setWidget(1, QFormLayout.FieldRole, self.tcp_localhost_only)
+        self.formLayout_2.setWidget(1, QFormLayout.ItemRole.FieldRole, self.tcp_localhost_only)
 
         self.tcp_port = QSpinBox(self.gb_tcp_server)
         self.tcp_port.setObjectName(u"tcp_port")
         self.tcp_port.setMaximum(65535)
 
-        self.formLayout_2.setWidget(0, QFormLayout.FieldRole, self.tcp_port)
+        self.formLayout_2.setWidget(0, QFormLayout.ItemRole.FieldRole, self.tcp_port)
 
 
         self.verticalLayout_2.addWidget(self.gb_tcp_server)
@@ -105,23 +105,23 @@ class Ui_PreferencesDialog(object):
         self.label_4 = QLabel(self.gb_udp_server)
         self.label_4.setObjectName(u"label_4")
 
-        self.formLayout.setWidget(0, QFormLayout.LabelRole, self.label_4)
+        self.formLayout.setWidget(0, QFormLayout.ItemRole.LabelRole, self.label_4)
 
         self.label_11 = QLabel(self.gb_udp_server)
         self.label_11.setObjectName(u"label_11")
 
-        self.formLayout.setWidget(1, QFormLayout.LabelRole, self.label_11)
+        self.formLayout.setWidget(1, QFormLayout.ItemRole.LabelRole, self.label_11)
 
         self.udp_localhost_only = QCheckBox(self.gb_udp_server)
         self.udp_localhost_only.setObjectName(u"udp_localhost_only")
 
-        self.formLayout.setWidget(1, QFormLayout.FieldRole, self.udp_localhost_only)
+        self.formLayout.setWidget(1, QFormLayout.ItemRole.FieldRole, self.udp_localhost_only)
 
         self.udp_port = QSpinBox(self.gb_udp_server)
         self.udp_port.setObjectName(u"udp_port")
         self.udp_port.setMaximum(65535)
 
-        self.formLayout.setWidget(0, QFormLayout.FieldRole, self.udp_port)
+        self.formLayout.setWidget(0, QFormLayout.ItemRole.FieldRole, self.udp_port)
 
 
         self.verticalLayout_2.addWidget(self.gb_udp_server)
@@ -134,22 +134,22 @@ class Ui_PreferencesDialog(object):
         self.label_23 = QLabel(self.gb_serial)
         self.label_23.setObjectName(u"label_23")
 
-        self.formLayout_6.setWidget(0, QFormLayout.LabelRole, self.label_23)
+        self.formLayout_6.setWidget(0, QFormLayout.ItemRole.LabelRole, self.label_23)
 
         self.label_24 = QLabel(self.gb_serial)
         self.label_24.setObjectName(u"label_24")
 
-        self.formLayout_6.setWidget(1, QFormLayout.LabelRole, self.label_24)
+        self.formLayout_6.setWidget(1, QFormLayout.ItemRole.LabelRole, self.label_24)
 
         self.serial_auto_expand = QCheckBox(self.gb_serial)
         self.serial_auto_expand.setObjectName(u"serial_auto_expand")
 
-        self.formLayout_6.setWidget(1, QFormLayout.FieldRole, self.serial_auto_expand)
+        self.formLayout_6.setWidget(1, QFormLayout.ItemRole.FieldRole, self.serial_auto_expand)
 
         self.serial_port = QLineEdit(self.gb_serial)
         self.serial_port.setObjectName(u"serial_port")
 
-        self.formLayout_6.setWidget(0, QFormLayout.FieldRole, self.serial_port)
+        self.formLayout_6.setWidget(0, QFormLayout.ItemRole.FieldRole, self.serial_port)
 
 
         self.verticalLayout_2.addWidget(self.gb_serial)
@@ -162,22 +162,22 @@ class Ui_PreferencesDialog(object):
         self.label_25 = QLabel(self.gb_buttplug_wsdm)
         self.label_25.setObjectName(u"label_25")
 
-        self.formLayout_7.setWidget(0, QFormLayout.LabelRole, self.label_25)
+        self.formLayout_7.setWidget(0, QFormLayout.ItemRole.LabelRole, self.label_25)
 
         self.buttplug_wsdm_address = QLineEdit(self.gb_buttplug_wsdm)
         self.buttplug_wsdm_address.setObjectName(u"buttplug_wsdm_address")
 
-        self.formLayout_7.setWidget(0, QFormLayout.FieldRole, self.buttplug_wsdm_address)
+        self.formLayout_7.setWidget(0, QFormLayout.ItemRole.FieldRole, self.buttplug_wsdm_address)
 
         self.label_26 = QLabel(self.gb_buttplug_wsdm)
         self.label_26.setObjectName(u"label_26")
 
-        self.formLayout_7.setWidget(1, QFormLayout.LabelRole, self.label_26)
+        self.formLayout_7.setWidget(1, QFormLayout.ItemRole.LabelRole, self.label_26)
 
         self.buttplug_wsdm_auto_expand = QCheckBox(self.gb_buttplug_wsdm)
         self.buttplug_wsdm_auto_expand.setObjectName(u"buttplug_wsdm_auto_expand")
 
-        self.formLayout_7.setWidget(1, QFormLayout.FieldRole, self.buttplug_wsdm_auto_expand)
+        self.formLayout_7.setWidget(1, QFormLayout.ItemRole.FieldRole, self.buttplug_wsdm_auto_expand)
 
 
         self.verticalLayout_2.addWidget(self.gb_buttplug_wsdm)
@@ -203,27 +203,27 @@ class Ui_PreferencesDialog(object):
         self.label_7 = QLabel(self.groupBox)
         self.label_7.setObjectName(u"label_7")
 
-        self.formLayout_3.setWidget(0, QFormLayout.LabelRole, self.label_7)
+        self.formLayout_3.setWidget(0, QFormLayout.ItemRole.LabelRole, self.label_7)
 
         self.audio_api = QComboBox(self.groupBox)
         self.audio_api.setObjectName(u"audio_api")
 
-        self.formLayout_3.setWidget(0, QFormLayout.FieldRole, self.audio_api)
+        self.formLayout_3.setWidget(0, QFormLayout.ItemRole.FieldRole, self.audio_api)
 
         self.label_8 = QLabel(self.groupBox)
         self.label_8.setObjectName(u"label_8")
 
-        self.formLayout_3.setWidget(1, QFormLayout.LabelRole, self.label_8)
+        self.formLayout_3.setWidget(1, QFormLayout.ItemRole.LabelRole, self.label_8)
 
         self.audio_output_device = QComboBox(self.groupBox)
         self.audio_output_device.setObjectName(u"audio_output_device")
 
-        self.formLayout_3.setWidget(1, QFormLayout.FieldRole, self.audio_output_device)
+        self.formLayout_3.setWidget(1, QFormLayout.ItemRole.FieldRole, self.audio_output_device)
 
         self.label_9 = QLabel(self.groupBox)
         self.label_9.setObjectName(u"label_9")
 
-        self.formLayout_3.setWidget(2, QFormLayout.LabelRole, self.label_9)
+        self.formLayout_3.setWidget(2, QFormLayout.ItemRole.LabelRole, self.label_9)
 
         self.audio_latency = QComboBox(self.groupBox)
         self.audio_latency.addItem("")
@@ -241,17 +241,17 @@ class Ui_PreferencesDialog(object):
         self.audio_latency.addItem("")
         self.audio_latency.setObjectName(u"audio_latency")
 
-        self.formLayout_3.setWidget(2, QFormLayout.FieldRole, self.audio_latency)
+        self.formLayout_3.setWidget(2, QFormLayout.ItemRole.FieldRole, self.audio_latency)
 
         self.label_27 = QLabel(self.groupBox)
         self.label_27.setObjectName(u"label_27")
 
-        self.formLayout_3.setWidget(3, QFormLayout.LabelRole, self.label_27)
+        self.formLayout_3.setWidget(3, QFormLayout.ItemRole.LabelRole, self.label_27)
 
         self.audio_info = QLabel(self.groupBox)
         self.audio_info.setObjectName(u"audio_info")
 
-        self.formLayout_3.setWidget(3, QFormLayout.FieldRole, self.audio_info)
+        self.formLayout_3.setWidget(3, QFormLayout.ItemRole.FieldRole, self.audio_info)
 
 
         self.verticalLayout_3.addWidget(self.groupBox)
@@ -269,30 +269,30 @@ class Ui_PreferencesDialog(object):
         self.groupBox_8.setObjectName(u"groupBox_8")
         self.gridLayout_5 = QGridLayout(self.groupBox_8)
         self.gridLayout_5.setObjectName(u"gridLayout_5")
-        self.label_16 = QLabel(self.groupBox_8)
-        self.label_16.setObjectName(u"label_16")
+        self.focstim_teleplot_prefix = QLineEdit(self.groupBox_8)
+        self.focstim_teleplot_prefix.setObjectName(u"focstim_teleplot_prefix")
 
-        self.gridLayout_5.addWidget(self.label_16, 2, 0, 1, 1)
+        self.gridLayout_5.addWidget(self.focstim_teleplot_prefix, 2, 2, 1, 1)
 
         self.focstim_use_teleplot = QCheckBox(self.groupBox_8)
         self.focstim_use_teleplot.setObjectName(u"focstim_use_teleplot")
 
         self.gridLayout_5.addWidget(self.focstim_use_teleplot, 1, 2, 1, 1)
 
+        self.label_16 = QLabel(self.groupBox_8)
+        self.label_16.setObjectName(u"label_16")
+
+        self.gridLayout_5.addWidget(self.label_16, 2, 0, 1, 1)
+
         self.refresh_serial_devices = QToolButton(self.groupBox_8)
         self.refresh_serial_devices.setObjectName(u"refresh_serial_devices")
 
         self.gridLayout_5.addWidget(self.refresh_serial_devices, 0, 3, 1, 1)
 
-        self.label_15 = QLabel(self.groupBox_8)
-        self.label_15.setObjectName(u"label_15")
+        self.label_18 = QLabel(self.groupBox_8)
+        self.label_18.setObjectName(u"label_18")
 
-        self.gridLayout_5.addWidget(self.label_15, 1, 0, 1, 1)
-
-        self.label_14 = QLabel(self.groupBox_8)
-        self.label_14.setObjectName(u"label_14")
-
-        self.gridLayout_5.addWidget(self.label_14, 0, 0, 1, 1)
+        self.gridLayout_5.addWidget(self.label_18, 3, 0, 1, 1)
 
         self.focstim_port = QComboBox(self.groupBox_8)
         self.focstim_port.setObjectName(u"focstim_port")
@@ -304,10 +304,20 @@ class Ui_PreferencesDialog(object):
 
         self.gridLayout_5.addWidget(self.focstim_port, 0, 2, 1, 1)
 
-        self.focstim_teleplot_prefix = QLineEdit(self.groupBox_8)
-        self.focstim_teleplot_prefix.setObjectName(u"focstim_teleplot_prefix")
+        self.label_15 = QLabel(self.groupBox_8)
+        self.label_15.setObjectName(u"label_15")
 
-        self.gridLayout_5.addWidget(self.focstim_teleplot_prefix, 2, 2, 1, 1)
+        self.gridLayout_5.addWidget(self.label_15, 1, 0, 1, 1)
+
+        self.label_14 = QLabel(self.groupBox_8)
+        self.label_14.setObjectName(u"label_14")
+
+        self.gridLayout_5.addWidget(self.label_14, 0, 0, 1, 1)
+
+        self.focstim_dump_notifications = QCheckBox(self.groupBox_8)
+        self.focstim_dump_notifications.setObjectName(u"focstim_dump_notifications")
+
+        self.gridLayout_5.addWidget(self.focstim_dump_notifications, 3, 2, 1, 1)
 
 
         self.verticalLayout_5.addWidget(self.groupBox_8)
@@ -488,24 +498,24 @@ class Ui_PreferencesDialog(object):
         self.label_2 = QLabel(self.groupBox_5)
         self.label_2.setObjectName(u"label_2")
 
-        self.formLayout_5.setWidget(0, QFormLayout.LabelRole, self.label_2)
+        self.formLayout_5.setWidget(0, QFormLayout.ItemRole.LabelRole, self.label_2)
 
         self.label_5 = QLabel(self.groupBox_5)
         self.label_5.setObjectName(u"label_5")
 
-        self.formLayout_5.setWidget(1, QFormLayout.LabelRole, self.label_5)
+        self.formLayout_5.setWidget(1, QFormLayout.ItemRole.LabelRole, self.label_5)
 
         self.display_fps = QSpinBox(self.groupBox_5)
         self.display_fps.setObjectName(u"display_fps")
         self.display_fps.setMaximum(1000)
 
-        self.formLayout_5.setWidget(0, QFormLayout.FieldRole, self.display_fps)
+        self.formLayout_5.setWidget(0, QFormLayout.ItemRole.FieldRole, self.display_fps)
 
         self.display_latency_ms = QDoubleSpinBox(self.groupBox_5)
         self.display_latency_ms.setObjectName(u"display_latency_ms")
         self.display_latency_ms.setMaximum(1000.000000000000000)
 
-        self.formLayout_5.setWidget(1, QFormLayout.FieldRole, self.display_latency_ms)
+        self.formLayout_5.setWidget(1, QFormLayout.ItemRole.FieldRole, self.display_latency_ms)
 
 
         self.verticalLayout_4.addWidget(self.groupBox_5)
@@ -531,8 +541,8 @@ class Ui_PreferencesDialog(object):
 
         self.frame = QFrame(self.tab_funscript)
         self.frame.setObjectName(u"frame")
-        self.frame.setFrameShape(QFrame.StyledPanel)
-        self.frame.setFrameShadow(QFrame.Raised)
+        self.frame.setFrameShape(QFrame.Shape.StyledPanel)
+        self.frame.setFrameShadow(QFrame.Shadow.Raised)
         self.horizontalLayout = QHBoxLayout(self.frame)
         self.horizontalLayout.setObjectName(u"horizontalLayout")
         self.button_funscript_reset_defaults = QPushButton(self.frame)
@@ -549,7 +559,7 @@ class Ui_PreferencesDialog(object):
 
         self.buttonBox = QDialogButtonBox(PreferencesDialog)
         self.buttonBox.setObjectName(u"buttonBox")
-        self.buttonBox.setStandardButtons(QDialogButtonBox.Apply|QDialogButtonBox.Cancel|QDialogButtonBox.Ok)
+        self.buttonBox.setStandardButtons(QDialogButtonBox.StandardButton.Apply|QDialogButtonBox.StandardButton.Cancel|QDialogButtonBox.StandardButton.Ok)
 
         self.verticalLayout.addWidget(self.buttonBox)
 
@@ -565,7 +575,7 @@ class Ui_PreferencesDialog(object):
 
         self.retranslateUi(PreferencesDialog)
 
-        self.tabWidget.setCurrentIndex(3)
+        self.tabWidget.setCurrentIndex(2)
 
 
         QMetaObject.connectSlotsByName(PreferencesDialog)
@@ -617,11 +627,16 @@ class Ui_PreferencesDialog(object):
         self.audio_info.setText(QCoreApplication.translate("PreferencesDialog", u"TextLabel", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_audio), QCoreApplication.translate("PreferencesDialog", u"Audio", None))
         self.groupBox_8.setTitle(QCoreApplication.translate("PreferencesDialog", u"FOC-Stim", None))
-        self.label_16.setText(QCoreApplication.translate("PreferencesDialog", u"teleplot prefix", None))
         self.focstim_use_teleplot.setText("")
+#if QT_CONFIG(tooltip)
+        self.label_16.setToolTip(QCoreApplication.translate("PreferencesDialog", u"Useful if you have multiple FOC-Stim boxes", None))
+#endif // QT_CONFIG(tooltip)
+        self.label_16.setText(QCoreApplication.translate("PreferencesDialog", u"teleplot prefix (?)", None))
         self.refresh_serial_devices.setText(QCoreApplication.translate("PreferencesDialog", u"Refresh", None))
+        self.label_18.setText(QCoreApplication.translate("PreferencesDialog", u"Dump notifications to file", None))
         self.label_15.setText(QCoreApplication.translate("PreferencesDialog", u"Use teleplot", None))
         self.label_14.setText(QCoreApplication.translate("PreferencesDialog", u"Serial port", None))
+        self.focstim_dump_notifications.setText("")
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_foc), QCoreApplication.translate("PreferencesDialog", u"FOC-Stim", None))
         self.groupBox_4.setTitle(QCoreApplication.translate("PreferencesDialog", u"NeoStim", None))
         self.neostim_refresh_serial_devices.setText(QCoreApplication.translate("PreferencesDialog", u"Refresh", None))

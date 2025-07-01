@@ -113,9 +113,10 @@ class PreferencesDialog(QDialog, Ui_PreferencesDialog):
         self.focstim_port.setCurrentIndex(self.focstim_port.findData(qt_ui.settings.focstim_serial_port.get()))
         self.focstim_use_teleplot.setChecked(qt_ui.settings.focstim_use_teleplot.get())
         self.focstim_teleplot_prefix.setText(qt_ui.settings.focstim_teleplot_prefix.get())
+        self.focstim_dump_notifications.setChecked(qt_ui.settings.focstim_dump_notifications_to_file.get())
 
         # neostim settings
-        self.neostim_port.setCurrentIndex(self.focstim_port.findData(qt_ui.settings.neostim_serial_port.get()))
+        self.neostim_port.setCurrentIndex(self.neostim_port.findData(qt_ui.settings.neostim_serial_port.get()))
 
         # media sync settings
         self.mpc_address.setText(qt_ui.settings.media_sync_mpc_address.get())
@@ -216,6 +217,7 @@ class PreferencesDialog(QDialog, Ui_PreferencesDialog):
         qt_ui.settings.focstim_serial_port.set(str(self.focstim_port.currentData()))
         qt_ui.settings.focstim_use_teleplot.set(self.focstim_use_teleplot.isChecked())
         qt_ui.settings.focstim_teleplot_prefix.set(self.focstim_teleplot_prefix.text())
+        qt_ui.settings.focstim_dump_notifications_to_file.set(self.focstim_dump_notifications.isChecked())
 
         # neoStim
         qt_ui.settings.neostim_serial_port.set(str(self.neostim_port.currentData()))
