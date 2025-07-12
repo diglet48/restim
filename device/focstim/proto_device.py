@@ -30,6 +30,10 @@ teleplot_port = 47269
 
 FOCSTIM_VERSION = "1.0"
 
+TIMEOUT_SETUP = 2000    # ms
+TIMEOUT_UPDATE = 4000   # ms
+
+
 class FOCStimProtoDevice(QObject, OutputDevice):
     def __init__(self):
         super().__init__()
@@ -50,6 +54,8 @@ class FOCStimProtoDevice(QObject, OutputDevice):
         self.update_timer = QTimer()
         self.update_timer.setInterval(int(1000 // 60))
         self.update_timer.timeout.connect(self.transmit_dirty_params)
+
+        self.max_latency = 0.2
 
         # self.set_timestamp_timer = QTimer()
         # self.set_timestamp_timer.setInterval(1000 // 10)
@@ -202,7 +208,7 @@ class FOCStimProtoDevice(QObject, OutputDevice):
                 self.stop()
 
         fut = self.api.request_firmware_version()
-        fut.set_timeout(2000)
+        fut.set_timeout(TIMEOUT_SETUP)
         fut.on_timeout.connect(on_firmware_timeout)
         fut.on_result.connect(on_firmware_response)
 
@@ -219,7 +225,7 @@ class FOCStimProtoDevice(QObject, OutputDevice):
             self.start_signal_generation()
 
         fut = self.api.request_capabilities_get()
-        fut.set_timeout(2000)
+        fut.set_timeout(TIMEOUT_SETUP)
         fut.on_timeout.connect(on_capabilities_timeout)
         fut.on_result.connect(on_capabilities_response)
 
@@ -248,7 +254,7 @@ class FOCStimProtoDevice(QObject, OutputDevice):
         else:
             assert False
         fut = self.api.request_start_signal(mode)
-        fut.set_timeout(2000)
+        fut.set_timeout(TIMEOUT_SETUP)
         fut.on_timeout.connect(on_signal_start_timeout)
         fut.on_result.connect(on_signal_start_response)
 
@@ -285,21 +291,16 @@ class FOCStimProtoDevice(QObject, OutputDevice):
         transmit_time = time.time()
         def completed(_):
             elapsed = time.time() - transmit_time
-            if elapsed > 0.4:
-                logger.warning(f"slow command response: {elapsed} seconds.")
-
-            # if self.teleplot_socket:
-            #     msg = f"""
-            #              latency:{(time.time() - transmit_time) * 1000}
-            #          """
-            #     self.teleplot_socket.write(msg.encode('utf-8'))
+            if elapsed > self.max_latency:
+                self.max_latency = elapsed
+                logger.warning(f"max command latency: {elapsed} seconds")
 
         # send only dirty values
         for axis, value in new_dict.items():
             if axis not in self.old_dict or value != self.old_dict[axis]:
                 # self.request_axis_set(axis, value, False)
                 fut = self.api.request_axis_move_to(axis, value, interval)
-                fut.set_timeout(2000)
+                fut.set_timeout(TIMEOUT_SETUP)
                 fut.on_timeout.connect(self.generic_timeout)
                 fut.on_result.connect(completed)
 
