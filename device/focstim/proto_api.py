@@ -19,8 +19,8 @@ logger = logging.getLogger('restim.focstim')
 
 
 class Future(QObject):
-    def __init__(self, parent, id):
-        super().__init__(parent)
+    def __init__(self, id):
+        super().__init__(None)
         self.completed = False
         self.timer = None
         self.id = id
@@ -37,7 +37,7 @@ class Future(QObject):
             self.on_timeout.emit(self.id)
 
     def set_timeout(self, timeout_ms):
-        self.timer = QTimer()
+        self.timer = QTimer(self)
         self.timer.timeout.connect(self.timeout)
         self.timer.setInterval(timeout_ms)
         self.timer.setSingleShot(True)
@@ -72,7 +72,7 @@ class FOCStimProtoAPI(QObject):
         self.pending_requests.clear()
 
     def send_request(self, request: Request) -> Future:
-        fut = Future(self, request.id)
+        fut = Future(request.id)
         message = RpcMessage(
             request=request
         )
