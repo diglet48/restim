@@ -300,7 +300,7 @@ class FOCStimProtoDevice(QObject, OutputDevice):
             if axis not in self.old_dict or value != self.old_dict[axis]:
                 # self.request_axis_set(axis, value, False)
                 fut = self.api.request_axis_move_to(axis, value, interval)
-                fut.set_timeout(TIMEOUT_SETUP)
+                fut.set_timeout(TIMEOUT_UPDATE)
                 fut.on_timeout.connect(self.generic_timeout)
                 fut.on_result.connect(completed)
 
