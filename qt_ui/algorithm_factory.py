@@ -259,9 +259,8 @@ class AlgorithmFactory:
         """
 
         # Fetch frequency axes
-        carrier_frequency = self.get_axis_from_script_mapping(AxisEnum.CARRIER_FREQUENCY, limits=(0, 100))
-        pulse_frequency = self.get_axis_from_script_mapping(AxisEnum.PULSE_FREQUENCY, limits=(0, 100))
-        fallback_frequency = create_constant_axis(100)
+        carrier_frequency = self.get_axis_from_script_mapping(AxisEnum.CARRIER_FREQUENCY)#, limits=(0, 100))
+        pulse_frequency = self.get_axis_from_script_mapping(AxisEnum.PULSE_FREQUENCY)#, limits=(0, 100))
 
         # Fetch pulse shape axes (always needed, so provide defaults: 100% width, rise: 0%)
         # pulse_width = self.get_axis_from_script_mapping(AxisEnum.PULSE_WIDTH, limits=(0, 100)) or create_constant_axis(100)
@@ -276,7 +275,8 @@ class AlgorithmFactory:
 
         # Get frequency limits from kit
         carrier_freq_limits = self.kit.limits_for_axis(AxisEnum.CARRIER_FREQUENCY)
-        pulse_freq_limits = self.kit.limits_for_axis(AxisEnum.PULSE_FREQUENCY)
+        pulse_width_limits = self.kit.limits_for_axis(AxisEnum.PULSE_WIDTH)
+        pulse_rise_time_limits = self.kit.limits_for_axis(AxisEnum.PULSE_RISE_TIME)
 
         # Create the algorithm
         algorithm = CoyoteAlgorithm(
@@ -317,7 +317,8 @@ class AlgorithmFactory:
                 device.max_frequency,
             ),
             carrier_freq_limits=carrier_freq_limits,
-            pulse_freq_limits=pulse_freq_limits
+            pulse_width_limits=pulse_width_limits,
+            pulse_rise_time_limits=pulse_rise_time_limits
         )
         return algorithm
 

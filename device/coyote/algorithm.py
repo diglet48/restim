@@ -1,937 +1,407 @@
 """
-DG-LAB Coyote 3.0 E-Stim Algorithm Implementation
+New Coyote 3.0 E-Stim Algorithm - Direct Control Model
 
-This algorithm controls a Coyote 3.0 dual-channel e-stim device by emulating the behavior
-of the pulse-based audio algorithm (used for traditional audio e-stim) while working
-within the constraints of the Coyote hardware protocol.
+This algorithm is a from-scratch redesign inspired by the Neostim architecture,
+but tailored specifically for the DG-LAB Coyote 3.0's hardware constraints.
 
-NOTE: This algorithm is designed specifically for the Coyote 3.0 device. 
-Other versions are not supported.
-
-The Coyote 3.0 is a dual-channel e-stim device with the following characteristics:
-- Two independent channels (A and B)
-- Each channel accepts pulses with:
-  - Intensity (0-100%)
-  - Duration (5-240ms)
-  - The device plays these pulses sequentially
-- Protocol accepts 4 pulses per packet
-- Device repeats the last received packet until a new one is sent
-
-Frequency Handling:
------------------
-Both carrier and pulse frequencies are user-configurable with ranges defined in 
-funscript configuration and constrained by safety limits:
-
-- Each frequency has its own user-defined range from funscript configurations
-- Carrier frequency (typically 500-1000 Hz) affects pulse durations
-- Pulse frequency (typically 0-100 Hz) controls pulse repetition rate
-
-Their relationship:
-- Higher carrier frequencies result in shorter pulse durations (inversely related)
-- Carrier frequency also modulates the effective pulse frequency
-- Channel-specific frequency limits determine valid pulse duration ranges
-- All frequencies are normalized within ranges before being applied
-
-This approach ensures all values stay within valid ranges and changes to either
-frequency produce intuitive results that adapt to user settings.
-
-Key Differences Between Audio E-Stim and Coyote:
-------------------------------------------------
-1. Protocol Constraints:
-   - Audio: Continuous stream of audio samples (44.1kHz) with full waveform control
-   - Coyote: Packets of exactly 4 pulses per channel with limited parameter control (intensity, duration)
-
-2. Parameter Control:
-   - Audio: Direct control over carrier frequency, pulse width, pulse shape, polarity, etc.
-   - Coyote: Only control over intensity (0-100%) and duration (5-240ms per pulse)
-
-3. Timing:
-   - Audio: Microsecond-level precision with continuous buffer
-   - Coyote: Packet-based with potential gaps between updates
-
-Emulation Approach:
-------------------
-This algorithm bridges these differences by:
-
-1. Buffer Abstraction:
-   - Maintains a FIFO buffer of pulses that abstract away the packet-based nature
-   - Similar to audio algorithm's sample buffer, but at a higher level
-
-2. Parameter Mapping:
-   - Maps pulse-based algorithm parameters to Coyote parameters:
-     - Carrier and pulse frequencies → Duration (inversely related)
-     - Alpha/Beta position → Channel intensity split
-     - Pulse polarity → Inverted envelope value 
-     - Envelope shape → Duration modulation
-
-3. Timing Management:
-   - Uses a predictive timing model to request new packets before the 
-     current one completes, ensuring smooth playback
-
-The result is an algorithm that behaves as similarly as possible to the 
-pulse-based audio algorithm while working within the hardware constraints.
+It abandons the previous audio-emulation approach in favor of direct parameter
+control, aiming for a more faithful and responsive funscript experience.
 """
 
 import logging
+import time
 import numpy as np
 from collections import deque
-from typing import List, Tuple, Dict, Deque
-from stim_math.audio_gen.various import ThreePhasePosition
-from stim_math.axis import AbstractMediaSync
-from device.coyote.device import CoyotePulse, CoyotePulses
-from stim_math.audio_gen.params import SafetyParams, CoyoteAlgorithmParams, VolumeParams
+from typing import List, Tuple, Deque
+
+from stim_math.axis import AbstractMediaSync, AbstractAxis
 from stim_math.threephase import ThreePhaseCenterCalibration
-from stim_math import limits
-import time
+from stim_math.audio_gen.params import CoyoteAlgorithmParams, VolumeParams, SafetyParams
+from stim_math.audio_gen.various import ThreePhasePosition
+from device.coyote.device import CoyotePulse, CoyotePulses
 
 logger = logging.getLogger('restim.coyote')
 
-# Protocol constraints
-COYOTE_PULSES_PER_PACKET = 4  # Coyote protocol requires exactly 4 pulses per packet
-COYOTE_MIN_PULSE_DURATION = 5  # Minimum pulse duration in ms
-COYOTE_MAX_PULSE_DURATION = 240  # Maximum pulse duration in ms
-
-# ===== Channel State Tracking =====
-
-class ChannelState:
-    """
-    Tracks the state of a single channel's pulse buffer.
-    
-    This class serves a similar purpose to the audio buffer in the pulse-based algorithm,
-    but at a higher level of abstraction (pulses instead of audio samples). It maintains
-    a FIFO queue of pulses that are consumed over time, abstracting away the 
-    packet-based nature of the Coyote protocol.
-    
-    The buffer is continuously refilled as pulses are consumed, ensuring smooth playback
-    and allowing for dynamic parameter changes during operation.
-    """
-    def __init__(self, 
-                 pulse_buffer: deque, 
-                 start_time: float, 
-                 elapsed_duration_ms: float,
-
-                 min_freq: float,  # Minimum frequency in Hz
-                 max_freq: float,  # Maximum frequency in Hz
-                 min_duration: int,  # Corresponds to max_freq
-                 max_duration: int): # Corresponds to min_freq
-        self.pulse_buffer = pulse_buffer
-        self.start_time = start_time
-        self.elapsed_duration_ms = elapsed_duration_ms
-
-        self.min_freq = min_freq
-        self.max_freq = max_freq
-        self.min_duration = min_duration
-        self.max_duration = max_duration
-        
-        # Track last parameters for detecting changes
-        self.last_pulse_freq = 0.0
-        self.last_pulse_width = 0.0
-        self.last_pulse_rise_time = 0.0
-
-        # Track current phase (0.0-1.0) within the envelope period for phase-locked pulse generation
-        self.envelope_phase = 0.0  # Always in [0.0, 1.0)
-
-
-    @property
-    def is_empty(self) -> bool:
-        """
-        Check if this channel's pulse buffer is empty.
-        
-        Returns:
-            bool: True if the buffer has no pulses, False otherwise
-        """
-        return len(self.pulse_buffer) == 0
-    
-    def advance_time(self, elapsed_time_ms: float) -> bool:
-        """
-        Advance this channel's state by consuming pulses based on elapsed time.
-        
-        This method is similar to how the pulse-based algorithm consumes samples
-        from its audio buffer. Pulses whose duration has passed are removed from
-        the buffer, and the elapsed time is adjusted accordingly.
-        
-        Args:
-            elapsed_time_ms: Time elapsed since last update in milliseconds
-            
-        Returns:
-            bool: True if the buffer needs more pulses, False otherwise
-        """
-        if self.is_empty:
-            logger.debug("Channel buffer is empty when advancing time")
-            return True
-            
-        self.elapsed_duration_ms += elapsed_time_ms
-        
-        # Consume pulses that have completed
-        accumulated_duration = 0
-        consumed_count = 0
-        while self.pulse_buffer and accumulated_duration + self.pulse_buffer[0].duration <= self.elapsed_duration_ms:
-            pulse = self.pulse_buffer.popleft()
-            accumulated_duration += pulse.duration
-            consumed_count += 1
-            
-        if consumed_count > 0:
-            logger.debug(f"Consumed {consumed_count} pulses, total duration {accumulated_duration:.1f}ms")
-            
-        # Adjust elapsed time to account for consumed pulses
-        self.elapsed_duration_ms -= accumulated_duration
-        
-        # Buffer needs refilling if it's getting low (less than 2 packets worth)
-        buffer_low = len(self.pulse_buffer) < COYOTE_PULSES_PER_PACKET * 2
-        if buffer_low:
-            logger.debug(f"Buffer running low: {len(self.pulse_buffer)} pulses remaining")
-        return buffer_low
-
-# ===== Utility Functions =====
-
-def frequency_to_duration(frequency: float) -> int:
-    """
-    Convert frequency to Coyote pulse duration using the device's specific mapping.
-    
-    This is a key function for emulating the pulse-based algorithm's frequency control.
-    In the pulse-based algorithm, frequency directly controls the waveform.
-    For Coyote, we must convert frequency to duration (they're inversely related).
-    
-    The Coyote uses a non-linear mapping for durations:
-    - 5-100ms: Direct 1:1 mapping from period
-    - 100-600ms: Compressed 5:1 mapping
-    - 600-1000ms: Compressed 10:1 mapping
-    
-    Args:
-        frequency: Input frequency in Hz
-    Returns:
-        Duration in milliseconds (5-240ms range)
-    """
-    # Frequency must be positive
-    if frequency <= 0:
-        logger.warning(f"Invalid frequency {frequency}Hz, using default")
-        frequency = 10.0  # Default fallback
-        
-    period = 1000.0 / frequency  # Convert Hz to period in ms
-    
-    if 5.0 <= period <= 100.0:
-        calculated = period
-    elif 100.0 < period <= 600.0:
-        calculated = (period - 100) / 5.0 + 100
-    elif 600.0 < period <= 1000.0:
-        calculated = (period - 600) / 10.0 + 200
-    else:
-        calculated = 10.0  # Default fallback
-        
-    result = int(np.clip(round(calculated), COYOTE_MIN_PULSE_DURATION, COYOTE_MAX_PULSE_DURATION))
-
-    return result
-
-def generate_discrete_envelope(num_pulses: int, attack: int, sustain: int, release: int) -> np.ndarray:
-    """
-    Generate a discrete ADSR/trapezoidal envelope array (values in [0, 1]) sampled at the pulse frequency.
-    Args:
-        num_pulses: Number of pulses in one envelope cycle
-        attack: Number of pulses for attack (ramp up)
-        sustain: Number of pulses for sustain (max value)
-        release: Number of pulses for release (ramp down)
-    Returns:
-        Numpy array of length num_pulses, values in [0, 1]
-    """
-    envelope = np.zeros(num_pulses)
-    # Attack
-    if attack > 0:
-        envelope[:attack] = np.linspace(0, 1, attack, endpoint=False)
-    # Sustain
-    if sustain > 0:
-        envelope[attack:attack+sustain] = 1.0
-    # Release
-    if release > 0:
-        envelope[attack+sustain:] = np.linspace(1, 0, num_pulses - (attack + sustain))
-    return envelope
-
-# Replace old generate_envelope with a new function that creates a discrete envelope for Coyote
-
-def generate_envelope(
-    t: float,
-    pulse_freq: float,
-    carrier_freq: float,
-    num_points: int = 100,
-    preview_pulses: int = 6
-) -> Tuple[np.ndarray, float]:
-    """
-    Generate a high-resolution envelope for EnvelopeGraph, matching the audio-based UI.
-    Args:
-        t: Current time in seconds (for phase alignment)
-        pulse_freq: Pulse frequency (Hz)
-        carrier_freq: Carrier frequency (Hz)
-        num_points: Number of points for the preview graph
-        preview_pulses: Number of pulses to visualize in the preview window
-    Returns:
-        Tuple of (envelope array, period in seconds)
-    """
-    if num_points < 3:
-        num_points = 3
-    preview_duration = preview_pulses / pulse_freq if pulse_freq > 0 else 1.0
-    envelope = np.zeros(num_points)
-    for i in range(num_points):
-        t_i = t + (i / (num_points - 1)) * preview_duration
-        phase = 2 * np.pi * carrier_freq * t_i
-        envelope[i] = np.abs(np.sin(phase))
-    period = preview_duration
-    return envelope, period
+COYOTE_PULSES_PER_PACKET = 4
+COYOTE_MIN_PULSE_DURATION = 5
+COYOTE_MAX_PULSE_DURATION = 240
 
 
 def compute_volume(media: AbstractMediaSync, volume_params: VolumeParams, t: float) -> float:
-    """
-    Calculate the overall volume multiplier from all volume sources.
-    
-    This function matches the volume calculation in the pulse-based algorithm,
-    combining multiple volume sources into a single multiplier.
-    
-    Args:
-        media: Media sync object to check playback status
-        volume_params: Volume parameters
-        t: Current time in seconds
-    Returns:
-        Volume multiplier (0-1)
-    """
+    """Calculate the overall volume multiplier from all volume sources."""
     if not media.is_playing():
-        return 0
-    
-    master_vol = np.clip(volume_params.master.last_value(), 0, 1)
-    api_vol = np.clip(volume_params.api.interpolate(t), 0, 1)
-    inactivity_vol = np.clip(volume_params.inactivity.last_value(), 0, 1)
-    external_vol = np.clip(volume_params.external.last_value(), 0, 1)
+        return 0.0
 
-    if inactivity_vol == 0:
-        logger.warning("Inactivity volume is 0, using 1")
-        inactivity_vol = 1
-    
-    volume = master_vol * api_vol * inactivity_vol * external_vol
-    
+    master = np.clip(volume_params.master.last_value(), 0, 1)
+    api = np.clip(volume_params.api.interpolate(t), 0, 1)
+    inactivity = np.clip(volume_params.inactivity.last_value(), 0, 1)
+    external = np.clip(volume_params.external.last_value(), 0, 1)
+
+    if inactivity == 0:
+        inactivity = 1.0
+
+    volume = master * api * inactivity * external
+
     return volume
 
-class CoyoteAlgorithm:
-    """
-    Coyote pulse generation algorithm that emulates the pulse-based audio algorithm.
-    
-    This class maintains a buffer of pulses for each channel, dynamically generating
-    new pulses as needed and packaging them into packets for the Coyote device.
-    It closely follows the design pattern of the pulse-based algorithm while
-    adapting to the constraints of the Coyote protocol.
-    
-    Frequency Handling:
-    ------------------
-    Both carrier and pulse frequencies are user-configurable parameters with their own
-    ranges defined in the funscript configuration and constrained by safety limits:
-    
-    - Carrier frequency: Typically ranges from 500-1000 Hz, primarily affects pulse timing
-      and spacing, but not directly their durations
-    - Pulse frequency: Typically ranges from 0-100 Hz, controls pulse repetition rate
-      and is the primary factor determining pulse durations
-    
-    Their relationship:
-    - Pulse frequency directly controls the duration of pulses (higher freq = shorter durations)
-    - Carrier frequency primarily modifies the effective pulse frequency for timing purposes
-    - The specific channel frequency limits determine the valid range of pulse durations
-    - All frequencies are normalized within their respective ranges before being applied
-    
-    This approach ensures:
-    - All values stay within their valid ranges
-    - Changes to either frequency produce intuitive and predictable results
-    - The algorithm adapts to different user settings and funscript configurations
-    
-    Key similarities with pulse-based algorithm:
-    - Uses a buffer abstraction (pulses instead of audio samples)
-    - Dynamically generates pulses based on current parameters
-    - Handles parameter interpolation over time
-    - Supports per-pulse polarity and phase control
-    - Maps position coordinates to output intensities
-    
-    Key adaptations for Coyote:
-    - Works with packets of 4 pulses instead of continuous audio
-    - Maps frequency to duration (inversely related)
-    - Updates based on packet timing rather than sample count
-    """
-    def __init__(self, media: AbstractMediaSync, params: CoyoteAlgorithmParams, safety_limits: SafetyParams,
-                 carrier_freq_limits=(0, 100), pulse_freq_limits=(0, 100)):
-        """
-        Initialize the Coyote algorithm.
-        
-        Args:
-            media: Media synchronization object
-            params: Algorithm parameters
-            safety_limits: Safety constraints for parameters
-            carrier_freq_limits: Tuple of (min, max) for carrier frequency range
-            pulse_freq_limits: Tuple of (min, max) for pulse frequency range
-        """
-        self.media = media
-        self.params = params
-        self.safety_limits = safety_limits
-        self.position_params = ThreePhasePosition(params.position, params.transform)
-        self.seq = 0  # Sequence counter (for phase increment)
-        self.next_update_time = 0  # When to request next packet
-        self.last_pulses = None  # Last generated packet
-        self.start_time = 0  # Reference time for relative logging
-        
-        # Get carrier frequency range from parameters and kit limits
-        carrier_min, carrier_max = carrier_freq_limits
-        self.min_carrier_freq = carrier_min
-        self.max_carrier_freq = carrier_max
-        
-        # Apply safety limits as a final constraint
-        # self.min_carrier_freq = max(carrier_min, safety_limits.minimum_carrier_frequency)
-        # self.max_carrier_freq = min(carrier_max, safety_limits.maximum_carrier_frequency)
-        self.carrier_freq_range = self.max_carrier_freq - self.min_carrier_freq
-        
-        # Get pulse frequency range from kit limits
-        self.min_pulse_freq, self.max_pulse_freq = pulse_freq_limits
-        self.pulse_freq_range = self.max_pulse_freq - self.min_pulse_freq
-        
-        # Initialize per-channel state
-        self.channel_states = {
-            'A': None,  # Will be initialized on first packet generation
-            'B': None   # Will be initialized on first packet generation
-        }
-        
-        # Buffer size (number of pulses to generate ahead)
-        self.buffer_size = COYOTE_PULSES_PER_PACKET * 4  # Buffer 4 packets worth of pulses
-        
-        logger.info("Initialized CoyoteAlgorithm")
-        logger.info(f"Safety limits: {safety_limits.minimum_carrier_frequency}-{safety_limits.maximum_carrier_frequency}Hz")
-        logger.info(f"Carrier frequency range: {self.min_carrier_freq}-{self.max_carrier_freq}Hz")
-        logger.info(f"Pulse frequency range: {self.min_pulse_freq}-{self.max_pulse_freq}Hz")
 
-        # Initialize shared envelope data (used by all channels)
-        self.shared_envelope = np.array([])
-        self.shared_envelope_period = 0.0
-        self.last_shared_pulse_freq = 0.0
-        self.last_shared_pulse_width = 0.0
-        self.last_shared_pulse_rise_time = 0.0
-        
-        # Set start time for relative time logging
-        self.start_time = np.float64(time.time())
-    
-    def compute_volume(self, t: float) -> float:
-        """
-        Calculate the current volume setting from all sources.
-        
-        Args:
-            t: Current time in seconds
-        Returns:
-            Volume multiplier (0-1)
-        """
-        return compute_volume(self.media, self.params.volume, t)
-    
-    def _rel_time(self, t: float) -> float:
-        """
-        Convert absolute timestamp to relative time in milliseconds.
-        
-        Args:
-            t: Absolute timestamp in seconds
-        Returns:
-            Relative time in milliseconds
-        """
-        return (t - self.start_time) * 1000.0
-    
-    def _compute_channel_intensity(self, 
-                              channel_id: str, 
-                              alpha: float, 
-                              beta: float, 
-                              volume: float) -> int:
-        """
-        Convert position coordinates to channel intensity.
-        
-        This method is similar to how the pulse-based algorithm maps position
-        coordinates to channel intensities, but adapted for the Coyote's
-        dual-channel architecture.
-        
-        Args:
-            channel_id: 'A' or 'B' channel identifier
-            alpha: +1 to -1 coordinate (top-bottom) where +1 is top, -1 is bottom
-            beta: +1 to -1 coordinate (left-right) where +1 is left, -1 is right
-            volume: 0 to 1 volume multiplier
-        Returns:
-            Integer intensity 0-100
-        """
-        # Vertices
-        sqrt3 = np.sqrt(3)
-        x, y = alpha, beta
-        xN, yN = 1.0, 0.0
-        xL, yL = -0.5, sqrt3 / 2
-        xR, yR = -0.5, -sqrt3 / 2
 
-        # Barycentric coordinates
-        denom = (yL - yR) * (xN - xR) + (xR - xL) * (yN - yR)
-        w_N = ((yL - yR) * (x - xR) + (xR - xL) * (y - yR)) / denom
-        w_L = ((yR - yN) * (x - xR) + (xN - xR) * (y - yR)) / denom
-        w_R = 1.0 - w_N - w_L
+class ChannelState:
+    """Holds the state for a single channel's pulse packet and timing."""
+    def __init__(self):
+        self.current_packet: Deque[CoyotePulse] = deque()
+        self.time_in_packet_ms = 0.0
+        self.total_packet_duration_ms = 0.0
+        self.packet_start_time_s = 0.0
+        self.packet_finish_time_s = 0.0
 
-        # Clamp
-        w_N = np.clip(w_N, 0, 1)
-        w_L = np.clip(w_L, 0, 1)
-        w_R = np.clip(w_R, 0, 1)
+    def set_new_packet(self, t: float, packet: List[CoyotePulse], time_to_finish_s: float):
+        """Updates the channel with a new packet and its timing information."""
+        self.current_packet = deque(packet)
+        self.packet_start_time_s = t
+        self.packet_finish_time_s = self.packet_start_time_s + time_to_finish_s
+        self.total_packet_duration_ms = sum(p.duration for p in packet)
+        self.time_in_packet_ms = 0.0
 
-        if channel_id == 'A':
-            intensity = w_L + w_N
-        elif channel_id == 'B':
-            intensity = w_R + w_N
+    def advance_time(self, delta_time_ms: float):
+        self.time_in_packet_ms += delta_time_ms
+
+    def is_ready_for_next_packet(self) -> bool:
+        """Returns True if the current packet has finished playing."""
+        return self.get_remaining_time_ms() <= 0
+
+    def get_remaining_time_ms(self) -> float:
+        if self.total_packet_duration_ms == 0:
+            return 0.0  # Ready for first packet
+        return max(0.0, self.total_packet_duration_ms - self.time_in_packet_ms)
+
+
+class WaveGenerator:
+    """Generates a continuous, asymmetric triangle wave based on pulse frequency and rise time."""
+    def __init__(self, pulse_frequency_axis: AbstractAxis, pulse_rise_time_axis: AbstractAxis,
+                 pulse_rise_time_limits: Tuple[float, float]):
+        self.pulse_frequency_axis = pulse_frequency_axis
+        self.pulse_rise_time_axis = pulse_rise_time_axis
+        self.pulse_rise_time_limits = pulse_rise_time_limits
+        self.phase = 0.0
+        self.rise_pct = 0.5  # Default to a symmetric wave
+
+    def advance(self, t: float, delta_time_ms: float):
+        pulse_freq_hz = self.pulse_frequency_axis.interpolate(t)
+        if pulse_freq_hz <= 0:
+            self.phase = 0.0
+            return
+
+        # Advance the phase based on the pulse frequency
+        self.phase += (delta_time_ms / 1000.0) * pulse_freq_hz
+        self.phase %= 1.0
+
+        # Update the rise percentage based on the pulse_rise_time axis
+        rise_time_val = self.pulse_rise_time_axis.interpolate(t)
+        min_rise, max_rise = self.pulse_rise_time_limits
+        rise_range = max_rise - min_rise
+
+        # Normalize rise time to a 0-1 percentage for the wave shape
+        normalized_rise = (rise_time_val - min_rise) / rise_range if rise_range > 0 else 0.5
+        normalized_rise = np.clip(normalized_rise, 0.0, 1.0)
+
+        # We don't want the rise/fall to be instantaneous, so map 0-1 to a safer range, e.g., 0.01 to 0.99
+        self.rise_pct = 0.01 + normalized_rise * 0.98
+
+    def get_value(self) -> float:
+        """Returns the current wave value, from -1.0 to 1.0."""
+        if self.rise_pct <= 0.0: return -1.0
+        if self.rise_pct >= 1.0: return 1.0
+
+        if self.phase < self.rise_pct:
+            # Rising part of the wave
+            return -1.0 + (self.phase / self.rise_pct) * 2.0
         else:
-            intensity = w_N
+            # Falling part of the wave
+            fall_phase = self.phase - self.rise_pct
+            fall_duration_pct = 1.0 - self.rise_pct
+            if fall_duration_pct <= 0: return -1.0
+            return 1.0 - (fall_phase / fall_duration_pct) * 2.0
 
-        # Clamp to [0, 1] after sum
-        intensity = np.clip(intensity, 0, 1)
 
-        # Apply volume and calibration scaling
-        intensity *= volume
-        center_calib = ThreePhaseCenterCalibration(self.params.calibrate.center.last_value())
-        scale = center_calib.get_scale(alpha, beta)
-        intensity *= scale
+class ContinuousSignal:
+    """Models the complete, time-aware signal for a single channel based on the 'wave' model."""
+    def __init__(self, params: CoyoteAlgorithmParams, channel_params: 'CoyoteChannelParams',
+                 carrier_freq_limits: Tuple[float, float], pulse_width_limits: Tuple[float, float],
+                 pulse_rise_time_limits: Tuple[float, float]):
+        self.params = params
+        self.channel_params = channel_params
+        self.pulse_rise_time_limits = pulse_rise_time_limits
+        self.pulse_width_limits = pulse_width_limits
+        self.wave = WaveGenerator(params.pulse_frequency, params.pulse_rise_time, pulse_rise_time_limits)
+        self.last_pulse_time_s = 0.0
+        self.start_time = None
 
-        # Convert to 0-100 range
-        result = int(np.clip(intensity * 100, 0, 100))
-        return result
-    
-    def _generate_single_pulse(self,
-                           base_time: float,
-                           pulse_index: int,
-                           base_intensity: int,
-                           envelope: np.ndarray,
-                           envelope_period: float,
-                           pulse_freq: float,
-                           carrier_freq: float,
-                           pulse_width: float,
-                           pulse_rise_time: float,
-                           min_duration: int,
-                           max_duration: int,
-                           pulse_interval_random: float,
-                           carrier_norm: float = 0.5,
-                           pulse_norm: float = 0.5) -> CoyotePulse:
+    def get_pulse_at(self, t: float, base_intensity: float, pulse_index: int = 0) -> CoyotePulse:
         """
-        Generate a single pulse with envelope-modulated duration.
-        
-        This method is the Coyote equivalent of the pulse generation in the
-        pulse-based algorithm. It creates a single pulse with parameters determined
-        by the current envelope value, applying randomization and polarity as needed.
-        
-        Note: Parameters are already interpolated and clipped to appropriate ranges.
-        
-        Args:
-            base_time: Starting time for this pulse sequence (seconds)
-            pulse_index: Index of this pulse within the sequence
-            base_intensity: Base intensity value (0-100)
-            envelope: The envelope array for duration modulation
-            envelope_period: Period of the envelope in seconds
-            pulse_freq: Pulse frequency parameter (Hz) - already interpolated
-            carrier_freq: Carrier frequency parameter (Hz) - already interpolated
-            min_duration: Minimum pulse duration (ms)
-            max_duration: Maximum pulse duration (ms)
-            pulse_interval_random: Random factor for pulse interval (0-1) - already interpolated
-            carrier_norm: Normalized carrier frequency (0-1) - pre-calculated
-            pulse_norm: Normalized pulse frequency (0-1) - pre-calculated
-        Returns:
-            A CoyotePulse object
+        Generate a pulse for this channel at time t.
+        base_intensity should be in the range 0-100 (int or float), as per position/intensity logic.
+        This method normalizes to [0,1] internally for all calculations.
         """
-        # The carrier frequency only affects pulse timing, not durations
-        # Higher carrier frequencies = faster pulse intervals
-        modified_pulse_freq = pulse_freq * (0.5 + carrier_norm)
-        
-        # Calculate pulse interval based on the modified frequency
-        pulse_interval_sec = 1.0 / modified_pulse_freq if modified_pulse_freq > 0 else 1.0
-        
-        # Apply random interval variation if specified (same as pulse-based algorithm)
-        if pulse_interval_random != 0:
-            pulse_interval_sec = pulse_interval_sec * np.random.uniform(1 - pulse_interval_random, 1 + pulse_interval_random)
-            
-        pulse_time = base_time + pulse_index * pulse_interval_sec
-        
-        # Sequence-based envelope: compute phase in envelope period and use attack envelope function
-        # Interpolate axes at pulse_time
-        rise_time = float(self.params.pulse_rise_time.interpolate(pulse_time))
-        width_time = float(self.params.pulse_width.interpolate(pulse_time))
-        # For now, set fall_time = rise_time (symmetrical attack/decay); can add separate fall axis if needed
-        fall_time = rise_time
-        envelope_period = rise_time + width_time + fall_time
-        if envelope_period <= 0:
-            envelope_period = 1e-6  # Prevent div by zero
-        # Compute phase in envelope period
-        phase = (pulse_time % envelope_period) / envelope_period
-        rise_frac = rise_time / envelope_period
-        width_frac = width_time / envelope_period
-        fall_frac = fall_time / envelope_period
-        def envelope_func(phase, rise, width, fall):
-            if phase < rise:
-                return phase / max(rise, 1e-6)
-            elif phase < rise + width:
-                return 1.0
-            elif phase < rise + width + fall:
-                return 1.0 - (phase - rise - width) / max(fall, 1e-6)
-            else:
-                return 0.0
-        env_value = envelope_func(phase, rise_frac, width_frac, fall_frac)
+        delta_time_ms = (t - self.last_pulse_time_s) * 1000.0 if self.last_pulse_time_s > 0 else 0
+        self.last_pulse_time_s = t
+        self.wave.advance(t, delta_time_ms)
 
-        # --- Duration calculation ---
-        # 1. Base duration from pulse_width and carrier_freq (classic TENS logic)
-        base_duration = pulse_width / carrier_freq * 1000 if carrier_freq > 0 else COYOTE_MIN_PULSE_DURATION
-        # 2. Add rise time shaping: treat rise time as a ramp proportion of the pulse
-        #    For Coyote, we can't shape the pulse itself, but we can modulate intensity to simulate a ramp
-        #    We'll scale intensity by a ramp factor if rise_time > 0
-        ramp_factor = 1.0
-        if pulse_rise_time > 0 and pulse_width > 0:
-            ramp_fraction = min(pulse_rise_time / pulse_width, 1.0)
-            # Simulate a linear ramp: average intensity over the pulse is reduced
-            ramp_factor = 1.0 - 0.5 * ramp_fraction  # crude approximation
+        if self.start_time is None:
+            self.start_time = t
 
-        # 3. Use envelope to modulate both duration and intensity (hybrid stereostim effect)
-        min_dur = max(min_duration, COYOTE_MIN_PULSE_DURATION)
-        max_dur = min(max_duration, COYOTE_MAX_PULSE_DURATION)
-        env_norm = np.clip(env_value, 0, 1)
-        
-        # Duration: envelope controls frequency/texture
-        effective_duration = int(np.clip(
-            min_dur + (1 - env_norm) * (max_dur - min_dur),
-            min_dur, max_dur
-        ))
-        effective_duration = int(np.clip(effective_duration, COYOTE_MIN_PULSE_DURATION, COYOTE_MAX_PULSE_DURATION))
+        # --- Get base parameters from axes ---
+        carrier_freq = self.params.carrier_frequency.interpolate(t)
+        pulse_width = self.params.pulse_width.interpolate(t)
+        random_strength = self.params.pulse_interval_random.interpolate(t)
 
-        # Intensity: modulate by envelope and ramp, always relative to base_intensity (from alpha/beta)
-        max_intensity = min(base_intensity, 100)
-        # Weighted blend: channel mapping dominates, envelope/ramp add texture
-        blend_weight = 0.3  # 0 = pure base_intensity, 1 = pure envelope/ramp
-        shaped = env_norm * ramp_factor
-        effective_intensity = int(np.clip(
-            max_intensity * (blend_weight * shaped + (1 - blend_weight)),
-            0, max_intensity
-        ))
-        # This ensures base intensity is always recognizable and envelope/ramp provide subtle shaping
+        # --- Calculate channel-specific frequency parameters ---
+        min_freq = self.channel_params.minimum_frequency.get()
+        max_freq = self.channel_params.maximum_frequency.get()
+        midpoint_freq = (min_freq + max_freq) / 2.0
+        max_deviation = (max_freq - min_freq) / 2.0
 
-        # --- Frequency reporting (for UI/debug) ---
-        effective_freq = 1000.0 / effective_duration if effective_duration > 0 else 100.0
+        # --- Build the wave that modulates the sensation frequency ---
+        # 1. Normalize the raw carrier frequency (e.g., 500-1000Hz) to a 0-1 percentage
+        min_carrier, max_carrier = self.pulse_width_limits
+        carrier_range = max_carrier - min_carrier
+        carrier_pct = (carrier_freq - min_carrier) / carrier_range if carrier_range > 0 else 0
+        carrier_pct = np.clip(carrier_pct, 0.0, 1.0)
 
-        # --- Optionally: Add randomization to pulse interval (not duration) ---
-        # This is handled elsewhere, but can be used for advanced effects
+        # 2. Amplitude of the wave is controlled by this correct percentage
+        amplitude = max_deviation * carrier_pct
 
-        # --- Comments on packet timing ---
-        # Max pulse duration: COYOTE_MAX_PULSE_DURATION (240 ms)
-        # One packet (4 pulses) at max duration: 960 ms
-        # This is the slowest possible output: ~1 packet/sec
-        # At min duration (5 ms), one packet is 20 ms: fastest possible
-        # The FIFO buffer and update logic ensure smooth, continuous output
+        # 3. Get current position on the wave (-1 to 1)
+        wave_value = self.wave.get_value()
 
+        # 4. The final modulated frequency is the midpoint offset by the wave
+        sensation_freq = midpoint_freq + (wave_value * amplitude)
+
+        # --- Calculate Final Pulse Parameters ---
+        # The final frequency is determined by the raw sensation frequency, scaled by the duty cycle (pulse_width)
+        # and random jitter. This effective frequency is then clipped to the channel's limits.
+
+        # 1. Calculate scaling factors
+        min_pw, max_pw = self.pulse_width_limits
+        pw_range = max_pw - min_pw
+        norm_pulse_width = (pulse_width - min_pw) / pw_range if pw_range > 0 else 0.5
+        norm_pulse_width = np.clip(norm_pulse_width, 0.0, 1.0)
+
+        # Remap the normalized pulse width to a scaler that modulates frequency. A wider pulse (higher norm_pulse_width)
+        # should result in a lower frequency (longer duration), so it needs a larger scaler.
+        # We map [0,1] to [0.75, 1.25] for a +/- 25% modulation. This could be a user-configurable parameter.
+        pulse_width_scaler = 0.75 + (norm_pulse_width * 0.5)
+
+        random_multiplier = 1.0
+        if random_strength > 0:
+            random_pct = random_strength / 100.0
+            random_jitter = (np.random.rand() - 0.5) * 2 * random_pct
+            random_multiplier = 1.0 + random_jitter
+
+        # 2. Calculate the effective frequency after scaling. A shorter pulse width (duty cycle) leads to a higher frequency.
+        effective_freq = sensation_freq / (pulse_width_scaler * random_multiplier)
+
+        # 3. Clip the effective frequency to the channel's configured min/max range.
+        target_freq = np.clip(effective_freq, min_freq, max_freq)
+        target_freq = max(0.1, target_freq)
+
+        # 4. Calculate the duration from the target frequency, then clip it to the hardware's absolute limits.
+        target_duration_ms = 1000.0 / target_freq
+        final_duration = int(np.clip(target_duration_ms, COYOTE_MIN_PULSE_DURATION, COYOTE_MAX_PULSE_DURATION))
+
+        # 5. Recalculate the final frequency from the actual final duration. This ensures perfect consistency
+        # between the frequency and duration values, respecting hardware limits above all.
+        final_freq = 1000.0 / final_duration if final_duration > 0 else 0
+
+        effective_intensity = int(np.clip(base_intensity, 0, 100))
         pulse = CoyotePulse(
-            frequency=int(effective_freq),
+            frequency=int(final_freq),
             intensity=effective_intensity,
-            duration=effective_duration
+            duration=final_duration
         )
-        if pulse_index < 4 or pulse_index % 10 == 0:
-            time_since_start = (pulse_time - self.start_time) * 1000
-            logger.debug(f"Pulse {pulse_index}: in {time_since_start:.1f}ms, env={env_value:.2f}, "
-                        f"duration={effective_duration}ms, freq={effective_freq:.1f}Hz, intensity={effective_intensity}% (env-modulated)")
         return pulse
 
-    
-    def _fill_channel_buffer(self, 
-                          channel_id: str, 
-                          current_time: float, 
-                          intensity: int,
-                          channel_params,
-                          initialize: bool = False) -> ChannelState:
-        """
-        Fill or initialize a channel's pulse buffer with pulses.
-        
-        This unified method replaces both _initialize_buffer and _update_buffer,
-        eliminating redundancy and ensuring consistent parameter handling.
-        
-        Args:
-            channel_id: 'A' or 'B' channel identifier
-            current_time: Current system time in seconds
-            intensity: Intensity for this channel (0-100)
-            channel_params: Channel-specific parameters
-            initialize: If True, create a new buffer; if False, update existing one
-        Returns:
-            ChannelState object (new or updated)
-        """
-        if initialize:
-            logger.info(f"Initializing pulse buffer for channel {channel_id} (in {(current_time - self.start_time) * 1000:.1f}ms)")
-            state = None
-        else:
-            state = self.channel_states[channel_id]
-            logger.debug(f"Filling buffer for channel {channel_id} (currently has {len(state.pulse_buffer)} pulses)")
-        
-        # Get channel frequency limits - these are used to calculate duration range
-        min_freq = channel_params.minimum_frequency.get()
-        max_freq = channel_params.maximum_frequency.get()
-        
-        # Apply global safety limits to channel limits
-        # min_freq = np.clip(min_freq, self.safety_limits.minimum_carrier_frequency, 
-        #                    self.safety_limits.maximum_carrier_frequency)
-        # max_freq = np.clip(max_freq, self.safety_limits.minimum_carrier_frequency, 
-        #                    self.safety_limits.maximum_carrier_frequency)
-        
-        # Calculate or reuse duration range based on frequency limits
-        if initialize:
-            # Initialize empty buffer
-            pulse_buffer = deque()
-            # Set up initial state
-            state = ChannelState(
-                pulse_buffer=pulse_buffer,
-                start_time=current_time,
-                elapsed_duration_ms=0.0,
-                min_freq=min_freq,
-                max_freq=max_freq,
-                min_duration=0,  # Will be calculated below
-                max_duration=0   # Will be calculated below
-            )
-            state.envelope_phase = 0.0  # Start at phase 0 for new buffer
-        
-        # Calculate how many new pulses to generate
-        if initialize:
-            new_pulses_needed = self.buffer_size
-            pulse_idx_offset = 0
-        else:
-            new_pulses_needed = max(0, self.buffer_size - len(state.pulse_buffer))
-            pulse_idx_offset = len(state.pulse_buffer)
-        
-        if new_pulses_needed <= 0:
-            return state
-            
-        # Calculate base time for next pulse
-        base_time = current_time
-        if not initialize and state.pulse_buffer:
-            # If buffer is not empty, start after the last pulse
-            # Calculate how long since first pulse for accurate alignment
-            elapsed_time = sum(p.duration for p in state.pulse_buffer) / 1000.0
-            base_time = state.start_time + elapsed_time
-        
-        # --- Refactored: Phase-locked, envelope-synchronized pulse train generation ---
-        # 1. Determine envelope period and average pulse frequency
-        envelope = self.shared_envelope
-        envelope_period = self.shared_envelope_period
-        min_duration = frequency_to_duration(max_freq)
-        max_duration = frequency_to_duration(min_freq)
 
-        # 2. Determine how many pulses fit in one envelope period
-        # Use the average pulse frequency (Hz) to determine N
-        avg_pulse_freq = self.params.pulse_frequency.interpolate(current_time)
-        if avg_pulse_freq <= 0:
-            avg_pulse_freq = 1.0  # Prevent div by zero
-        N = max(1, int(round(envelope_period * avg_pulse_freq)))
+class CoyoteAlgorithm:
+    """New Coyote pulse generation algorithm using a continuous signal model."""
+    def __init__(self, media: AbstractMediaSync, params: CoyoteAlgorithmParams, safety_limits: SafetyParams,
+                 carrier_freq_limits: Tuple[float, float], pulse_width_limits: Tuple[float, float],
+                 pulse_rise_time_limits: Tuple[float, float]):
+        self.media = media
+        self.params = params
+        self.calibration = ThreePhaseCenterCalibration(params.calibrate)
+        self.position = ThreePhasePosition(params.position, params.transform)
 
-        # 3. Generate pulses for enough envelope periods to fill the buffer
-        pulses_to_generate = new_pulses_needed
-        period_idx = 0
-        pulses_generated = 0
-        while pulses_to_generate > 0:
-            envelope_start_time = base_time + period_idx * envelope_period
-            for i in range(N):
-                if pulses_to_generate <= 0:
-                    break
-                # Phase-locked: continue from previous phase
-                phase = (state.envelope_phase + pulses_generated / N) % 1.0
-                pulse_time = envelope_start_time + phase * envelope_period
-                subtle_jitter = 0.0
-                pulse_time_jittered = pulse_time + subtle_jitter
-                carrier_freq = self.params.carrier_frequency.interpolate(pulse_time_jittered)
-                pulse_freq = self.params.pulse_frequency.interpolate(pulse_time_jittered)
-                pulse_width = self.params.pulse_width.interpolate(pulse_time_jittered)
-                pulse_rise_time = self.params.pulse_rise_time.interpolate(pulse_time_jittered)
-                pulse_interval_random = self.params.pulse_interval_random.interpolate(pulse_time_jittered)
-                carrier_freq = np.clip(carrier_freq, self.min_carrier_freq, self.max_carrier_freq)
-                pulse_freq = np.clip(pulse_freq, self.min_pulse_freq, self.max_pulse_freq)
-                pulse_width = np.clip(pulse_width, limits.PulseWidth.min, limits.PulseWidth.max)
-                pulse_rise_time = np.clip(pulse_rise_time, limits.PulseRiseTime.min, limits.PulseRiseTime.max)
-                carrier_norm = (carrier_freq - self.min_carrier_freq) / self.carrier_freq_range if self.carrier_freq_range > 0 else 0.5
-                pulse_norm = (pulse_freq - self.min_pulse_freq) / self.pulse_freq_range if self.pulse_freq_range > 0 else 0.5
-                env_idx = int(phase * (len(envelope) - 1))
-                env_value = envelope[env_idx] if len(envelope) > 0 else 1.0
-                pulse = self._generate_single_pulse(
-                    base_time=pulse_time_jittered,
-                    pulse_index=i,
-                    base_intensity=intensity,
-                    envelope=envelope,
-                    envelope_period=envelope_period,
-                    pulse_freq=pulse_freq,
-                    carrier_freq=carrier_freq,
-                    pulse_width=pulse_width,
-                    pulse_rise_time=pulse_rise_time,
-                    min_duration=min_duration,
-                    max_duration=max_duration,
-                    pulse_interval_random=pulse_interval_random,
-                    carrier_norm=carrier_norm,
-                    pulse_norm=pulse_norm
-                )
-                state.pulse_buffer.append(pulse)
-                pulses_to_generate -= 1
-                pulses_generated += 1
-            period_idx += 1
-        # Update envelope phase for continuity
-        state.envelope_phase = (state.envelope_phase + pulses_generated / N) % 1.0
-        # --- End refactor ---
+        self.signal_a = ContinuousSignal(params, params.channel_a, carrier_freq_limits, pulse_width_limits,
+                                         pulse_rise_time_limits)
+        self.signal_b = ContinuousSignal(params, params.channel_b, carrier_freq_limits, pulse_width_limits,
+                                         pulse_rise_time_limits)
 
-        
-        if initialize:
-            logger.info(f"Generated initial buffer with {len(state.pulse_buffer)} pulses")
+        self.channel_a = ChannelState()
+        self.channel_b = ChannelState()
+
+        self.start_time = None
+        self.last_update_time_s = 0.0
+        self.next_update_time = 0.0
+
+    def _get_positional_intensities(self, t: float, volume: float) -> Tuple[int, int]:
+        """Barycentric phase diagram mapping: (beta, alpha) with left=+1, right=-1, neutral=+1 (top)."""
+        alpha, beta = self.position.get_position(t)
+
+        # Barycentric weights for triangle corners
+        w_L = max(0.0, (beta + 1) / 2)
+        w_R = max(0.0, (1 - beta) / 2)
+        w_N = max(0.0, alpha)
+        sum_w = w_L + w_R + w_N
+        if sum_w > 0:
+            w_L /= sum_w
+            w_R /= sum_w
+            w_N /= sum_w
         else:
-            logger.debug(f"Added {new_pulses_needed} pulses to buffer, now has {len(state.pulse_buffer)} pulses")
-        
-        return state
-    
-    def _get_channel_packet(self, channel_id: str, current_time: float, intensity: int, channel_params):
-        """
-        Get a packet of pulses for a channel, handling buffer management.
-        
-        This method is conceptually similar to how the pulse-based algorithm
-        gets audio samples from its buffer, but adapted for the packet-based
-        nature of the Coyote protocol.
-        
-        Args:
-            channel_id: 'A' or 'B' channel identifier
-            current_time: Current system time in seconds
-            intensity: Intensity for this channel (0-100)
-            channel_params: Channel-specific parameters
-        Returns:
-            Tuple of (list of pulses for this packet, next update time in seconds)
-        """
-        channel_state = self.channel_states[channel_id]
-        
-        # Initialize channel state if needed
-        if channel_state is None:
-            logger.info(f"First initialization for channel {channel_id}")
-            channel_state = self._fill_channel_buffer(
-                channel_id, current_time, intensity, channel_params, initialize=True
-            )
-            self.channel_states[channel_id] = channel_state
-        else:
-            # Calculate elapsed time since last update
-            elapsed_time_ms = (current_time - channel_state.start_time) * 1000.0
-            logger.debug(f"Channel {channel_id}: advancing time by {elapsed_time_ms:.1f}ms")
-            
-            # Update buffer based on elapsed time
-            needs_more_pulses = channel_state.advance_time(elapsed_time_ms)
-            
-            # Reset start time for future calculations
-            channel_state.start_time = current_time
-            
-            # If buffer is low, fill it
-            if needs_more_pulses:
-                if channel_state.is_empty:
-                    logger.warning(f"Channel {channel_id}: Buffer is empty! Reinitializing.")
-                    channel_state = self._fill_channel_buffer(
-                        channel_id, current_time, intensity, channel_params, initialize=True
-                    )
-                    self.channel_states[channel_id] = channel_state
-                else:
-                    logger.debug(f"Channel {channel_id}: Filling buffer (currently has {len(channel_state.pulse_buffer)} pulses)")
-                    channel_state = self._fill_channel_buffer(
-                        channel_id, current_time, intensity, channel_params, initialize=False
-                    )
-        
-        # Ensure we have enough pulses for a packet
-        available_pulses = len(channel_state.pulse_buffer)
-        
-        assert available_pulses >= COYOTE_PULSES_PER_PACKET, \
-            f"Not enough pulses available for channel {channel_id}: have {available_pulses}, need {COYOTE_PULSES_PER_PACKET}"
-        
-        # Take pulses for this packet
-        packet_pulses = [channel_state.pulse_buffer.popleft() for _ in range(COYOTE_PULSES_PER_PACKET)]
-        
-        # Calculate when we should check back based on the pulse durations
-        packet_duration_ms = sum(p.duration for p in packet_pulses)
-        
-        # We want to update before the packet is completely played
-        # This ensures smooth transitions between packets
-        margin_factor = 0.8  # Update after 80% of the packet duration
-        next_update = current_time + (packet_duration_ms * margin_factor / 1000.0)
-        next_update_in_ms = packet_duration_ms * margin_factor
-        
-        logger.debug(f"Channel {channel_id}: Packet with {len(packet_pulses)} pulses, "
-                    f"duration={packet_duration_ms:.1f}ms, next update in {next_update_in_ms:.1f}ms")
-        
-        return packet_pulses, next_update
-    
+            w_L = w_R = w_N = 0.0
+
+        # Calibration scaling
+        center_val = self.params.calibrate.center.last_value()
+        center_calib = ThreePhaseCenterCalibration(center_val)
+        scale = center_calib.get_scale(alpha, beta)
+
+        # Channel mapping: A = left+neutral, B = right+neutral
+        intensity_a = (w_L + w_N) * volume * scale
+        intensity_b = (w_R + w_N) * volume * scale
+
+        result_a = int(np.clip(intensity_a * 100, 0, 100))
+        result_b = int(np.clip(intensity_b * 100, 0, 100))
+
+        return result_a, result_b
+
+
     def generate_packet(self, current_time: float) -> CoyotePulses:
         """
         Generate one packet of pulses for both channels.
-        
-        This method is the main entry point for generating Coyote pulse packets.
-        It serves a similar role to the generate_audio method in the pulse-based algorithm, 
-        but adapted for the Coyote's packet-based protocol.
-        
-        Args:
-            current_time: Current system time in seconds
-        Returns:
-            CoyotePulses object containing pulses for both channels
+
+        This function is called periodically to generate a new set of pulses for both channels (A and B).
+        It advances the channel state, checks if a new packet is needed, and then generates and logs pulse details.
         """
-        self.seq += 1
-        
-        # Set start time if this is the first call
-        if self.start_time == 0:
-            self.start_time = current_time
-        
-        time_since_start_ms = (current_time - self.start_time) * 1000
-        logger.debug(f"\n=== Generating packet #{self.seq} in {time_since_start_ms:.1f}ms ===")
-        
-        # Get position and volume (same as pulse-based algorithm)
-        alpha, beta = self.position_params.get_position(current_time)
-        volume = compute_volume(self.media, self.params.volume, current_time)
-        
-        # Process each channel independently
-        channel_pulses = {}
-        channel_next_updates = {}
-        
-        for channel_id, channel_params in [('A', self.params.channel_a), ('B', self.params.channel_b)]:
-            # Calculate intensity for this channel based on position
-            intensity = self._compute_channel_intensity(
-                channel_id, 
-                alpha, 
-                beta, 
-                volume
-            )
-            
-            # Get pulses for this channel
-            pulses, next_update = self._get_channel_packet(
-                channel_id,
-                current_time,
-                intensity,
-                channel_params
-            )
-            
-            # Store results
-            channel_pulses[channel_id] = pulses
-            channel_next_updates[channel_id] = next_update
-        
-        # Calculate next update time based on shortest channel duration (earliest next update)
-        next_update_time = min(channel_next_updates.values())
-        update_in_ms = (next_update_time - current_time) * 1000
-        
-        # Create final pulse packet
-        result = CoyotePulses(channel_pulses['A'], channel_pulses['B'])
-        
-        # Log details using relative time
-        logger.debug(f"  Position: alpha={alpha:.2f}, beta={beta:.2f}, volume={volume:.2f}")
-        logger.debug(f"  Next update in {update_in_ms:.1f}ms")
-        
-        # Store for later reference
-        self.last_pulses = result
-        self.next_update_time = next_update_time
-        
-        return result
+        # --- Timing Management ---
+        margin = 0.8 # Request next packet after 80% of this one has played
+
+        # Initialize last update time if first call
+        if self.last_update_time_s == 0.0:
+            self.last_update_time_s = current_time
+
+        # Calculate elapsed time since last packet
+        delta_time_s = current_time - self.last_update_time_s
+        self.last_update_time_s = current_time
+
+        # --- Channel State Advancement ---
+        # Advance the state of each channel by the elapsed time (in ms)
+        self.channel_a.advance_time(delta_time_s * 1000.0)
+        self.channel_b.advance_time(delta_time_s * 1000.0)
+
+        # --- Packet Generation Condition ---
+        # Generate a new packet only if either channel is ready
+        if self.channel_a.is_ready_for_next_packet() or self.channel_b.is_ready_for_next_packet():
+            t = current_time
+            use_media_time = False
+            media_type = 'media'
+
+            if hasattr(self.media, 'media_type'):
+                media_type = str(getattr(self.media, 'media_type'))
+            elif self.media.__class__.__name__.lower().startswith('internal'):
+                media_type = 'internal'
+            elif 'vlc' in self.media.__class__.__name__.lower():
+                media_type = 'vlc'
+            elif 'mpv' in self.media.__class__.__name__.lower():
+                media_type = 'mpv'
+            else:
+                media_type = self.media.__class__.__name__.lower()
+            comment = media_type
+
+            try:
+                if hasattr(self.media, 'is_playing') and self.media.is_playing() and hasattr(self.media, 'map_timestamp') and media_type != 'internal':
+                    rel_time_s = self.media.map_timestamp(time.time())
+                    if rel_time_s is not None and rel_time_s >= 0:
+                        use_media_time = True
+            except Exception:
+                pass
+
+            if use_media_time:
+                # rel_time_s is set from map_timestamp
+                hours = int(rel_time_s // 3600)
+                minutes = int((rel_time_s % 3600) // 60)
+                seconds = int(rel_time_s % 60)
+                millis = int((rel_time_s - int(rel_time_s)) * 1000)
+            elif media_type == 'internal':
+                now = time.localtime()
+                hours = now.tm_hour
+                minutes = now.tm_min
+                seconds = now.tm_sec
+                millis = int((time.time() - int(time.time())) * 1000)
+            else:
+                if self.start_time is None:
+                    self.start_time = t
+                rel_time_s = t - self.start_time
+                hours = int(rel_time_s // 3600)
+                minutes = int((rel_time_s % 3600) // 60)
+                seconds = int(rel_time_s % 60)
+                millis = int((rel_time_s - int(rel_time_s)) * 1000)
+
+            alpha, beta = self.position.get_position(t)
+            volume = compute_volume(self.media, self.params.volume, t)
+            intensity_a, intensity_b = self._get_positional_intensities(t, volume)
+
+            # --- Channel A Pulse Generation ---
+            pulses_a: List[CoyotePulse] = []
+            time_advanced_in_packet_ms = 0.0
+            for i in range(COYOTE_PULSES_PER_PACKET):
+                t_pulse = t + (time_advanced_in_packet_ms / 1000.0)
+                pulse = self.signal_a.get_pulse_at(t_pulse, intensity_a, i+1)
+                pulses_a.append(pulse)
+                time_advanced_in_packet_ms += pulse.duration
+            total_a = sum(p.duration for p in pulses_a)
+
+            # --- Channel B Pulse Generation ---
+            pulses_b: List[CoyotePulse] = []
+            time_advanced_in_packet_ms = 0.0
+            for i in range(COYOTE_PULSES_PER_PACKET):
+                t_pulse = t + (time_advanced_in_packet_ms / 1000.0)
+                pulse = self.signal_b.get_pulse_at(t_pulse, intensity_b, i+1)
+                pulses_b.append(pulse)
+                time_advanced_in_packet_ms += pulse.duration
+            total_b = sum(p.duration for p in pulses_b)
+
+            # Build the entire debug log as a single string 
+            log_lines = []
+            log_lines.append("")
+            log_lines.append(f"=== Generating packet at {hours:02}:{minutes:02}:{seconds:02}:{millis:03} === [{comment}]")
+            log_lines.append(f"  Position: alpha={alpha:.2f}, beta={beta:.2f}, volume={volume:.2f}")
+            log_lines.append(f"Channel A ({total_a} ms):")
+            for i, pulse in enumerate(pulses_a):
+                log_lines.append(f"  Pulse {i+1}: duration={pulse.duration} ms, freq={pulse.frequency} Hz, intensity={pulse.intensity}%")
+            log_lines.append("")
+            log_lines.append(f"Channel B ({total_b} ms):")
+            for i, pulse in enumerate(pulses_b):
+                log_lines.append(f"  Pulse {i+1}: duration={pulse.duration} ms, freq={pulse.frequency} Hz, intensity={pulse.intensity}%")
+            logger.debug("\n".join(log_lines))
+
+            # --- Schedule next update based on shortest channel duration ---
+            # Use a margin to ensure timely updates before packet end
+            time_a = sum(p.duration / 1000.0 for p in pulses_a)
+            time_b = sum(p.duration / 1000.0 for p in pulses_b)
+   
+            self.next_update_time = t + min(time_a, time_b) * margin
+
+            return CoyotePulses(pulses_a, pulses_b)
+        else:
+            # Not ready: schedule next update based on remaining time
+            next_update_in_ms = min(self.channel_a.get_remaining_time_ms(), self.channel_b.get_remaining_time_ms())
+            self.next_update_time = current_time + (next_update_in_ms / 1000.0) * margin
+
+            return CoyotePulses([], [])
+
+
+    def get_next_update_time(self) -> float:
+        return self.next_update_time
 
     def get_envelope_data(self) -> Tuple[np.ndarray, float]:
-        """
-        Get the current (shared) envelope data for both channels.
-        Returns:
-            Tuple of (envelope array, envelope period in seconds)
-            If no data is available, returns (empty array, 0)
-        """
-        # Always return a high-resolution preview envelope for UI widgets
-        # Use current time and interpolated parameters for preview
-        t = time.time()
-        pulse_freq = self.params.pulse_frequency.interpolate(t)
-        carrier_freq = self.params.carrier_frequency.interpolate(t)
-        preview_points = 100
-        preview_pulses = 6
-        envelope, period = generate_envelope(
-            t=t,
-            pulse_freq=pulse_freq,
-            carrier_freq=carrier_freq,
-            num_points=preview_points,
-            preview_pulses=preview_pulses
-        )
-        return envelope, period
+        return np.array([]), 0.0

@@ -443,8 +443,7 @@ class CoyoteDevice(OutputDevice, QObject):
                         continue
 
                     current_time = time.time()
-                    logger.debug(f"Update loop iteration at {current_time}")
-                    
+                    # Only log when a packet is actually generated and sent
                     if current_time >= self.algorithm.next_update_time:
                         pulses = self.algorithm.generate_packet(current_time)
                         await self.send_command(pulses=pulses)
