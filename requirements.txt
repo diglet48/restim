@@ -3,6 +3,9 @@ websockets
 sounddevice
 soundfile
 matplotlib!=3.9.*
-PySide6
+PySide6>=6.9.0
 crc
 msdparser
+# protoletariat		# dev only
+protobuf>=6.0.0
+pystream-protobuf

@@ -48,9 +48,10 @@ pulse_device_emulation_mode = NonPersistentSetting('continuous (best)')
 pulse_phase_offset_increment = NonPersistentSetting(0.0)
 
 volume_default_level = Setting('volume/default_level', 10.0, float)
-volume_ramp_time = Setting('volume/inactivity_ramp_time', 3.0, float)
+volume_ramp_target = Setting('volume/ramp_target', 1.0, float)
+volume_ramp_increment_rate = Setting('volume/increment_rate', 1.0, float)
+volume_inactivity_time = Setting('volume/inactivity_ramp_time', 3.0, float)
 volume_inactivity_threshold = Setting('volume/inactivity_inactive_threshold', 2.0, float)
-volume_increment_rate = Setting('volume/increment_rate', 1.0, float)
 volume_slow_start_time = Setting('volume/slow_start_time', 1.0, float)
 tau_us = Setting('volume/tau_us', 355, float)
 
@@ -106,6 +107,7 @@ device_config_device_type = Setting('device_configuration/device_type', 0, int)
 device_config_waveform_type = Setting('device_configuration/waveform_type', 1, int)
 device_config_min_freq = Setting('device_configuration/min_frequency', 500, float)
 device_config_max_freq = Setting('device_configuration/max_frequency', 1000, float)
+device_config_waveform_amplitude_amps = Setting('device_configuration/waveform_amplitude_amps', 0.120, float)
 
 media_sync_default_source = Setting('media_sync/default_source', 'Internal', str)
 media_sync_mpc_address = Setting('media_sync/mpc_address', 'http://127.0.0.1:13579', str)
@@ -154,6 +156,7 @@ serial_auto_expand = Setting("network/serial-auto-expand", True, bool)
 focstim_serial_port = Setting("focstim/serial_port", '', str)
 focstim_use_teleplot = Setting("focstim/use-teleplot", True, bool)
 focstim_teleplot_prefix = Setting("focstim/teleplot_prefix", "", str)
+focstim_dump_notifications_to_file = Setting("focstim/dump_notifications_to_file", False, bool)
 
 neostim_serial_port = Setting("neostim/serial_port", '', str)
 

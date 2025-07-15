@@ -21,13 +21,14 @@ import net.websocketserver
 import net.tcpudpserver
 import qt_ui.funscript_conversion_dialog
 import qt_ui.simfile_conversion_dialog
+import qt_ui.funscript_decomposition_dialog
 import qt_ui.preferences_dialog
 import qt_ui.settings
 import net.serialproxy
 import net.buttplug_wsdm_client
 from qt_ui import resources
 from qt_ui.models.funscript_kit import FunscriptKitModel
-from device.focstim.focstim_device import FOCStimDevice
+from device.focstim.proto_device import FOCStimProtoDevice
 from device.neostim.neostim_device import NeoStim
 from device.coyote.device import CoyoteDevice, CoyoteParams
 from qt_ui.widgets.icon_with_connection_status import IconWithConnectionStatus
@@ -184,6 +185,9 @@ class Window(QMainWindow, Ui_MainWindow):
 
         self.simfile_conversion_dialog = qt_ui.simfile_conversion_dialog.SimfileConversionDialog()
         self.actionSimfile_conversion.triggered.connect(self.open_simfile_conversion_dialog)
+
+        self.funscript_decomposition_dialog = qt_ui.funscript_decomposition_dialog.FunscriptDecompositionDialog()
+        self.actionFunscript_decomposition.triggered.connect(self.open_funscript_decomposition_dialog)
 
         self.settings_dialog = qt_ui.preferences_dialog.PreferencesDialog()
         self.actionPreferences.triggered.connect(self.open_preferences_dialog)
@@ -464,10 +468,12 @@ class Window(QMainWindow, Ui_MainWindow):
                 self.tab_volume.set_play_state(self.playstate)
                 self.refresh_play_button_icon()
         elif device.device_type in (DeviceType.FOCSTIM_THREE_PHASE, DeviceType.FOCSTIM_FOUR_PHASE):
-            output_device = FOCStimDevice()
+            output_device = FOCStimProtoDevice()
             serial_port_name = qt_ui.settings.focstim_serial_port.get()
             use_teleplot = qt_ui.settings.focstim_use_teleplot.get()
-            output_device.start(serial_port_name, use_teleplot, algorithm)
+            dump_notifications = qt_ui.settings.focstim_dump_notifications_to_file.get()
+            output_device.start_serial(serial_port_name, use_teleplot, dump_notifications, algorithm)
+            # output_device.start_tcp('192.168.2.17', 55533, use_teleplot, dump_notifications, algorithm)
             if output_device.is_connected_and_running():
                 self.output_device = output_device
                 self.playstate = PlayState.PLAYING
@@ -532,6 +538,10 @@ class Window(QMainWindow, Ui_MainWindow):
     def open_simfile_conversion_dialog(self):
         self.signal_stop(PlayState.STOPPED)
         self.simfile_conversion_dialog.exec()
+
+    def open_funscript_decomposition_dialog(self):
+        self.signal_stop(PlayState.STOPPED)
+        self.funscript_decomposition_dialog.exec()
 
     def open_preferences_dialog(self):
         self.signal_stop(PlayState.STOPPED)

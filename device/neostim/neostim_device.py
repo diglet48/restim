@@ -91,7 +91,7 @@ def crc8_ccit(data):
     return crc.Calculator(crc.Crc8.CCITT).checksum(data)
 
 def crc16_ccit(data):
-    return crc.Calculator(crc.Crc16.XMODEM).checksum(data)
+    return crc.Calculator(crc.Crc16.IBM_3740).checksum(data)
 
 
 @dataclass
@@ -199,7 +199,7 @@ class Frame:
     seq: np.uint8               # seq << 3
     payload_size: np.uint16 = 0 # in bytes
     byte_4: np.uint8 = 0        # not used?
-    crc8: np.uint8 = 0          # crc of header
+    crc8: np.uint8 = 0          # crc of first 5 bytes in frame
     crc16: np.uint16 = 0        # crc of payload
     payload: bytes = b''
 

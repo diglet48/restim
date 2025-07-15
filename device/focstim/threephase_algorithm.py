@@ -3,21 +3,27 @@ import time
 import numpy as np
 
 from stim_math.audio_gen.base_classes import RemoteGenerationAlgorithm
-from stim_math.audio_gen.params import SafetyParams, FOCStimParams
+from stim_math.audio_gen.params import FOCStimParams, SafetyParamsFOC
 from stim_math.audio_gen.various import ThreePhasePosition
 from stim_math.axis import AbstractMediaSync
+from device.focstim.constants_pb2 import AxisType
+from stim_math import limits
 
 FOC_MIN_FREQUENCY = 500
 FOC_MAX_FREQUENCY = 2000
 
 
-class FOCStimAlgorithm(RemoteGenerationAlgorithm):
-    def __init__(self, media: AbstractMediaSync, params: FOCStimParams, safety_limits: SafetyParams):
+class FOCStimThreephaseAlgorithm(RemoteGenerationAlgorithm):
+    def __init__(self, media: AbstractMediaSync, params: FOCStimParams, safety_limits: SafetyParamsFOC):
         super().__init__()
         self.media = media
         self.params = params
         self.safety_limits = safety_limits
         self.position_params = ThreePhasePosition(params.position, params.transform)
+
+        epsilon = 0.0001
+        assert safety_limits.waveform_amplitude_amps >= (limits.WaveformAmpltiudeFOC.min - epsilon)
+        assert safety_limits.waveform_amplitude_amps <= (limits.WaveformAmpltiudeFOC.max + epsilon)
 
     def outputs(self):
         return 3
@@ -51,17 +57,17 @@ class FOCStimAlgorithm(RemoteGenerationAlgorithm):
         alpha, beta = self.position_params.get_position(t)
 
         return {
-            'L0': remap(alpha, -1, 1),
-            'L1': remap(beta, -1, 1),
-            'V0': remap(volume, 0, 1),
-            'A0': remap(self.params.carrier_frequency.interpolate(t), FOC_MIN_FREQUENCY, FOC_MAX_FREQUENCY),
-            'A1': remap(self.params.pulse_frequency.interpolate(t), 1, 100),
-            'A2': remap(self.params.pulse_width.interpolate(t), 3, 20),
-            'A3': remap(self.params.pulse_rise_time.interpolate(t), 2, 10),
-            'A4': remap(self.params.pulse_interval_random.interpolate(t), 0, 1),
-            'C0': remap(self.params.calibrate.center.interpolate(t), -10, 10),
-            'C1': remap(self.params.calibrate.neutral.interpolate(t), -10, 10),
-            'C2': remap(self.params.calibrate.right.interpolate(t), -10, 10),
+            AxisType.AXIS_POSITION_ALPHA: alpha,
+            AxisType.AXIS_POSITION_BETA: beta,
+            AxisType.AXIS_WAVEFORM_AMPLITUDE_AMPS: volume * self.safety_limits.waveform_amplitude_amps,
+            AxisType.AXIS_CARRIER_FREQUENCY_HZ: self.params.carrier_frequency.interpolate(t),
+            AxisType.AXIS_PULSE_FREQUENCY_HZ: self.params.pulse_frequency.interpolate(t),
+            AxisType.AXIS_PULSE_WIDTH_IN_CYCLES: self.params.pulse_width.interpolate(t),
+            AxisType.AXIS_PULSE_RISE_TIME_CYCLES: self.params.pulse_rise_time.interpolate(t),
+            AxisType.AXIS_PULSE_INTERVAL_RANDOM_PERCENT: self.params.pulse_interval_random.interpolate(t),
+            AxisType.AXIS_CALIBRATION_3_CENTER: self.params.calibrate.center.interpolate(t),
+            AxisType.AXIS_CALIBRATION_3_UP: self.params.calibrate.neutral.interpolate(t),
+            AxisType.AXIS_CALIBRATION_3_LEFT: self.params.calibrate.right.interpolate(t),
         }
 
     def frequency_derating_factor(self, max_frequency, frequency, tau):

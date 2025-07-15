@@ -3,7 +3,7 @@
 ################################################################################
 ## Form generated from reading UI file 'mainwindow.ui'
 ##
-## Created by: Qt User Interface Compiler version 6.8.3
+## Created by: Qt User Interface Compiler version 6.9.0
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
@@ -43,7 +43,7 @@ class Ui_MainWindow(object):
             MainWindow.setObjectName(u"MainWindow")
         MainWindow.resize(843, 663)
         icon = QIcon()
-        icon.addFile(u"../../../.designer/resources/favicon.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        icon.addFile(u":/restim/favicon.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
         MainWindow.setWindowIcon(icon)
         self.actionFunscript_conversion = QAction(MainWindow)
         self.actionFunscript_conversion.setObjectName(u"actionFunscript_conversion")
@@ -73,8 +73,7 @@ class Ui_MainWindow(object):
         self.actionStart = QAction(MainWindow)
         self.actionStart.setObjectName(u"actionStart")
         icon4 = QIcon()
-        icon4.addFile(u":/newPrefix/play_poly.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
-        icon4.addFile(u"../../../.designer/resources/stop-sign_poly.svg", QSize(), QIcon.Mode.Normal, QIcon.State.On)
+        icon4.addFile(u":/restim/play_poly.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
         self.actionStart.setIcon(icon4)
         self.actionLog = QAction(MainWindow)
         self.actionLog.setObjectName(u"actionLog")
@@ -84,6 +83,8 @@ class Ui_MainWindow(object):
         self.actionLog.setIcon(icon5)
         self.actionSimfile_conversion = QAction(MainWindow)
         self.actionSimfile_conversion.setObjectName(u"actionSimfile_conversion")
+        self.actionFunscript_decomposition = QAction(MainWindow)
+        self.actionFunscript_decomposition.setObjectName(u"actionFunscript_decomposition")
         self.centralwidget = QWidget(MainWindow)
         self.centralwidget.setObjectName(u"centralwidget")
         self.horizontalLayout = QHBoxLayout(self.centralwidget)
@@ -217,10 +218,6 @@ class Ui_MainWindow(object):
         self.tabWidget.addTab(self.tab_a_b_testing, "")
         self.tab_volume = VolumeControlWidget()
         self.tab_volume.setObjectName(u"tab_volume")
-        self.verticalLayout_6 = QVBoxLayout(self.tab_volume)
-        self.verticalLayout_6.setSpacing(0)
-        self.verticalLayout_6.setObjectName(u"verticalLayout_6")
-        self.verticalLayout_6.setContentsMargins(0, 0, 0, 6)
         self.tabWidget.addTab(self.tab_volume, "")
         self.tab_vibrate = VibrationSettingsWidget()
         self.tab_vibrate.setObjectName(u"tab_vibrate")
@@ -260,6 +257,7 @@ class Ui_MainWindow(object):
         self.menuSetup.addAction(self.actionPreferences)
         self.menuTools.addAction(self.actionFunscript_conversion)
         self.menuTools.addAction(self.actionSimfile_conversion)
+        self.menuTools.addAction(self.actionFunscript_decomposition)
         self.toolBar.addAction(self.actionControl)
         self.toolBar.addAction(self.actionMedia)
         self.toolBar.addAction(self.actionStart)
@@ -297,6 +295,7 @@ class Ui_MainWindow(object):
         self.actionLog.setShortcut(QCoreApplication.translate("MainWindow", u"Ctrl+4", None))
 #endif // QT_CONFIG(shortcut)
         self.actionSimfile_conversion.setText(QCoreApplication.translate("MainWindow", u"Simfile conversion", None))
+        self.actionFunscript_decomposition.setText(QCoreApplication.translate("MainWindow", u"Funscript decomposition", None))
         self.groupBox_volume.setTitle(QCoreApplication.translate("MainWindow", u"volume", None))
         self.groupBox_pattern.setTitle(QCoreApplication.translate("MainWindow", u"Pattern generator", None))
         self.comboBox_patternSelect.setItemText(0, QCoreApplication.translate("MainWindow", u"Mouse", None))

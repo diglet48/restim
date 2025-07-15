@@ -6,7 +6,7 @@ from device.neostim.algorithm import NeoStimAlgorithm
 from device.coyote.algorithm import CoyoteAlgorithm
 from qt_ui.device_wizard.enums import DeviceConfiguration, DeviceType, WaveformType
 from stim_math.audio_gen.base_classes import AudioGenerationAlgorithm
-from device.focstim.algorithm import FOCStimAlgorithm
+from device.focstim.threephase_algorithm import FOCStimThreephaseAlgorithm
 from stim_math.audio_gen.pulse_based import DefaultThreePhasePulseBasedAlgorithm, ABTestThreePhasePulseBasedAlgorithm
 from stim_math.audio_gen.continuous import ThreePhaseAlgorithm
 from stim_math.audio_gen.params import *
@@ -156,7 +156,7 @@ class AlgorithmFactory:
         return algorithm
 
     def create_focstim_3phase_pulsebased(self, device: DeviceConfiguration) -> AudioGenerationAlgorithm:
-        algorithm = FOCStimAlgorithm(
+        algorithm = FOCStimThreephaseAlgorithm(
             self.media_sync,
             FOCStimParams(
                 position=ThreephasePositionParams(
@@ -178,9 +178,10 @@ class AlgorithmFactory:
                 pulse_rise_time=self.get_axis_pulse_rise_time(),
                 tau=self.get_axis_tau(),
             ),
-            safety_limits=SafetyParams(
+            safety_limits=SafetyParamsFOC(
                 device.min_frequency,
                 device.max_frequency,
+                device.waveform_amplitude_amps,
             )
         )
         return algorithm
@@ -209,9 +210,10 @@ class AlgorithmFactory:
                 pulse_rise_time=self.get_axis_pulse_rise_time(),
                 tau=self.get_axis_tau(),
             ),
-            safety_limits=SafetyParams(
+            safety_limits=SafetyParamsFOC(
                 device.min_frequency,
                 device.max_frequency,
+                device.waveform_amplitude_amps,
             )
         )
         return algorithm

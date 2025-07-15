@@ -14,8 +14,8 @@
    <string>restim</string>
   </property>
   <property name="windowIcon">
-   <iconset>
-    <normaloff>../../../.designer/resources/favicon.png</normaloff>../../../.designer/resources/favicon.png</iconset>
+   <iconset resource="../resources/restim.qrc">
+    <normaloff>:/restim/favicon.png</normaloff>:/restim/favicon.png</iconset>
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QHBoxLayout" name="horizontalLayout">
@@ -278,23 +278,6 @@
            <attribute name="title">
             <string>Volume</string>
            </attribute>
-           <layout class="QVBoxLayout" name="verticalLayout_6">
-            <property name="spacing">
-             <number>0</number>
-            </property>
-            <property name="leftMargin">
-             <number>0</number>
-            </property>
-            <property name="topMargin">
-             <number>0</number>
-            </property>
-            <property name="rightMargin">
-             <number>0</number>
-            </property>
-            <property name="bottomMargin">
-             <number>6</number>
-            </property>
-           </layout>
           </widget>
           <widget class="VibrationSettingsWidget" name="tab_vibrate">
            <attribute name="title">
@@ -337,6 +320,7 @@
     </property>
     <addaction name="actionFunscript_conversion"/>
     <addaction name="actionSimfile_conversion"/>
+    <addaction name="actionFunscript_decomposition"/>
    </widget>
    <addaction name="menuSetup"/>
    <addaction name="menuTools"/>
@@ -432,9 +416,8 @@
   </action>
   <action name="actionStart">
    <property name="icon">
-    <iconset>
-     <normaloff>:/newPrefix/play_poly.svg</normaloff>
-     <normalon>../../../.designer/resources/stop-sign_poly.svg</normalon>:/newPrefix/play_poly.svg</iconset>
+    <iconset resource="../resources/restim.qrc">
+     <normaloff>:/restim/play_poly.svg</normaloff>:/restim/play_poly.svg</iconset>
    </property>
    <property name="text">
     <string>Start</string>
@@ -458,6 +441,11 @@
   <action name="actionSimfile_conversion">
    <property name="text">
     <string>Simfile conversion</string>
+   </property>
+  </action>
+  <action name="actionFunscript_decomposition">
+   <property name="text">
+    <string>Funscript decomposition</string>
    </property>
   </action>
  </widget>

@@ -3,7 +3,7 @@
 ################################################################################
 ## Form generated from reading UI file 'volumecontrolwidget.ui'
 ##
-## Created by: Qt User Interface Compiler version 6.8.3
+## Created by: Qt User Interface Compiler version 6.9.0
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
@@ -33,50 +33,50 @@ class Ui_VolumeControlForm(object):
         self.label_volume = QLabel(self.groupBox)
         self.label_volume.setObjectName(u"label_volume")
 
-        self.formLayout_2.setWidget(0, QFormLayout.LabelRole, self.label_volume)
+        self.formLayout_2.setWidget(0, QFormLayout.ItemRole.LabelRole, self.label_volume)
 
         self.label_target_volume = QLabel(self.groupBox)
         self.label_target_volume.setObjectName(u"label_target_volume")
 
-        self.formLayout_2.setWidget(1, QFormLayout.LabelRole, self.label_target_volume)
+        self.formLayout_2.setWidget(1, QFormLayout.ItemRole.LabelRole, self.label_target_volume)
 
-        self.doubleSpinBox_target_volume = QDoubleSpinBox(self.groupBox)
-        self.doubleSpinBox_target_volume.setObjectName(u"doubleSpinBox_target_volume")
-        self.doubleSpinBox_target_volume.setKeyboardTracking(False)
-        self.doubleSpinBox_target_volume.setMaximum(100.000000000000000)
-        self.doubleSpinBox_target_volume.setSingleStep(0.100000000000000)
-        self.doubleSpinBox_target_volume.setValue(100.000000000000000)
+        self.doubleSpinBox_ramp_target = QDoubleSpinBox(self.groupBox)
+        self.doubleSpinBox_ramp_target.setObjectName(u"doubleSpinBox_ramp_target")
+        self.doubleSpinBox_ramp_target.setKeyboardTracking(False)
+        self.doubleSpinBox_ramp_target.setMaximum(100.000000000000000)
+        self.doubleSpinBox_ramp_target.setSingleStep(0.100000000000000)
+        self.doubleSpinBox_ramp_target.setValue(100.000000000000000)
 
-        self.formLayout_2.setWidget(1, QFormLayout.FieldRole, self.doubleSpinBox_target_volume)
+        self.formLayout_2.setWidget(1, QFormLayout.ItemRole.FieldRole, self.doubleSpinBox_ramp_target)
 
         self.label_rate = QLabel(self.groupBox)
         self.label_rate.setObjectName(u"label_rate")
 
-        self.formLayout_2.setWidget(2, QFormLayout.LabelRole, self.label_rate)
+        self.formLayout_2.setWidget(2, QFormLayout.ItemRole.LabelRole, self.label_rate)
 
-        self.doubleSpinBox_rate = QDoubleSpinBox(self.groupBox)
-        self.doubleSpinBox_rate.setObjectName(u"doubleSpinBox_rate")
-        self.doubleSpinBox_rate.setKeyboardTracking(False)
-        self.doubleSpinBox_rate.setMaximum(10000.000000000000000)
-        self.doubleSpinBox_rate.setSingleStep(0.100000000000000)
-        self.doubleSpinBox_rate.setValue(1.000000000000000)
+        self.doubleSpinBox_ramp_rate = QDoubleSpinBox(self.groupBox)
+        self.doubleSpinBox_ramp_rate.setObjectName(u"doubleSpinBox_ramp_rate")
+        self.doubleSpinBox_ramp_rate.setKeyboardTracking(False)
+        self.doubleSpinBox_ramp_rate.setMaximum(10000.000000000000000)
+        self.doubleSpinBox_ramp_rate.setSingleStep(0.100000000000000)
+        self.doubleSpinBox_ramp_rate.setValue(1.000000000000000)
 
-        self.formLayout_2.setWidget(2, QFormLayout.FieldRole, self.doubleSpinBox_rate)
+        self.formLayout_2.setWidget(2, QFormLayout.ItemRole.FieldRole, self.doubleSpinBox_ramp_rate)
 
         self.label = QLabel(self.groupBox)
         self.label.setObjectName(u"label")
 
-        self.formLayout_2.setWidget(3, QFormLayout.LabelRole, self.label)
+        self.formLayout_2.setWidget(3, QFormLayout.ItemRole.LabelRole, self.label)
 
         self.checkBox_ramp_enabled = QCheckBox(self.groupBox)
         self.checkBox_ramp_enabled.setObjectName(u"checkBox_ramp_enabled")
 
-        self.formLayout_2.setWidget(3, QFormLayout.FieldRole, self.checkBox_ramp_enabled)
+        self.formLayout_2.setWidget(3, QFormLayout.ItemRole.FieldRole, self.checkBox_ramp_enabled)
 
         self.label_6 = QLabel(self.groupBox)
         self.label_6.setObjectName(u"label_6")
 
-        self.formLayout_2.setWidget(0, QFormLayout.FieldRole, self.label_6)
+        self.formLayout_2.setWidget(0, QFormLayout.ItemRole.FieldRole, self.label_6)
 
 
         self.verticalLayout.addWidget(self.groupBox)
@@ -88,7 +88,7 @@ class Ui_VolumeControlForm(object):
         self.label_2 = QLabel(self.groupBox_2)
         self.label_2.setObjectName(u"label_2")
 
-        self.formLayout.setWidget(0, QFormLayout.LabelRole, self.label_2)
+        self.formLayout.setWidget(0, QFormLayout.ItemRole.LabelRole, self.label_2)
 
         self.doubleSpinBox_inactivity_threshold = QDoubleSpinBox(self.groupBox_2)
         self.doubleSpinBox_inactivity_threshold.setObjectName(u"doubleSpinBox_inactivity_threshold")
@@ -96,12 +96,12 @@ class Ui_VolumeControlForm(object):
         self.doubleSpinBox_inactivity_threshold.setMaximum(100.000000000000000)
         self.doubleSpinBox_inactivity_threshold.setSingleStep(0.100000000000000)
 
-        self.formLayout.setWidget(0, QFormLayout.FieldRole, self.doubleSpinBox_inactivity_threshold)
+        self.formLayout.setWidget(0, QFormLayout.ItemRole.FieldRole, self.doubleSpinBox_inactivity_threshold)
 
         self.label_3 = QLabel(self.groupBox_2)
         self.label_3.setObjectName(u"label_3")
 
-        self.formLayout.setWidget(2, QFormLayout.LabelRole, self.label_3)
+        self.formLayout.setWidget(2, QFormLayout.ItemRole.LabelRole, self.label_3)
 
         self.doubleSpinBox_inactivity_volume = QDoubleSpinBox(self.groupBox_2)
         self.doubleSpinBox_inactivity_volume.setObjectName(u"doubleSpinBox_inactivity_volume")
@@ -109,12 +109,12 @@ class Ui_VolumeControlForm(object):
         self.doubleSpinBox_inactivity_volume.setMaximum(100.000000000000000)
         self.doubleSpinBox_inactivity_volume.setSingleStep(0.100000000000000)
 
-        self.formLayout.setWidget(2, QFormLayout.FieldRole, self.doubleSpinBox_inactivity_volume)
+        self.formLayout.setWidget(2, QFormLayout.ItemRole.FieldRole, self.doubleSpinBox_inactivity_volume)
 
         self.label_4 = QLabel(self.groupBox_2)
         self.label_4.setObjectName(u"label_4")
 
-        self.formLayout.setWidget(1, QFormLayout.LabelRole, self.label_4)
+        self.formLayout.setWidget(1, QFormLayout.ItemRole.LabelRole, self.label_4)
 
         self.doubleSpinBox_inactivity_ramp_time = QDoubleSpinBox(self.groupBox_2)
         self.doubleSpinBox_inactivity_ramp_time.setObjectName(u"doubleSpinBox_inactivity_ramp_time")
@@ -122,7 +122,7 @@ class Ui_VolumeControlForm(object):
         self.doubleSpinBox_inactivity_ramp_time.setMaximum(100.000000000000000)
         self.doubleSpinBox_inactivity_ramp_time.setSingleStep(0.100000000000000)
 
-        self.formLayout.setWidget(1, QFormLayout.FieldRole, self.doubleSpinBox_inactivity_ramp_time)
+        self.formLayout.setWidget(1, QFormLayout.ItemRole.FieldRole, self.doubleSpinBox_inactivity_ramp_time)
 
 
         self.verticalLayout.addWidget(self.groupBox_2)
@@ -134,7 +134,7 @@ class Ui_VolumeControlForm(object):
         self.label_7 = QLabel(self.groupBox_4)
         self.label_7.setObjectName(u"label_7")
 
-        self.formLayout_4.setWidget(0, QFormLayout.LabelRole, self.label_7)
+        self.formLayout_4.setWidget(0, QFormLayout.ItemRole.LabelRole, self.label_7)
 
         self.doubleSpinBox_slow_start = QDoubleSpinBox(self.groupBox_4)
         self.doubleSpinBox_slow_start.setObjectName(u"doubleSpinBox_slow_start")
@@ -144,7 +144,7 @@ class Ui_VolumeControlForm(object):
         self.doubleSpinBox_slow_start.setSingleStep(0.100000000000000)
         self.doubleSpinBox_slow_start.setValue(1.000000000000000)
 
-        self.formLayout_4.setWidget(0, QFormLayout.FieldRole, self.doubleSpinBox_slow_start)
+        self.formLayout_4.setWidget(0, QFormLayout.ItemRole.FieldRole, self.doubleSpinBox_slow_start)
 
 
         self.verticalLayout.addWidget(self.groupBox_4)
@@ -156,7 +156,7 @@ class Ui_VolumeControlForm(object):
         self.label_5 = QLabel(self.groupBox_3)
         self.label_5.setObjectName(u"label_5")
 
-        self.formLayout_3.setWidget(0, QFormLayout.LabelRole, self.label_5)
+        self.formLayout_3.setWidget(0, QFormLayout.ItemRole.LabelRole, self.label_5)
 
         self.doubleSpinBox_tau = QDoubleSpinBox(self.groupBox_3)
         self.doubleSpinBox_tau.setObjectName(u"doubleSpinBox_tau")
@@ -166,7 +166,7 @@ class Ui_VolumeControlForm(object):
         self.doubleSpinBox_tau.setMaximum(1000.000000000000000)
         self.doubleSpinBox_tau.setValue(355.000000000000000)
 
-        self.formLayout_3.setWidget(0, QFormLayout.FieldRole, self.doubleSpinBox_tau)
+        self.formLayout_3.setWidget(0, QFormLayout.ItemRole.FieldRole, self.doubleSpinBox_tau)
 
 
         self.verticalLayout.addWidget(self.groupBox_3)
@@ -175,8 +175,8 @@ class Ui_VolumeControlForm(object):
 
         self.verticalLayout.addItem(self.verticalSpacer)
 
-        QWidget.setTabOrder(self.doubleSpinBox_target_volume, self.doubleSpinBox_rate)
-        QWidget.setTabOrder(self.doubleSpinBox_rate, self.checkBox_ramp_enabled)
+        QWidget.setTabOrder(self.doubleSpinBox_ramp_target, self.doubleSpinBox_ramp_rate)
+        QWidget.setTabOrder(self.doubleSpinBox_ramp_rate, self.checkBox_ramp_enabled)
         QWidget.setTabOrder(self.checkBox_ramp_enabled, self.doubleSpinBox_inactivity_threshold)
         QWidget.setTabOrder(self.doubleSpinBox_inactivity_threshold, self.doubleSpinBox_inactivity_ramp_time)
         QWidget.setTabOrder(self.doubleSpinBox_inactivity_ramp_time, self.doubleSpinBox_inactivity_volume)
