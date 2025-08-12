@@ -7,8 +7,8 @@ import stream # pystream-protobuf
 
 import google.protobuf.text_format
 from PySide6.QtSerialPort import QSerialPort
-from PySide6.QtCore import QIODevice, QTimer, QObject, Signal
-from PySide6.QtNetwork import QUdpSocket, QAbstractSocket
+from PySide6.QtCore import QIODevice, QTimer, QObject
+from PySide6.QtNetwork import QAbstractSocket
 from PySide6.QtNetwork import QTcpSocket
 
 import qt_ui.settings
@@ -16,6 +16,7 @@ from device.focstim.proto_api import FOCStimProtoAPI
 from device.focstim.notifications_pb2 import NotificationBoot, NotificationPotentiometer, NotificationCurrents, \
     NotificationModelEstimation, NotificationSystemStats, NotificationSignalStats, NotificationDebugString, \
     NotificationBattery, NotificationDebugAS5311
+from device.focstim.teleplot import Teleplot
 from device.output_device import OutputDevice
 from stim_math.audio_gen.base_classes import RemoteGenerationAlgorithm
 
@@ -40,8 +41,7 @@ class FOCStimProtoDevice(QObject, OutputDevice):
         self.transport = None
         self.algorithm = None
         self.old_dict = {}
-        self.teleplot_socket = None
-        self.teleplot_prefix = qt_ui.settings.focstim_teleplot_prefix.get()
+        self.teleplot = None
         self.notification_log = None
         self.dump_notifications = False
 
@@ -66,14 +66,12 @@ class FOCStimProtoDevice(QObject, OutputDevice):
         self.clear_dirty_params_timer.timeout.connect(self.clear_dirty_params)
 
         def print_data_rate():
-            if self.api and self.teleplot_socket:
-                msg = f"""
-                           bytes_out:{self.api.bytes_written}
-                           bytes_in:{self.api.bytes_read}
-                           updates_sent:{self.updates_sent}
-                       """
-                self.teleplot_socket.write(msg.encode('utf-8'))
-                # print(self.api.bytes_read, self.api.bytes_written)
+            if self.api and self.teleplot:
+                self.teleplot.write_metrics(
+                   bytes_out=self.api.bytes_written,
+                   bytes_in=self.api.bytes_read,
+                   updates_sent=self.updates_sent
+                )
                 self.api.bytes_read = 0
                 self.api.bytes_written = 0
                 self.updates_sent = 0
@@ -89,8 +87,8 @@ class FOCStimProtoDevice(QObject, OutputDevice):
 
     def start_teleplot(self, use_teleplot):
         if use_teleplot:
-            self.teleplot_socket = QUdpSocket()
-            self.teleplot_socket.connectToHost(teleplot_addr, teleplot_port, QIODevice.OpenModeFlag.WriteOnly)
+            prefix = qt_ui.settings.focstim_teleplot_prefix.get()
+            self.teleplot = Teleplot(prefix)
 
     def start_tcp(self, host_address, port, use_teleplot, dump_notifications, algorithm: RemoteGenerationAlgorithm):
         assert self.api is None
@@ -276,10 +274,10 @@ class FOCStimProtoDevice(QObject, OutputDevice):
             self.stop()
 
     def transmit_dirty_params(self, interval=30):
-        msg = f"""
-                {self.teleplot_prefix}event_loop_latency:{(time.time() - self.last_update) * 1000}
-                """
-        self.teleplot_socket.write(msg.encode('utf-8'))
+        if self.teleplot:
+            self.teleplot.write_metrics(
+                event_loop_latency=(time.time() - self.last_update) * 1000
+            )
         self.last_update = time.time()
 
         if len(self.api.pending_requests) > 20:
@@ -333,88 +331,81 @@ class FOCStimProtoDevice(QObject, OutputDevice):
         self.stop()
 
     def handle_notification_potentiometer(self, notif: NotificationPotentiometer):
-        # print('potmeter:', notif.value)
-        if self.teleplot_socket:
-            self.teleplot_socket.write(f"pot:{notif.value}".encode('utf-8'))
+        if self.teleplot:
+            self.teleplot.write_metrics(
+                pot=notif.value
+            )
 
     def handle_notification_currents(self, notif: NotificationCurrents):
         # print(notif)
-        if self.teleplot_socket:
-            msg = f"""
-                {self.teleplot_prefix}rms_a:{notif.rms_a}
-                {self.teleplot_prefix}rms_b:{notif.rms_b}
-                {self.teleplot_prefix}rms_c:{notif.rms_c}
-                {self.teleplot_prefix}rms_d:{notif.rms_d}
-                {self.teleplot_prefix}max_a:{notif.peak_a}
-                {self.teleplot_prefix}max_b:{notif.peak_b}
-                {self.teleplot_prefix}max_c:{notif.peak_c}
-                {self.teleplot_prefix}max_d:{notif.peak_d}
-                {self.teleplot_prefix}max_cmd:{notif.peak_cmd}
-                {self.teleplot_prefix}power_total:{notif.output_power}
-                {self.teleplot_prefix}power_skin:{notif.output_power_skin}
-            """
-            self.teleplot_socket.write(msg.encode('utf-8'))
+        if self.teleplot:
+            self.teleplot.write_metrics(
+                rms_a=notif.rms_a,
+                rms_b=notif.rms_b,
+                rms_c=notif.rms_c,
+                rms_d=notif.rms_d,
+                max_a=notif.peak_a,
+                max_b=notif.peak_b,
+                max_c=notif.peak_c,
+                max_d=notif.peak_d,
+                max_cmd=notif.peak_cmd,
+                power_total=notif.output_power,
+                power_skin=notif.output_power_skin,
+            )
 
     def handle_notification_model_estimation(self, notif: NotificationModelEstimation):
-        if self.teleplot_socket:
-            msg = f"""
-                {self.teleplot_prefix}R_a:{notif.resistance_a}
-                {self.teleplot_prefix}R_b:{notif.resistance_b}
-                {self.teleplot_prefix}R_c:{notif.resistance_c}
-                {self.teleplot_prefix}R_d:{notif.resistance_d}
-                {self.teleplot_prefix}Z_a:{notif.resistance_a}:{notif.reluctance_a}|xy
-                {self.teleplot_prefix}Z_b:{notif.resistance_b}:{notif.reluctance_b}|xy
-                {self.teleplot_prefix}Z_c:{notif.resistance_c}:{notif.reluctance_c}|xy
-                {self.teleplot_prefix}Z_d:{notif.resistance_d}:{notif.reluctance_d}|xy
-            """
-            self.teleplot_socket.write(msg.encode('utf-8'))
+        if self.teleplot:
+            self.teleplot.write_metrics(
+                R_a=f"{notif.resistance_a}",
+                R_b=f"{notif.resistance_b}",
+                R_c=f"{notif.resistance_c}",
+                R_d=f"{notif.resistance_d}",
+                Z_a=f"{notif.resistance_a}:{notif.reluctance_a}|xy",
+                Z_b=f"{notif.resistance_b}:{notif.reluctance_b}|xy",
+                Z_c=f"{notif.resistance_c}:{notif.reluctance_c}|xy",
+                Z_d=f"{notif.resistance_d}:{notif.reluctance_d}|xy"
+            )
 
     def handle_notification_system_stats(self, notif: NotificationSystemStats):
         if notif.HasField('esc1'):
-            if self.teleplot_socket:
-                msg = f"""
-                    {self.teleplot_prefix}temp_stm32:{notif.esc1.temp_stm32}
-                    {self.teleplot_prefix}temp_board:{notif.esc1.temp_board}
-                    {self.teleplot_prefix}v_bus:{notif.esc1.v_bus}
-                """
-                self.teleplot_socket.write(msg.encode('utf-8'))
+            if self.teleplot:
+                self.teleplot.write_metrics(
+                    temp_stm32=notif.esc1.temp_stm32,
+                    temp_board=notif.esc1.temp_board,
+                    v_bus=notif.esc1.v_bus
+                )
         elif notif.HasField('focstimv3'):
-            if self.teleplot_socket:
-                msg = f"""
-                    {self.teleplot_prefix}temp_stm32:{notif.focstimv3.temp_stm32}
-                    {self.teleplot_prefix}v_sys:{notif.focstimv3.v_sys}
-                    {self.teleplot_prefix}v_boost:{notif.focstimv3.v_boost}
-                    {self.teleplot_prefix}boost_duty_cycle:{notif.focstimv3.boost_duty_cycle}
-                """
-                self.teleplot_socket.write(msg.encode('utf-8'))
+            if self.teleplot:
+                self.teleplot.write_metrics(
+                    temp_stm32=notif.focstimv3.temp_stm32,
+                    v_sys=notif.focstimv3.v_sys,
+                    v_boost=notif.focstimv3.v_boost,
+                    boost_duty_cycle=notif.focstimv3.boost_duty_cycle
+                )
 
     def handle_notification_signal_stats(self, notif: NotificationSignalStats):
-        if self.teleplot_socket:
-            msg = f"""
-                {self.teleplot_prefix}pulse_frequency:{notif.actual_pulse_frequency}
-                {self.teleplot_prefix}v_drive:{notif.v_drive}
-            """
-            self.teleplot_socket.write(msg.encode('utf-8'))
+        if self.teleplot:
+            self.teleplot.write_metrics(
+                pulse_frequency=notif.actual_pulse_frequency,
+                v_drive=notif.v_drive
+            )
 
     def handle_notification_battery(self, notif: NotificationBattery):
-        if self.teleplot_socket:
-            msg = f"""
-                {self.teleplot_prefix}battery_voltage:{notif.battery_voltage}
-                {self.teleplot_prefix}battery_charge_rate:{notif.battery_charge_rate_watt}
-                {self.teleplot_prefix}battery_soc:{notif.battery_soc}
-                {self.teleplot_prefix}temp_bq27411:{notif.chip_temperature}
-            """
-            self.teleplot_socket.write(msg.encode('utf-8'))
+        if self.teleplot:
+            self.teleplot.write_metrics(
+                battery_voltage=notif.battery_voltage,
+                battery_charge_rate=notif.battery_charge_rate_watt,
+                battery_soc=notif.battery_soc,
+                temp_bq27411=notif.chip_temperature,
+            )
 
     def handle_notification_debug_string(self, notif: NotificationDebugString):
         logger.warning(notif.message)
 
     def handle_notification_debug_as5311(self, notif: NotificationDebugAS5311):
-        if self.teleplot_socket:
-            msg = f"""
-                {self.teleplot_prefix}as5311_raw:{notif.raw}
-                {self.teleplot_prefix}as5311_um:{notif.tracked * (2000.0 / 4096) }
-                {self.teleplot_prefix}as5311_flags:{notif.flags}
-            """
-            self.teleplot_socket.write(msg.encode('utf-8'))
-
+        if self.teleplot:
+            self.teleplot.write_metrics(
+                as5311_raw=notif.raw,
+                as5311_um=notif.tracked * (2000.0 / 4096),
+                as5311_flags=notif.flags,
+            )
