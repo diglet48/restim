@@ -246,35 +246,9 @@ class AlgorithmFactory:
         return algorithm
     
     def create_coyote(self, device: DeviceConfiguration) -> AudioGenerationAlgorithm:
-        """
-        Create direct algorithm for Coyote device with proper frequency handling.
-
-        Each channel can take:
-        - Vibration axis if available (assumed already in reasonable range or scaled directly).
-        - Pulse frequency (1-100 mapped directly into channel's range).
-        - Carrier frequency (global, used if pulse frequency is missing).
-        - Fallback to constant 100 if none exist.
-
-        Pulse width and rise time are **always required** by the algorithm, so fallbacks are handled here.
-        """
-
-        # Fetch frequency axes
-        carrier_frequency = self.get_axis_from_script_mapping(AxisEnum.CARRIER_FREQUENCY)#, limits=(0, 100))
-        pulse_frequency = self.get_axis_from_script_mapping(AxisEnum.PULSE_FREQUENCY)#, limits=(0, 100))
-
-        # Fetch pulse shape axes (always needed, so provide defaults: 100% width, rise: 0%)
-        # pulse_width = self.get_axis_from_script_mapping(AxisEnum.PULSE_WIDTH, limits=(0, 100)) or create_constant_axis(100)
-        # pulse_rise_time = self.get_axis_from_script_mapping(AxisEnum.PULSE_RISE_TIME, limits=(0, 100)) or create_constant_axis(0)
-
-        # Vibration axes (optional, not yet used)
-        # vibration_1 = self.get_axis_from_script_mapping(AxisEnum.VIBRATION_1_FREQUENCY)  # Consider for Channel A effects?
-        # vibration_2 = self.get_axis_from_script_mapping(AxisEnum.VIBRATION_2_FREQUENCY)  # Consider for Channel B effects?
-
-        # Prefer pulse frequency → fallback to carrier frequency → fallback to constant 100
-        script_frequency = pulse_frequency or carrier_frequency or create_constant_axis(100)
-
         # Get frequency limits from kit
         carrier_freq_limits = self.kit.limits_for_axis(AxisEnum.CARRIER_FREQUENCY)
+        pulse_freq_limits = self.kit.limits_for_axis(AxisEnum.PULSE_FREQUENCY)
         pulse_width_limits = self.kit.limits_for_axis(AxisEnum.PULSE_WIDTH)
         pulse_rise_time_limits = self.kit.limits_for_axis(AxisEnum.PULSE_RISE_TIME)
 
@@ -317,6 +291,7 @@ class AlgorithmFactory:
                 device.max_frequency,
             ),
             carrier_freq_limits=carrier_freq_limits,
+            pulse_freq_limits=pulse_freq_limits,
             pulse_width_limits=pulse_width_limits,
             pulse_rise_time_limits=pulse_rise_time_limits
         )

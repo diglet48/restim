@@ -9,3 +9,4 @@ msdparser
 # protoletariat		# dev only
 protobuf>=6.0.0
 pystream-protobuf
+bleak                   # Coyote only

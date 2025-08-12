@@ -186,8 +186,8 @@ class CoyoteAlgorithmParams:
     transform: ThreephasePositionTransformParams
     calibrate: ThreephaseCalibrationParams
     volume: VolumeParams
-    carrier_frequency: AbstractAxis # raw pos (not Hz)
-    pulse_frequency: AbstractAxis   # raw pos (not Hz)
+    carrier_frequency: AbstractAxis # Hz
+    pulse_frequency: AbstractAxis   # Hz
     pulse_width: AbstractAxis       # carrier cycles
     pulse_interval_random: AbstractAxis
     pulse_rise_time: AbstractAxis
