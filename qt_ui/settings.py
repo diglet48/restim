@@ -52,6 +52,7 @@ volume_ramp_target = Setting('volume/ramp_target', 1.0, float)
 volume_ramp_increment_rate = Setting('volume/increment_rate', 1.0, float)
 volume_inactivity_time = Setting('volume/inactivity_ramp_time', 3.0, float)
 volume_inactivity_threshold = Setting('volume/inactivity_inactive_threshold', 2.0, float)
+volume_inactivity_volume = Setting('volume/inactivity_reduction', 0.0, float)
 volume_slow_start_time = Setting('volume/slow_start_time', 1.0, float)
 tau_us = Setting('volume/tau_us', 355, float)
 
