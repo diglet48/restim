@@ -1,21 +1,31 @@
 import functools
 
 from PySide6.QtSerialPort import QSerialPortInfo
-from PySide6.QtWidgets import QDialog, QAbstractButton, QDialogButtonBox, QAbstractItemView, QHeaderView, QComboBox
+from PySide6.QtWidgets import QDialog, QAbstractButton, QDialogButtonBox, QAbstractItemView, QHeaderView, QComboBox, QTableWidgetItem, QCheckBox, QApplication
+from PySide6.QtCore import Qt, Signal, QTimer
 
 from qt_ui.preferences_dialog_ui import Ui_PreferencesDialog
 from qt_ui.models.funscript_kit import FunscriptKitModel
+from qt_ui.services.pattern_service import PatternControlService
 import qt_ui.settings
 
 import sounddevice as sd
 
 
 class PreferencesDialog(QDialog, Ui_PreferencesDialog):
+    # Signal emitted when pattern preferences change
+    patterns_changed = Signal()
+    
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setupUi(self)
 
         self.tabWidget.setCurrentIndex(0)
+
+        # Initialize pattern service and cache pattern data immediately
+        self.pattern_service = PatternControlService()
+        self._cached_patterns = None
+        self._cache_patterns_data()
 
         self.loadSettings()
 
@@ -39,6 +49,9 @@ class PreferencesDialog(QDialog, Ui_PreferencesDialog):
             QAbstractItemView.AnyKeyPressed
         )
 
+        # patterns setup - do this immediately during initialization
+        self.setup_patterns_tab()
+
         # media sync reset buttons
         self.mpc_reload.clicked.connect(
             functools.partial(self.mpc_address.setText, qt_ui.settings.media_sync_mpc_address.default_value)
@@ -56,6 +69,14 @@ class PreferencesDialog(QDialog, Ui_PreferencesDialog):
         # focstim/neostim reload serial devices
         self.refresh_serial_devices.clicked.connect(self.repopulate_serial_devices)
         self.neostim_refresh_serial_devices.clicked.connect(self.repopulate_serial_devices)
+    
+    def _cache_patterns_data(self):
+        """Cache pattern data at startup to avoid late discovery issues"""
+        try:
+            # Pre-load all pattern data immediately
+            self._cached_patterns = self.pattern_service.get_available_patterns(respect_user_preferences=False)
+        except Exception as e:
+            self._cached_patterns = []
 
     def exec(self):
         self.loadSettings()
@@ -132,6 +153,9 @@ class PreferencesDialog(QDialog, Ui_PreferencesDialog):
 
         # funscript mapping
         self.tableView.setModel(FunscriptKitModel.load_from_settings())
+        
+        # refresh pattern preferences (just reload checkboxes from settings)
+        self.refresh_pattern_preferences()
 
     def repopulate_audio_devices(self):
         self.audio_output_device.clear()
@@ -239,3 +263,91 @@ class PreferencesDialog(QDialog, Ui_PreferencesDialog):
 
     def funscript_reset_defaults(self):
         self.tableView.model().reset_to_defaults()
+    
+    def setup_patterns_tab(self):
+        """Setup the patterns tab with cached pattern data"""
+        # Use cached patterns data to avoid late discovery
+        patterns = self._cached_patterns or []
+        
+        if not patterns:
+            return
+        
+        # Set up table with known size
+        self.patterns_table.setRowCount(len(patterns))
+        
+        # Populate table rows
+        for row, pattern in enumerate(patterns):
+            # Column 0: Pattern name
+            name_item = QTableWidgetItem(pattern['name'])
+            name_item.setFlags(Qt.ItemIsEnabled | Qt.ItemIsSelectable)
+            self.patterns_table.setItem(row, 0, name_item)
+            
+            # Column 1: Enabled checkbox (only for non-priority patterns)
+            if pattern['class_name'] in ['MousePattern', 'CirclePattern']:
+                # For Mouse and Circle patterns, show blank cell
+                enabled_item = QTableWidgetItem("")
+                enabled_item.setFlags(Qt.ItemIsEnabled)
+                self.patterns_table.setItem(row, 1, enabled_item)
+            else:
+                # For other patterns, create checkbox
+                checkbox = QCheckBox()
+                pattern_enabled = self.pattern_service.is_pattern_enabled(pattern['name'])
+                checkbox.setChecked(pattern_enabled)
+                checkbox.setProperty("pattern_name", pattern['name'])
+                checkbox.setProperty("class_name", pattern['class_name'])
+                checkbox.toggled.connect(self.on_pattern_checkbox_changed)
+                
+                # Add checkbox to table
+                checkbox_item = QTableWidgetItem()
+                checkbox_item.setFlags(Qt.ItemIsEnabled)
+                self.patterns_table.setItem(row, 1, checkbox_item)
+                self.patterns_table.setCellWidget(row, 1, checkbox)
+        
+        # Simple, single layout update
+        self.patterns_table.resizeRowsToContents()
+        
+        # Connect buttons
+        self.button_patterns_enable_all.clicked.connect(self.enable_all_patterns)
+        self.button_patterns_disable_all.clicked.connect(self.disable_all_patterns)
+    
+    def refresh_pattern_preferences(self):
+        """Refresh checkbox states from current settings without rebuilding the UI"""
+        if not hasattr(self, 'patterns_table'):
+            return
+            
+        for row in range(self.patterns_table.rowCount()):
+            checkbox = self.patterns_table.cellWidget(row, 1)
+            if isinstance(checkbox, QCheckBox):
+                pattern_name = checkbox.property("pattern_name")
+                if pattern_name:
+                    # Update checkbox state from settings
+                    enabled = self.pattern_service.is_pattern_enabled(pattern_name)
+                    checkbox.setChecked(enabled)
+    
+    def enable_all_patterns(self):
+        """Enable all patterns with checkboxes"""
+        for row in range(self.patterns_table.rowCount()):
+            widget = self.patterns_table.cellWidget(row, 1)
+            if isinstance(widget, QCheckBox):
+                widget.setChecked(True)
+        # Emit signal to notify that patterns have changed
+        self.patterns_changed.emit()
+    
+    def disable_all_patterns(self):
+        """Disable all patterns with checkboxes"""
+        for row in range(self.patterns_table.rowCount()):
+            widget = self.patterns_table.cellWidget(row, 1)
+            if isinstance(widget, QCheckBox):
+                widget.setChecked(False)
+        # Emit signal to notify that patterns have changed
+        self.patterns_changed.emit()
+    
+    def on_pattern_checkbox_changed(self, checked: bool):
+        """Handle when a pattern checkbox is toggled"""
+        sender = self.sender()
+        if isinstance(sender, QCheckBox):
+            pattern_name = sender.property("pattern_name")
+            if pattern_name:
+                self.pattern_service.set_pattern_enabled(pattern_name, checked)
+                # Emit signal to notify that patterns have changed
+                self.patterns_changed.emit()

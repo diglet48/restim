@@ -19,8 +19,8 @@ from PySide6.QtWidgets import (QAbstractButton, QApplication, QCheckBox, QComboB
     QDialogButtonBox, QDoubleSpinBox, QFormLayout, QFrame,
     QGridLayout, QGroupBox, QHBoxLayout, QHeaderView,
     QLabel, QLineEdit, QPushButton, QSizePolicy,
-    QSpacerItem, QSpinBox, QTabWidget, QToolButton,
-    QVBoxLayout, QWidget)
+    QSpacerItem, QSpinBox, QTabWidget, QTableWidget, QToolButton,
+    QVBoxLayout, QWidget, QAbstractItemView)
 
 from qt_ui.widgets.table_view_with_combobox import TableViewWithComboBox
 import restim_rc
@@ -554,6 +554,58 @@ class Ui_PreferencesDialog(object):
         self.verticalLayout_7.addWidget(self.frame)
 
         self.tabWidget.addTab(self.tab_funscript, "")
+        self.tab_patterns = QWidget()
+        self.tab_patterns.setObjectName(u"tab_patterns")
+        self.verticalLayout_8 = QVBoxLayout(self.tab_patterns)
+        self.verticalLayout_8.setObjectName(u"verticalLayout_8")
+        
+        # Threephase Patterns title
+        self.patterns_title = QLabel(self.tab_patterns)
+        self.patterns_title.setObjectName(u"patterns_title")
+        self.patterns_title.setText("Threephase Patterns")
+        font = QFont()
+        font.setPointSize(12)
+        font.setBold(True)
+        self.patterns_title.setFont(font)
+        self.patterns_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.patterns_title.setStyleSheet("QLabel { margin: 10px 0px; }")
+        self.verticalLayout_8.addWidget(self.patterns_title)
+        
+        # Enable/Disable All buttons
+        self.patterns_button_frame = QFrame(self.tab_patterns)
+        self.patterns_button_frame.setObjectName(u"patterns_button_frame")
+        self.patterns_button_frame.setFrameShape(QFrame.Shape.StyledPanel)
+        self.patterns_button_frame.setFrameShadow(QFrame.Shadow.Raised)
+        self.patterns_button_layout = QHBoxLayout(self.patterns_button_frame)
+        self.patterns_button_layout.setObjectName(u"patterns_button_layout")
+        
+        self.button_patterns_enable_all = QPushButton(self.patterns_button_frame)
+        self.button_patterns_enable_all.setObjectName(u"button_patterns_enable_all")
+        self.patterns_button_layout.addWidget(self.button_patterns_enable_all)
+        
+        self.button_patterns_disable_all = QPushButton(self.patterns_button_frame)
+        self.button_patterns_disable_all.setObjectName(u"button_patterns_disable_all")
+        self.patterns_button_layout.addWidget(self.button_patterns_disable_all)
+        
+        self.patterns_button_spacer = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
+        self.patterns_button_layout.addItem(self.patterns_button_spacer)
+        
+        self.verticalLayout_8.addWidget(self.patterns_button_frame)
+        
+        # Patterns table - will be populated programmatically
+        self.patterns_table = QTableWidget(self.tab_patterns)
+        self.patterns_table.setObjectName(u"patterns_table")
+        self.patterns_table.setColumnCount(2)
+        self.patterns_table.setHorizontalHeaderLabels([u"Pattern", u"Enabled"])
+        self.patterns_table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
+        self.patterns_table.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)
+        self.patterns_table.setAlternatingRowColors(True)
+        self.patterns_table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
+        self.patterns_table.verticalHeader().setVisible(False)
+        
+        self.verticalLayout_8.addWidget(self.patterns_table)
+
+        self.tabWidget.addTab(self.tab_patterns, "")
 
         self.verticalLayout.addWidget(self.tabWidget)
 
@@ -662,6 +714,9 @@ class Ui_PreferencesDialog(object):
         self.display_latency_ms.setSuffix("")
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_display), QCoreApplication.translate("PreferencesDialog", u"Display", None))
         self.button_funscript_reset_defaults.setText(QCoreApplication.translate("PreferencesDialog", u"Reset all to defaults", None))
+        self.button_patterns_enable_all.setText(QCoreApplication.translate("PreferencesDialog", u"Enable All", None))
+        self.button_patterns_disable_all.setText(QCoreApplication.translate("PreferencesDialog", u"Disable All", None))
+        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_patterns), QCoreApplication.translate("PreferencesDialog", u"Patterns", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_funscript), QCoreApplication.translate("PreferencesDialog", u"Funscript / T-Code", None))
     # retranslateUi
 
