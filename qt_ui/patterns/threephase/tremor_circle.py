@@ -1,5 +1,5 @@
 """
-Tremor Circle Pattern - Circular motion with tremor-like micro-shakes
+Tremor Circle Pattern
 """
 import numpy as np
 from qt_ui.patterns.threephase.base import ThreephasePattern, register_pattern
@@ -8,7 +8,7 @@ from qt_ui.patterns.threephase.base import ThreephasePattern, register_pattern
 @register_pattern(category="complex")
 class TremorCirclePattern(ThreephasePattern):
     display_name = "Tremor Circle"
-    description = "Circular motion overlaid with fine tremor-like micro-shakes. Base circular movement modulated by high-frequency oscillations. Natural, subtle vibratory motion."
+    description = ""
     
     def __init__(self, amplitude=1.0, velocity=1.0):
         super().__init__(amplitude, velocity)
@@ -24,7 +24,7 @@ class TremorCirclePattern(ThreephasePattern):
         base_alpha = 0.6 * np.cos(circle_angle)
         base_beta = 0.6 * np.sin(circle_angle)
         
-        # Tremor modulation - high frequency, low amplitude
+        # Tremor modulation
         tremor_freq1 = 25.0
         tremor_freq2 = 31.5
         tremor_intensity = 0.08
@@ -38,7 +38,7 @@ class TremorCirclePattern(ThreephasePattern):
             np.cos(self.time * tremor_freq2 * 0.9) * 0.4
         )
         
-        # Amplitude modulation for tremor realism
+        # Amplitude modulation
         tremor_envelope = 0.8 + 0.2 * np.sin(self.time * 0.7)
         tremor_alpha *= tremor_envelope
         tremor_beta *= tremor_envelope
