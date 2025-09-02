@@ -21,7 +21,7 @@ class RoseCurvePattern(ThreephasePattern):
         
         # Rose curve equation: r = cos(n*θ)
         theta = self.time
-        r = abs(np.cos(self.n * theta))  # Take absolute value to keep all petals
+        r = abs(np.cos(self.n * theta))
         
         alpha = r * np.cos(theta)
         beta = r * np.sin(theta)

@@ -20,7 +20,7 @@ class WShapePattern(ThreephasePattern):
         # Create a full W cycle
         cycle_time = self.time % (4 * np.pi)
         phase = int(cycle_time / np.pi)  # 0, 1, 2, 3
-        phase_progress = (cycle_time % np.pi) / np.pi  # 0 to 1
+        phase_progress = (cycle_time % np.pi) / np.pi
         
         if phase == 0:
             # First V forward
