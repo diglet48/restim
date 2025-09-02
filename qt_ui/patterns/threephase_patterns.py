@@ -27,9 +27,6 @@ class ThreephaseMotionGenerator(QtCore.QObject):
         # Instantiate MousePattern with axes
         self.mouse_pattern = MousePattern(alpha, beta)
 
-        # Load patterns respecting user preferences
-        self.refresh_patterns()
-        
         # Default to mouse pattern
         self.pattern = self.mouse_pattern
 
@@ -138,5 +135,6 @@ class ThreephaseMotionGenerator(QtCore.QObject):
     def refreshSettings(self):
         self.timer.setInterval(int(1000 // np.clip(qt_ui.settings.display_fps.get(), 1.0, 500.0)))
         self.latency = qt_ui.settings.display_latency.get() / 1000.0
+        self.refresh_patterns()
 
     position_updated = QtCore.Signal(float, float)  # a, b
