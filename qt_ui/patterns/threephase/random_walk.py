@@ -16,7 +16,7 @@ class RandomWalkPattern(ThreephasePattern):
         self.alpha_pos = 0.0
         self.beta_pos = 0.0
         self.center_pull_strength = 0.003
-        self.noise_strength = 0.8  # Reduced from 3.5 to prevent excessive buildup
+        self.noise_strength = 0.8
 
     def _pseudo_random(self, t):
         """Simple pseudo-random function based on time"""
@@ -30,7 +30,7 @@ class RandomWalkPattern(ThreephasePattern):
         # Get pseudo-random direction
         rand_x, rand_y = self._pseudo_random(self.time)
         
-        # Random walk with gentle drift
+        # Random walk
         self.alpha_pos += rand_x * self.noise_strength * dt
         self.beta_pos += rand_y * self.noise_strength * dt
         
