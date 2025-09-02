@@ -13,9 +13,6 @@ import sounddevice as sd
 
 
 class PreferencesDialog(QDialog, Ui_PreferencesDialog):
-    # Signal emitted when pattern preferences change
-    patterns_changed = Signal()
-    
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setupUi(self)
@@ -261,6 +258,18 @@ class PreferencesDialog(QDialog, Ui_PreferencesDialog):
         # funscript mapping
         self.tableView.model().save_to_settings()
 
+        # patterns
+        for row in range(self.patterns_table.rowCount()):
+            checkbox = self.patterns_table.cellWidget(row, 1)
+            if isinstance(checkbox, QCheckBox):
+                pattern_name = checkbox.property("pattern_name")
+                if pattern_name:
+                    # Update checkbox state from settings
+                    was_enabled = self.pattern_service.is_pattern_enabled(pattern_name)
+                    is_enabled = checkbox.isChecked()
+                    if was_enabled != is_enabled:
+                        self.pattern_service.set_pattern_enabled(pattern_name, is_enabled)
+
     def funscript_reset_defaults(self):
         self.tableView.model().reset_to_defaults()
     
@@ -295,8 +304,7 @@ class PreferencesDialog(QDialog, Ui_PreferencesDialog):
                 checkbox.setChecked(pattern_enabled)
                 checkbox.setProperty("pattern_name", pattern['name'])
                 checkbox.setProperty("class_name", pattern['class_name'])
-                checkbox.toggled.connect(self.on_pattern_checkbox_changed)
-                
+
                 # Add checkbox to table
                 checkbox_item = QTableWidgetItem()
                 checkbox_item.setFlags(Qt.ItemIsEnabled)
@@ -304,6 +312,8 @@ class PreferencesDialog(QDialog, Ui_PreferencesDialog):
                 self.patterns_table.setCellWidget(row, 1, checkbox)
         
         # Simple, single layout update
+        self.patterns_table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
+        self.patterns_table.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)
         self.patterns_table.resizeRowsToContents()
         
         # Connect buttons
@@ -330,24 +340,11 @@ class PreferencesDialog(QDialog, Ui_PreferencesDialog):
             widget = self.patterns_table.cellWidget(row, 1)
             if isinstance(widget, QCheckBox):
                 widget.setChecked(True)
-        # Emit signal to notify that patterns have changed
-        self.patterns_changed.emit()
-    
+
     def disable_all_patterns(self):
         """Disable all patterns with checkboxes"""
         for row in range(self.patterns_table.rowCount()):
             widget = self.patterns_table.cellWidget(row, 1)
             if isinstance(widget, QCheckBox):
                 widget.setChecked(False)
-        # Emit signal to notify that patterns have changed
-        self.patterns_changed.emit()
-    
-    def on_pattern_checkbox_changed(self, checked: bool):
-        """Handle when a pattern checkbox is toggled"""
-        sender = self.sender()
-        if isinstance(sender, QCheckBox):
-            pattern_name = sender.property("pattern_name")
-            if pattern_name:
-                self.pattern_service.set_pattern_enabled(pattern_name, checked)
-                # Emit signal to notify that patterns have changed
-                self.patterns_changed.emit()
+

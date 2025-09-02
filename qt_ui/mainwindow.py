@@ -387,9 +387,6 @@ class Window(QMainWindow, Ui_MainWindow):
         if config.device_type in (DeviceType.AUDIO_THREE_PHASE, DeviceType.NEOSTIM_THREE_PHASE, DeviceType.FOCSTIM_THREE_PHASE):
             self.motion_3.set_enable(True)
             self.motion_4.set_enable(False)
-            self.comboBox_patternSelect.clear()
-            for pattern in self.motion_3.patterns:
-                self.comboBox_patternSelect.addItem(pattern.name(), pattern)
             self.stackedWidget_visual.setCurrentIndex(
                 self.stackedWidget_visual.indexOf(self.page_threephase)
             )
@@ -397,12 +394,11 @@ class Window(QMainWindow, Ui_MainWindow):
         if config.device_type == DeviceType.FOCSTIM_FOUR_PHASE:
             self.motion_3.set_enable(False)
             self.motion_4.set_enable(True)
-            self.comboBox_patternSelect.clear()
-            for pattern in self.motion_4.patterns:
-                self.comboBox_patternSelect.addItem(pattern.name(), pattern)
             self.stackedWidget_visual.setCurrentIndex(
                 self.stackedWidget_visual.indexOf(self.page_fourphase)
             )
+
+        self.refresh_pattern_combobox()
 
     def pattern_selection_changed(self, index):
         pattern = self.comboBox_patternSelect.currentData()
@@ -537,6 +533,27 @@ class Window(QMainWindow, Ui_MainWindow):
         self.tab_a_b_testing.refreshSettings()
         self.motion_3.refreshSettings()
         self.motion_4.refreshSettings()
+        self.refresh_pattern_combobox()
+
+    def refresh_pattern_combobox(self):
+        config = DeviceConfiguration.from_settings()
+        currently_selected_text = self.comboBox_patternSelect.currentText()
+
+        if config.device_type in (DeviceType.AUDIO_THREE_PHASE, DeviceType.NEOSTIM_THREE_PHASE, DeviceType.FOCSTIM_THREE_PHASE):
+            self.comboBox_patternSelect.clear()
+            for pattern in self.motion_3.patterns:
+                self.comboBox_patternSelect.addItem(pattern.name(), pattern)
+        else:
+            self.comboBox_patternSelect.clear()
+            for pattern in self.motion_4.patterns:
+                self.comboBox_patternSelect.addItem(pattern.name(), pattern)
+
+        # try to select pattern with similar name as was previously selected
+        index = self.comboBox_patternSelect.findText(currently_selected_text)
+        if index == -1:
+            index = 0
+        self.comboBox_patternSelect.setCurrentIndex(index)
+
 
     def save_settings(self):
         """
