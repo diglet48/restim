@@ -1,127 +1,16 @@
-from abc import ABC, abstractmethod
-
-import numpy as np
 import time
-
+import logging
+import numpy as np
 from PySide6 import QtCore
-
 import qt_ui.settings
 from stim_math.axis import AbstractAxis, WriteProtectedAxis
-
+from qt_ui.patterns.fourphase.mouse import MousePattern
+from qt_ui.patterns.fourphase.orbit import OrbitPattern
+from qt_ui.patterns.fourphase.sequence import SequencePattern
+from qt_ui.patterns.fourphase.spiral import SpiralPattern
 from qt_ui.widgets.fourphase_widget_stereographic import v1, v2, v3, v4
 
-
-class FourphasePattern(ABC):
-    def __init__(self):
-        pass
-
-    @abstractmethod
-    def name(self):
-        ...
-
-    @abstractmethod
-    def update(self, dt: float):
-        ...
-
-
-class MousePattern(FourphasePattern):
-    def __init__(self, alpha: AbstractAxis, beta: AbstractAxis, gamma: AbstractAxis):
-        super().__init__()
-        self.alpha = alpha
-        self.beta = beta
-        self.gamma = gamma
-        self.x = 0.00001    # hack to force display update on load
-        self.y = 0
-        self.z = 0
-
-    def name(self):
-        return "mouse"
-
-    def mouse_event(self, x, y, z):
-        self.alpha.add(x)
-        self.beta.add(y)
-        self.gamma.add(z)
-        self.x = x
-        self.y = y
-        self.z = z
-
-    def update(self, dt: float):
-        return self.x, self.y, self.z
-
-    def last_position_is_mouse_position(self):
-        return (self.x, self.y) == (self.alpha.last_value(), self.beta.last_value())
-
-
-class OrbitPattern(FourphasePattern):
-    def __init__(self, name, axis):
-        super().__init__()
-        self._name = name
-        self.axis = axis
-        self.dir1 = np.linalg.cross(axis, [.5, .7, .999])
-        self.dir2 = np.linalg.cross(axis, self.dir1)
-        self.dir1 /= np.linalg.norm(self.dir1)
-        self.dir2 /= np.linalg.norm(self.dir2)
-        self.angle = 0
-
-    def name(self):
-        return self._name
-
-    def update(self, dt: float):
-        self.angle = self.angle + dt * 1
-        return self.dir1 * np.cos(self.angle) + self.dir2 * np.sin(self.angle)
-
-
-class SequencePattern(FourphasePattern):
-    def __init__(self, name, sequence: list):
-        super().__init__()
-        self._name = name
-        self.sequence = np.vstack((sequence, sequence, sequence[0]))
-        self.index = 0
-
-        for i in range(1, len(self.sequence)):
-            dist_1 = np.linalg.norm(self.sequence[i] - self.sequence[i-1])
-            dist_2 = np.linalg.norm(self.sequence[i] + self.sequence[i-1])
-            if dist_2 < dist_1:
-                self.sequence[i] *= -1
-
-    def name(self):
-        return self._name
-
-    def update(self, dt: float):
-        self.index = (self.index + dt / 2) % (len(self.sequence) - 1)
-        index = self.index
-        x = np.interp(index, np.arange(len(self.sequence)), self.sequence[:, 0])
-        y = np.interp(index, np.arange(len(self.sequence)), self.sequence[:, 1])
-        z = np.interp(index, np.arange(len(self.sequence)), self.sequence[:, 2])
-
-        xyz = np.array([x, y, z])
-        xyz /= np.linalg.norm(xyz)
-        return xyz
-
-
-class SpiralPattern(FourphasePattern):
-    def __init__(self, name, axis):
-        super().__init__()
-        self._name = name
-        self.axis = axis / np.linalg.norm(axis)
-        self.dir1 = np.linalg.cross(axis, [.5, .7, .999])
-        self.dir2 = np.linalg.cross(axis, self.dir1)
-        self.dir1 /= np.linalg.norm(self.dir1)
-        self.dir2 /= np.linalg.norm(self.dir2)
-        self.angle = 0
-        self.angle2 = 0
-
-    def name(self):
-        return self._name
-
-    def update(self, dt: float):
-        self.angle = self.angle + dt * 4
-        self.angle2 = self.angle2 + dt * .23
-        radius = np.sin(self.angle2) * 0.6
-        vec = (self.axis +
-               self.dir1 * np.cos(self.angle) * radius +
-               self.dir2 * np.sin(self.angle) * radius)
-        return vec / np.linalg.norm(vec)
+logger = logging.getLogger('restim.motion_generation')
 
 
 class FourphaseMotionGenerator(QtCore.QObject):
@@ -135,7 +24,10 @@ class FourphaseMotionGenerator(QtCore.QObject):
         self.script_beta = None
         self.script_gamma = None
 
+        # Instantiate MousePattern with axes
         self.mouse_pattern = MousePattern(alpha, beta, gamma)
+
+        # Create patterns like the original implementation
         self.patterns = [
             self.mouse_pattern,
             SequencePattern('seq ABCD', [v1, v2, v3, v4]),
@@ -172,13 +64,15 @@ class FourphaseMotionGenerator(QtCore.QObject):
             self.timer.stop()
 
     def set_pattern(self, pattern):
-        if issubclass(pattern.__class__, FourphasePattern):
+        if isinstance(pattern, MousePattern):
+            self.pattern = self.mouse_pattern
+        elif pattern in self.patterns:
             self.pattern = pattern
 
     def set_scripts(self, alpha, beta, gamma):
-        self.script_alpha = alpha if issubclass(alpha.__class__, WriteProtectedAxis) else None
-        self.script_beta = beta if issubclass(beta.__class__, WriteProtectedAxis) else None
-        self.script_gamma = gamma if issubclass(gamma.__class__, WriteProtectedAxis) else None
+        self.script_alpha = alpha if isinstance(alpha, WriteProtectedAxis) else None
+        self.script_beta = beta if isinstance(beta, WriteProtectedAxis) else None
+        self.script_gamma = gamma if isinstance(gamma, WriteProtectedAxis) else None
 
     def any_scripts_loaded(self):
         return (self.script_alpha, self.script_beta, self.script_gamma) != (None, None, None)
@@ -191,18 +85,15 @@ class FourphaseMotionGenerator(QtCore.QObject):
         self.last_update_time = time.time()
 
         if not self.any_scripts_loaded():
-            if issubclass(self.pattern.__class__, MousePattern):
+            if isinstance(self.pattern, MousePattern):
                 if self.pattern.last_position_is_mouse_position():
-                    # mouse position, display update already handled.
                     pass
                 else:
-                    # tcode position, send lagged position
                     a = self.alpha.interpolate(time.time() - self.latency)
                     b = self.beta.interpolate(time.time() - self.latency)
                     c = self.gamma.interpolate(time.time() - self.latency)
                     self.position_updated.emit(a, b, c)
             else:
-                # update pattern, display lagged position
                 a, b, c = self.pattern.update(dt * self.velocity)
                 self.alpha.add(a)
                 self.beta.add(b)
@@ -212,7 +103,6 @@ class FourphaseMotionGenerator(QtCore.QObject):
                 c = self.gamma.interpolate(time.time() - self.latency)
                 self.position_updated.emit(a, b, c)
         else:
-            # update display with data from funscript
             if self.script_alpha:
                 a = self.script_alpha.interpolate(time.time() - self.latency)
             else:
