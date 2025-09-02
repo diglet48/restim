@@ -1,5 +1,5 @@
 """
-Spirograph Pattern - Classic cycloid mathematical pattern
+Spirograph Pattern
 """
 import numpy as np
 from qt_ui.patterns.threephase.base import ThreephasePattern, register_pattern
@@ -8,7 +8,7 @@ from qt_ui.patterns.threephase.base import ThreephasePattern, register_pattern
 @register_pattern(category="mathematical")
 class SpirographPattern(ThreephasePattern):
     display_name = "Spirograph"
-    description = "Classic cycloid pattern created by a circle rolling inside another circle. Creates intricate geometric loops and spirals. Mathematical precision with elegant, flowing complexity."
+    description = ""
     
     def __init__(self, amplitude=1.0, velocity=1.0):
         super().__init__(amplitude, velocity)

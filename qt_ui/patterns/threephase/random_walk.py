@@ -1,5 +1,5 @@
 """
-Random Walk Pattern - Unpredictable wandering motion with center-pull
+Random Walk Pattern
 """
 import numpy as np
 from qt_ui.patterns.threephase.base import ThreephasePattern, register_pattern
@@ -8,7 +8,7 @@ from qt_ui.patterns.threephase.base import ThreephasePattern, register_pattern
 @register_pattern(category="experimental")
 class RandomWalkPattern(ThreephasePattern):
     display_name = "Random Walk"
-    description = "Unpredictable wandering motion with pseudo-random direction changes. Includes center-pull to prevent drift. Creates natural, organic, unpredictable movement patterns."
+    description = ""
     
     def __init__(self, amplitude=1.0, velocity=1.0):
         super().__init__(amplitude, velocity)

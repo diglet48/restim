@@ -1,5 +1,5 @@
 """
-Mouse Pattern - direct mouse control
+Mouse Pattern
 """
 from qt_ui.patterns.threephase.base import ThreephasePattern, register_pattern
 from stim_math.axis import AbstractAxis
@@ -7,7 +7,7 @@ from stim_math.axis import AbstractAxis
 @register_pattern(category="manual")
 class MousePattern(ThreephasePattern):
     display_name = "Mouse"
-    description = "Direct mouse control for manual positioning"
+    description = ""
     category = "manual"
     def __init__(self, alpha: AbstractAxis = None, beta: AbstractAxis = None, amplitude: float = 1.0, velocity: float = 1.0):
         super().__init__(amplitude=amplitude, velocity=velocity)

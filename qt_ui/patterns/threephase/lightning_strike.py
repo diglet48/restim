@@ -1,5 +1,5 @@
 """
-Lightning Strike Pattern - Sudden intense strikes with quiet periods
+Lightning Strike Pattern
 """
 import numpy as np
 from qt_ui.patterns.threephase.base import ThreephasePattern, register_pattern
@@ -8,7 +8,7 @@ from qt_ui.patterns.threephase.base import ThreephasePattern, register_pattern
 @register_pattern(category="experimental")
 class LightningStrikePattern(ThreephasePattern):
     display_name = "Lightning Strike"
-    description = "Sudden intense strikes with quiet periods"
+    description = ""
     
     def __init__(self, amplitude=1.0, velocity=1.0):
         super().__init__(amplitude, velocity)

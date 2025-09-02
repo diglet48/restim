@@ -1,5 +1,5 @@
 """
-Rose Curve Pattern - Mathematical rose with beautiful petals
+Rose Curve Pattern
 """
 import numpy as np
 from qt_ui.patterns.threephase.base import ThreephasePattern, register_pattern
@@ -8,7 +8,7 @@ from qt_ui.patterns.threephase.base import ThreephasePattern, register_pattern
 @register_pattern(category="mathematical")
 class RoseCurvePattern(ThreephasePattern):
     display_name = "Rose Curve"
-    description = "Mathematical rose pattern with 5 beautiful petals. Smooth, organic flower-like motion with symmetrical design. Gentle yet varied stimulation following natural curves."
+    description = ""
     
     def __init__(self, amplitude=1.0, velocity=1.0):
         super().__init__(amplitude, velocity)

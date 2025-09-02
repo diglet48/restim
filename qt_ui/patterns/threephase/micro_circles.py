@@ -1,5 +1,5 @@
 """
-Micro Circles Pattern - Small circular motions with drifting origins
+Micro Circles Pattern
 """
 import numpy as np
 from qt_ui.patterns.threephase.base import ThreephasePattern, register_pattern
@@ -8,7 +8,7 @@ from qt_ui.patterns.threephase.base import ThreephasePattern, register_pattern
 @register_pattern(category="basic")
 class MicroCirclesPattern(ThreephasePattern):
     display_name = "Micro Circles"
-    description = "Small circular motions with drifting origins"
+    description = ""
     
     def __init__(self, amplitude=1.0, velocity=1.0):
         super().__init__(amplitude, velocity)
