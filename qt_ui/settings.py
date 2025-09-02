@@ -160,3 +160,31 @@ focstim_teleplot_prefix = Setting("focstim/teleplot_prefix", "", str)
 focstim_dump_notifications_to_file = Setting("focstim/dump_notifications_to_file", False, bool)
 
 neostim_serial_port = Setting("neostim/serial_port", '', str)
+
+# Pattern preferences - we'll store this as a JSON string and convert to dict
+import json
+
+class DictSetting(Setting):
+    """Special setting for dictionary data stored as JSON string"""
+    def __init__(self, key, default_value):
+        super().__init__(key, default_value, str)
+    
+    def get(self):
+        if self.cache is None:
+            json_str = get_settings_instance().value(self.key, json.dumps(self.default_value), str)
+            try:
+                self.cache = json.loads(json_str) if json_str else self.default_value
+            except (json.JSONDecodeError, TypeError):
+                self.cache = self.default_value
+        return self.cache
+    
+    def set(self, value):
+        json_str = json.dumps(value)
+        current_cache = self.cache if self.cache is not None else self.default_value
+        if json_str != json.dumps(current_cache):
+            get_settings_instance().setValue(self.key, json_str)
+            self.cache = value
+            # Force immediate sync to ensure persistence
+            get_settings_instance().sync()
+
+pattern_enabled = DictSetting("patterns/enabled", {})
