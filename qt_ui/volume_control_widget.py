@@ -95,13 +95,21 @@ class VolumeControlWidget(QtWidgets.QWidget, Ui_VolumeControlForm):
         else:
             api_volume = self.axis_api_volume.interpolate(time.time() - self.latency)
         external_volume = self.axis_external_volume.interpolate(time.time() - self.latency)
+        
+        # Progress bar shows the effective applied volume (as it always did)
+        effective_volume = int(master_volume * api_volume * inactivity_volume * external_volume * 100)
         self.volume_widget.set_value_and_tooltip(
-            int(master_volume * api_volume * inactivity_volume * external_volume * 100),
+            effective_volume,
             f"master volume: {master_volume * 100:.0f}%\n" +
             f"tcode/funscript volume: {api_volume * 100:.0f}%\n" +
             f"inactivity volume: {inactivity_volume * 100:.0f}%\n" +
             f"external volume: {external_volume * 100:.0f}%"
         )
+        
+        # Red line shows the master volume setting (from spinbox)
+        if self.doubleSpinBox_volume is not None:
+            master_volume_setting = int(self.doubleSpinBox_volume.value())
+            self.volume_widget.set_master_volume_indicator(master_volume_setting)
 
     def timeout_ramp(self, dt: float):
         if not self.checkBox_ramp_enabled.isChecked():
