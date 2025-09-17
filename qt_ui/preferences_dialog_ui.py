@@ -15,12 +15,13 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QFont, QFontDatabase, QGradient, QIcon,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
-from PySide6.QtWidgets import (QAbstractButton, QApplication, QCheckBox, QComboBox,
-    QDialogButtonBox, QDoubleSpinBox, QFormLayout, QFrame,
-    QGridLayout, QGroupBox, QHBoxLayout, QHeaderView,
-    QLabel, QLineEdit, QPushButton, QSizePolicy,
-    QSpacerItem, QSpinBox, QTabWidget, QToolButton,
-    QVBoxLayout, QWidget)
+from PySide6.QtWidgets import (QAbstractButton, QAbstractItemView, QApplication, QCheckBox,
+    QComboBox, QDialogButtonBox, QDoubleSpinBox, QFormLayout,
+    QFrame, QGridLayout, QGroupBox, QHBoxLayout,
+    QHeaderView, QLabel, QLineEdit, QPushButton,
+    QSizePolicy, QSpacerItem, QSpinBox, QTabWidget,
+    QTableWidget, QTableWidgetItem, QToolButton, QVBoxLayout,
+    QWidget)
 
 from qt_ui.widgets.table_view_with_combobox import TableViewWithComboBox
 import restim_rc
@@ -554,6 +555,55 @@ class Ui_PreferencesDialog(object):
         self.verticalLayout_7.addWidget(self.frame)
 
         self.tabWidget.addTab(self.tab_funscript, "")
+        self.tab_patterns = QWidget()
+        self.tab_patterns.setObjectName(u"tab_patterns")
+        self.verticalLayout_9 = QVBoxLayout(self.tab_patterns)
+        self.verticalLayout_9.setObjectName(u"verticalLayout_9")
+        self.label_19 = QLabel(self.tab_patterns)
+        self.label_19.setObjectName(u"label_19")
+        self.label_19.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.label_19.setMargin(10)
+
+        self.verticalLayout_9.addWidget(self.label_19)
+
+        self.frame_9 = QFrame(self.tab_patterns)
+        self.frame_9.setObjectName(u"frame_9")
+        self.frame_9.setFrameShape(QFrame.Shape.StyledPanel)
+        self.frame_9.setFrameShadow(QFrame.Shadow.Raised)
+        self.horizontalLayout_3 = QHBoxLayout(self.frame_9)
+        self.horizontalLayout_3.setObjectName(u"horizontalLayout_3")
+        self.button_patterns_enable_all = QPushButton(self.frame_9)
+        self.button_patterns_enable_all.setObjectName(u"button_patterns_enable_all")
+
+        self.horizontalLayout_3.addWidget(self.button_patterns_enable_all)
+
+        self.button_patterns_disable_all = QPushButton(self.frame_9)
+        self.button_patterns_disable_all.setObjectName(u"button_patterns_disable_all")
+
+        self.horizontalLayout_3.addWidget(self.button_patterns_disable_all)
+
+        self.horizontalSpacer = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
+
+        self.horizontalLayout_3.addItem(self.horizontalSpacer)
+
+
+        self.verticalLayout_9.addWidget(self.frame_9)
+
+        self.patterns_table = QTableWidget(self.tab_patterns)
+        if (self.patterns_table.columnCount() < 2):
+            self.patterns_table.setColumnCount(2)
+        __qtablewidgetitem = QTableWidgetItem()
+        self.patterns_table.setHorizontalHeaderItem(0, __qtablewidgetitem)
+        __qtablewidgetitem1 = QTableWidgetItem()
+        self.patterns_table.setHorizontalHeaderItem(1, __qtablewidgetitem1)
+        self.patterns_table.setObjectName(u"patterns_table")
+        self.patterns_table.setAlternatingRowColors(True)
+        self.patterns_table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
+        self.patterns_table.verticalHeader().setVisible(False)
+
+        self.verticalLayout_9.addWidget(self.patterns_table)
+
+        self.tabWidget.addTab(self.tab_patterns, "")
 
         self.verticalLayout.addWidget(self.tabWidget)
 
@@ -663,5 +713,13 @@ class Ui_PreferencesDialog(object):
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_display), QCoreApplication.translate("PreferencesDialog", u"Display", None))
         self.button_funscript_reset_defaults.setText(QCoreApplication.translate("PreferencesDialog", u"Reset all to defaults", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_funscript), QCoreApplication.translate("PreferencesDialog", u"Funscript / T-Code", None))
+        self.label_19.setText(QCoreApplication.translate("PreferencesDialog", u"<html><head/><body><p><span style=\" font-size:12pt; font-weight:700;\">Threephase patterns</span></p></body></html>", None))
+        self.button_patterns_enable_all.setText(QCoreApplication.translate("PreferencesDialog", u"Enable All", None))
+        self.button_patterns_disable_all.setText(QCoreApplication.translate("PreferencesDialog", u"Disable All", None))
+        ___qtablewidgetitem = self.patterns_table.horizontalHeaderItem(0)
+        ___qtablewidgetitem.setText(QCoreApplication.translate("PreferencesDialog", u"Pattern", None));
+        ___qtablewidgetitem1 = self.patterns_table.horizontalHeaderItem(1)
+        ___qtablewidgetitem1.setText(QCoreApplication.translate("PreferencesDialog", u"Enabled", None));
+        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_patterns), QCoreApplication.translate("PreferencesDialog", u"Patterns", None))
     # retranslateUi
 
