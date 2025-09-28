@@ -386,42 +386,38 @@
       </attribute>
       <layout class="QVBoxLayout" name="verticalLayout_5">
        <item>
+        <widget class="QGroupBox" name="groupBox_11">
+         <property name="title">
+          <string>Communication</string>
+         </property>
+         <layout class="QFormLayout" name="formLayout_10">
+          <item row="0" column="0">
+           <widget class="QRadioButton" name="focstim_radio_serial">
+            <property name="text">
+             <string>Serial</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <widget class="QRadioButton" name="focstim_radio_wifi">
+            <property name="text">
+             <string>Wifi</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
         <widget class="QGroupBox" name="groupBox_8">
          <property name="title">
-          <string>FOC-Stim</string>
+          <string>Serial</string>
          </property>
          <layout class="QGridLayout" name="gridLayout_5">
-          <item row="2" column="2">
-           <widget class="QLineEdit" name="focstim_teleplot_prefix"/>
-          </item>
-          <item row="1" column="2">
-           <widget class="QCheckBox" name="focstim_use_teleplot">
+          <item row="0" column="0">
+           <widget class="QLabel" name="label_14">
             <property name="text">
-             <string/>
-            </property>
-           </widget>
-          </item>
-          <item row="2" column="0">
-           <widget class="QLabel" name="label_16">
-            <property name="toolTip">
-             <string>Useful if you have multiple FOC-Stim boxes</string>
-            </property>
-            <property name="text">
-             <string>teleplot prefix (?)</string>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="3">
-           <widget class="QToolButton" name="refresh_serial_devices">
-            <property name="text">
-             <string>Refresh</string>
-            </property>
-           </widget>
-          </item>
-          <item row="3" column="0">
-           <widget class="QLabel" name="label_18">
-            <property name="text">
-             <string>Dump notifications to file</string>
+             <string>Serial port</string>
             </property>
            </widget>
           </item>
@@ -435,21 +431,110 @@
             </property>
            </widget>
           </item>
+          <item row="0" column="3">
+           <widget class="QToolButton" name="focstim_refresh_serial_devices">
+            <property name="text">
+             <string>Refresh</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <widget class="QGroupBox" name="groupBox_10">
+         <property name="title">
+          <string>Network</string>
+         </property>
+         <layout class="QGridLayout" name="gridLayout_7">
+          <item row="0" column="1" colspan="2">
+           <widget class="QLineEdit" name="focstim_ssid"/>
+          </item>
+          <item row="2" column="1">
+           <widget class="QToolButton" name="focstim_sync">
+            <property name="text">
+             <string>Upload ssid/password</string>
+            </property>
+           </widget>
+          </item>
           <item row="1" column="0">
+           <widget class="QLabel" name="label_21">
+            <property name="text">
+             <string>Password</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="1" colspan="2">
+           <widget class="QLineEdit" name="focstim_password"/>
+          </item>
+          <item row="0" column="0">
+           <widget class="QLabel" name="label_20">
+            <property name="text">
+             <string>SSID</string>
+            </property>
+           </widget>
+          </item>
+          <item row="4" column="1">
+           <widget class="QLineEdit" name="focstim_ip"/>
+          </item>
+          <item row="4" column="0">
+           <widget class="QLabel" name="label_22">
+            <property name="text">
+             <string>IP</string>
+            </property>
+           </widget>
+          </item>
+          <item row="4" column="2">
+           <widget class="QToolButton" name="focstim_read_ip">
+            <property name="text">
+             <string>Read from device</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <widget class="QGroupBox" name="groupBox_9">
+         <property name="title">
+          <string>Advanced</string>
+         </property>
+         <layout class="QFormLayout" name="formLayout_8">
+          <item row="0" column="0">
            <widget class="QLabel" name="label_15">
             <property name="text">
              <string>Use teleplot</string>
             </property>
            </widget>
           </item>
-          <item row="0" column="0">
-           <widget class="QLabel" name="label_14">
+          <item row="0" column="1">
+           <widget class="QCheckBox" name="focstim_use_teleplot">
             <property name="text">
-             <string>Serial port</string>
+             <string/>
             </property>
            </widget>
           </item>
-          <item row="3" column="2">
+          <item row="1" column="0">
+           <widget class="QLabel" name="label_16">
+            <property name="toolTip">
+             <string>Useful if you have multiple FOC-Stim boxes</string>
+            </property>
+            <property name="text">
+             <string>teleplot prefix (?)</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="1">
+           <widget class="QLineEdit" name="focstim_teleplot_prefix"/>
+          </item>
+          <item row="2" column="0">
+           <widget class="QLabel" name="label_18">
+            <property name="text">
+             <string>Dump notifications to file</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="1">
            <widget class="QCheckBox" name="focstim_dump_notifications">
             <property name="text">
              <string/>
@@ -898,16 +983,54 @@
   </customwidget>
  </customwidgets>
  <tabstops>
-  <tabstop>udp_localhost_only</tabstop>
-  <tabstop>display_fps</tabstop>
-  <tabstop>display_latency_ms</tabstop>
+  <tabstop>focstim_radio_serial</tabstop>
+  <tabstop>focstim_radio_wifi</tabstop>
+  <tabstop>focstim_port</tabstop>
+  <tabstop>focstim_refresh_serial_devices</tabstop>
+  <tabstop>focstim_ssid</tabstop>
+  <tabstop>focstim_password</tabstop>
+  <tabstop>focstim_sync</tabstop>
+  <tabstop>focstim_use_teleplot</tabstop>
+  <tabstop>focstim_teleplot_prefix</tabstop>
+  <tabstop>focstim_dump_notifications</tabstop>
+  <tabstop>tcp_port</tabstop>
+  <tabstop>udp_port</tabstop>
+  <tabstop>gb_serial</tabstop>
+  <tabstop>serial_auto_expand</tabstop>
+  <tabstop>serial_port</tabstop>
+  <tabstop>gb_buttplug_wsdm</tabstop>
+  <tabstop>buttplug_wsdm_address</tabstop>
+  <tabstop>buttplug_wsdm_auto_expand</tabstop>
+  <tabstop>audio_latency</tabstop>
+  <tabstop>tabWidget</tabstop>
+  <tabstop>gb_udp_server</tabstop>
   <tabstop>audio_api</tabstop>
+  <tabstop>display_latency_ms</tabstop>
+  <tabstop>websocket_port</tabstop>
+  <tabstop>neostim_refresh_serial_devices</tabstop>
+  <tabstop>neostim_port</tabstop>
+  <tabstop>mpc_address</tabstop>
+  <tabstop>mpc_reload</tabstop>
+  <tabstop>heresphere_address</tabstop>
+  <tabstop>heresphere_reload</tabstop>
+  <tabstop>vlc_reload</tabstop>
+  <tabstop>vlc_address</tabstop>
+  <tabstop>vlc_username</tabstop>
+  <tabstop>vlc_password</tabstop>
+  <tabstop>kodi_address</tabstop>
+  <tabstop>kodi_reload</tabstop>
+  <tabstop>tableView</tabstop>
+  <tabstop>button_funscript_reset_defaults</tabstop>
+  <tabstop>button_patterns_enable_all</tabstop>
+  <tabstop>button_patterns_disable_all</tabstop>
+  <tabstop>patterns_table</tabstop>
   <tabstop>audio_output_device</tabstop>
   <tabstop>gb_websocket_server</tabstop>
-  <tabstop>websocket_localhost_only</tabstop>
   <tabstop>gb_tcp_server</tabstop>
+  <tabstop>udp_localhost_only</tabstop>
+  <tabstop>display_fps</tabstop>
   <tabstop>tcp_localhost_only</tabstop>
-  <tabstop>gb_udp_server</tabstop>
+  <tabstop>websocket_localhost_only</tabstop>
  </tabstops>
  <resources>
   <include location="../resources/restim.qrc"/>

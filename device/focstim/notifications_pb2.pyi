@@ -155,3 +155,15 @@ class NotificationDebugAS5311(_message.Message):
 
     def __init__(self, raw: _Optional[int]=..., tracked: _Optional[int]=..., flags: _Optional[int]=...) -> None:
         ...
+
+class NotificationDebugEdging(_message.Message):
+    __slots__ = ('full_power_threshold', 'reduced_power_threshold', 'reduction')
+    FULL_POWER_THRESHOLD_FIELD_NUMBER: _ClassVar[int]
+    REDUCED_POWER_THRESHOLD_FIELD_NUMBER: _ClassVar[int]
+    REDUCTION_FIELD_NUMBER: _ClassVar[int]
+    full_power_threshold: float
+    reduced_power_threshold: float
+    reduction: float
+
+    def __init__(self, full_power_threshold: _Optional[float]=..., reduced_power_threshold: _Optional[float]=..., reduction: _Optional[float]=...) -> None:
+        ...

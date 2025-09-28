@@ -1,5 +1,7 @@
 import functools
+import logging
 
+import google.protobuf.text_format
 from PySide6.QtSerialPort import QSerialPortInfo
 from PySide6.QtWidgets import QDialog, QAbstractButton, QDialogButtonBox, QAbstractItemView, QHeaderView, QComboBox, QTableWidgetItem, QCheckBox, QApplication
 from PySide6.QtCore import Qt, Signal, QTimer
@@ -7,9 +9,12 @@ from PySide6.QtCore import Qt, Signal, QTimer
 from qt_ui.preferences_dialog_ui import Ui_PreferencesDialog
 from qt_ui.models.funscript_kit import FunscriptKitModel
 from qt_ui.services.pattern_service import PatternControlService
+from device.focstim.helpers import WifiUploadHelper, GrabIpHelper
 import qt_ui.settings
 
 import sounddevice as sd
+
+logger = logging.getLogger('restim.preferences')
 
 
 class PreferencesDialog(QDialog, Ui_PreferencesDialog):
@@ -64,9 +69,13 @@ class PreferencesDialog(QDialog, Ui_PreferencesDialog):
         )
 
         # focstim/neostim reload serial devices
-        self.refresh_serial_devices.clicked.connect(self.repopulate_serial_devices)
+        self.focstim_refresh_serial_devices.clicked.connect(self.repopulate_serial_devices)
         self.neostim_refresh_serial_devices.clicked.connect(self.repopulate_serial_devices)
-    
+
+        # focstim buttons
+        self.focstim_read_ip.clicked.connect(self.read_focstim_ip)
+        self.focstim_sync.clicked.connect(self.upload_focstim_ssid)
+
     def _cache_patterns_data(self):
         """Cache pattern data at startup to avoid late discovery issues"""
         try:
@@ -133,6 +142,12 @@ class PreferencesDialog(QDialog, Ui_PreferencesDialog):
         self.focstim_teleplot_prefix.setText(qt_ui.settings.focstim_teleplot_prefix.get())
         self.focstim_dump_notifications.setChecked(qt_ui.settings.focstim_dump_notifications_to_file.get())
 
+        self.focstim_radio_serial.setChecked(qt_ui.settings.focstim_communication_serial.get())
+        self.focstim_radio_wifi.setChecked(qt_ui.settings.focstim_communication_wifi.get())
+        self.focstim_ssid.setText(qt_ui.settings.focstim_ssid.get())
+        self.focstim_password.setText(qt_ui.settings.focstim_password.get())
+        self.focstim_ip.setText(qt_ui.settings.focstim_ip.get())
+
         # neostim settings
         self.neostim_port.setCurrentIndex(self.neostim_port.findData(qt_ui.settings.neostim_serial_port.get()))
 
@@ -197,7 +212,6 @@ class PreferencesDialog(QDialog, Ui_PreferencesDialog):
         refresh(self.focstim_port, qt_ui.settings.focstim_serial_port)
         refresh(self.neostim_port, qt_ui.settings.neostim_serial_port)
 
-
     def refresh_audio_device_info(self):
         api_index = self.audio_api.currentIndex()
         device_name = self.audio_output_device.currentText()
@@ -206,6 +220,57 @@ class PreferencesDialog(QDialog, Ui_PreferencesDialog):
                 out_channels = device['max_output_channels']
                 samplerate = device['default_samplerate']
                 self.audio_info.setText(f"channels: {out_channels}, samplerate: {samplerate}")
+
+    def upload_focstim_ssid(self):
+        helper = WifiUploadHelper()
+        fut = helper.upload(
+            self.focstim_port.currentData(),
+            self.focstim_ssid.text().encode("utf-8"),
+            self.focstim_password.text().encode("utf-8"),
+        )
+        if fut is None:
+            return
+        self.focstim_sync.setEnabled(False)
+
+        def timeout():
+            helper.close()
+            logger.error("timeout uploading wifi settings")
+            self.focstim_sync.setEnabled(True)
+
+        def result(result):
+            helper.close()
+            s = google.protobuf.text_format.MessageToString(result, as_one_line=True)
+            logger.info(f"response: {s}")
+            self.focstim_sync.setEnabled(True)
+
+        fut.on_timeout.connect(timeout)
+        fut.on_result.connect(result)
+
+    def read_focstim_ip(self):
+        helper = GrabIpHelper()
+        fut = helper.get_ip(
+            self.focstim_port.currentData(),
+        )
+        if fut is None:
+            return
+        self.focstim_read_ip.setEnabled(False)
+
+        def timeout():
+            helper.close()
+            logger.error("timeout grabbing IP")
+            self.focstim_read_ip.setEnabled(True)
+
+        def result(result):
+            helper.close()
+            s = google.protobuf.text_format.MessageToString(result, as_one_line=True)
+            logger.info(f"response: {s}")
+            ip = result.response_wifi_ip_get.ip
+            ip_string = f"{(ip >> 24) & 0xFF}.{(ip >> 16) & 0xFF}.{(ip >> 8) & 0xFF}.{ip & 0xFF}"
+            self.focstim_read_ip.setEnabled(True)
+            self.focstim_ip.setText(ip_string)
+
+        fut.on_timeout.connect(timeout)
+        fut.on_result.connect(result)
 
     def saveSettings(self):
         # network
@@ -239,6 +304,11 @@ class PreferencesDialog(QDialog, Ui_PreferencesDialog):
         qt_ui.settings.focstim_use_teleplot.set(self.focstim_use_teleplot.isChecked())
         qt_ui.settings.focstim_teleplot_prefix.set(self.focstim_teleplot_prefix.text())
         qt_ui.settings.focstim_dump_notifications_to_file.set(self.focstim_dump_notifications.isChecked())
+        qt_ui.settings.focstim_communication_serial.set(self.focstim_radio_serial.isChecked())
+        qt_ui.settings.focstim_communication_wifi.set(self.focstim_radio_wifi.isChecked())
+        qt_ui.settings.focstim_ssid.set(self.focstim_ssid.text())
+        qt_ui.settings.focstim_password.set(self.focstim_password.text())
+        qt_ui.settings.focstim_ip.set(self.focstim_ip.text())
 
         # neoStim
         qt_ui.settings.neostim_serial_port.set(str(self.neostim_port.currentData()))
