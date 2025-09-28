@@ -19,9 +19,9 @@ from PySide6.QtWidgets import (QAbstractButton, QAbstractItemView, QApplication,
     QComboBox, QDialogButtonBox, QDoubleSpinBox, QFormLayout,
     QFrame, QGridLayout, QGroupBox, QHBoxLayout,
     QHeaderView, QLabel, QLineEdit, QPushButton,
-    QSizePolicy, QSpacerItem, QSpinBox, QTabWidget,
-    QTableWidget, QTableWidgetItem, QToolButton, QVBoxLayout,
-    QWidget)
+    QRadioButton, QSizePolicy, QSpacerItem, QSpinBox,
+    QTabWidget, QTableWidget, QTableWidgetItem, QToolButton,
+    QVBoxLayout, QWidget)
 
 from qt_ui.widgets.table_view_with_combobox import TableViewWithComboBox
 import restim_rc
@@ -266,34 +266,31 @@ class Ui_PreferencesDialog(object):
         self.tab_foc.setObjectName(u"tab_foc")
         self.verticalLayout_5 = QVBoxLayout(self.tab_foc)
         self.verticalLayout_5.setObjectName(u"verticalLayout_5")
+        self.groupBox_11 = QGroupBox(self.tab_foc)
+        self.groupBox_11.setObjectName(u"groupBox_11")
+        self.formLayout_10 = QFormLayout(self.groupBox_11)
+        self.formLayout_10.setObjectName(u"formLayout_10")
+        self.focstim_radio_serial = QRadioButton(self.groupBox_11)
+        self.focstim_radio_serial.setObjectName(u"focstim_radio_serial")
+
+        self.formLayout_10.setWidget(0, QFormLayout.ItemRole.LabelRole, self.focstim_radio_serial)
+
+        self.focstim_radio_wifi = QRadioButton(self.groupBox_11)
+        self.focstim_radio_wifi.setObjectName(u"focstim_radio_wifi")
+
+        self.formLayout_10.setWidget(1, QFormLayout.ItemRole.LabelRole, self.focstim_radio_wifi)
+
+
+        self.verticalLayout_5.addWidget(self.groupBox_11)
+
         self.groupBox_8 = QGroupBox(self.tab_foc)
         self.groupBox_8.setObjectName(u"groupBox_8")
         self.gridLayout_5 = QGridLayout(self.groupBox_8)
         self.gridLayout_5.setObjectName(u"gridLayout_5")
-        self.focstim_teleplot_prefix = QLineEdit(self.groupBox_8)
-        self.focstim_teleplot_prefix.setObjectName(u"focstim_teleplot_prefix")
+        self.label_14 = QLabel(self.groupBox_8)
+        self.label_14.setObjectName(u"label_14")
 
-        self.gridLayout_5.addWidget(self.focstim_teleplot_prefix, 2, 2, 1, 1)
-
-        self.focstim_use_teleplot = QCheckBox(self.groupBox_8)
-        self.focstim_use_teleplot.setObjectName(u"focstim_use_teleplot")
-
-        self.gridLayout_5.addWidget(self.focstim_use_teleplot, 1, 2, 1, 1)
-
-        self.label_16 = QLabel(self.groupBox_8)
-        self.label_16.setObjectName(u"label_16")
-
-        self.gridLayout_5.addWidget(self.label_16, 2, 0, 1, 1)
-
-        self.refresh_serial_devices = QToolButton(self.groupBox_8)
-        self.refresh_serial_devices.setObjectName(u"refresh_serial_devices")
-
-        self.gridLayout_5.addWidget(self.refresh_serial_devices, 0, 3, 1, 1)
-
-        self.label_18 = QLabel(self.groupBox_8)
-        self.label_18.setObjectName(u"label_18")
-
-        self.gridLayout_5.addWidget(self.label_18, 3, 0, 1, 1)
+        self.gridLayout_5.addWidget(self.label_14, 0, 0, 1, 1)
 
         self.focstim_port = QComboBox(self.groupBox_8)
         self.focstim_port.setObjectName(u"focstim_port")
@@ -305,23 +302,97 @@ class Ui_PreferencesDialog(object):
 
         self.gridLayout_5.addWidget(self.focstim_port, 0, 2, 1, 1)
 
-        self.label_15 = QLabel(self.groupBox_8)
-        self.label_15.setObjectName(u"label_15")
+        self.focstim_refresh_serial_devices = QToolButton(self.groupBox_8)
+        self.focstim_refresh_serial_devices.setObjectName(u"focstim_refresh_serial_devices")
 
-        self.gridLayout_5.addWidget(self.label_15, 1, 0, 1, 1)
-
-        self.label_14 = QLabel(self.groupBox_8)
-        self.label_14.setObjectName(u"label_14")
-
-        self.gridLayout_5.addWidget(self.label_14, 0, 0, 1, 1)
-
-        self.focstim_dump_notifications = QCheckBox(self.groupBox_8)
-        self.focstim_dump_notifications.setObjectName(u"focstim_dump_notifications")
-
-        self.gridLayout_5.addWidget(self.focstim_dump_notifications, 3, 2, 1, 1)
+        self.gridLayout_5.addWidget(self.focstim_refresh_serial_devices, 0, 3, 1, 1)
 
 
         self.verticalLayout_5.addWidget(self.groupBox_8)
+
+        self.groupBox_10 = QGroupBox(self.tab_foc)
+        self.groupBox_10.setObjectName(u"groupBox_10")
+        self.gridLayout_7 = QGridLayout(self.groupBox_10)
+        self.gridLayout_7.setObjectName(u"gridLayout_7")
+        self.label_22 = QLabel(self.groupBox_10)
+        self.label_22.setObjectName(u"label_22")
+
+        self.gridLayout_7.addWidget(self.label_22, 3, 0, 1, 1)
+
+        self.focstim_ssid = QLineEdit(self.groupBox_10)
+        self.focstim_ssid.setObjectName(u"focstim_ssid")
+
+        self.gridLayout_7.addWidget(self.focstim_ssid, 0, 1, 1, 2)
+
+        self.focstim_sync = QToolButton(self.groupBox_10)
+        self.focstim_sync.setObjectName(u"focstim_sync")
+
+        self.gridLayout_7.addWidget(self.focstim_sync, 2, 1, 1, 1)
+
+        self.label_21 = QLabel(self.groupBox_10)
+        self.label_21.setObjectName(u"label_21")
+
+        self.gridLayout_7.addWidget(self.label_21, 1, 0, 1, 1)
+
+        self.focstim_read_ip = QToolButton(self.groupBox_10)
+        self.focstim_read_ip.setObjectName(u"focstim_read_ip")
+
+        self.gridLayout_7.addWidget(self.focstim_read_ip, 3, 2, 1, 1)
+
+        self.focstim_password = QLineEdit(self.groupBox_10)
+        self.focstim_password.setObjectName(u"focstim_password")
+
+        self.gridLayout_7.addWidget(self.focstim_password, 1, 1, 1, 2)
+
+        self.label_20 = QLabel(self.groupBox_10)
+        self.label_20.setObjectName(u"label_20")
+
+        self.gridLayout_7.addWidget(self.label_20, 0, 0, 1, 1)
+
+        self.focstim_ip = QLineEdit(self.groupBox_10)
+        self.focstim_ip.setObjectName(u"focstim_ip")
+
+        self.gridLayout_7.addWidget(self.focstim_ip, 3, 1, 1, 1)
+
+
+        self.verticalLayout_5.addWidget(self.groupBox_10)
+
+        self.groupBox_9 = QGroupBox(self.tab_foc)
+        self.groupBox_9.setObjectName(u"groupBox_9")
+        self.formLayout_8 = QFormLayout(self.groupBox_9)
+        self.formLayout_8.setObjectName(u"formLayout_8")
+        self.label_18 = QLabel(self.groupBox_9)
+        self.label_18.setObjectName(u"label_18")
+
+        self.formLayout_8.setWidget(2, QFormLayout.ItemRole.LabelRole, self.label_18)
+
+        self.focstim_dump_notifications = QCheckBox(self.groupBox_9)
+        self.focstim_dump_notifications.setObjectName(u"focstim_dump_notifications")
+
+        self.formLayout_8.setWidget(2, QFormLayout.ItemRole.FieldRole, self.focstim_dump_notifications)
+
+        self.label_16 = QLabel(self.groupBox_9)
+        self.label_16.setObjectName(u"label_16")
+
+        self.formLayout_8.setWidget(1, QFormLayout.ItemRole.LabelRole, self.label_16)
+
+        self.focstim_teleplot_prefix = QLineEdit(self.groupBox_9)
+        self.focstim_teleplot_prefix.setObjectName(u"focstim_teleplot_prefix")
+
+        self.formLayout_8.setWidget(1, QFormLayout.ItemRole.FieldRole, self.focstim_teleplot_prefix)
+
+        self.label_15 = QLabel(self.groupBox_9)
+        self.label_15.setObjectName(u"label_15")
+
+        self.formLayout_8.setWidget(0, QFormLayout.ItemRole.LabelRole, self.label_15)
+
+        self.focstim_use_teleplot = QCheckBox(self.groupBox_9)
+        self.focstim_use_teleplot.setObjectName(u"focstim_use_teleplot")
+
+        self.formLayout_8.setWidget(0, QFormLayout.ItemRole.FieldRole, self.focstim_use_teleplot)
+
+
+        self.verticalLayout_5.addWidget(self.groupBox_9)
 
         self.verticalSpacer_4 = QSpacerItem(20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
 
@@ -613,15 +684,55 @@ class Ui_PreferencesDialog(object):
 
         self.verticalLayout.addWidget(self.buttonBox)
 
-        QWidget.setTabOrder(self.udp_localhost_only, self.display_fps)
-        QWidget.setTabOrder(self.display_fps, self.display_latency_ms)
-        QWidget.setTabOrder(self.display_latency_ms, self.audio_api)
-        QWidget.setTabOrder(self.audio_api, self.audio_output_device)
+        QWidget.setTabOrder(self.focstim_radio_serial, self.focstim_radio_wifi)
+        QWidget.setTabOrder(self.focstim_radio_wifi, self.focstim_port)
+        QWidget.setTabOrder(self.focstim_port, self.focstim_refresh_serial_devices)
+        QWidget.setTabOrder(self.focstim_refresh_serial_devices, self.focstim_ssid)
+        QWidget.setTabOrder(self.focstim_ssid, self.focstim_password)
+        QWidget.setTabOrder(self.focstim_password, self.focstim_sync)
+        QWidget.setTabOrder(self.focstim_sync, self.focstim_ip)
+        QWidget.setTabOrder(self.focstim_ip, self.focstim_read_ip)
+        QWidget.setTabOrder(self.focstim_read_ip, self.focstim_use_teleplot)
+        QWidget.setTabOrder(self.focstim_use_teleplot, self.focstim_teleplot_prefix)
+        QWidget.setTabOrder(self.focstim_teleplot_prefix, self.focstim_dump_notifications)
+        QWidget.setTabOrder(self.focstim_dump_notifications, self.tcp_port)
+        QWidget.setTabOrder(self.tcp_port, self.udp_port)
+        QWidget.setTabOrder(self.udp_port, self.gb_serial)
+        QWidget.setTabOrder(self.gb_serial, self.serial_auto_expand)
+        QWidget.setTabOrder(self.serial_auto_expand, self.serial_port)
+        QWidget.setTabOrder(self.serial_port, self.gb_buttplug_wsdm)
+        QWidget.setTabOrder(self.gb_buttplug_wsdm, self.buttplug_wsdm_address)
+        QWidget.setTabOrder(self.buttplug_wsdm_address, self.buttplug_wsdm_auto_expand)
+        QWidget.setTabOrder(self.buttplug_wsdm_auto_expand, self.audio_latency)
+        QWidget.setTabOrder(self.audio_latency, self.tabWidget)
+        QWidget.setTabOrder(self.tabWidget, self.gb_udp_server)
+        QWidget.setTabOrder(self.gb_udp_server, self.audio_api)
+        QWidget.setTabOrder(self.audio_api, self.display_latency_ms)
+        QWidget.setTabOrder(self.display_latency_ms, self.websocket_port)
+        QWidget.setTabOrder(self.websocket_port, self.neostim_refresh_serial_devices)
+        QWidget.setTabOrder(self.neostim_refresh_serial_devices, self.neostim_port)
+        QWidget.setTabOrder(self.neostim_port, self.mpc_address)
+        QWidget.setTabOrder(self.mpc_address, self.mpc_reload)
+        QWidget.setTabOrder(self.mpc_reload, self.heresphere_address)
+        QWidget.setTabOrder(self.heresphere_address, self.heresphere_reload)
+        QWidget.setTabOrder(self.heresphere_reload, self.vlc_reload)
+        QWidget.setTabOrder(self.vlc_reload, self.vlc_address)
+        QWidget.setTabOrder(self.vlc_address, self.vlc_username)
+        QWidget.setTabOrder(self.vlc_username, self.vlc_password)
+        QWidget.setTabOrder(self.vlc_password, self.kodi_address)
+        QWidget.setTabOrder(self.kodi_address, self.kodi_reload)
+        QWidget.setTabOrder(self.kodi_reload, self.tableView)
+        QWidget.setTabOrder(self.tableView, self.button_funscript_reset_defaults)
+        QWidget.setTabOrder(self.button_funscript_reset_defaults, self.button_patterns_enable_all)
+        QWidget.setTabOrder(self.button_patterns_enable_all, self.button_patterns_disable_all)
+        QWidget.setTabOrder(self.button_patterns_disable_all, self.patterns_table)
+        QWidget.setTabOrder(self.patterns_table, self.audio_output_device)
         QWidget.setTabOrder(self.audio_output_device, self.gb_websocket_server)
-        QWidget.setTabOrder(self.gb_websocket_server, self.websocket_localhost_only)
-        QWidget.setTabOrder(self.websocket_localhost_only, self.gb_tcp_server)
-        QWidget.setTabOrder(self.gb_tcp_server, self.tcp_localhost_only)
-        QWidget.setTabOrder(self.tcp_localhost_only, self.gb_udp_server)
+        QWidget.setTabOrder(self.gb_websocket_server, self.gb_tcp_server)
+        QWidget.setTabOrder(self.gb_tcp_server, self.udp_localhost_only)
+        QWidget.setTabOrder(self.udp_localhost_only, self.display_fps)
+        QWidget.setTabOrder(self.display_fps, self.tcp_localhost_only)
+        QWidget.setTabOrder(self.tcp_localhost_only, self.websocket_localhost_only)
 
         self.retranslateUi(PreferencesDialog)
 
@@ -676,17 +787,27 @@ class Ui_PreferencesDialog(object):
         self.label_27.setText(QCoreApplication.translate("PreferencesDialog", u"Info", None))
         self.audio_info.setText(QCoreApplication.translate("PreferencesDialog", u"TextLabel", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_audio), QCoreApplication.translate("PreferencesDialog", u"Audio", None))
-        self.groupBox_8.setTitle(QCoreApplication.translate("PreferencesDialog", u"FOC-Stim", None))
-        self.focstim_use_teleplot.setText("")
+        self.groupBox_11.setTitle(QCoreApplication.translate("PreferencesDialog", u"Communication", None))
+        self.focstim_radio_serial.setText(QCoreApplication.translate("PreferencesDialog", u"Serial", None))
+        self.focstim_radio_wifi.setText(QCoreApplication.translate("PreferencesDialog", u"Wifi", None))
+        self.groupBox_8.setTitle(QCoreApplication.translate("PreferencesDialog", u"Serial", None))
+        self.label_14.setText(QCoreApplication.translate("PreferencesDialog", u"Serial port", None))
+        self.focstim_refresh_serial_devices.setText(QCoreApplication.translate("PreferencesDialog", u"Refresh", None))
+        self.groupBox_10.setTitle(QCoreApplication.translate("PreferencesDialog", u"Network", None))
+        self.label_22.setText(QCoreApplication.translate("PreferencesDialog", u"IP", None))
+        self.focstim_sync.setText(QCoreApplication.translate("PreferencesDialog", u"Sync with device", None))
+        self.label_21.setText(QCoreApplication.translate("PreferencesDialog", u"Password", None))
+        self.focstim_read_ip.setText(QCoreApplication.translate("PreferencesDialog", u"Read from device", None))
+        self.label_20.setText(QCoreApplication.translate("PreferencesDialog", u"SSID", None))
+        self.groupBox_9.setTitle(QCoreApplication.translate("PreferencesDialog", u"Advanced", None))
+        self.label_18.setText(QCoreApplication.translate("PreferencesDialog", u"Dump notifications to file", None))
+        self.focstim_dump_notifications.setText("")
 #if QT_CONFIG(tooltip)
         self.label_16.setToolTip(QCoreApplication.translate("PreferencesDialog", u"Useful if you have multiple FOC-Stim boxes", None))
 #endif // QT_CONFIG(tooltip)
         self.label_16.setText(QCoreApplication.translate("PreferencesDialog", u"teleplot prefix (?)", None))
-        self.refresh_serial_devices.setText(QCoreApplication.translate("PreferencesDialog", u"Refresh", None))
-        self.label_18.setText(QCoreApplication.translate("PreferencesDialog", u"Dump notifications to file", None))
         self.label_15.setText(QCoreApplication.translate("PreferencesDialog", u"Use teleplot", None))
-        self.label_14.setText(QCoreApplication.translate("PreferencesDialog", u"Serial port", None))
-        self.focstim_dump_notifications.setText("")
+        self.focstim_use_teleplot.setText("")
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_foc), QCoreApplication.translate("PreferencesDialog", u"FOC-Stim", None))
         self.groupBox_4.setTitle(QCoreApplication.translate("PreferencesDialog", u"NeoStim", None))
         self.neostim_refresh_serial_devices.setText(QCoreApplication.translate("PreferencesDialog", u"Refresh", None))

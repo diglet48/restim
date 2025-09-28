@@ -154,6 +154,36 @@ class ResponseTimestampGet(_message.Message):
     def __init__(self, timestamp_ms: _Optional[int]=..., unix_timestamp_ms: _Optional[int]=...) -> None:
         ...
 
+class RequestWifiParametersSet(_message.Message):
+    __slots__ = ('ssid', 'password')
+    SSID_FIELD_NUMBER: _ClassVar[int]
+    PASSWORD_FIELD_NUMBER: _ClassVar[int]
+    ssid: bytes
+    password: bytes
+
+    def __init__(self, ssid: _Optional[bytes]=..., password: _Optional[bytes]=...) -> None:
+        ...
+
+class ResponseWifiParametersSet(_message.Message):
+    __slots__ = ()
+
+    def __init__(self) -> None:
+        ...
+
+class RequestWifiIPGet(_message.Message):
+    __slots__ = ()
+
+    def __init__(self) -> None:
+        ...
+
+class ResponseWifiIPGet(_message.Message):
+    __slots__ = ('ip',)
+    IP_FIELD_NUMBER: _ClassVar[int]
+    ip: int
+
+    def __init__(self, ip: _Optional[int]=...) -> None:
+        ...
+
 class RequestDebugStm32DeepSleep(_message.Message):
     __slots__ = ()
 

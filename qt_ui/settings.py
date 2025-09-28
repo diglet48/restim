@@ -158,6 +158,11 @@ focstim_serial_port = Setting("focstim/serial_port", '', str)
 focstim_use_teleplot = Setting("focstim/use-teleplot", True, bool)
 focstim_teleplot_prefix = Setting("focstim/teleplot_prefix", "", str)
 focstim_dump_notifications_to_file = Setting("focstim/dump_notifications_to_file", False, bool)
+focstim_communication_serial = Setting("focstim/communication_serial", True, bool)
+focstim_communication_wifi = Setting("focstim/communication_wifi", False, bool)
+focstim_ssid = Setting("focstim/wifi_ssid", '', str)
+focstim_password = Setting("focstim/wifi_password", '', str)
+focstim_ip = Setting("focstim/wifi_ip", '', str)
 
 neostim_serial_port = Setting("neostim/serial_port", '', str)
 

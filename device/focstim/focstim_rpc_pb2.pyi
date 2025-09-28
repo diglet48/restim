@@ -8,7 +8,7 @@ from typing import ClassVar as _ClassVar, Optional as _Optional, Union as _Union
 DESCRIPTOR: _descriptor.FileDescriptor
 
 class Notification(_message.Message):
-    __slots__ = ('notification_boot', 'notification_potentiometer', 'notification_currents', 'notification_model_estimation', 'notification_system_stats', 'notification_signal_stats', 'notification_battery', 'notification_debug_string', 'notification_debug_as5311', 'timestamp')
+    __slots__ = ('notification_boot', 'notification_potentiometer', 'notification_currents', 'notification_model_estimation', 'notification_system_stats', 'notification_signal_stats', 'notification_battery', 'notification_debug_string', 'notification_debug_as5311', 'notification_debug_edging', 'timestamp')
     NOTIFICATION_BOOT_FIELD_NUMBER: _ClassVar[int]
     NOTIFICATION_POTENTIOMETER_FIELD_NUMBER: _ClassVar[int]
     NOTIFICATION_CURRENTS_FIELD_NUMBER: _ClassVar[int]
@@ -18,6 +18,7 @@ class Notification(_message.Message):
     NOTIFICATION_BATTERY_FIELD_NUMBER: _ClassVar[int]
     NOTIFICATION_DEBUG_STRING_FIELD_NUMBER: _ClassVar[int]
     NOTIFICATION_DEBUG_AS5311_FIELD_NUMBER: _ClassVar[int]
+    NOTIFICATION_DEBUG_EDGING_FIELD_NUMBER: _ClassVar[int]
     TIMESTAMP_FIELD_NUMBER: _ClassVar[int]
     notification_boot: _notifications_pb2.NotificationBoot
     notification_potentiometer: _notifications_pb2.NotificationPotentiometer
@@ -28,13 +29,14 @@ class Notification(_message.Message):
     notification_battery: _notifications_pb2.NotificationBattery
     notification_debug_string: _notifications_pb2.NotificationDebugString
     notification_debug_as5311: _notifications_pb2.NotificationDebugAS5311
+    notification_debug_edging: _notifications_pb2.NotificationDebugEdging
     timestamp: int
 
-    def __init__(self, notification_boot: _Optional[_Union[_notifications_pb2.NotificationBoot, _Mapping]]=..., notification_potentiometer: _Optional[_Union[_notifications_pb2.NotificationPotentiometer, _Mapping]]=..., notification_currents: _Optional[_Union[_notifications_pb2.NotificationCurrents, _Mapping]]=..., notification_model_estimation: _Optional[_Union[_notifications_pb2.NotificationModelEstimation, _Mapping]]=..., notification_system_stats: _Optional[_Union[_notifications_pb2.NotificationSystemStats, _Mapping]]=..., notification_signal_stats: _Optional[_Union[_notifications_pb2.NotificationSignalStats, _Mapping]]=..., notification_battery: _Optional[_Union[_notifications_pb2.NotificationBattery, _Mapping]]=..., notification_debug_string: _Optional[_Union[_notifications_pb2.NotificationDebugString, _Mapping]]=..., notification_debug_as5311: _Optional[_Union[_notifications_pb2.NotificationDebugAS5311, _Mapping]]=..., timestamp: _Optional[int]=...) -> None:
+    def __init__(self, notification_boot: _Optional[_Union[_notifications_pb2.NotificationBoot, _Mapping]]=..., notification_potentiometer: _Optional[_Union[_notifications_pb2.NotificationPotentiometer, _Mapping]]=..., notification_currents: _Optional[_Union[_notifications_pb2.NotificationCurrents, _Mapping]]=..., notification_model_estimation: _Optional[_Union[_notifications_pb2.NotificationModelEstimation, _Mapping]]=..., notification_system_stats: _Optional[_Union[_notifications_pb2.NotificationSystemStats, _Mapping]]=..., notification_signal_stats: _Optional[_Union[_notifications_pb2.NotificationSignalStats, _Mapping]]=..., notification_battery: _Optional[_Union[_notifications_pb2.NotificationBattery, _Mapping]]=..., notification_debug_string: _Optional[_Union[_notifications_pb2.NotificationDebugString, _Mapping]]=..., notification_debug_as5311: _Optional[_Union[_notifications_pb2.NotificationDebugAS5311, _Mapping]]=..., notification_debug_edging: _Optional[_Union[_notifications_pb2.NotificationDebugEdging, _Mapping]]=..., timestamp: _Optional[int]=...) -> None:
         ...
 
 class Request(_message.Message):
-    __slots__ = ('id', 'request_firmware_version', 'request_capabilities_get', 'request_signal_start', 'request_signal_stop', 'request_axis_move_to', 'request_timestamp_set', 'request_timestamp_get', 'request_debug_stm32_deep_sleep', 'request_debug_enter_bootloader')
+    __slots__ = ('id', 'request_firmware_version', 'request_capabilities_get', 'request_signal_start', 'request_signal_stop', 'request_axis_move_to', 'request_timestamp_set', 'request_timestamp_get', 'request_wifi_parameters_set', 'request_wifi_ip_get', 'request_debug_stm32_deep_sleep', 'request_debug_enter_bootloader')
     ID_FIELD_NUMBER: _ClassVar[int]
     REQUEST_FIRMWARE_VERSION_FIELD_NUMBER: _ClassVar[int]
     REQUEST_CAPABILITIES_GET_FIELD_NUMBER: _ClassVar[int]
@@ -43,6 +45,8 @@ class Request(_message.Message):
     REQUEST_AXIS_MOVE_TO_FIELD_NUMBER: _ClassVar[int]
     REQUEST_TIMESTAMP_SET_FIELD_NUMBER: _ClassVar[int]
     REQUEST_TIMESTAMP_GET_FIELD_NUMBER: _ClassVar[int]
+    REQUEST_WIFI_PARAMETERS_SET_FIELD_NUMBER: _ClassVar[int]
+    REQUEST_WIFI_IP_GET_FIELD_NUMBER: _ClassVar[int]
     REQUEST_DEBUG_STM32_DEEP_SLEEP_FIELD_NUMBER: _ClassVar[int]
     REQUEST_DEBUG_ENTER_BOOTLOADER_FIELD_NUMBER: _ClassVar[int]
     id: int
@@ -53,14 +57,16 @@ class Request(_message.Message):
     request_axis_move_to: _messages_pb2.RequestAxisMoveTo
     request_timestamp_set: _messages_pb2.RequestTimestampSet
     request_timestamp_get: _messages_pb2.RequestTimestampGet
+    request_wifi_parameters_set: _messages_pb2.RequestWifiParametersSet
+    request_wifi_ip_get: _messages_pb2.RequestWifiIPGet
     request_debug_stm32_deep_sleep: _messages_pb2.RequestDebugStm32DeepSleep
     request_debug_enter_bootloader: _messages_pb2.RequestDebugEnterBootloader
 
-    def __init__(self, id: _Optional[int]=..., request_firmware_version: _Optional[_Union[_messages_pb2.RequestFirmwareVersion, _Mapping]]=..., request_capabilities_get: _Optional[_Union[_messages_pb2.RequestCapabilitiesGet, _Mapping]]=..., request_signal_start: _Optional[_Union[_messages_pb2.RequestSignalStart, _Mapping]]=..., request_signal_stop: _Optional[_Union[_messages_pb2.RequestSignalStop, _Mapping]]=..., request_axis_move_to: _Optional[_Union[_messages_pb2.RequestAxisMoveTo, _Mapping]]=..., request_timestamp_set: _Optional[_Union[_messages_pb2.RequestTimestampSet, _Mapping]]=..., request_timestamp_get: _Optional[_Union[_messages_pb2.RequestTimestampGet, _Mapping]]=..., request_debug_stm32_deep_sleep: _Optional[_Union[_messages_pb2.RequestDebugStm32DeepSleep, _Mapping]]=..., request_debug_enter_bootloader: _Optional[_Union[_messages_pb2.RequestDebugEnterBootloader, _Mapping]]=...) -> None:
+    def __init__(self, id: _Optional[int]=..., request_firmware_version: _Optional[_Union[_messages_pb2.RequestFirmwareVersion, _Mapping]]=..., request_capabilities_get: _Optional[_Union[_messages_pb2.RequestCapabilitiesGet, _Mapping]]=..., request_signal_start: _Optional[_Union[_messages_pb2.RequestSignalStart, _Mapping]]=..., request_signal_stop: _Optional[_Union[_messages_pb2.RequestSignalStop, _Mapping]]=..., request_axis_move_to: _Optional[_Union[_messages_pb2.RequestAxisMoveTo, _Mapping]]=..., request_timestamp_set: _Optional[_Union[_messages_pb2.RequestTimestampSet, _Mapping]]=..., request_timestamp_get: _Optional[_Union[_messages_pb2.RequestTimestampGet, _Mapping]]=..., request_wifi_parameters_set: _Optional[_Union[_messages_pb2.RequestWifiParametersSet, _Mapping]]=..., request_wifi_ip_get: _Optional[_Union[_messages_pb2.RequestWifiIPGet, _Mapping]]=..., request_debug_stm32_deep_sleep: _Optional[_Union[_messages_pb2.RequestDebugStm32DeepSleep, _Mapping]]=..., request_debug_enter_bootloader: _Optional[_Union[_messages_pb2.RequestDebugEnterBootloader, _Mapping]]=...) -> None:
         ...
 
 class Response(_message.Message):
-    __slots__ = ('id', 'response_firmware_version', 'response_capabilities_get', 'response_signal_start', 'response_signal_stop', 'response_axis_move_to', 'response_timestamp_set', 'response_timestamp_get', 'response_debug_stm32_deep_sleep', 'error')
+    __slots__ = ('id', 'response_firmware_version', 'response_capabilities_get', 'response_signal_start', 'response_signal_stop', 'response_axis_move_to', 'response_timestamp_set', 'response_timestamp_get', 'response_wifi_parameters_set', 'response_wifi_ip_get', 'response_debug_stm32_deep_sleep', 'error')
     ID_FIELD_NUMBER: _ClassVar[int]
     RESPONSE_FIRMWARE_VERSION_FIELD_NUMBER: _ClassVar[int]
     RESPONSE_CAPABILITIES_GET_FIELD_NUMBER: _ClassVar[int]
@@ -69,6 +75,8 @@ class Response(_message.Message):
     RESPONSE_AXIS_MOVE_TO_FIELD_NUMBER: _ClassVar[int]
     RESPONSE_TIMESTAMP_SET_FIELD_NUMBER: _ClassVar[int]
     RESPONSE_TIMESTAMP_GET_FIELD_NUMBER: _ClassVar[int]
+    RESPONSE_WIFI_PARAMETERS_SET_FIELD_NUMBER: _ClassVar[int]
+    RESPONSE_WIFI_IP_GET_FIELD_NUMBER: _ClassVar[int]
     RESPONSE_DEBUG_STM32_DEEP_SLEEP_FIELD_NUMBER: _ClassVar[int]
     ERROR_FIELD_NUMBER: _ClassVar[int]
     id: int
@@ -79,10 +87,12 @@ class Response(_message.Message):
     response_axis_move_to: _messages_pb2.ResponseAxisMoveTo
     response_timestamp_set: _messages_pb2.ResponseTimestampSet
     response_timestamp_get: _messages_pb2.ResponseTimestampGet
+    response_wifi_parameters_set: _messages_pb2.ResponseWifiParametersSet
+    response_wifi_ip_get: _messages_pb2.ResponseWifiIPGet
     response_debug_stm32_deep_sleep: _messages_pb2.ResponseDebugStm32DeepSleep
     error: Error
 
-    def __init__(self, id: _Optional[int]=..., response_firmware_version: _Optional[_Union[_messages_pb2.ResponseFirmwareVersion, _Mapping]]=..., response_capabilities_get: _Optional[_Union[_messages_pb2.ResponseCapabilitiesGet, _Mapping]]=..., response_signal_start: _Optional[_Union[_messages_pb2.ResponseSignalStart, _Mapping]]=..., response_signal_stop: _Optional[_Union[_messages_pb2.ResponseSignalStop, _Mapping]]=..., response_axis_move_to: _Optional[_Union[_messages_pb2.ResponseAxisMoveTo, _Mapping]]=..., response_timestamp_set: _Optional[_Union[_messages_pb2.ResponseTimestampSet, _Mapping]]=..., response_timestamp_get: _Optional[_Union[_messages_pb2.ResponseTimestampGet, _Mapping]]=..., response_debug_stm32_deep_sleep: _Optional[_Union[_messages_pb2.ResponseDebugStm32DeepSleep, _Mapping]]=..., error: _Optional[_Union[Error, _Mapping]]=...) -> None:
+    def __init__(self, id: _Optional[int]=..., response_firmware_version: _Optional[_Union[_messages_pb2.ResponseFirmwareVersion, _Mapping]]=..., response_capabilities_get: _Optional[_Union[_messages_pb2.ResponseCapabilitiesGet, _Mapping]]=..., response_signal_start: _Optional[_Union[_messages_pb2.ResponseSignalStart, _Mapping]]=..., response_signal_stop: _Optional[_Union[_messages_pb2.ResponseSignalStop, _Mapping]]=..., response_axis_move_to: _Optional[_Union[_messages_pb2.ResponseAxisMoveTo, _Mapping]]=..., response_timestamp_set: _Optional[_Union[_messages_pb2.ResponseTimestampSet, _Mapping]]=..., response_timestamp_get: _Optional[_Union[_messages_pb2.ResponseTimestampGet, _Mapping]]=..., response_wifi_parameters_set: _Optional[_Union[_messages_pb2.ResponseWifiParametersSet, _Mapping]]=..., response_wifi_ip_get: _Optional[_Union[_messages_pb2.ResponseWifiIPGet, _Mapping]]=..., response_debug_stm32_deep_sleep: _Optional[_Union[_messages_pb2.ResponseDebugStm32DeepSleep, _Mapping]]=..., error: _Optional[_Union[Error, _Mapping]]=...) -> None:
         ...
 
 class Error(_message.Message):

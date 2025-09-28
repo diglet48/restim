@@ -10,7 +10,7 @@ from device.focstim.focstim_rpc_pb2 import Request, RpcMessage, Response
 from device.focstim.hdlc import HDLC
 from device.focstim.messages_pb2 import RequestFirmwareVersion, RequestAxisSet, RequestAxisMoveTo, RequestTimestampSet, \
     RequestSignalStart, RequestSignalStop, RequestCapabilitiesGet, RequestDebugStm32DeepSleep, \
-    RequestDebugEnterBootloader
+    RequestDebugEnterBootloader, RequestWifiParametersSet, RequestWifiIPGet
 from device.focstim.notifications_pb2 import NotificationBoot, NotificationPotentiometer, NotificationCurrents, \
     NotificationModelEstimation, NotificationSystemStats, NotificationSignalStats, NotificationBattery, \
     NotificationDebugString, NotificationDebugAS5311
@@ -207,6 +207,21 @@ class FOCStimProtoAPI(QObject):
         return self.send_request(Request(
             id=self.next_request_id(),
             request_capabilities_get=RequestCapabilitiesGet()
+        ))
+
+    def request_wifi_parameters_set(self, ssid: bytes, password: bytes) -> Future:
+        return self.send_request(Request(
+            id=self.next_request_id(),
+            request_wifi_parameters_set=RequestWifiParametersSet(
+                ssid=ssid,
+                password=password
+            )
+        ))
+
+    def request_wifi_ip_get(self) -> Future:
+        return self.send_request(Request(
+            id=self.next_request_id(),
+            request_wifi_ip_get=RequestWifiIPGet()
         ))
 
     def request_debug_stm32_deep_sleep(self) -> Future:
