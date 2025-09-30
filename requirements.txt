@@ -9,3 +9,4 @@ msdparser
 # protoletariat		# dev only
 protobuf>=6.0.0
 pystream-protobuf
+stm32loader @ git+https://github.com/diglet48/stm32loader@feat/device-table
