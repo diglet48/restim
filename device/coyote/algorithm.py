@@ -233,14 +233,33 @@ class ContinuousSignal:
         min_w, max_w = self.pulse_width_limits
         width_norm = 0.0 if max_w <= min_w else np.clip((width_cycles - min_w) / (max_w - min_w), 0.0, 1.0)
 
-        # Available symmetric headroom around base duration
-        headroom_ms = min(max_dur - base_duration, base_duration - min_dur)
-        headroom_ms = max(0.0, headroom_ms)
+        # Floating headroom on each side of base (use float limits, clamp to >=0)
+        min_dur_f = 1000.0 / max_freq
+        max_dur_f = 1000.0 / min_freq
+        amp_up_ms = max(0.0, max_dur_f - base_duration)  # can increase duration up to this much
+        amp_dn_ms = max(0.0, base_duration - min_dur_f)  # can decrease duration up to this much
 
-        # Cap texture depth to a fraction of headroom; scale by width_norm
         TEXTURE_MAX_DEPTH_FRACTION = 0.5
-        texture_amplitude_ms = headroom_ms * TEXTURE_MAX_DEPTH_FRACTION * width_norm
-        texture_ms = texture_amplitude_ms * np.sin(self.modulation_phase)
+        amp_up_ms *= TEXTURE_MAX_DEPTH_FRACTION * width_norm
+        amp_dn_ms *= TEXTURE_MAX_DEPTH_FRACTION * width_norm
+
+        # Zero-mean texture respecting asymmetric headroom
+        s = np.sin(self.modulation_phase)
+        if amp_up_ms > 1e-6 and amp_dn_ms > 1e-6:
+            # Symmetric case: use sine with symmetric amplitude
+            texture_amplitude_ms = min(amp_up_ms, amp_dn_ms)
+            texture_ms = texture_amplitude_ms * s
+        elif amp_up_ms > 1e-6:
+            # One-sided (can only go up). Use rectified sine and subtract DC (E|sin|=2/π)
+            texture_amplitude_ms = amp_up_ms
+            texture_ms = amp_up_ms * (abs(s) - 2.0/np.pi)
+        elif amp_dn_ms > 1e-6:
+            # One-sided (can only go down). Negative rectified sine with DC removed
+            texture_amplitude_ms = amp_dn_ms
+            texture_ms = -amp_dn_ms * (abs(s) - 2.0/np.pi)
+        else:
+            texture_amplitude_ms = 0.0
+            texture_ms = 0.0
 
         desired_ms = base_duration * jitter_factor + texture_ms
 
@@ -276,8 +295,8 @@ class ContinuousSignal:
             print(
                 f"[DEBUG] COYOTE get_pulse_at: t={current_time:.3f} idx={pulse_index} "
                 f"req_freq={requested_freq:.2f}Hz limits=({min_freq:.1f},{max_freq:.1f})Hz "
-                f"dur_limits=({min_dur},{max_dur})ms base_dur={base_duration:.1f}ms jitter={jitter:.2f} "
-                f"texture_amp={texture_amplitude_ms:.2f}ms desired={desired_ms:.2f}ms residual={self._duration_residual_ms:+.2f}ms "
+                f"dur_limits=({min_dur},{max_dur})ms base_dur={base_duration:.2f}ms jitter={jitter:.2f} "
+                f"tex_up={amp_up_ms:.2f}ms tex_dn={amp_dn_ms:.2f}ms tex_used={texture_amplitude_ms:.2f}ms desired={desired_ms:.2f}ms residual={self._duration_residual_ms:+.2f}ms "
                 f"final_dur={pulse_duration}ms final_freq={final_frequency}Hz intensity={final_intensity}%"
             )
         except Exception:
