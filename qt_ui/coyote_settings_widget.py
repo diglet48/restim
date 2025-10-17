@@ -429,10 +429,11 @@ class EnvelopeGraph(QWidget):
         self.envelope_data = np.array([])
         self.envelope_period = 0.0
         
-        # Store recent pulses for overlay - increased to show more
+        # Store recent pulses for overlay
         self.recent_pulses = []
-        self.max_pulses = 50  # Show plenty of pulses
-        self.max_pulse_age = 2.0  # Show a longer history (2 seconds)
+        # Keep enough pulses to cover ~2s even at higher rates (both channels)
+        self.max_pulses = 400
+        self.max_pulse_age = 2.0  # seconds
         
         # Colors for visualization
         self.envelope_color = QColor(0, 180, 255, 150)
@@ -585,7 +586,11 @@ class EnvelopeGraph(QWidget):
         # Drop old pulses
         cutoff = current_time - self.max_pulse_age
         self.recent_pulses = [p for p in self.recent_pulses if p['timestamp'] >= cutoff]
-        for pulse in self.recent_pulses:
+        # Decimate if there are too many points to draw
+        step = max(1, int(len(self.recent_pulses) / 200))
+        for i, pulse in enumerate(self.recent_pulses):
+            if i % step != 0:
+                continue
             age = current_time - pulse['timestamp']
             frac = max(0.0, min(1.0, 1.0 - age / self.max_pulse_age))
             x = self.margin + frac * usable_width
