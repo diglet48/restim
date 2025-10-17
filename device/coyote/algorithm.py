@@ -248,15 +248,23 @@ class ContinuousSignal:
         accum = self._duration_residual_ms + desired_ms
         pulse_duration = int(np.floor(accum + 0.5))  # nearest int
         self._duration_residual_ms = accum - pulse_duration
+        # Keep residual bounded for numerical stability
+        if self._duration_residual_ms > 0.49:
+            self._duration_residual_ms = 0.49
+        elif self._duration_residual_ms < -0.49:
+            self._duration_residual_ms = -0.49
 
         # Clamp to channel-specific duration window and hardware bounds
+        clamped = False
         if pulse_duration < min_dur:
-            # Accumulate shortfall so subsequent pulses compensate when possible
-            self._duration_residual_ms += (pulse_duration - min_dur)
             pulse_duration = min_dur
+            clamped = True
         elif pulse_duration > max_dur:
-            self._duration_residual_ms += (pulse_duration - max_dur)
             pulse_duration = max_dur
+            clamped = True
+        # If clamped to bounds, do not let residual drift; rounding is only for integer fairness
+        if clamped:
+            self._duration_residual_ms = 0.0
 
         final_frequency = int(max(1, round(1000.0 / pulse_duration)))
 
@@ -339,7 +347,9 @@ class ChannelController:
         return pulse
 
     def fill_queue(self, now_s: float) -> None:
-        end_time = self.queue_end_time if self.queue_end_time is not None else now_s
+        # Compute end_time from current queue coverage relative to now
+        coverage_s = sum(p.duration for p in self.queue) / 1000.0
+        end_time = now_s + coverage_s
         horizon_end = now_s + self.queue_horizon_s
         seq_index = 0
         while end_time < horizon_end or len(self.queue) < COYOTE_PULSES_PER_PACKET:
@@ -350,7 +360,6 @@ class ChannelController:
 
         self.queue_end_time = end_time
         try:
-            coverage_s = sum(p.duration for p in self.queue) / 1000.0
             print(f"[DEBUG] COYOTE fill_queue {self.name}: size={len(self.queue)} coverage={coverage_s:.3f}s horizon={self.queue_horizon_s:.3f}s")
         except Exception:
             pass
