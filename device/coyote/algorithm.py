@@ -362,6 +362,14 @@ class CoyoteAlgorithm:
         self.last_update_time_s = 0.0
         self.next_update_time = 0.0
 
+        # Global per-pulse cap (percentage points). Read from settings if available.
+        self._max_change_per_pulse = 3.0
+        try:
+            if ui_settings is not None:
+                self._max_change_per_pulse = float(ui_settings.coyote_max_intensity_change_per_pulse.get())
+        except Exception:
+            pass
+
         # Per-channel controllers (queues, smoothing, assembly)
         self.ctrl_a = ChannelController(
             'A', self.media, self.params, self.signal_a,
@@ -379,16 +387,7 @@ class CoyoteAlgorithm:
         # UI Preview Cache
         self._cached_envelope = np.full(200, 0.5)  # Default to a flat line
         self._cached_envelope_period = 0.0
-
         # Smoothing state handled by ChannelController
-
-        # Global per-pulse cap (percentage points). Read from settings if available.
-        self._max_change_per_pulse = 3.0
-        try:
-            if ui_settings is not None:
-                self._max_change_per_pulse = float(ui_settings.coyote_max_intensity_change_per_pulse.get())
-        except Exception:
-            pass
 
     # Channel-specific pulse generation and queues moved to ChannelController
 
