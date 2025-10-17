@@ -161,6 +161,7 @@ class ContinuousSignal:
         self._last_pulse_time = 0.0
         self._start_time = None
         self.modulation_phase = 0.0
+        self._duration_residual_ms = 0.0  # fractional ms accumulator to reduce rounding jitter
         
         # Envelope cache
         self._envelope_lookup_table = None
@@ -224,10 +225,21 @@ class ContinuousSignal:
         # Treat jitter as a 0..1 fraction; clamp to ±50% to avoid pathological spans
         jitter = float(np.clip(jitter, 0.0, 0.5))
         jitter_factor = 1.0 + (np.random.rand() * 2.0 - 1.0) * jitter
-        pulse_duration = int(round(base_duration * jitter_factor))
+        desired_ms = base_duration * jitter_factor
+
+        # Fractional-duration accumulation to reduce jagged 10↔11ms toggling
+        accum = self._duration_residual_ms + desired_ms
+        pulse_duration = int(np.floor(accum + 0.5))  # nearest int
+        self._duration_residual_ms = accum - pulse_duration
 
         # Clamp to channel-specific duration window and hardware bounds
-        pulse_duration = int(np.clip(pulse_duration, min_dur, max_dur))
+        if pulse_duration < min_dur:
+            # Accumulate shortfall so subsequent pulses compensate when possible
+            self._duration_residual_ms += (pulse_duration - min_dur)
+            pulse_duration = min_dur
+        elif pulse_duration > max_dur:
+            self._duration_residual_ms += (pulse_duration - max_dur)
+            pulse_duration = max_dur
 
         final_frequency = int(max(1, round(1000.0 / pulse_duration)))
 
@@ -240,6 +252,7 @@ class ContinuousSignal:
                 f"[DEBUG] COYOTE get_pulse_at: t={current_time:.3f} idx={pulse_index} "
                 f"req_freq={requested_freq:.2f}Hz limits=({min_freq:.1f},{max_freq:.1f})Hz "
                 f"dur_limits=({min_dur},{max_dur})ms base_dur={base_duration:.1f}ms jitter={jitter:.2f} "
+                f"desired={desired_ms:.2f}ms residual={self._duration_residual_ms:+.2f}ms "
                 f"final_dur={pulse_duration}ms final_freq={final_frequency}Hz intensity={final_intensity}%"
             )
         except Exception:
@@ -320,7 +333,8 @@ class ChannelController:
 
         self.queue_end_time = end_time
         try:
-            print(f"[DEBUG] COYOTE fill_queue {self.name}: size={len(self.queue)} until={end_time-now_s:.3f}s horizon={self.queue_horizon_s:.3f}s")
+            coverage_s = sum(p.duration for p in self.queue) / 1000.0
+            print(f"[DEBUG] COYOTE fill_queue {self.name}: size={len(self.queue)} coverage={coverage_s:.3f}s horizon={self.queue_horizon_s:.3f}s")
         except Exception:
             pass
 
