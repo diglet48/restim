@@ -57,6 +57,9 @@ class FOCStimFourphaseAlgorithm(RemoteGenerationAlgorithm):
 
         alpha, beta, gamma = self.position_params.get_position(t)
 
+        if not self.media.is_playing():
+            volume *= 0
+
         return {
             AxisType.AXIS_POSITION_ALPHA: alpha,
             AxisType.AXIS_POSITION_BETA: beta,

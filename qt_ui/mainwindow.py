@@ -21,6 +21,7 @@ import net.websocketserver
 import net.tcpudpserver
 import qt_ui.funscript_conversion_dialog
 import qt_ui.simfile_conversion_dialog
+import qt_ui.focstim_flash_dialog
 import qt_ui.funscript_decomposition_dialog
 import qt_ui.preferences_dialog
 import qt_ui.settings
@@ -185,6 +186,9 @@ class Window(QMainWindow, Ui_MainWindow):
 
         self.simfile_conversion_dialog = qt_ui.simfile_conversion_dialog.SimfileConversionDialog()
         self.actionSimfile_conversion.triggered.connect(self.open_simfile_conversion_dialog)
+
+        self.focstim_flash_dialog = qt_ui.focstim_flash_dialog.FocStimFlashDialog()
+        self.actionFirmware_updater.triggered.connect(self.open_focstim_flash_dialog)
 
         self.funscript_decomposition_dialog = qt_ui.funscript_decomposition_dialog.FunscriptDecompositionDialog()
         self.actionFunscript_decomposition.triggered.connect(self.open_funscript_decomposition_dialog)
@@ -392,9 +396,6 @@ class Window(QMainWindow, Ui_MainWindow):
         if config.device_type in (DeviceType.AUDIO_THREE_PHASE, DeviceType.NEOSTIM_THREE_PHASE, DeviceType.FOCSTIM_THREE_PHASE, DeviceType.COYOTE_THREE_PHASE):
             self.motion_3.set_enable(True)
             self.motion_4.set_enable(False)
-            self.comboBox_patternSelect.clear()
-            for pattern in self.motion_3.patterns:
-                self.comboBox_patternSelect.addItem(pattern.name(), pattern)
             self.stackedWidget_visual.setCurrentIndex(
                 self.stackedWidget_visual.indexOf(self.page_threephase)
             )
@@ -402,9 +403,6 @@ class Window(QMainWindow, Ui_MainWindow):
         if config.device_type == DeviceType.FOCSTIM_FOUR_PHASE:
             self.motion_3.set_enable(False)
             self.motion_4.set_enable(True)
-            self.comboBox_patternSelect.clear()
-            for pattern in self.motion_4.patterns:
-                self.comboBox_patternSelect.addItem(pattern.name(), pattern)
             self.stackedWidget_visual.setCurrentIndex(
                 self.stackedWidget_visual.indexOf(self.page_fourphase)
             )
@@ -420,6 +418,8 @@ class Window(QMainWindow, Ui_MainWindow):
                 channel_b_intensity_balance=qt_ui.settings.coyote_channel_b_intensity_balance.get()
             )
             self.tab_coyote.setup_device(self.output_device)
+
+        self.refresh_pattern_combobox()
 
     def pattern_selection_changed(self, index):
         pattern = self.comboBox_patternSelect.currentData()
@@ -469,11 +469,15 @@ class Window(QMainWindow, Ui_MainWindow):
                 self.refresh_play_button_icon()
         elif device.device_type in (DeviceType.FOCSTIM_THREE_PHASE, DeviceType.FOCSTIM_FOUR_PHASE):
             output_device = FOCStimProtoDevice()
-            serial_port_name = qt_ui.settings.focstim_serial_port.get()
             use_teleplot = qt_ui.settings.focstim_use_teleplot.get()
             dump_notifications = qt_ui.settings.focstim_dump_notifications_to_file.get()
-            output_device.start_serial(serial_port_name, use_teleplot, dump_notifications, algorithm)
-            # output_device.start_tcp('192.168.2.17', 55533, use_teleplot, dump_notifications, algorithm)
+            comms_wifi = qt_ui.settings.focstim_communication_wifi.get()
+            if not comms_wifi:
+                serial_port_name = qt_ui.settings.focstim_serial_port.get()
+                output_device.start_serial(serial_port_name, use_teleplot, dump_notifications, algorithm)
+            else:
+                ip = qt_ui.settings.focstim_ip.get()
+                output_device.start_tcp(ip, 55533, use_teleplot, dump_notifications, algorithm)
             if output_device.is_connected_and_running():
                 self.output_device = output_device
                 self.playstate = PlayState.PLAYING
@@ -539,6 +543,10 @@ class Window(QMainWindow, Ui_MainWindow):
         self.signal_stop(PlayState.STOPPED)
         self.simfile_conversion_dialog.exec()
 
+    def open_focstim_flash_dialog(self):
+        self.signal_stop(PlayState.STOPPED)
+        self.focstim_flash_dialog.exec()
+
     def open_funscript_decomposition_dialog(self):
         self.signal_stop(PlayState.STOPPED)
         self.funscript_decomposition_dialog.exec()
@@ -567,6 +575,27 @@ class Window(QMainWindow, Ui_MainWindow):
         self.tab_a_b_testing.refreshSettings()
         self.motion_3.refreshSettings()
         self.motion_4.refreshSettings()
+        self.refresh_pattern_combobox()
+
+    def refresh_pattern_combobox(self):
+        config = DeviceConfiguration.from_settings()
+        currently_selected_text = self.comboBox_patternSelect.currentText()
+
+        if config.device_type in (DeviceType.AUDIO_THREE_PHASE, DeviceType.NEOSTIM_THREE_PHASE, DeviceType.FOCSTIM_THREE_PHASE):
+            self.comboBox_patternSelect.clear()
+            for pattern in self.motion_3.patterns:
+                self.comboBox_patternSelect.addItem(pattern.name(), pattern)
+        else:
+            self.comboBox_patternSelect.clear()
+            for pattern in self.motion_4.patterns:
+                self.comboBox_patternSelect.addItem(pattern.name(), pattern)
+
+        # try to select pattern with similar name as was previously selected
+        index = self.comboBox_patternSelect.findText(currently_selected_text)
+        if index == -1:
+            index = 0
+        self.comboBox_patternSelect.setCurrentIndex(index)
+
 
     def save_settings(self):
         """
