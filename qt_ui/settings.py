@@ -173,3 +173,6 @@ coyote_channel_a_freq_max = Setting("coyote/channel_a_freq_max", 100, int)
 coyote_channel_b_strength_max = Setting("coyote/channel_b_strength_max", 100, int)
 coyote_channel_b_freq_min = Setting("coyote/channel_b_freq_min", 20, int)
 coyote_channel_b_freq_max = Setting("coyote/channel_b_freq_max", 50, int)
+
+# Coyote smoothing: maximum allowed intensity change per pulse (percentage points)
+coyote_max_intensity_change_per_pulse = Setting("coyote/max_intensity_change_per_pulse", 3.0, float)

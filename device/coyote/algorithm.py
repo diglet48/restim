@@ -26,6 +26,11 @@ from stim_math.threephase import ThreePhaseCenterCalibration
 from stim_math.audio_gen.params import CoyoteAlgorithmParams, VolumeParams, SafetyParams
 from stim_math.audio_gen.various import ThreePhasePosition
 from device.coyote.device import CoyotePulse, CoyotePulses
+try:
+    # Optional import; keeps algorithm functional in headless contexts
+    from qt_ui import settings as ui_settings
+except Exception:  # pragma: no cover - setting import is best-effort
+    ui_settings = None
 
 logger = logging.getLogger('restim.coyote')
 
@@ -303,13 +308,8 @@ class ContinuousSignal:
         # Debug log so we can see the modulation values
         print(f"[DEBUG] pulse={pulse_index} base={base_duration} swing={int(round(scaled_swing))} final={pulse_duration} depth={mod_depth_cycles:.2f}cycles phase={self.modulation_phase:.2f}")
 
-        # --- Intensity Modulation (subtle additive modulation) ---
-        # Apply subtle sine wave modulation as additive to positional intensity
-        # Use much smaller scaling (1% per cycle instead of 10%)
-        intensity_mod_depth = mod_depth_cycles * 0.01  # 1% per cycle for subtlety
-        raw_mod_value = np.sin(self.modulation_phase)  # Continuous sine wave
-        modulation_amount = raw_mod_value * intensity_mod_depth * base_intensity
-        final_intensity = int(np.clip(base_intensity + modulation_amount, 1, 100))
+        # Intensity is supplied by the caller (already smoothed/slewed). Do not modulate here.
+        final_intensity = int(np.clip(base_intensity, 1, 100))
 
         return CoyotePulse(         
             duration=pulse_duration,
@@ -350,6 +350,20 @@ class CoyoteAlgorithm:
         self._cached_envelope = np.full(200, 0.5)  # Default to a flat line
         self._cached_envelope_period = 0.0
 
+        # Minimal per-channel intensity smoothing state
+        self._last_intensity_a = None  # type: float | None
+        self._last_intensity_b = None  # type: float | None
+        self._last_intensity_time_a = None  # type: float | None
+        self._last_intensity_time_b = None  # type: float | None
+
+        # Global per-pulse cap (percentage points). Read from settings if available.
+        self._max_change_per_pulse = 3.0
+        try:
+            if ui_settings is not None:
+                self._max_change_per_pulse = float(ui_settings.coyote_max_intensity_change_per_pulse.get())
+        except Exception:
+            pass
+
     def _get_positional_intensities(self, t: float, volume: float) -> Tuple[int, int]:
         """Barycentric phase diagram mapping: (beta, alpha) with left=+1, right=-1, neutral=+1 (top)."""
         alpha, beta = self.position.get_position(t)
@@ -389,7 +403,45 @@ class CoyoteAlgorithm:
             intensity_a, intensity_b = self._get_positional_intensities(t_pulse, volume)
             
             # Select appropriate intensity based on channel
-            intensity = intensity_a if channel_name == 'A' else intensity_b
+            target_intensity = float(intensity_a if channel_name == 'A' else intensity_b)
+
+            # Convert pulse_rise_time (carrier cycles) to a time constant (seconds)
+            carrier_hz = float(self.params.carrier_frequency.interpolate(t_pulse))
+            rise_cycles = float(self.params.pulse_rise_time.interpolate(t_pulse))
+            tau_s = 0.0 if carrier_hz <= 0 else (rise_cycles / carrier_hz)
+
+            # Minimal EMA smoothing of intensity (no extra magic numbers)
+            if channel_name == 'A':
+                last_y = self._last_intensity_a
+                last_t = self._last_intensity_time_a
+                if last_y is None or tau_s <= 0 or last_t is None:
+                    y = target_intensity
+                else:
+                    dt = max(0.0, t_pulse - last_t)
+                    # Slew limit: base on tau, also cap by global per-pulse limit
+                    allowed = (dt / tau_s) * 100.0
+                    if self._max_change_per_pulse > 0:
+                        allowed = min(allowed, self._max_change_per_pulse)
+                    delta = np.clip(target_intensity - last_y, -allowed, allowed)
+                    y = last_y + delta
+                self._last_intensity_a = y
+                self._last_intensity_time_a = t_pulse
+            else:
+                last_y = self._last_intensity_b
+                last_t = self._last_intensity_time_b
+                if last_y is None or tau_s <= 0 or last_t is None:
+                    y = target_intensity
+                else:
+                    dt = max(0.0, t_pulse - last_t)
+                    allowed = (dt / tau_s) * 100.0
+                    if self._max_change_per_pulse > 0:
+                        allowed = min(allowed, self._max_change_per_pulse)
+                    delta = np.clip(target_intensity - last_y, -allowed, allowed)
+                    y = last_y + delta
+                self._last_intensity_b = y
+                self._last_intensity_time_b = t_pulse
+
+            intensity = int(np.clip(round(y), 0, 100))
             
             pulse = signal.get_pulse_at(t_pulse, intensity, i + 1)
             pulses.append(pulse)
