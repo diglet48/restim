@@ -257,17 +257,21 @@ class ContinuousSignal:
             # Symmetric case: use sine with symmetric amplitude
             texture_amplitude_ms = min(amp_up_ms, amp_dn_ms)
             texture_ms = texture_amplitude_ms * s
+            tex_mode = 'sym'
         elif amp_up_ms > 1e-6:
             # One-sided (can only go up). Use rectified sine and subtract DC (E|sin|=2/π)
             texture_amplitude_ms = amp_up_ms
             texture_ms = amp_up_ms * (abs(s) - 2.0/np.pi)
+            tex_mode = 'up'
         elif amp_dn_ms > 1e-6:
             # One-sided (can only go down). Negative rectified sine with DC removed
             texture_amplitude_ms = amp_dn_ms
             texture_ms = -amp_dn_ms * (abs(s) - 2.0/np.pi)
+            tex_mode = 'down'
         else:
             texture_amplitude_ms = 0.0
             texture_ms = 0.0
+            tex_mode = 'none'
 
         desired_ms = base_duration * jitter_factor + texture_ms
 
@@ -303,7 +307,7 @@ class ContinuousSignal:
             print(
                 f"[DEBUG] COYOTE get_pulse_at: t={current_time:.3f} idx={pulse_index} "
                 f"pf_raw={raw_pf:.2f}Hz pf_norm={pf_norm:.2f} mapped={mapped_freq:.2f}Hz limits=({min_freq:.1f},{max_freq:.1f})Hz "
-                f"dur_limits=({min_dur},{max_dur})ms base_dur={base_duration:.2f}ms jitter={jitter:.2f} "
+                f"dur_limits=({min_dur},{max_dur})ms base_dur={base_duration:.2f}ms jitter={jitter:.2f} width_norm={width_norm:.2f} tex_mode={tex_mode} "
                 f"tex_up={amp_up_ms:.2f}ms tex_dn={amp_dn_ms:.2f}ms tex_used={texture_amplitude_ms:.2f}ms desired={desired_ms:.2f}ms residual={self._duration_residual_ms:+.2f}ms "
                 f"final_dur={pulse_duration}ms final_freq={final_frequency}Hz intensity={final_intensity}%"
             )

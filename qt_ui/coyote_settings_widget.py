@@ -425,9 +425,9 @@ class EnvelopeGraph(QWidget):
         
         self.layout().addWidget(self.view)
         
-        # Store envelope data
-        self.envelope_data = np.zeros(100)  # Default empty envelope
-        self.envelope_period = 1.0
+        # Period preview mode: not using an envelope curve
+        self.envelope_data = np.array([])
+        self.envelope_period = 0.0
         
         # Store recent pulses for overlay - increased to show more
         self.recent_pulses = []
@@ -542,8 +542,7 @@ class EnvelopeGraph(QWidget):
         # Draw simple grid
         self._drawGrid(width, height, graph_top, graph_bottom)
         
-        # Draw envelope
-        self._drawEnvelope(width, height, graph_top, graph_bottom, graph_height)
+        # No envelope curve in period preview mode
         
         # Draw pulses
         self._drawPulses(width, height, graph_top, graph_bottom, graph_height, current_time)
@@ -579,21 +578,19 @@ class EnvelopeGraph(QWidget):
         self.scene.addPath(path, pen)
     
     def _drawPulses(self, width, height, graph_top, graph_bottom, graph_height, current_time):
-        """Draw pulse dots on the envelope"""
-        if not self.recent_pulses or len(self.envelope_data) == 0 or self.envelope_period <= 0:
+        """Draw pulse dots using normalized duration and time window"""
+        if not self.recent_pulses:
             return
         usable_width = width - 2 * self.margin
+        # Drop old pulses
+        cutoff = current_time - self.max_pulse_age
+        self.recent_pulses = [p for p in self.recent_pulses if p['timestamp'] >= cutoff]
         for pulse in self.recent_pulses:
             age = current_time - pulse['timestamp']
-            phase = (age % self.envelope_period) / self.envelope_period
-            phase_reversed = 1.0 - phase  # Newer pulses on right
-            x = self.margin + phase_reversed * usable_width
-            if len(self.envelope_data) > 1:
-                env_idx = min(int(phase_reversed * (len(self.envelope_data) - 1)), len(self.envelope_data) - 1)
-                env_value = self.envelope_data[env_idx]
-                y = graph_bottom - (env_value * graph_height)
-            else:
-                y = (graph_top + graph_bottom) / 2
+            frac = max(0.0, min(1.0, 1.0 - age / self.max_pulse_age))
+            x = self.margin + frac * usable_width
+            norm = pulse.get('norm', 0.5)
+            y = graph_bottom - (norm * graph_height)
             intensity = pulse['intensity']
             size = 4 + (12 * intensity / 100.0)
             channel = pulse['channel']
@@ -602,18 +599,14 @@ class EnvelopeGraph(QWidget):
             dot.setPen(QPen(Qt.NoPen))
             dot.setToolTip(f"Channel: {'A' if channel == 0 else 'B'}\n"
                            f"Intensity: {intensity}%\n"
-                           f"Duration: {pulse['duration']} ms")
+                           f"Duration: {pulse['duration']} ms\n"
+                           f"Normalized: {norm:.2f}")
             dot.setAcceptHoverEvents(True)
             self.scene.addItem(dot)
     
     def _drawFrequencyLabel(self, width, height):
         """Draw frequency information"""
-        if self.envelope_period > 0:
-            freq_hz = 1.0 / self.envelope_period
-            label_text = f"{freq_hz:.1f} Hz ({self.envelope_period*1000:.0f} ms)"
-            label = self.scene.addText(label_text)
-            label.setPos(width - 180, 5)
-            label.setDefaultTextColor(QColor(60, 60, 60))
+        # No frequency label in period preview mode
 
 class EnvelopeGraphContainer(QWidget):
     """
@@ -630,21 +623,14 @@ class EnvelopeGraphContainer(QWidget):
         top_row = QHBoxLayout()
         
         # Add description
-        self.description = QLabel("Envelope Pattern")
+        self.description = QLabel("Pulse Period Preview (last 2 s)")
         self.description.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
         top_row.addWidget(self.description)
         
         # Add spacer
         top_row.addStretch(1)
         
-        # Add waveform selector
-        self.waveform_label = QLabel("Waveform:")
-        top_row.addWidget(self.waveform_label)
-        
-        self.waveform_selector = QtWidgets.QComboBox()
-        self.waveform_selector.addItem("Sine")
-        # Add more waveforms here when supported
-        top_row.addWidget(self.waveform_selector)
+        # No waveform selector in period preview mode
         
         self.layout.addLayout(top_row)
         
@@ -657,18 +643,10 @@ class EnvelopeGraphContainer(QWidget):
         self.received_real_data = False
     
     def setEnvelopeData(self, envelope_data, envelope_period):
-        """Pass envelope data to the graph"""
-        self.received_real_data = True
-        
-        # Update envelope description based on real data
-        if envelope_period > 0:
-            freq_hz = 1.0 / envelope_period
-            self.description.setText(f"Envelope Pattern - {freq_hz:.1f} Hz ({envelope_period*1000:.0f} ms)")
-        
-        # Pass data to the graph
-        self.graph.setEnvelopeData(envelope_data, envelope_period)
+        # Not used in period preview mode
+        pass
     
-    def addPulse(self, channel_id, intensity, duration, strength=100):
+    def addPulse(self, channel_id, intensity, duration, strength=100, min_hz=None, max_hz=None):
         """
         Add a pulse to the visualization
         
@@ -688,8 +666,18 @@ class EnvelopeGraphContainer(QWidget):
         # Convert channel ID to index (0 for A, 1 for B)
         channel_idx = 0 if channel_id == 'A' else 1
         
-        # Add directly to the graph without buffering
+        # Compute normalized duration using provided channel range
+        if min_hz and max_hz and max_hz > min_hz and min_hz > 0 and max_hz > 0:
+            d_min = 1000.0 / max_hz
+            d_max = 1000.0 / min_hz
+            norm = (duration - d_min) / max(1e-6, (d_max - d_min))
+            norm = max(0.0, min(1.0, norm))
+        else:
+            norm = 0.5
+        # Add to graph and attach normalized value
         self.graph.addPulse(channel_idx, intensity, duration)
+        if self.graph.recent_pulses:
+            self.graph.recent_pulses[0]['norm'] = norm
 
 class CoyoteSettingsWidget(QtWidgets.QWidget):
     def __init__(self, parent=None):
@@ -1015,7 +1003,8 @@ class CoyoteSettingsWidget(QtWidgets.QWidget):
                 
                 # Add to envelope graph only if effective intensity is > 0
                 if effective_intensity > 0:
-                    self.envelope_graph.addPulse('A', pulse.intensity, pulse.duration, strength_a)
+                    self.envelope_graph.addPulse('A', pulse.intensity, pulse.duration, strength_a,
+                                                 min_hz=self.freq_min_a.value(), max_hz=self.freq_max_a.value())
 
         # Update Channel B
         if pulses.channel_b:
@@ -1038,7 +1027,8 @@ class CoyoteSettingsWidget(QtWidgets.QWidget):
                 
                 # Add to envelope graph only if effective intensity is > 0
                 if effective_intensity > 0:
-                    self.envelope_graph.addPulse('B', pulse.intensity, pulse.duration, strength_b)
+                    self.envelope_graph.addPulse('B', pulse.intensity, pulse.duration, strength_b,
+                                                 min_hz=self.freq_min_b.value(), max_hz=self.freq_max_b.value())
 
     def update_freq_min_a(self, value):
         """Update minimum frequency for channel A"""
@@ -1115,13 +1105,5 @@ class CoyoteSettingsWidget(QtWidgets.QWidget):
         self.update_channel_b(self.volume_b_slider.value())
 
     def fetch_envelope_data(self):
-        """Fetch shared envelope data and update the graph"""
-        if self.device is None or self.device.algorithm is None or not self.isVisible():
-            return
-
-        try:
-            env_data, env_period = self.device.algorithm.get_envelope_data()
-            if env_data is not None and env_data.size > 0 and env_period > 0:
-                self.envelope_graph.setEnvelopeData(env_data, env_period)
-        except Exception as e:
-            print(f"Error fetching envelope data: {str(e)}")
+        """Not used in period preview mode; pulses drive the preview."""
+        return
