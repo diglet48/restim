@@ -793,75 +793,7 @@ class CoyoteSettingsWidget(QtWidgets.QWidget):
         status_layout.addWidget(self.label_battery_level)
         self.layout().addLayout(status_layout)
         
-        # Add envelope graph with matching layout to pulse graphs
-        envelope_section = QHBoxLayout()
-        
-        # Left section - make it the same width as channel controls
-        envelope_left = QVBoxLayout()
-        left_widget = QWidget()
-        left_widget.setMinimumWidth(130)  # Increased width to match channel control sections
-        left_widget.setMaximumWidth(130)  # Increased width to match channel control sections
-        envelope_left.addWidget(left_widget)
-        envelope_section.addLayout(envelope_left)
-        
-        # Add envelope graph in the center with stretch factor
-        self.envelope_graph = EnvelopeGraphContainer()
-        self.envelope_graph.setMinimumHeight(120)
-        envelope_section.addWidget(self.envelope_graph, 1)  # Use stretch factor of 1
-        
-        # Right side controls with proper width
-        envelope_right = QHBoxLayout()  # Changed to horizontal layout
-        
-        # Add a visual legend for dots with proper size
-        legend_layout = QVBoxLayout()
-        legend_layout.setSpacing(2)
-        
-        # Use shared channel colors
-        channel_a_qcolor = CHANNEL_A_COLOR
-        channel_b_qcolor = CHANNEL_B_COLOR
-
-        legend_label = QLabel("Dots:")
-        legend_label.setAlignment(Qt.AlignCenter)
-        legend_layout.addWidget(legend_label)
-
-        channel_a_legend = QHBoxLayout()
-        channel_a_color = QLabel("●")
-        channel_a_color.setFont(channel_a_color.font())
-        channel_a_palette = channel_a_color.palette()
-        channel_a_palette.setColor(channel_a_color.foregroundRole(), channel_a_qcolor)
-        channel_a_color.setPalette(channel_a_palette)
-        channel_a_color.setStyleSheet("font-size: 16px;")
-        channel_a_text = QLabel("Channel A")
-        channel_a_legend.addWidget(channel_a_color)
-        channel_a_legend.addWidget(channel_a_text)
-        legend_layout.addLayout(channel_a_legend)
-
-        channel_b_legend = QHBoxLayout()
-        channel_b_color = QLabel("●")
-        channel_b_color.setFont(channel_b_color.font())
-        channel_b_palette = channel_b_color.palette()
-        channel_b_palette.setColor(channel_b_color.foregroundRole(), channel_b_qcolor)
-        channel_b_color.setPalette(channel_b_palette)
-        channel_b_color.setStyleSheet("font-size: 16px;")
-        channel_b_text = QLabel("Channel B")
-        channel_b_legend.addWidget(channel_b_color)
-        channel_b_legend.addWidget(channel_b_text)
-        legend_layout.addLayout(channel_b_legend)
-        
-        size_legend = QHBoxLayout()
-        size_label = QLabel("Size = Intensity")
-        size_legend.addWidget(size_label)
-        legend_layout.addLayout(size_legend)
-        
-        # Create a widget to contain the legend with proper width
-        legend_widget = QWidget()
-        legend_widget.setLayout(legend_layout)
-        legend_widget.setMinimumWidth(130)  # Match the width of volume sliders
-        envelope_right.addWidget(legend_widget)
-        
-        envelope_section.addLayout(envelope_right)
-        
-        self.layout().addLayout(envelope_section)
+        # No envelope/period preview section
 
         # Channel A Row
         channel_a_layout = QHBoxLayout()
@@ -1000,10 +932,7 @@ class CoyoteSettingsWidget(QtWidgets.QWidget):
             self.update_channel_a(0)
             self.update_channel_b(0)
         
-        # Set up timer to periodically fetch envelope data directly
-        self.envelope_timer = QTimer()
-        self.envelope_timer.timeout.connect(self.fetch_envelope_data)
-        self.envelope_timer.start(500)  # Fetch every 500ms
+        # No envelope preview polling
 
     def update_channel_a(self, value):
         """Update channel A strength (volume) in the device."""
@@ -1082,10 +1011,7 @@ class CoyoteSettingsWidget(QtWidgets.QWidget):
                     channel_limit=max_strength_a
                 )
                 
-                # Add to envelope graph only if effective intensity is > 0
-                if effective_intensity > 0:
-                    self.envelope_graph.addPulse('A', pulse.intensity, pulse.duration, strength_a,
-                                                 min_hz=self.freq_min_a.value(), max_hz=self.freq_max_a.value())
+                # No envelope preview
 
         # Update Channel B
         if pulses.channel_b:
@@ -1106,10 +1032,7 @@ class CoyoteSettingsWidget(QtWidgets.QWidget):
                     channel_limit=max_strength_b
                 )
                 
-                # Add to envelope graph only if effective intensity is > 0
-                if effective_intensity > 0:
-                    self.envelope_graph.addPulse('B', pulse.intensity, pulse.duration, strength_b,
-                                                 min_hz=self.freq_min_b.value(), max_hz=self.freq_max_b.value())
+                # No envelope preview
 
     def update_freq_min_a(self, value):
         """Update minimum frequency for channel A"""
@@ -1185,6 +1108,4 @@ class CoyoteSettingsWidget(QtWidgets.QWidget):
         # Send updated strength to device
         self.update_channel_b(self.volume_b_slider.value())
 
-    def fetch_envelope_data(self):
-        """Not used in period preview mode; pulses drive the preview."""
-        return
+    # No envelope preview
