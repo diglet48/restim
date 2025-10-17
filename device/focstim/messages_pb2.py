@@ -7,7 +7,7 @@ from google.protobuf.internal import builder as _builder
 _runtime_version.ValidateProtobufRuntimeVersion(_runtime_version.Domain.PUBLIC, 6, 31, 0, '', 'messages.proto')
 _sym_db = _symbol_database.Default()
 from . import constants_pb2 as constants__pb2
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x0emessages.proto\x12\x0bfocstim_rpc\x1a\x0fconstants.proto"\x18\n\x16RequestFirmwareVersion"f\n\x17ResponseFirmwareVersion\x12+\n\x05board\x18\x01 \x01(\x0e2\x1c.focstim_rpc.BoardIdentifier\x12\x1e\n\x16stm32_firmware_version\x18\x02 \x01(\t"\x18\n\x16RequestCapabilitiesGet"\x91\x01\n\x17ResponseCapabilitiesGet\x12\x12\n\nthreephase\x18\x01 \x01(\x08\x12\x11\n\tfourphase\x18\x02 \x01(\x08\x12\x0f\n\x07battery\x18\x03 \x01(\x08\x12\x15\n\rpotentiometer\x18\x04 \x01(\x08\x12\'\n\x1fmaximum_waveform_amplitude_amps\x18\x05 \x01(\x02";\n\x12RequestSignalStart\x12%\n\x04mode\x18\x01 \x01(\x0e2\x17.focstim_rpc.OutputMode"\x15\n\x13ResponseSignalStart"\x13\n\x11RequestSignalStop"\x14\n\x12ResponseSignalStop"\x10\n\x0eRequestModeSet"\x11\n\x0fResponseModeSet"Y\n\x11RequestAxisMoveTo\x12#\n\x04axis\x18\x01 \x01(\x0e2\x15.focstim_rpc.AxisType\x12\r\n\x05value\x18\x03 \x01(\x02\x12\x10\n\x08interval\x18\x04 \x01(\r"\x14\n\x12ResponseAxisMoveTo"i\n\x0eRequestAxisSet\x12#\n\x04axis\x18\x01 \x01(\x0e2\x15.focstim_rpc.AxisType\x12\x14\n\x0ctimestamp_ms\x18\x02 \x01(\x07\x12\r\n\x05value\x18\x03 \x01(\x02\x12\r\n\x05clear\x18\x04 \x01(\x08"\x11\n\x0fResponseAxisSet"+\n\x13RequestTimestampSet\x12\x14\n\x0ctimestamp_ms\x18\x01 \x01(\x04"N\n\x14ResponseTimestampSet\x12\x11\n\toffset_ms\x18\x01 \x01(\x03\x12\x11\n\tchange_ms\x18\x02 \x01(\x12\x12\x10\n\x08error_ms\x18\x03 \x01(\x12"\x15\n\x13RequestTimestampGet"G\n\x14ResponseTimestampGet\x12\x14\n\x0ctimestamp_ms\x18\x01 \x01(\x07\x12\x19\n\x11unix_timestamp_ms\x18\x02 \x01(\x04"\x1c\n\x1aRequestDebugStm32DeepSleep"\x1d\n\x1bResponseDebugStm32DeepSleep"\x1d\n\x1bRequestDebugEnterBootloaderb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x0emessages.proto\x12\x0bfocstim_rpc\x1a\x0fconstants.proto"\x18\n\x16RequestFirmwareVersion"f\n\x17ResponseFirmwareVersion\x12+\n\x05board\x18\x01 \x01(\x0e2\x1c.focstim_rpc.BoardIdentifier\x12\x1e\n\x16stm32_firmware_version\x18\x02 \x01(\t"\x18\n\x16RequestCapabilitiesGet"\x91\x01\n\x17ResponseCapabilitiesGet\x12\x12\n\nthreephase\x18\x01 \x01(\x08\x12\x11\n\tfourphase\x18\x02 \x01(\x08\x12\x0f\n\x07battery\x18\x03 \x01(\x08\x12\x15\n\rpotentiometer\x18\x04 \x01(\x08\x12\'\n\x1fmaximum_waveform_amplitude_amps\x18\x05 \x01(\x02";\n\x12RequestSignalStart\x12%\n\x04mode\x18\x01 \x01(\x0e2\x17.focstim_rpc.OutputMode"\x15\n\x13ResponseSignalStart"\x13\n\x11RequestSignalStop"\x14\n\x12ResponseSignalStop"\x10\n\x0eRequestModeSet"\x11\n\x0fResponseModeSet"Y\n\x11RequestAxisMoveTo\x12#\n\x04axis\x18\x01 \x01(\x0e2\x15.focstim_rpc.AxisType\x12\r\n\x05value\x18\x03 \x01(\x02\x12\x10\n\x08interval\x18\x04 \x01(\r"\x14\n\x12ResponseAxisMoveTo"i\n\x0eRequestAxisSet\x12#\n\x04axis\x18\x01 \x01(\x0e2\x15.focstim_rpc.AxisType\x12\x14\n\x0ctimestamp_ms\x18\x02 \x01(\x07\x12\r\n\x05value\x18\x03 \x01(\x02\x12\r\n\x05clear\x18\x04 \x01(\x08"\x11\n\x0fResponseAxisSet"+\n\x13RequestTimestampSet\x12\x14\n\x0ctimestamp_ms\x18\x01 \x01(\x04"N\n\x14ResponseTimestampSet\x12\x11\n\toffset_ms\x18\x01 \x01(\x03\x12\x11\n\tchange_ms\x18\x02 \x01(\x12\x12\x10\n\x08error_ms\x18\x03 \x01(\x12"\x15\n\x13RequestTimestampGet"G\n\x14ResponseTimestampGet\x12\x14\n\x0ctimestamp_ms\x18\x01 \x01(\x07\x12\x19\n\x11unix_timestamp_ms\x18\x02 \x01(\x04":\n\x18RequestWifiParametersSet\x12\x0c\n\x04ssid\x18\x01 \x01(\x0c\x12\x10\n\x08password\x18\x02 \x01(\x0c"\x1b\n\x19ResponseWifiParametersSet"\x12\n\x10RequestWifiIPGet"\x1f\n\x11ResponseWifiIPGet\x12\n\n\x02ip\x18\x01 \x01(\r"\x1c\n\x1aRequestDebugStm32DeepSleep"\x1d\n\x1bResponseDebugStm32DeepSleep"\x1d\n\x1bRequestDebugEnterBootloaderb\x06proto3')
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'messages_pb2', _globals)
@@ -49,9 +49,17 @@ if not _descriptor._USE_C_DESCRIPTORS:
     _globals['_REQUESTTIMESTAMPGET']._serialized_end = 901
     _globals['_RESPONSETIMESTAMPGET']._serialized_start = 903
     _globals['_RESPONSETIMESTAMPGET']._serialized_end = 974
-    _globals['_REQUESTDEBUGSTM32DEEPSLEEP']._serialized_start = 976
-    _globals['_REQUESTDEBUGSTM32DEEPSLEEP']._serialized_end = 1004
-    _globals['_RESPONSEDEBUGSTM32DEEPSLEEP']._serialized_start = 1006
-    _globals['_RESPONSEDEBUGSTM32DEEPSLEEP']._serialized_end = 1035
-    _globals['_REQUESTDEBUGENTERBOOTLOADER']._serialized_start = 1037
-    _globals['_REQUESTDEBUGENTERBOOTLOADER']._serialized_end = 1066
+    _globals['_REQUESTWIFIPARAMETERSSET']._serialized_start = 976
+    _globals['_REQUESTWIFIPARAMETERSSET']._serialized_end = 1034
+    _globals['_RESPONSEWIFIPARAMETERSSET']._serialized_start = 1036
+    _globals['_RESPONSEWIFIPARAMETERSSET']._serialized_end = 1063
+    _globals['_REQUESTWIFIIPGET']._serialized_start = 1065
+    _globals['_REQUESTWIFIIPGET']._serialized_end = 1083
+    _globals['_RESPONSEWIFIIPGET']._serialized_start = 1085
+    _globals['_RESPONSEWIFIIPGET']._serialized_end = 1116
+    _globals['_REQUESTDEBUGSTM32DEEPSLEEP']._serialized_start = 1118
+    _globals['_REQUESTDEBUGSTM32DEEPSLEEP']._serialized_end = 1146
+    _globals['_RESPONSEDEBUGSTM32DEEPSLEEP']._serialized_start = 1148
+    _globals['_RESPONSEDEBUGSTM32DEEPSLEEP']._serialized_end = 1177
+    _globals['_REQUESTDEBUGENTERBOOTLOADER']._serialized_start = 1179
+    _globals['_REQUESTDEBUGENTERBOOTLOADER']._serialized_end = 1208

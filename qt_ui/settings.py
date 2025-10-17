@@ -52,6 +52,7 @@ volume_ramp_target = Setting('volume/ramp_target', 1.0, float)
 volume_ramp_increment_rate = Setting('volume/increment_rate', 1.0, float)
 volume_inactivity_time = Setting('volume/inactivity_ramp_time', 3.0, float)
 volume_inactivity_threshold = Setting('volume/inactivity_inactive_threshold', 2.0, float)
+volume_inactivity_volume = Setting('volume/inactivity_reduction', 0.0, float)
 volume_slow_start_time = Setting('volume/slow_start_time', 1.0, float)
 tau_us = Setting('volume/tau_us', 355, float)
 
@@ -157,6 +158,11 @@ focstim_serial_port = Setting("focstim/serial_port", '', str)
 focstim_use_teleplot = Setting("focstim/use-teleplot", True, bool)
 focstim_teleplot_prefix = Setting("focstim/teleplot_prefix", "", str)
 focstim_dump_notifications_to_file = Setting("focstim/dump_notifications_to_file", False, bool)
+focstim_communication_serial = Setting("focstim/communication_serial", True, bool)
+focstim_communication_wifi = Setting("focstim/communication_wifi", False, bool)
+focstim_ssid = Setting("focstim/wifi_ssid", '', str)
+focstim_password = Setting("focstim/wifi_password", '', str)
+focstim_ip = Setting("focstim/wifi_ip", '', str)
 
 neostim_serial_port = Setting("neostim/serial_port", '', str)
 
@@ -173,3 +179,31 @@ coyote_channel_a_freq_max = Setting("coyote/channel_a_freq_max", 100, int)
 coyote_channel_b_strength_max = Setting("coyote/channel_b_strength_max", 100, int)
 coyote_channel_b_freq_min = Setting("coyote/channel_b_freq_min", 20, int)
 coyote_channel_b_freq_max = Setting("coyote/channel_b_freq_max", 50, int)
+
+# Pattern preferences - we'll store this as a JSON string and convert to dict
+import json
+
+class DictSetting(Setting):
+    """Special setting for dictionary data stored as JSON string"""
+    def __init__(self, key, default_value):
+        super().__init__(key, default_value, str)
+    
+    def get(self):
+        if self.cache is None:
+            json_str = get_settings_instance().value(self.key, json.dumps(self.default_value), str)
+            try:
+                self.cache = json.loads(json_str) if json_str else self.default_value
+            except (json.JSONDecodeError, TypeError):
+                self.cache = self.default_value
+        return self.cache
+    
+    def set(self, value):
+        json_str = json.dumps(value)
+        current_cache = self.cache if self.cache is not None else self.default_value
+        if json_str != json.dumps(current_cache):
+            get_settings_instance().setValue(self.key, json_str)
+            self.cache = value
+            # Force immediate sync to ensure persistence
+            get_settings_instance().sync()
+
+pattern_enabled = DictSetting("patterns/enabled", {})

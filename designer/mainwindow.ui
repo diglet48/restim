@@ -321,6 +321,8 @@
     <addaction name="actionFunscript_conversion"/>
     <addaction name="actionSimfile_conversion"/>
     <addaction name="actionFunscript_decomposition"/>
+    <addaction name="separator"/>
+    <addaction name="actionFirmware_updater"/>
    </widget>
    <addaction name="menuSetup"/>
    <addaction name="menuTools"/>
@@ -446,6 +448,11 @@
   <action name="actionFunscript_decomposition">
    <property name="text">
     <string>Funscript decomposition</string>
+   </property>
+  </action>
+  <action name="actionFirmware_updater">
+   <property name="text">
+    <string>Firmware updater</string>
    </property>
   </action>
  </widget>

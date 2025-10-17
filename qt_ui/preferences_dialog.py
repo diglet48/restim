@@ -1,13 +1,20 @@
 import functools
+import logging
 
+import google.protobuf.text_format
 from PySide6.QtSerialPort import QSerialPortInfo
-from PySide6.QtWidgets import QDialog, QAbstractButton, QDialogButtonBox, QAbstractItemView, QHeaderView, QComboBox
+from PySide6.QtWidgets import QDialog, QAbstractButton, QDialogButtonBox, QAbstractItemView, QHeaderView, QComboBox, QTableWidgetItem, QCheckBox, QApplication
+from PySide6.QtCore import Qt, Signal, QTimer
 
 from qt_ui.preferences_dialog_ui import Ui_PreferencesDialog
 from qt_ui.models.funscript_kit import FunscriptKitModel
+from qt_ui.services.pattern_service import PatternControlService
+from device.focstim.helpers import WifiUploadHelper, GrabIpHelper
 import qt_ui.settings
 
 import sounddevice as sd
+
+logger = logging.getLogger('restim.preferences')
 
 
 class PreferencesDialog(QDialog, Ui_PreferencesDialog):
@@ -16,6 +23,11 @@ class PreferencesDialog(QDialog, Ui_PreferencesDialog):
         self.setupUi(self)
 
         self.tabWidget.setCurrentIndex(0)
+
+        # Initialize pattern service and cache pattern data immediately
+        self.pattern_service = PatternControlService()
+        self._cached_patterns = None
+        self._cache_patterns_data()
 
         self.loadSettings()
 
@@ -39,6 +51,9 @@ class PreferencesDialog(QDialog, Ui_PreferencesDialog):
             QAbstractItemView.AnyKeyPressed
         )
 
+        # patterns setup - do this immediately during initialization
+        self.setup_patterns_tab()
+
         # media sync reset buttons
         self.mpc_reload.clicked.connect(
             functools.partial(self.mpc_address.setText, qt_ui.settings.media_sync_mpc_address.default_value)
@@ -54,8 +69,20 @@ class PreferencesDialog(QDialog, Ui_PreferencesDialog):
         )
 
         # focstim/neostim reload serial devices
-        self.refresh_serial_devices.clicked.connect(self.repopulate_serial_devices)
+        self.focstim_refresh_serial_devices.clicked.connect(self.repopulate_serial_devices)
         self.neostim_refresh_serial_devices.clicked.connect(self.repopulate_serial_devices)
+
+        # focstim buttons
+        self.focstim_read_ip.clicked.connect(self.read_focstim_ip)
+        self.focstim_sync.clicked.connect(self.upload_focstim_ssid)
+
+    def _cache_patterns_data(self):
+        """Cache pattern data at startup to avoid late discovery issues"""
+        try:
+            # Pre-load all pattern data immediately
+            self._cached_patterns = self.pattern_service.get_available_patterns(respect_user_preferences=False)
+        except Exception as e:
+            self._cached_patterns = []
 
     def exec(self):
         self.loadSettings()
@@ -115,6 +142,12 @@ class PreferencesDialog(QDialog, Ui_PreferencesDialog):
         self.focstim_teleplot_prefix.setText(qt_ui.settings.focstim_teleplot_prefix.get())
         self.focstim_dump_notifications.setChecked(qt_ui.settings.focstim_dump_notifications_to_file.get())
 
+        self.focstim_radio_serial.setChecked(qt_ui.settings.focstim_communication_serial.get())
+        self.focstim_radio_wifi.setChecked(qt_ui.settings.focstim_communication_wifi.get())
+        self.focstim_ssid.setText(qt_ui.settings.focstim_ssid.get())
+        self.focstim_password.setText(qt_ui.settings.focstim_password.get())
+        self.focstim_ip.setText(qt_ui.settings.focstim_ip.get())
+
         # neostim settings
         self.neostim_port.setCurrentIndex(self.neostim_port.findData(qt_ui.settings.neostim_serial_port.get()))
 
@@ -141,6 +174,9 @@ class PreferencesDialog(QDialog, Ui_PreferencesDialog):
 
         # funscript mapping
         self.tableView.setModel(FunscriptKitModel.load_from_settings())
+        
+        # refresh pattern preferences (just reload checkboxes from settings)
+        self.refresh_pattern_preferences()
 
     def repopulate_audio_devices(self):
         self.audio_output_device.clear()
@@ -185,7 +221,6 @@ class PreferencesDialog(QDialog, Ui_PreferencesDialog):
         refresh(self.focstim_port, qt_ui.settings.focstim_serial_port)
         refresh(self.neostim_port, qt_ui.settings.neostim_serial_port)
 
-
     def refresh_audio_device_info(self):
         api_index = self.audio_api.currentIndex()
         device_name = self.audio_output_device.currentText()
@@ -194,6 +229,57 @@ class PreferencesDialog(QDialog, Ui_PreferencesDialog):
                 out_channels = device['max_output_channels']
                 samplerate = device['default_samplerate']
                 self.audio_info.setText(f"channels: {out_channels}, samplerate: {samplerate}")
+
+    def upload_focstim_ssid(self):
+        helper = WifiUploadHelper()
+        fut = helper.upload(
+            self.focstim_port.currentData(),
+            self.focstim_ssid.text().encode("utf-8"),
+            self.focstim_password.text().encode("utf-8"),
+        )
+        if fut is None:
+            return
+        self.focstim_sync.setEnabled(False)
+
+        def timeout():
+            helper.close()
+            logger.error("timeout uploading wifi settings")
+            self.focstim_sync.setEnabled(True)
+
+        def result(result):
+            helper.close()
+            s = google.protobuf.text_format.MessageToString(result, as_one_line=True)
+            logger.info(f"response: {s}")
+            self.focstim_sync.setEnabled(True)
+
+        fut.on_timeout.connect(timeout)
+        fut.on_result.connect(result)
+
+    def read_focstim_ip(self):
+        helper = GrabIpHelper()
+        fut = helper.get_ip(
+            self.focstim_port.currentData(),
+        )
+        if fut is None:
+            return
+        self.focstim_read_ip.setEnabled(False)
+
+        def timeout():
+            helper.close()
+            logger.error("timeout grabbing IP")
+            self.focstim_read_ip.setEnabled(True)
+
+        def result(result):
+            helper.close()
+            s = google.protobuf.text_format.MessageToString(result, as_one_line=True)
+            logger.info(f"response: {s}")
+            ip = result.response_wifi_ip_get.ip
+            ip_string = f"{(ip >> 24) & 0xFF}.{(ip >> 16) & 0xFF}.{(ip >> 8) & 0xFF}.{ip & 0xFF}"
+            self.focstim_read_ip.setEnabled(True)
+            self.focstim_ip.setText(ip_string)
+
+        fut.on_timeout.connect(timeout)
+        fut.on_result.connect(result)
 
     def saveSettings(self):
         # network
@@ -227,6 +313,11 @@ class PreferencesDialog(QDialog, Ui_PreferencesDialog):
         qt_ui.settings.focstim_use_teleplot.set(self.focstim_use_teleplot.isChecked())
         qt_ui.settings.focstim_teleplot_prefix.set(self.focstim_teleplot_prefix.text())
         qt_ui.settings.focstim_dump_notifications_to_file.set(self.focstim_dump_notifications.isChecked())
+        qt_ui.settings.focstim_communication_serial.set(self.focstim_radio_serial.isChecked())
+        qt_ui.settings.focstim_communication_wifi.set(self.focstim_radio_wifi.isChecked())
+        qt_ui.settings.focstim_ssid.set(self.focstim_ssid.text())
+        qt_ui.settings.focstim_password.set(self.focstim_password.text())
+        qt_ui.settings.focstim_ip.set(self.focstim_ip.text())
 
         # neoStim
         qt_ui.settings.neostim_serial_port.set(str(self.neostim_port.currentData()))
@@ -255,5 +346,93 @@ class PreferencesDialog(QDialog, Ui_PreferencesDialog):
         # funscript mapping
         self.tableView.model().save_to_settings()
 
+        # patterns
+        for row in range(self.patterns_table.rowCount()):
+            checkbox = self.patterns_table.cellWidget(row, 1)
+            if isinstance(checkbox, QCheckBox):
+                pattern_name = checkbox.property("pattern_name")
+                if pattern_name:
+                    # Update checkbox state from settings
+                    was_enabled = self.pattern_service.is_pattern_enabled(pattern_name)
+                    is_enabled = checkbox.isChecked()
+                    if was_enabled != is_enabled:
+                        self.pattern_service.set_pattern_enabled(pattern_name, is_enabled)
+
     def funscript_reset_defaults(self):
         self.tableView.model().reset_to_defaults()
+    
+    def setup_patterns_tab(self):
+        """Setup the patterns tab with cached pattern data"""
+        # Use cached patterns data to avoid late discovery
+        patterns = self._cached_patterns or []
+        
+        if not patterns:
+            return
+        
+        # Set up table with known size
+        self.patterns_table.setRowCount(len(patterns))
+        
+        # Populate table rows
+        for row, pattern in enumerate(patterns):
+            # Column 0: Pattern name
+            name_item = QTableWidgetItem(pattern['name'])
+            name_item.setFlags(Qt.ItemIsEnabled | Qt.ItemIsSelectable)
+            self.patterns_table.setItem(row, 0, name_item)
+            
+            # Column 1: Enabled checkbox (only for non-priority patterns)
+            if pattern['class_name'] in ['MousePattern', 'CirclePattern']:
+                # For Mouse and Circle patterns, show blank cell
+                enabled_item = QTableWidgetItem("")
+                enabled_item.setFlags(Qt.ItemIsEnabled)
+                self.patterns_table.setItem(row, 1, enabled_item)
+            else:
+                # For other patterns, create checkbox
+                checkbox = QCheckBox()
+                pattern_enabled = self.pattern_service.is_pattern_enabled(pattern['name'])
+                checkbox.setChecked(pattern_enabled)
+                checkbox.setProperty("pattern_name", pattern['name'])
+                checkbox.setProperty("class_name", pattern['class_name'])
+
+                # Add checkbox to table
+                checkbox_item = QTableWidgetItem()
+                checkbox_item.setFlags(Qt.ItemIsEnabled)
+                self.patterns_table.setItem(row, 1, checkbox_item)
+                self.patterns_table.setCellWidget(row, 1, checkbox)
+        
+        # Simple, single layout update
+        self.patterns_table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
+        self.patterns_table.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)
+        self.patterns_table.resizeRowsToContents()
+        
+        # Connect buttons
+        self.button_patterns_enable_all.clicked.connect(self.enable_all_patterns)
+        self.button_patterns_disable_all.clicked.connect(self.disable_all_patterns)
+    
+    def refresh_pattern_preferences(self):
+        """Refresh checkbox states from current settings without rebuilding the UI"""
+        if not hasattr(self, 'patterns_table'):
+            return
+            
+        for row in range(self.patterns_table.rowCount()):
+            checkbox = self.patterns_table.cellWidget(row, 1)
+            if isinstance(checkbox, QCheckBox):
+                pattern_name = checkbox.property("pattern_name")
+                if pattern_name:
+                    # Update checkbox state from settings
+                    enabled = self.pattern_service.is_pattern_enabled(pattern_name)
+                    checkbox.setChecked(enabled)
+    
+    def enable_all_patterns(self):
+        """Enable all patterns with checkboxes"""
+        for row in range(self.patterns_table.rowCount()):
+            widget = self.patterns_table.cellWidget(row, 1)
+            if isinstance(widget, QCheckBox):
+                widget.setChecked(True)
+
+    def disable_all_patterns(self):
+        """Disable all patterns with checkboxes"""
+        for row in range(self.patterns_table.rowCount()):
+            widget = self.patterns_table.cellWidget(row, 1)
+            if isinstance(widget, QCheckBox):
+                widget.setChecked(False)
+

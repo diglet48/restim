@@ -70,6 +70,9 @@ class NeoStimAlgorithm(QObject, NeoStimPTGenerator):
             np.clip(self.params.volume.inactivity.last_value(), 0, 1) * \
             np.clip(self.params.volume.external.last_value(), 0, 1)
 
+        if not self.media.is_playing():
+            volume *= 0
+
         alpha, beta = self.position_params.get_position(t)
         calibration_neutral = self.params.calibrate.neutral.last_value()
         calibration_right = self.params.calibrate.right.last_value()
