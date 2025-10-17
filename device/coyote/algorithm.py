@@ -216,10 +216,18 @@ class ContinuousSignal:
         min_dur = max(COYOTE_MIN_PULSE_DURATION, int(round(1000.0 / max_freq)))
         max_dur = min(COYOTE_MAX_PULSE_DURATION, int(round(1000.0 / min_freq)))
 
-        # Base frequency from UI/funscript axis, clamped by channel limits
-        requested_freq = float(self.params.pulse_frequency.interpolate(current_time))
-        requested_freq = float(np.clip(requested_freq, min_freq, max_freq))
-        base_duration = 1000.0 / requested_freq if requested_freq > 0 else max_dur
+        # Map global funscript pulse_frequency into the channel's preferred range
+        # 1) Normalize funscript value using global pulse_freq_limits (kit limits)
+        raw_pf = float(self.params.pulse_frequency.interpolate(current_time))
+        pf_min, pf_max = self.pulse_freq_limits
+        if pf_max <= pf_min:
+            pf_norm = 0.0
+        else:
+            pf_norm = float(np.clip((raw_pf - pf_min) / (pf_max - pf_min), 0.0, 1.0))
+        # 2) Map normalized value into channel-specific [min_freq, max_freq]
+        mapped_freq = min_freq + pf_norm * (max_freq - min_freq)
+        mapped_freq = float(np.clip(mapped_freq, min_freq, max_freq))
+        base_duration = 1000.0 / mapped_freq if mapped_freq > 0 else max_dur
 
         # Optional jitter around base duration (from funscript)
         jitter = float(self.params.pulse_interval_random.interpolate(current_time))
@@ -294,7 +302,7 @@ class ContinuousSignal:
         try:
             print(
                 f"[DEBUG] COYOTE get_pulse_at: t={current_time:.3f} idx={pulse_index} "
-                f"req_freq={requested_freq:.2f}Hz limits=({min_freq:.1f},{max_freq:.1f})Hz "
+                f"pf_raw={raw_pf:.2f}Hz pf_norm={pf_norm:.2f} mapped={mapped_freq:.2f}Hz limits=({min_freq:.1f},{max_freq:.1f})Hz "
                 f"dur_limits=({min_dur},{max_dur})ms base_dur={base_duration:.2f}ms jitter={jitter:.2f} "
                 f"tex_up={amp_up_ms:.2f}ms tex_dn={amp_dn_ms:.2f}ms tex_used={texture_amplitude_ms:.2f}ms desired={desired_ms:.2f}ms residual={self._duration_residual_ms:+.2f}ms "
                 f"final_dur={pulse_duration}ms final_freq={final_frequency}Hz intensity={final_intensity}%"
