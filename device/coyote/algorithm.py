@@ -280,6 +280,13 @@ class CoyoteAlgorithm:
         self.last_update_time_s = 0.0
         self.next_update_time = 0.0
 
+        # Per-channel pulse queues and horizons
+        self.queue_a: Deque[CoyotePulse] = deque()
+        self.queue_b: Deque[CoyotePulse] = deque()
+        self.queue_end_time_a: float | None = None
+        self.queue_end_time_b: float | None = None
+        self.queue_horizon_s: float = 0.75
+
         # UI Preview Cache
         self._cached_envelope = np.full(200, 0.5)  # Default to a flat line
         self._cached_envelope_period = 0.0
@@ -297,6 +304,90 @@ class CoyoteAlgorithm:
                 self._max_change_per_pulse = float(ui_settings.coyote_max_intensity_change_per_pulse.get())
         except Exception:
             pass
+
+    def _generate_single_pulse(self, t_pulse: float, signal: 'ContinuousSignal', channel_name: str,
+                               seq_index: int) -> CoyotePulse:
+        volume = compute_volume(self.media, self.params.volume, t_pulse)
+        intensity_a, intensity_b = self._get_positional_intensities(t_pulse, volume)
+        target_intensity = float(intensity_a if channel_name == 'A' else intensity_b)
+
+        carrier_hz = float(self.params.carrier_frequency.interpolate(t_pulse))
+        rise_cycles = float(self.params.pulse_rise_time.interpolate(t_pulse))
+        tau_s = 0.0 if carrier_hz <= 0 else (rise_cycles / carrier_hz)
+
+        if channel_name == 'A':
+            last_y = self._last_intensity_a
+            last_t = self._last_intensity_time_a
+            if last_y is None or tau_s <= 0 or last_t is None:
+                y = target_intensity
+            else:
+                dt = max(0.0, t_pulse - last_t)
+                allowed = (dt / tau_s) * 100.0
+                if self._max_change_per_pulse > 0:
+                    allowed = min(allowed, self._max_change_per_pulse)
+                delta = np.clip(target_intensity - last_y, -allowed, allowed)
+                y = last_y + delta
+            self._last_intensity_a = y
+            self._last_intensity_time_a = t_pulse
+        else:
+            last_y = self._last_intensity_b
+            last_t = self._last_intensity_time_b
+            if last_y is None or tau_s <= 0 or last_t is None:
+                y = target_intensity
+            else:
+                dt = max(0.0, t_pulse - last_t)
+                allowed = (dt / tau_s) * 100.0
+                if self._max_change_per_pulse > 0:
+                    allowed = min(allowed, self._max_change_per_pulse)
+                delta = np.clip(target_intensity - last_y, -allowed, allowed)
+                y = last_y + delta
+            self._last_intensity_b = y
+            self._last_intensity_time_b = t_pulse
+
+        intensity = int(np.clip(round(y), 0, 100))
+        pulse = signal.get_pulse_at(t_pulse, intensity, seq_index)
+        return pulse
+
+    def _fill_channel_queue(self, now_s: float, channel_name: str, signal: 'ContinuousSignal') -> None:
+        if channel_name == 'A':
+            q = self.queue_a
+            end_time = self.queue_end_time_a if self.queue_end_time_a is not None else now_s
+        else:
+            q = self.queue_b
+            end_time = self.queue_end_time_b if self.queue_end_time_b is not None else now_s
+
+        horizon_end = now_s + self.queue_horizon_s
+        seq_index = 0
+        while end_time < horizon_end or len(q) < 4:
+            pulse = self._generate_single_pulse(end_time, signal, channel_name, seq_index)
+            q.append(pulse)
+            end_time += pulse.duration / 1000.0
+            seq_index += 1
+
+        if channel_name == 'A':
+            self.queue_end_time_a = end_time
+        else:
+            self.queue_end_time_b = end_time
+
+        try:
+            print(f"[DEBUG] COYOTE fill_queue {channel_name}: size={len(q)} until={end_time-now_s:.3f}s horizon={self.queue_horizon_s:.3f}s")
+        except Exception:
+            pass
+
+    def _pop_packet_from_queue(self, channel_name: str) -> List[CoyotePulse]:
+        if channel_name == 'A':
+            q = self.queue_a
+        else:
+            q = self.queue_b
+
+        packet: List[CoyotePulse] = []
+        while len(packet) < COYOTE_PULSES_PER_PACKET:
+            if q:
+                packet.append(q.popleft())
+            else:
+                # Fallback safe pulse
+                packet.append(CoyotePulse(frequency=0, intensity=0, duration=COYOTE_MIN_PULSE_DURATION))
+        return packet
 
     def _get_positional_intensities(self, t: float, volume: float) -> Tuple[int, int]:
         """Barycentric phase diagram mapping: (beta, alpha) with left=+1, right=-1, neutral=+1 (top)."""
@@ -454,15 +545,26 @@ class CoyoteAlgorithm:
         self.signal_b.modulation_phase = (self.signal_b.modulation_phase + phase_change) % (2 * np.pi)
 
     def _is_packet_generation_needed(self) -> bool:
-        """Check if either channel needs a new packet."""
-        return (self.channel_a.is_ready_for_next_packet() or 
-                self.channel_b.is_ready_for_next_packet())
+        """Check if either channel needs a new packet.
+
+        We also allow proactive generation if queues are running low, to avoid
+        starving the device with repeats for too long.
+        """
+        low_queue = (len(self.queue_a) < COYOTE_PULSES_PER_PACKET or
+                     len(self.queue_b) < COYOTE_PULSES_PER_PACKET)
+        ready = (self.channel_a.is_ready_for_next_packet() or
+                 self.channel_b.is_ready_for_next_packet())
+        return ready or low_queue
 
     def _schedule_next_update(self, current_time: float, packet_duration_a: float, 
                              packet_duration_b: float, margin: float = 0.8) -> None:
         """Schedule the next update time based on packet durations."""
         min_duration = min(packet_duration_a, packet_duration_b)
         self.next_update_time = current_time + min_duration * margin
+        try:
+            print(f"[DEBUG] COYOTE schedule: next_update in {min_duration*margin:.3f}s (A={packet_duration_a:.3f}s B={packet_duration_b:.3f}s)")
+        except Exception:
+            pass
 
     def _log_packet_debug(self, current_time: float, alpha: float, beta: float, 
                          pulses_a: List[CoyotePulse], pulses_b: List[CoyotePulse],
@@ -531,10 +633,16 @@ class CoyoteAlgorithm:
         # Update the UI preview cache from the current state
         self._update_envelope_preview(current_time)
 
-        # Generate pulses for both channels
+        # Ensure queues are filled ahead of time
+        self._fill_channel_queue(current_time, 'A', self.signal_a)
+        self._fill_channel_queue(current_time, 'B', self.signal_b)
+
+        # Assemble packets by popping from queues (atomic update for A and B)
         alpha, beta = self.position.get_position(current_time)
-        pulses_a, duration_a = self._generate_channel_pulses(current_time, self.signal_a, 'A')
-        pulses_b, duration_b = self._generate_channel_pulses(current_time, self.signal_b, 'B')
+        pulses_a = self._pop_packet_from_queue('A')
+        pulses_b = self._pop_packet_from_queue('B')
+        duration_a = sum(p.duration for p in pulses_a)
+        duration_b = sum(p.duration for p in pulses_b)
 
         # Update channel states so readiness reflects packet progress
         try:
