@@ -437,10 +437,8 @@ class EnvelopeGraph(QWidget):
         
         # Colors for visualization
         self.envelope_color = QColor(0, 180, 255, 150)
-        self.pulse_colors = [
-            CHANNEL_A_COLOR,
-            CHANNEL_B_COLOR
-        ]
+        self.pulse_colors = [CHANNEL_A_COLOR, CHANNEL_B_COLOR]
+        self.line_colors = [QColor(170, 120, 255, 200), QColor(255, 190, 80, 200)]
         
         # Add margin to avoid clipping
         self.margin = 20
@@ -552,8 +550,18 @@ class EnvelopeGraph(QWidget):
         self._drawFrequencyLabel(width, height)
     
     def _drawGrid(self, width, height, graph_top, graph_bottom):
-        # No axes, no grid lines, nothing drawn
-        pass
+        # Simple horizontal lines at 0, 0.5, 1 and vertical lines every 0.5 s
+        pen = QPen(QColor(60, 60, 60))
+        pen.setStyle(Qt.DashLine)
+        self.scene.addLine(self.margin, graph_bottom, width - self.margin, graph_bottom, pen)
+        self.scene.addLine(self.margin, (graph_top + graph_bottom)/2, width - self.margin, (graph_top + graph_bottom)/2, pen)
+        self.scene.addLine(self.margin, graph_top, width - self.margin, graph_top, pen)
+        # Vertical ticks
+        usable_width = width - 2 * self.margin
+        n_ticks = 4
+        for i in range(1, n_ticks):
+            x = self.margin + (i / n_ticks) * usable_width
+            self.scene.addLine(x, graph_top, x, graph_bottom, pen)
     
     def _drawEnvelope(self, width, height, graph_top, graph_bottom, graph_height):
         """Draw envelope curve (0 at bottom, 1 at top)"""
@@ -586,28 +594,55 @@ class EnvelopeGraph(QWidget):
         # Drop old pulses
         cutoff = current_time - self.max_pulse_age
         self.recent_pulses = [p for p in self.recent_pulses if p['timestamp'] >= cutoff]
-        # Decimate if there are too many points to draw
-        step = max(1, int(len(self.recent_pulses) / 200))
-        for i, pulse in enumerate(self.recent_pulses):
+        # Split pulses by channel and build polylines (newest on right)
+        series = {0: [], 1: []}
+        step = max(1, int(len(self.recent_pulses) / 300))
+        for i, p in enumerate(self.recent_pulses):
             if i % step != 0:
                 continue
-            age = current_time - pulse['timestamp']
+            age = current_time - p['timestamp']
             frac = max(0.0, min(1.0, 1.0 - age / self.max_pulse_age))
             x = self.margin + frac * usable_width
-            norm = pulse.get('norm', 0.5)
+            norm = p.get('norm', 0.5)
             y = graph_bottom - (norm * graph_height)
-            intensity = pulse['intensity']
-            size = 4 + (12 * intensity / 100.0)
-            channel = pulse['channel']
-            dot = QGraphicsEllipseItem(x - size/2, y - size/2, size, size)
-            dot.setBrush(QBrush(self.pulse_colors[channel]))
-            dot.setPen(QPen(Qt.NoPen))
-            dot.setToolTip(f"Channel: {'A' if channel == 0 else 'B'}\n"
-                           f"Intensity: {intensity}%\n"
-                           f"Duration: {pulse['duration']} ms\n"
-                           f"Normalized: {norm:.2f}")
-            dot.setAcceptHoverEvents(True)
-            self.scene.addItem(dot)
+            series[p['channel']].append((x, y, p))
+
+        for ch in (0, 1):
+            pts = series[ch]
+            if len(pts) < 2:
+                continue
+            # Sort by x to draw from left to right
+            pts.sort(key=lambda t: t[0])
+            path = QPainterPath()
+            path.moveTo(pts[0][0], pts[0][1])
+            for x, y, _ in pts[1:]:
+                path.lineTo(x, y)
+            pen = QPen(self.line_colors[ch], 2)
+            self.scene.addPath(path, pen)
+
+            # Draw dots on top with intensity-sized markers
+            for x, y, p in pts:
+                size = 3 + (9 * p['intensity'] / 100.0)
+                dot = QGraphicsEllipseItem(x - size/2, y - size/2, size, size)
+                dot.setBrush(QBrush(self.pulse_colors[ch]))
+                dot.setPen(QPen(Qt.NoPen))
+                hz = 0 if p['duration'] <= 0 else int(round(1000.0 / p['duration']))
+                dot.setToolTip(f"Channel: {'A' if ch == 0 else 'B'}\n"
+                               f"Intensity: {p['intensity']}%\n"
+                               f"Duration: {p['duration']} ms ({hz} Hz)\n"
+                               f"Normalized: {p.get('norm', 0.5):.2f}")
+                self.scene.addItem(dot)
+
+        # Right-side labels: current freq estimate per channel
+        for ch in (0, 1):
+            pts = series[ch]
+            if not pts:
+                continue
+            _, _, last = pts[-1]
+            hz = 0 if last['duration'] <= 0 else int(round(1000.0 / last['duration']))
+            label = self.scene.addText(f"{'A' if ch == 0 else 'B'}: {hz} Hz")
+            label.setDefaultTextColor(self.pulse_colors[ch])
+            label.setPos(width - self.margin - 80, graph_top + ch * 18)
     
     def _drawFrequencyLabel(self, width, height):
         """Draw frequency information"""
