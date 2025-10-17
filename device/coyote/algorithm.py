@@ -234,6 +234,17 @@ class ContinuousSignal:
         # Intensity is supplied by the caller (already smoothed). Do not modulate here.
         final_intensity = int(np.clip(base_intensity, 0, 100))
 
+        # Debug: trace pulse generation values (do not remove)
+        try:
+            print(
+                f"[DEBUG] COYOTE get_pulse_at: t={current_time:.3f} idx={pulse_index} "
+                f"req_freq={requested_freq:.2f}Hz limits=({min_freq:.1f},{max_freq:.1f})Hz "
+                f"dur_limits=({min_dur},{max_dur})ms base_dur={base_duration:.1f}ms jitter={jitter:.2f} "
+                f"final_dur={pulse_duration}ms final_freq={final_frequency}Hz intensity={final_intensity}%"
+            )
+        except Exception:
+            pass
+
         return CoyotePulse(
             duration=pulse_duration,
             intensity=final_intensity,
@@ -524,6 +535,13 @@ class CoyoteAlgorithm:
         alpha, beta = self.position.get_position(current_time)
         pulses_a, duration_a = self._generate_channel_pulses(current_time, self.signal_a, 'A')
         pulses_b, duration_b = self._generate_channel_pulses(current_time, self.signal_b, 'B')
+
+        # Update channel states so readiness reflects packet progress
+        try:
+            self.channel_a.set_new_packet(current_time, pulses_a, duration_a / 1000.0)
+            self.channel_b.set_new_packet(current_time, pulses_b, duration_b / 1000.0)
+        except Exception:
+            pass
 
         # Log debug information
         self._log_packet_debug(current_time, alpha, beta, pulses_a, pulses_b, duration_a, duration_b)
