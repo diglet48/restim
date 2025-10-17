@@ -203,6 +203,7 @@ class ContinuousSignal:
 
         - pulse_frequency: controls the base repetition rate (Hz)
         - pulse_interval_random: ±fractional jitter of the base duration
+        - pulse_width: controls zero-mean micro-texture depth (duration modulation)
         - intensity: provided by caller (volume × position, smoothed elsewhere)
         """
         # Initialize timing state
@@ -220,12 +221,28 @@ class ContinuousSignal:
         requested_freq = float(np.clip(requested_freq, min_freq, max_freq))
         base_duration = 1000.0 / requested_freq if requested_freq > 0 else max_dur
 
-        # Optional jitter around base duration
+        # Optional jitter around base duration (from funscript)
         jitter = float(self.params.pulse_interval_random.interpolate(current_time))
         # Treat jitter as a 0..1 fraction; clamp to ±50% to avoid pathological spans
         jitter = float(np.clip(jitter, 0.0, 0.5))
         jitter_factor = 1.0 + (np.random.rand() * 2.0 - 1.0) * jitter
-        desired_ms = base_duration * jitter_factor
+
+        # Micro-texture from pulse_width (depth) with phase advanced in _advance_channel_states
+        # Normalize pulse_width cycles to 0..1 using limits
+        width_cycles = float(self.params.pulse_width.interpolate(current_time))
+        min_w, max_w = self.pulse_width_limits
+        width_norm = 0.0 if max_w <= min_w else np.clip((width_cycles - min_w) / (max_w - min_w), 0.0, 1.0)
+
+        # Available symmetric headroom around base duration
+        headroom_ms = min(max_dur - base_duration, base_duration - min_dur)
+        headroom_ms = max(0.0, headroom_ms)
+
+        # Cap texture depth to a fraction of headroom; scale by width_norm
+        TEXTURE_MAX_DEPTH_FRACTION = 0.5
+        texture_amplitude_ms = headroom_ms * TEXTURE_MAX_DEPTH_FRACTION * width_norm
+        texture_ms = texture_amplitude_ms * np.sin(self.modulation_phase)
+
+        desired_ms = base_duration * jitter_factor + texture_ms
 
         # Fractional-duration accumulation to reduce jagged 10↔11ms toggling
         accum = self._duration_residual_ms + desired_ms
@@ -252,7 +269,7 @@ class ContinuousSignal:
                 f"[DEBUG] COYOTE get_pulse_at: t={current_time:.3f} idx={pulse_index} "
                 f"req_freq={requested_freq:.2f}Hz limits=({min_freq:.1f},{max_freq:.1f})Hz "
                 f"dur_limits=({min_dur},{max_dur})ms base_dur={base_duration:.1f}ms jitter={jitter:.2f} "
-                f"desired={desired_ms:.2f}ms residual={self._duration_residual_ms:+.2f}ms "
+                f"texture_amp={texture_amplitude_ms:.2f}ms desired={desired_ms:.2f}ms residual={self._duration_residual_ms:+.2f}ms "
                 f"final_dur={pulse_duration}ms final_freq={final_frequency}Hz intensity={final_intensity}%"
             )
         except Exception:
@@ -489,17 +506,15 @@ class CoyoteAlgorithm:
         self.channel_a.advance_time(delta_time_ms)
         self.channel_b.advance_time(delta_time_ms)
 
-        # Get normalized modulation speed
-        # We use signal_a's limits, assuming they are the same for both channels.
-        _, mod_speed_norm, _, _ = _get_normalized_parameters(
+        # Advance shared micro-texture phase using carrier axis as speed control (mapped to ~0.5..5 Hz)
+        carrier_norm, _, _, _ = _get_normalized_parameters(
             self.params, current_time, self.signal_a.carrier_freq_limits, self.signal_a.pulse_freq_limits)
-
-        # Calculate phase change based on elapsed time and modulation speed
-        # This logic is now centralized here from its previous location in get_pulse_at.
+        TEXTURE_MIN_HZ = 0.5
+        TEXTURE_MAX_HZ = 5.0
+        texture_speed_hz = TEXTURE_MIN_HZ + (TEXTURE_MAX_HZ - TEXTURE_MIN_HZ) * (carrier_norm / 100.0)
         delta_time_s = delta_time_ms / 1000.0
-        phase_change = (delta_time_s * mod_speed_norm / 10.0) * 2 * np.pi  # Simplified from / 50.0 * 5.0
-
-        # Apply the same phase change to both signals to keep them in sync
+        phase_change = (delta_time_s * texture_speed_hz) * 2 * np.pi
+        # Keep both channels in sync for texture phase
         self.signal_a.modulation_phase = (self.signal_a.modulation_phase + phase_change) % (2 * np.pi)
         self.signal_b.modulation_phase = (self.signal_b.modulation_phase + phase_change) % (2 * np.pi)
 
