@@ -674,6 +674,17 @@ class EnvelopeGraphContainer(QWidget):
         
         self.layout.addLayout(top_row)
         
+        # Stats row
+        stats_row = QHBoxLayout()
+        self.statsA = QLabel("A: —")
+        self.statsB = QLabel("B: —")
+        self.statsA.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+        self.statsB.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+        stats_row.addWidget(self.statsA)
+        stats_row.addStretch(1)
+        stats_row.addWidget(self.statsB)
+        self.layout.addLayout(stats_row)
+
         # Create envelope graph
         self.graph = EnvelopeGraph()
         self.layout.addWidget(self.graph)
@@ -718,6 +729,36 @@ class EnvelopeGraphContainer(QWidget):
         self.graph.addPulse(channel_idx, intensity, duration)
         if self.graph.recent_pulses:
             self.graph.recent_pulses[0]['norm'] = norm
+        # Update stats after each pulse
+        self.updateStats()
+
+    def updateStats(self):
+        def fmt_stats(ch):
+            pulses = [p for p in self.graph.recent_pulses if p['channel'] == ch]
+            if not pulses:
+                return "—"
+            # Current from most recent
+            now_hz = int(round(1000.0 / pulses[0]['duration'])) if pulses[0]['duration'] > 0 else 0
+            # Compute frequency and period arrays
+            hz = [1000.0 / p['duration'] for p in pulses if p['duration'] > 0]
+            if not hz:
+                return f"{'A' if ch == 0 else 'B'}: —"
+            avg_hz = sum(hz) / len(hz)
+            min_hz = int(min(hz))
+            max_hz = int(max(hz))
+            # Period jitter (% of mean period)
+            periods = [p['duration'] for p in pulses]
+            mu = sum(periods) / len(periods)
+            if len(periods) > 1:
+                var = sum((x - mu) ** 2 for x in periods) / (len(periods) - 1)
+                sd = var ** 0.5
+                jitter = int(round((sd / mu) * 100)) if mu > 0 else 0
+            else:
+                jitter = 0
+            return f"{'A' if ch == 0 else 'B'}: {now_hz} Hz • avg {int(round(avg_hz))} ({min_hz}–{max_hz}) • jitter {jitter}% • n={len(pulses)}"
+
+        self.statsA.setText(fmt_stats(0))
+        self.statsB.setText(fmt_stats(1))
 
 class CoyoteSettingsWidget(QtWidgets.QWidget):
     def __init__(self, parent=None):
