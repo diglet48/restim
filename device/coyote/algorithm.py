@@ -136,17 +136,17 @@ def _get_normalized_parameters(params: CoyoteAlgorithmParams, t: float,
 
 
 class ContinuousSignal:
-    """Models a single channel's pulse generation using symmetric ramp envelopes.
-    
-    Generates pulses whose frequency *and intensity* are driven by a shared sine-wave LFO.
-    The LFO parameters come from the `pulse_*` axes so UI preview and runtime stay in sync.
-    Base intensity from volume/position is multiplied by an LFO factor (±50 % max) to
-    create a smooth pulsing effect while frequency receives the same LFO swing.
+    """Models a single channel's pulse generation.
+
+    Revised to keep the pulse frequency anchored to the funscript/UI
+    `pulse_frequency` axis (with optional jitter), and to stop sweeping
+    across the full min/max range. This preserves the intention of
+    funscripts more faithfully while staying within hardware limits.
     """
-    
+
     ENVELOPE_RESOLUTION = 200  # Number of points in envelope lookup table
 
-    
+
     def __init__(self, params: CoyoteAlgorithmParams, channel_params: 'CoyoteChannelParams',
                  carrier_freq_limits: Tuple[float, float], pulse_freq_limits: Tuple[float, float],
                  pulse_width_limits: Tuple[float, float], pulse_rise_time_limits: Tuple[float, float]):
@@ -198,123 +198,46 @@ class ContinuousSignal:
         return np.clip(randomized_freq, min_freq, max_freq)
 
     def get_pulse_at(self, current_time: float, base_intensity: float, pulse_index: int = 0) -> CoyotePulse:
-        """Generate a pulse using sine-wave frequency modulation.
+        """Generate a pulse anchored to the requested pulse_frequency with optional jitter.
 
-        - carrier_frequency:  Sets the base frequency.
-        - pulse_frequency:    Controls the speed of the frequency modulation (modulation frequency).
-        - pulse_width:        Controls the depth of the frequency modulation.
-        - pulse_rise_time:    Adds jitter/randomness to the frequency.
-        - intensity:          Starts with volume × position distribution and is then multiplied by the
-      same sine-wave factor used for frequency, giving ±50 % pulsing around the base value.
+        - pulse_frequency: controls the base repetition rate (Hz)
+        - pulse_interval_random: ±fractional jitter of the base duration
+        - intensity: provided by caller (volume × position, smoothed elsewhere)
         """
-        # --- Timing and State Update ---
+        # Initialize timing state
         if self._start_time is None:
             self._start_time = current_time
-        delta_time = current_time - self._last_pulse_time
         self._last_pulse_time = current_time
 
-        # Advance modulation phase by the elapsed time since the previous pulse
-        _, pulse_freq_norm, _, _ = _get_normalized_parameters(
-            self.params, current_time, self.carrier_freq_limits, self.pulse_freq_limits)
-        phase_increment = delta_time * 2 * np.pi * (pulse_freq_norm / 100.0) * 10.0  # same scaling as scheduler
-        self.modulation_phase += phase_increment
-
-        # --- Get Parameters ---
-        # carrier_frequency: raw Hz value (normalized to 0-100% range)
-        # pulse_frequency: raw Hz value (normalized to 0-100% range)  
-        # pulse_width: raw carrier cycles (used directly)
-        # pulse_rise_time: raw carrier cycles (used directly)
-        carrier_freq_norm, mod_speed_norm, _, _ = _get_normalized_parameters(
-            self.params, current_time, self.carrier_freq_limits, self.pulse_freq_limits)
-        
-        # Use raw carrier cycle values directly
-        mod_depth_cycles = self.params.pulse_width.interpolate(current_time)
-        jitter_cycles = self.params.pulse_rise_time.interpolate(current_time)
-        
-        # Debug parameter values
-        print(f"[DEBUG] RAW: carrier={self.params.carrier_frequency.interpolate(current_time):.2f}Hz "
-              f"pulse_freq={self.params.pulse_frequency.interpolate(current_time):.2f}Hz "
-              f"pulse_width={mod_depth_cycles:.2f}cycles "
-              f"pulse_rise_time={jitter_cycles:.2f}cycles")
-        print(f"[DEBUG] NORMALIZED: carrier={carrier_freq_norm:.1f}% pulse_freq={mod_speed_norm:.1f}%")
-        randomization_strength = self.params.pulse_interval_random.interpolate(current_time)
-
-        # --- Base Frequency Calculation ---
+        # Effective channel limits → convert to duration window
         min_freq, max_freq = self._calculate_effective_frequency_limits()
-        base_frequency = min_freq + (carrier_freq_norm / 100.0) * (max_freq - min_freq)
-        base_frequency = np.clip(base_frequency, min_freq, max_freq)
-
-        # --- Duration Modulation (Sine Wave) ---
-        # We now drive duration directly so every pulse has at least 1 ms difference.
-        base_duration = int(1000.0 / base_frequency)
-        # Channel-specific duration limits derived from frequency limits
         min_dur = max(COYOTE_MIN_PULSE_DURATION, int(round(1000.0 / max_freq)))
         max_dur = min(COYOTE_MAX_PULSE_DURATION, int(round(1000.0 / min_freq)))
-        
-        # --- Duration Modulation (Sine Wave) ---
-        # Use raw carrier cycles directly for modulation depth
-        # Each cycle = 1ms swing, so 5 cycles = 5ms swing
-        # This gives us the full range based on actual cycle count
-        
-        mod_value = np.sin(self.modulation_phase)
-        
-        # Use the full duration range for maximum swing
-        base_duration = int(round((min_dur + max_dur) / 2))  # centre of the channel range
-        max_swing = max_dur - base_duration  # distance to max boundary
-        min_swing = min_dur - base_duration  # distance to min boundary
-        
-        # Ensure full frequency range coverage from min_dur to max_dur
-        # Map the sine wave directly to the full duration range
-        
-        # Calculate the actual swing needed to reach boundaries
-        # Use the actual distances to min and max boundaries
-        if mod_value >= 0:
-            # Positive modulation: scale to max boundary
-            scaled_swing = max_swing * mod_value
-        else:
-            # Negative modulation: scale to min boundary
-            scaled_swing = min_swing * mod_value
-        
-        # The raw cycles are now used for intensity modulation, not range limitation
-        
-        # Ensure we hit the exact boundaries
-        if mod_value >= 0.98:  # near maximum
-            scaled_swing = max_swing
-        elif mod_value <= -0.98:  # near minimum
-            scaled_swing = min_swing
-        
-        # Allow swing to use the full available range regardless of cycle count
-        # The cycle count now determines modulation depth, not range limitation
-        
-        pulse_duration = base_duration + int(round(scaled_swing))
 
-        # Debug log every value for investigation
-        print(f"[DEBUG] freq_limits: min={min_freq:.1f} max={max_freq:.1f}")
-        print(f"[DEBUG] dur_limits: min={min_dur} max={max_dur}")
-        print(f"[DEBUG] base={base_duration} min_swing={min_swing:.1f} max_swing={max_swing:.1f} depth={mod_depth_cycles:.2f}cycles")
-        print(f"[DEBUG] mod_value={mod_value:.2f} scaled_swing={scaled_swing:.1f} final_dur={pulse_duration}")
-        print(f"[DEBUG] final_freq={int(1000.0/pulse_duration)} phase={self.modulation_phase:.2f}")
-        print("---")
+        # Base frequency from UI/funscript axis, clamped by channel limits
+        requested_freq = float(self.params.pulse_frequency.interpolate(current_time))
+        requested_freq = float(np.clip(requested_freq, min_freq, max_freq))
+        base_duration = 1000.0 / requested_freq if requested_freq > 0 else max_dur
 
-        # Ensure we stay within the channel-specific duration window
+        # Optional jitter around base duration
+        jitter = float(self.params.pulse_interval_random.interpolate(current_time))
+        # Treat jitter as a 0..1 fraction; clamp to ±50% to avoid pathological spans
+        jitter = float(np.clip(jitter, 0.0, 0.5))
+        jitter_factor = 1.0 + (np.random.rand() * 2.0 - 1.0) * jitter
+        pulse_duration = int(round(base_duration * jitter_factor))
+
+        # Clamp to channel-specific duration window and hardware bounds
         pulse_duration = int(np.clip(pulse_duration, min_dur, max_dur))
 
-        # Clip to hardware limits
-        pulse_duration = np.clip(pulse_duration, COYOTE_MIN_PULSE_DURATION, COYOTE_MAX_PULSE_DURATION)
+        final_frequency = int(max(1, round(1000.0 / pulse_duration)))
 
-        # Derive frequency only for diagnostics
-        final_frequency = int(1000.0 / pulse_duration)
+        # Intensity is supplied by the caller (already smoothed). Do not modulate here.
+        final_intensity = int(np.clip(base_intensity, 0, 100))
 
-        # Debug log so we can see the modulation values
-        print(f"[DEBUG] pulse={pulse_index} base={base_duration} swing={int(round(scaled_swing))} final={pulse_duration} depth={mod_depth_cycles:.2f}cycles phase={self.modulation_phase:.2f}")
-
-        # Intensity is supplied by the caller (already smoothed/slewed). Do not modulate here.
-        final_intensity = int(np.clip(base_intensity, 1, 100))
-
-        return CoyotePulse(         
+        return CoyotePulse(
             duration=pulse_duration,
-            intensity=final_intensity,  
-            frequency=final_frequency
+            intensity=final_intensity,
+            frequency=final_frequency,
         )
 
 
@@ -561,43 +484,15 @@ class CoyoteAlgorithm:
         logger.debug("\n".join(log_lines))
 
     def _update_envelope_preview(self, t: float):
-        """
-        Generates and caches the UI envelope preview.
-        This must be called from the same state as pulse generation to ensure sync.
-        """
-        # Get normalized modulation speed and depth
-        _, pulse_freq, pulse_width, _ = _get_normalized_parameters(
-            self.params, t, self.signal_a.carrier_freq_limits, self.signal_a.pulse_freq_limits)
+        """Generate and cache a simple flat envelope synced to pulse_frequency.
 
-        # The period is the inverse of the modulation frequency (speed).
-        self._cached_envelope_period = 1.0 / pulse_freq if pulse_freq > 0 else 0.0
-
-        # This visualization must precisely match the runtime logic in get_pulse_at.
+        The revised runtime no longer modulates frequency by a sine wave, so the
+        preview reflects a steady state: flat line with period = 1/pulse_frequency.
+        """
         num_points = 200
-        modulation_depth = pulse_width  # This is already normalized to [0, 1]
-
-        # To sync the preview with the dots, we must use the phase of the *next* packet.
-        # The state has already been advanced for the current time `t` in generate_packet.
-        current_phase = self.signal_a.modulation_phase
-
-        # Generate the sine wave for the plot starting from the current phase.
-        x = np.linspace(current_phase, current_phase + 2 * np.pi, num_points)
-        modulation_wave = np.sin(x)  # Range [-1, 1]
-
-        # Calculate the frequency multiplier, exactly as in get_pulse_at.
-        frequency_multiplier = 1.0 + modulation_wave * modulation_depth
-
-        # Normalize the multiplier from its runtime range to the [0, 1] range for the UI.
-        min_mult = 1.0 - modulation_depth
-        max_mult = 1.0 + modulation_depth
-        range_mult = max_mult - min_mult
-
-        if range_mult == 0:
-            # If there's no modulation, the envelope is flat at the midpoint.
-            self._cached_envelope = np.full(num_points, 0.5)
-            return
-
-        self._cached_envelope = (frequency_multiplier - min_mult) / range_mult
+        freq = float(self.params.pulse_frequency.interpolate(t))
+        self._cached_envelope_period = 1.0 / freq if freq > 0 else 0.0
+        self._cached_envelope = np.full(num_points, 0.5)
 
     def generate_packet(self, current_time: float) -> CoyotePulses:
         """Generate one packet of pulses for both channels."""
@@ -643,52 +538,9 @@ class CoyoteAlgorithm:
         return self.next_update_time
 
     def get_envelope_data(self) -> Tuple[np.ndarray, float]:
-        """Returns the current envelope shape and its period for UI visualization."""
+        """Return the current flat envelope and its period for UI visualization."""
         t = time.time()
-
-        # Get normalized modulation speed and depth
-        # Note: We no longer need carrier_freq or rise_time for the preview
-        _, pulse_freq, pulse_width, _ = _get_normalized_parameters(
-            self.params, t, self.signal_a.carrier_freq_limits, self.signal_a.pulse_freq_limits)
-
-        # The UI envelope now visualizes the sine-wave frequency modulation.
-        # The period is the inverse of the modulation frequency (speed).
-        period = 1.0 / pulse_freq if pulse_freq > 0 else 0.0
-
-        # This visualization must precisely match the runtime logic in get_pulse_at.
+        freq = float(self.params.pulse_frequency.interpolate(t))
+        period = 1.0 / freq if freq > 0 else 0.0
         num_points = 200
-        modulation_depth = pulse_width  # This is already normalized to [0, 1]
-
-        # To sync the preview with the dots, we must predict the phase for the *next* packet.
-        # This involves simulating the state advancement that happens at the start of generate_packet().
-        t = time.time()
-        delta_time_ms = (t - self.last_update_time_s) * 1000.0
-        _, pulse_freq, _, _ = _get_normalized_parameters(
-            self.params, t, self.signal_a.carrier_freq_limits, self.signal_a.pulse_freq_limits)
-
-        # 1. Predict the phase increment.
-        phase_increment = (delta_time_ms / 1000.0) * pulse_freq * 2 * np.pi
-
-        # 2. Calculate the predicted starting phase for the next packet.
-        predicted_phase = self.signal_a.modulation_phase + phase_increment
-
-        # 3. Generate the sine wave for the plot starting from the predicted phase.
-        x = np.linspace(predicted_phase, predicted_phase + 2 * np.pi, num_points)
-        modulation_wave = np.sin(x)  # Range [-1, 1]
-
-        # 2. Calculate the frequency multiplier, exactly as in get_pulse_at.
-        # The result is in the range [1 - depth, 1 + depth].
-        frequency_multiplier = 1.0 + modulation_wave * modulation_depth
-
-        # 3. Normalize the multiplier from its runtime range to the [0, 1] range for the UI.
-        min_mult = 1.0 - modulation_depth
-        max_mult = 1.0 + modulation_depth
-        range_mult = max_mult - min_mult
-
-        if range_mult == 0:
-            # If there's no modulation, the envelope is flat at the midpoint.
-            return np.full(num_points, 0.5), period
-
-        envelope = (frequency_multiplier - min_mult) / range_mult
-
-        return envelope, period
+        return np.full(num_points, 0.5), period
