@@ -254,6 +254,88 @@ class ContinuousSignal:
 
 
 
+class ChannelController:
+    """Encapsulates per-channel queuing, smoothing, and packet assembly."""
+
+    def __init__(self,
+                 name: str,
+                 media: AbstractMediaSync,
+                 params: CoyoteAlgorithmParams,
+                 signal: ContinuousSignal,
+                 get_positional_intensities,
+                 max_change_per_pulse: float,
+                 queue_horizon_s: float = 0.75):
+        self.name = name  # 'A' or 'B'
+        self.media = media
+        self.params = params
+        self.signal = signal
+        self.get_positional_intensities = get_positional_intensities
+        self.max_change_per_pulse = max_change_per_pulse
+        self.queue_horizon_s = queue_horizon_s
+
+        self.queue: Deque[CoyotePulse] = deque()
+        self.queue_end_time: float | None = None
+
+        # Smoothing state
+        self._last_intensity: float | None = None
+        self._last_intensity_time: float | None = None
+
+    def _generate_single_pulse(self, t_pulse: float, seq_index: int) -> CoyotePulse:
+        volume = compute_volume(self.media, self.params.volume, t_pulse)
+        ia, ib = self.get_positional_intensities(t_pulse, volume)
+        target_intensity = float(ia if self.name == 'A' else ib)
+
+        carrier_hz = float(self.params.carrier_frequency.interpolate(t_pulse))
+        rise_cycles = float(self.params.pulse_rise_time.interpolate(t_pulse))
+        tau_s = 0.0 if carrier_hz <= 0 else (rise_cycles / carrier_hz)
+
+        last_y = self._last_intensity
+        last_t = self._last_intensity_time
+        if last_y is None or tau_s <= 0 or last_t is None:
+            y = target_intensity
+        else:
+            dt = max(0.0, t_pulse - last_t)
+            allowed = (dt / tau_s) * 100.0
+            if self.max_change_per_pulse > 0:
+                allowed = min(allowed, self.max_change_per_pulse)
+            delta = np.clip(target_intensity - last_y, -allowed, allowed)
+            y = last_y + delta
+
+        self._last_intensity = y
+        self._last_intensity_time = t_pulse
+
+        intensity = int(np.clip(round(y), 0, 100))
+        pulse = self.signal.get_pulse_at(t_pulse, intensity, seq_index)
+        return pulse
+
+    def fill_queue(self, now_s: float) -> None:
+        end_time = self.queue_end_time if self.queue_end_time is not None else now_s
+        horizon_end = now_s + self.queue_horizon_s
+        seq_index = 0
+        while end_time < horizon_end or len(self.queue) < COYOTE_PULSES_PER_PACKET:
+            pulse = self._generate_single_pulse(end_time, seq_index)
+            self.queue.append(pulse)
+            end_time += pulse.duration / 1000.0
+            seq_index += 1
+
+        self.queue_end_time = end_time
+        try:
+            print(f"[DEBUG] COYOTE fill_queue {self.name}: size={len(self.queue)} until={end_time-now_s:.3f}s horizon={self.queue_horizon_s:.3f}s")
+        except Exception:
+            pass
+
+    def pop_packet(self) -> List[CoyotePulse]:
+        packet: List[CoyotePulse] = []
+        while len(packet) < COYOTE_PULSES_PER_PACKET:
+            if self.queue:
+                packet.append(self.queue.popleft())
+            else:
+                packet.append(CoyotePulse(frequency=0, intensity=0, duration=COYOTE_MIN_PULSE_DURATION))
+        return packet
+
+    def has_minimum_pulses(self, n: int) -> bool:
+        return len(self.queue) >= n
+
 class CoyoteAlgorithm:
     """Coyote 3.0 pulse generation algorithm with symmetric ramp envelope modulation.
     
@@ -280,22 +362,25 @@ class CoyoteAlgorithm:
         self.last_update_time_s = 0.0
         self.next_update_time = 0.0
 
-        # Per-channel pulse queues and horizons
-        self.queue_a: Deque[CoyotePulse] = deque()
-        self.queue_b: Deque[CoyotePulse] = deque()
-        self.queue_end_time_a: float | None = None
-        self.queue_end_time_b: float | None = None
-        self.queue_horizon_s: float = 0.75
+        # Per-channel controllers (queues, smoothing, assembly)
+        self.ctrl_a = ChannelController(
+            'A', self.media, self.params, self.signal_a,
+            get_positional_intensities=self._get_positional_intensities,
+            max_change_per_pulse=self._max_change_per_pulse,
+            queue_horizon_s=0.75,
+        )
+        self.ctrl_b = ChannelController(
+            'B', self.media, self.params, self.signal_b,
+            get_positional_intensities=self._get_positional_intensities,
+            max_change_per_pulse=self._max_change_per_pulse,
+            queue_horizon_s=0.75,
+        )
 
         # UI Preview Cache
         self._cached_envelope = np.full(200, 0.5)  # Default to a flat line
         self._cached_envelope_period = 0.0
 
-        # Minimal per-channel intensity smoothing state
-        self._last_intensity_a = None  # type: float | None
-        self._last_intensity_b = None  # type: float | None
-        self._last_intensity_time_a = None  # type: float | None
-        self._last_intensity_time_b = None  # type: float | None
+        # Smoothing state handled by ChannelController
 
         # Global per-pulse cap (percentage points). Read from settings if available.
         self._max_change_per_pulse = 3.0
@@ -305,89 +390,7 @@ class CoyoteAlgorithm:
         except Exception:
             pass
 
-    def _generate_single_pulse(self, t_pulse: float, signal: 'ContinuousSignal', channel_name: str,
-                               seq_index: int) -> CoyotePulse:
-        volume = compute_volume(self.media, self.params.volume, t_pulse)
-        intensity_a, intensity_b = self._get_positional_intensities(t_pulse, volume)
-        target_intensity = float(intensity_a if channel_name == 'A' else intensity_b)
-
-        carrier_hz = float(self.params.carrier_frequency.interpolate(t_pulse))
-        rise_cycles = float(self.params.pulse_rise_time.interpolate(t_pulse))
-        tau_s = 0.0 if carrier_hz <= 0 else (rise_cycles / carrier_hz)
-
-        if channel_name == 'A':
-            last_y = self._last_intensity_a
-            last_t = self._last_intensity_time_a
-            if last_y is None or tau_s <= 0 or last_t is None:
-                y = target_intensity
-            else:
-                dt = max(0.0, t_pulse - last_t)
-                allowed = (dt / tau_s) * 100.0
-                if self._max_change_per_pulse > 0:
-                    allowed = min(allowed, self._max_change_per_pulse)
-                delta = np.clip(target_intensity - last_y, -allowed, allowed)
-                y = last_y + delta
-            self._last_intensity_a = y
-            self._last_intensity_time_a = t_pulse
-        else:
-            last_y = self._last_intensity_b
-            last_t = self._last_intensity_time_b
-            if last_y is None or tau_s <= 0 or last_t is None:
-                y = target_intensity
-            else:
-                dt = max(0.0, t_pulse - last_t)
-                allowed = (dt / tau_s) * 100.0
-                if self._max_change_per_pulse > 0:
-                    allowed = min(allowed, self._max_change_per_pulse)
-                delta = np.clip(target_intensity - last_y, -allowed, allowed)
-                y = last_y + delta
-            self._last_intensity_b = y
-            self._last_intensity_time_b = t_pulse
-
-        intensity = int(np.clip(round(y), 0, 100))
-        pulse = signal.get_pulse_at(t_pulse, intensity, seq_index)
-        return pulse
-
-    def _fill_channel_queue(self, now_s: float, channel_name: str, signal: 'ContinuousSignal') -> None:
-        if channel_name == 'A':
-            q = self.queue_a
-            end_time = self.queue_end_time_a if self.queue_end_time_a is not None else now_s
-        else:
-            q = self.queue_b
-            end_time = self.queue_end_time_b if self.queue_end_time_b is not None else now_s
-
-        horizon_end = now_s + self.queue_horizon_s
-        seq_index = 0
-        while end_time < horizon_end or len(q) < 4:
-            pulse = self._generate_single_pulse(end_time, signal, channel_name, seq_index)
-            q.append(pulse)
-            end_time += pulse.duration / 1000.0
-            seq_index += 1
-
-        if channel_name == 'A':
-            self.queue_end_time_a = end_time
-        else:
-            self.queue_end_time_b = end_time
-
-        try:
-            print(f"[DEBUG] COYOTE fill_queue {channel_name}: size={len(q)} until={end_time-now_s:.3f}s horizon={self.queue_horizon_s:.3f}s")
-        except Exception:
-            pass
-
-    def _pop_packet_from_queue(self, channel_name: str) -> List[CoyotePulse]:
-        if channel_name == 'A':
-            q = self.queue_a
-        else:
-            q = self.queue_b
-
-        packet: List[CoyotePulse] = []
-        while len(packet) < COYOTE_PULSES_PER_PACKET:
-            if q:
-                packet.append(q.popleft())
-            else:
-                # Fallback safe pulse
-                packet.append(CoyotePulse(frequency=0, intensity=0, duration=COYOTE_MIN_PULSE_DURATION))
-        return packet
+    # Channel-specific pulse generation and queues moved to ChannelController
 
     def _get_positional_intensities(self, t: float, volume: float) -> Tuple[int, int]:
         """Barycentric phase diagram mapping: (beta, alpha) with left=+1, right=-1, neutral=+1 (top)."""
@@ -416,64 +419,7 @@ class CoyoteAlgorithm:
 
         return intensity_a, intensity_b
 
-    def _generate_channel_pulses(self, t: float, signal: 'ContinuousSignal', 
-                                channel_name: str) -> Tuple[List[CoyotePulse], float]:
-        """Generate pulses for a single channel, eliminating code duplication."""
-        pulses: List[CoyotePulse] = []
-        time_advanced_in_packet_ms = 0.0
-        
-        for i in range(COYOTE_PULSES_PER_PACKET):
-            t_pulse = t + (time_advanced_in_packet_ms / 1000.0)
-            volume = compute_volume(self.media, self.params.volume, t_pulse)
-            intensity_a, intensity_b = self._get_positional_intensities(t_pulse, volume)
-            
-            # Select appropriate intensity based on channel
-            target_intensity = float(intensity_a if channel_name == 'A' else intensity_b)
-
-            # Convert pulse_rise_time (carrier cycles) to a time constant (seconds)
-            carrier_hz = float(self.params.carrier_frequency.interpolate(t_pulse))
-            rise_cycles = float(self.params.pulse_rise_time.interpolate(t_pulse))
-            tau_s = 0.0 if carrier_hz <= 0 else (rise_cycles / carrier_hz)
-
-            # Minimal EMA smoothing of intensity (no extra magic numbers)
-            if channel_name == 'A':
-                last_y = self._last_intensity_a
-                last_t = self._last_intensity_time_a
-                if last_y is None or tau_s <= 0 or last_t is None:
-                    y = target_intensity
-                else:
-                    dt = max(0.0, t_pulse - last_t)
-                    # Slew limit: base on tau, also cap by global per-pulse limit
-                    allowed = (dt / tau_s) * 100.0
-                    if self._max_change_per_pulse > 0:
-                        allowed = min(allowed, self._max_change_per_pulse)
-                    delta = np.clip(target_intensity - last_y, -allowed, allowed)
-                    y = last_y + delta
-                self._last_intensity_a = y
-                self._last_intensity_time_a = t_pulse
-            else:
-                last_y = self._last_intensity_b
-                last_t = self._last_intensity_time_b
-                if last_y is None or tau_s <= 0 or last_t is None:
-                    y = target_intensity
-                else:
-                    dt = max(0.0, t_pulse - last_t)
-                    allowed = (dt / tau_s) * 100.0
-                    if self._max_change_per_pulse > 0:
-                        allowed = min(allowed, self._max_change_per_pulse)
-                    delta = np.clip(target_intensity - last_y, -allowed, allowed)
-                    y = last_y + delta
-                self._last_intensity_b = y
-                self._last_intensity_time_b = t_pulse
-
-            intensity = int(np.clip(round(y), 0, 100))
-            
-            pulse = signal.get_pulse_at(t_pulse, intensity, i + 1)
-            pulses.append(pulse)
-            time_advanced_in_packet_ms += pulse.duration
-            
-        total_duration = sum(p.duration for p in pulses)
-        return pulses, total_duration
+    # Per-channel pulse generation was refactored into ChannelController
 
     def _get_media_type(self) -> str:
         """Determine the media type for logging purposes."""
@@ -550,8 +496,8 @@ class CoyoteAlgorithm:
         We also allow proactive generation if queues are running low, to avoid
         starving the device with repeats for too long.
         """
-        low_queue = (len(self.queue_a) < COYOTE_PULSES_PER_PACKET or
-                     len(self.queue_b) < COYOTE_PULSES_PER_PACKET)
+        low_queue = (not self.ctrl_a.has_minimum_pulses(COYOTE_PULSES_PER_PACKET) or
+                     not self.ctrl_b.has_minimum_pulses(COYOTE_PULSES_PER_PACKET))
         ready = (self.channel_a.is_ready_for_next_packet() or
                  self.channel_b.is_ready_for_next_packet())
         return ready or low_queue
@@ -634,13 +580,13 @@ class CoyoteAlgorithm:
         self._update_envelope_preview(current_time)
 
         # Ensure queues are filled ahead of time
-        self._fill_channel_queue(current_time, 'A', self.signal_a)
-        self._fill_channel_queue(current_time, 'B', self.signal_b)
+        self.ctrl_a.fill_queue(current_time)
+        self.ctrl_b.fill_queue(current_time)
 
         # Assemble packets by popping from queues (atomic update for A and B)
         alpha, beta = self.position.get_position(current_time)
-        pulses_a = self._pop_packet_from_queue('A')
-        pulses_b = self._pop_packet_from_queue('B')
+        pulses_a = self.ctrl_a.pop_packet()
+        pulses_b = self.ctrl_b.pop_packet()
         duration_a = sum(p.duration for p in pulses_a)
         duration_b = sum(p.duration for p in pulses_b)
 
