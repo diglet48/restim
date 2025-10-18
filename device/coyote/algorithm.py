@@ -88,27 +88,6 @@ class ChannelState:
         return max(0.0, self.total_packet_duration_ms - self.time_in_packet_ms)
 
 
-# --- Envelope Generators ---
-
-def generate_ramp_envelope(attack: float, plateau: float, release: float, num_points: int) -> np.ndarray:
-    """Generate a symmetric ramp (triangle/trapezoid) envelope 0→1→0.
-
-    attack: seconds from 0→1
-    plateau: seconds at level 1 between attack and release (may be 0)
-    release: seconds from 1→0
-    """
-    total = attack + plateau + release
-    if total <= 0 or num_points < 2:
-        return np.zeros(num_points)
-
-    a_pts = max(1, int(round(num_points * attack / total)))
-    p_pts = max(0, int(round(num_points * plateau / total)))
-    r_pts = num_points - a_pts - p_pts
-    ascent = np.linspace(0, 1, a_pts, endpoint=False)
-    plateau_arr = np.ones(p_pts)
-    descent = np.linspace(1, 0, r_pts, endpoint=True)
-    return np.concatenate([ascent, plateau_arr, descent])
-
 def _normalize_axis(value: float, limits: Tuple[float, float]) -> float:
     """Normalize a raw axis value to a 0-100 scale based on its limits."""
     min_val, max_val = limits
@@ -144,9 +123,6 @@ class ContinuousSignal:
     funscripts more faithfully while staying within hardware limits.
     """
 
-    ENVELOPE_RESOLUTION = 200  # Number of points in envelope lookup table
-
-
     def __init__(self, params: CoyoteAlgorithmParams, channel_params: 'CoyoteChannelParams',
                  carrier_freq_limits: Tuple[float, float], pulse_freq_limits: Tuple[float, float],
                  pulse_width_limits: Tuple[float, float], pulse_rise_time_limits: Tuple[float, float],
@@ -164,11 +140,6 @@ class ContinuousSignal:
         self._start_time = None
         self.modulation_phase = 0.0
         self._duration_residual_ms = 0.0  # fractional ms accumulator to reduce rounding jitter
-        
-        # Envelope cache
-        self._envelope_lookup_table = None
-        self._cached_envelope_params = None
-        self._envelope_period = 0.0
 
     def _calculate_effective_frequency_limits(self) -> Tuple[float, float]:
         """Calculate effective frequency limits considering hardware constraints."""
@@ -494,9 +465,6 @@ class CoyoteAlgorithm:
             queue_horizon_s=0.75,
         )
 
-        # UI Preview Cache
-        self._cached_envelope = np.full(200, 0.5)  # Default to a flat line
-        self._cached_envelope_period = 0.0
         # Smoothing state handled by ChannelController
 
     # Channel-specific pulse generation and queues moved to ChannelController
@@ -660,17 +628,6 @@ class CoyoteAlgorithm:
         
         logger.debug("\n".join(log_lines))
 
-    def _update_envelope_preview(self, t: float):
-        """Generate and cache a simple flat envelope synced to pulse_frequency.
-
-        The revised runtime no longer modulates frequency by a sine wave, so the
-        preview reflects a steady state: flat line with period = 1/pulse_frequency.
-        """
-        num_points = 200
-        freq = float(self.params.pulse_frequency.interpolate(t))
-        self._cached_envelope_period = 1.0 / freq if freq > 0 else 0.0
-        self._cached_envelope = np.full(num_points, 0.5)
-
     def generate_packet(self, current_time: float) -> Optional[CoyotePulses]:
         """Generate one packet of pulses for both channels."""
         PACKET_MARGIN = 0.8  # Request next packet after 80% of current one has played
@@ -693,9 +650,6 @@ class CoyoteAlgorithm:
             )
             self.next_update_time = current_time + (remaining_time_ms / 1000.0) * PACKET_MARGIN
             return None
-
-        # Update the UI preview cache from the current state
-        self._update_envelope_preview(current_time)
 
         # Ensure queues are filled ahead of time
         if logger.isEnabledFor(logging.DEBUG):
@@ -731,11 +685,3 @@ class CoyoteAlgorithm:
 
     def get_next_update_time(self) -> float:
         return self.next_update_time
-
-    def get_envelope_data(self) -> Tuple[np.ndarray, float]:
-        """Return the current flat envelope and its period for UI visualization."""
-        t = time.time()
-        freq = float(self.params.pulse_frequency.interpolate(t))
-        period = 1.0 / freq if freq > 0 else 0.0
-        num_points = 200
-        return np.full(num_points, 0.5), period

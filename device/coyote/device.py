@@ -4,7 +4,6 @@ import logging
 from typing import Optional, Callable
 import time
 import threading
-import numpy as np
 
 from bleak import BleakClient, BleakScanner
 from device.output_device import OutputDevice
@@ -76,7 +75,6 @@ class CoyoteDevice(OutputDevice, QObject):
     parameters_changed = Signal()
     power_levels_changed = Signal(CoyoteStrengths)
     pulse_sent = Signal(CoyotePulses)
-    envelope_updated = Signal(str, np.ndarray, float)  # channel_id, envelope_data, envelope_period
 
     def __init__(self, device_name: str):
         OutputDevice.__init__(self)
