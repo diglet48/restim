@@ -1,18 +1,54 @@
 """
 DG-LAB Coyote 3.0 E-Stim Algorithm Implementation
 
-This algorithm controls a Coyote 3.0 dual-channel e-stim device using a symmetric ramp envelope
-model that matches the pulse-based audio algorithm behavior while working within hardware constraints.
+EXPERIMENTAL: Best-effort adaptation of restim's funscript-based algorithms to the Coyote 3.0's
+hardware square pulse generator. This implementation attempts to simulate smooth parameter changes
+and modulation on hardware that fundamentally outputs discrete square pulses.
 
-Hardware Specifications:
------------------------
+Protocol Specification (Chinese):
+https://github.com/DG-LAB-OPENSOURCE/DG-LAB-OPENSOURCE/blob/main/coyote/v3/README_V3.md
+
+Hardware Specifications & Limitations:
+--------------------------------------
 - Two independent channels (A and B)
-- Each pulse: intensity (0-100%), duration (5-240ms)
-- Protocol: 4 pulses per packet
+- Square pulse generator only (no smooth waveforms like continuous audio devices)
+- Pulse parameters: 
+  * Intensity: 0-100%
+  * Duration: 5-240ms (sent as "waveform frequency" parameter in protocol, despite the name)
+    - Spec documents 10-240ms range, but hardware appears to support down to 5ms
+    - Spec also provides an optional extended mapping from input values 10-1000 → output 10-240
+  * Relationship: frequency_hz = 1000 / duration_ms (simple inverse)
+  * Effective frequency range: ~4.17Hz (240ms) to 200Hz (5ms)
+  * This algorithm works in Hz internally, then converts to duration_ms when sending to device
+- Protocol: B0 command contains 4 pulses per packet (20 bytes total)
+- Spec recommends ~100ms update rate, but this implementation uses adaptive scheduling
+  (sends next packet at 80% of current packet duration for seamless transitions)
 - Device repeats last packet until new one arrives
+- Invalid waveform data causes device to discard entire 4-pulse packet for that channel
+- Channel strength range: 0-200 (separate from pulse intensity 0-100%)
+- Balance parameters (BF command): frequency balance and intensity balance affect perceived output
 
-<TODO: describe fully>
+Key Limitations:
+- Cannot produce smooth continuous waveforms - only discrete square pulses
+- Limited frequency range compared to audio-based devices
+- Packet-based protocol requires continuous streaming (no gaps or device repeats last packet)
+- No native envelope/modulation support - must be simulated via parameter variations
+- Hardware balance parameters (frequency/intensity) affect output independently
+- Each pulse duration is quantized to integer milliseconds
 
+Algorithm Overview (Best-Effort Approach):
+------------------------------------------
+- Maps funscript pulse_frequency to channel-specific frequency ranges
+- Applies optional jitter (pulse_interval_random) to pulse timing
+- Adds zero-mean micro-texture via pulse_width modulation to simulate smoothness
+- Smooths intensity transitions based on pulse_rise_time
+- Maintains pulse queues (750ms horizon) for continuous output
+- Uses barycentric mapping for three-phase position diagram intensity control
+- Adaptive packet scheduling (80% of packet duration) for seamless output
+
+Each channel maintains an independent pulse queue. The algorithm attempts to create perceptually
+smooth sensations by varying pulse duration and intensity, but results will differ significantly
+from audio-based continuous algorithms due to fundamental hardware limitations.
 """
 
 import logging
@@ -117,10 +153,11 @@ def _get_normalized_parameters(params: CoyoteAlgorithmParams, t: float,
 class ContinuousSignal:
     """Models a single channel's pulse generation.
 
-    Revised to keep the pulse frequency anchored to the funscript/UI
-    `pulse_frequency` axis (with optional jitter), and to stop sweeping
-    across the full min/max range. This preserves the intention of
-    funscripts more faithfully while staying within hardware limits.
+    Generates pulses with duration anchored to the funscript pulse_frequency parameter,
+    mapped into the channel's configured frequency range. Applies optional jitter and
+    zero-mean micro-texture modulation via the pulse_width parameter.
+    
+    The carrier_frequency parameter controls the speed of the texture modulation phase.
     """
 
     def __init__(self, params: CoyoteAlgorithmParams, channel_params: 'CoyoteChannelParams',
@@ -418,10 +455,11 @@ class ChannelController:
         return len(self.queue) >= n
 
 class CoyoteAlgorithm:
-    """Coyote 3.0 pulse generation algorithm with symmetric ramp envelope modulation.
+    """Coyote 3.0 pulse generation algorithm.
     
     Coordinates dual-channel pulse generation using ContinuousSignal instances.
-    Handles packet timing, positional intensity distribution, and envelope preview.
+    Handles packet timing, positional intensity distribution, and smoothed intensity transitions.
+    Each channel maintains an independent pulse queue for continuous output.
     """
     def __init__(self, media: AbstractMediaSync, params: CoyoteAlgorithmParams, safety_limits: SafetyParams,
                  carrier_freq_limits: Tuple[float, float], pulse_freq_limits: Tuple[float, float],

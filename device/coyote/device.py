@@ -50,9 +50,9 @@ class CoyoteParams:
 
 @dataclass
 class CoyotePulse:
-    frequency: int # 0-150 Hz
+    frequency: int # Calculated from duration: 1000/duration_ms, range ~4-200 Hz
     intensity: int   # 0-100
-    duration: int   # 10-240 (converted from Hz frequency)
+    duration: int   # 5-240ms (spec says 10-240, but 5ms works)
 
 @dataclass
 class CoyotePulses:
