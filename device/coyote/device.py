@@ -327,17 +327,6 @@ class CoyoteDevice(OutputDevice, QObject):
             await self.disconnect()
             return False
 
-    # async def connect_and_start(self, algorithm: CoyoteThreePhaseAlgorithm, params: CoyoteParams):
-    #     """Connect to device and start operation"""
-    #     self.algorithm = algorithm
-    #     self.parameters = params
-    #     self.is_connected = True  # Set connected status
-
-    #     # Start the update loop if not already running
-    #     if not self.running:
-    #         self.running = True
-    #         asyncio.create_task(self.update_loop())
-
     async def send_command(self, 
                             strengths: Optional[CoyoteStrengths] = None,
                             pulses: Optional[CoyotePulses] = None):
@@ -446,7 +435,8 @@ class CoyoteDevice(OutputDevice, QObject):
                     # Only log when a packet is actually generated and sent
                     if current_time >= self.algorithm.next_update_time:
                         pulses = self.algorithm.generate_packet(current_time)
-                        await self.send_command(pulses=pulses)
+                        if pulses is not None:
+                            await self.send_command(pulses=pulses)
                         sleep_time = max(0.001, self.algorithm.next_update_time - time.time())
                     else:
                         sleep_time = 0.01

@@ -19,7 +19,7 @@ import logging
 import time
 import numpy as np
 from collections import deque
-from typing import List, Tuple, Deque
+from typing import List, Tuple, Deque, Optional
 
 from stim_math.axis import AbstractMediaSync, AbstractAxis
 from stim_math.threephase import ThreePhaseCenterCalibration
@@ -621,7 +621,7 @@ class CoyoteAlgorithm:
         self._cached_envelope_period = 1.0 / freq if freq > 0 else 0.0
         self._cached_envelope = np.full(num_points, 0.5)
 
-    def generate_packet(self, current_time: float) -> CoyotePulses:
+    def generate_packet(self, current_time: float) -> Optional[CoyotePulses]:
         """Generate one packet of pulses for both channels."""
         PACKET_MARGIN = 0.8  # Request next packet after 80% of current one has played
         
@@ -642,7 +642,7 @@ class CoyoteAlgorithm:
                 self.channel_b.get_remaining_time_ms()
             )
             self.next_update_time = current_time + (remaining_time_ms / 1000.0) * PACKET_MARGIN
-            return CoyotePulses([], [])
+            return None
 
         # Update the UI preview cache from the current state
         self._update_envelope_preview(current_time)
