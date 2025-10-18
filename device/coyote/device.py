@@ -12,6 +12,7 @@ from device.output_device import OutputDevice
 from PySide6.QtCore import QObject, Signal
 
 logger = logging.getLogger('restim.coyote')
+LOG_PREFIX = "[Coyote]"
 
 # Coyote BLE UUIDs
 BATTERY_SERVICE_UUID = "0000180A-0000-1000-8000-00805f9b34fb"
@@ -101,7 +102,7 @@ class CoyoteDevice(OutputDevice, QObject):
         asyncio.set_event_loop(loop)
         
         def run_loop():
-            logger.info("Starting asyncio loop thread")
+            logger.info(f"{LOG_PREFIX} Starting asyncio loop thread")
             loop.run_until_complete(self._connection_loop())
             loop.run_forever()
             
@@ -109,69 +110,73 @@ class CoyoteDevice(OutputDevice, QObject):
 
     async def _connection_loop(self):
         """Main connection loop that runs the state machine"""
-        logger.info("Starting connection loop")
+        logger.info(f"{LOG_PREFIX} Starting connection loop")
         prev_stage = self.connection_stage
         
+        attempt_counter = 0
+
         while True:
             try:
                 # Check if client is still connected
                 if (self.connection_stage == ConnectionStage.CONNECTED and 
                     (not self.client or not self.client.is_connected)):
-                    logger.warning("Device disconnected unexpectedly")
+                    logger.warning(f"{LOG_PREFIX} Device disconnected unexpectedly")
                     await self.disconnect()
                     continue
 
                 if self.connection_stage == ConnectionStage.DISCONNECTED:
-                    logger.info("Starting connection process")
+                    logger.info(f"{LOG_PREFIX} Starting connection process")
                     self.connection_stage = ConnectionStage.SCANNING
                     
                 elif self.connection_stage == ConnectionStage.SCANNING:
                     if await self._scan_for_device():
-                        logger.info("Device found, connecting...")
+                        attempt_counter = 0
+                        logger.info(f"{LOG_PREFIX} Device found, connecting...")
                         self.connection_stage = ConnectionStage.CONNECTING
                     else:
-                        logger.info("Device not found, retrying in 5 seconds...")
+                        attempt_counter += 1
+                        logger.info(f"{LOG_PREFIX} Device not found (attempt {attempt_counter}); retrying in 5 seconds...")
                         await asyncio.sleep(5)
                         
                 elif self.connection_stage == ConnectionStage.CONNECTING:
                     if await self.client.connect():
-                        logger.info("Connected, discovering services...")
+                        logger.info(f"{LOG_PREFIX} Connected, discovering services...")
                         self.connection_stage = ConnectionStage.SERVICE_DISCOVERY
                     else:
-                        logger.error("Connection failed")
+                        logger.error(f"{LOG_PREFIX} Connection failed")
                         await self.disconnect()
                         
                 elif self.connection_stage == ConnectionStage.SERVICE_DISCOVERY:
                     if await self.client.get_services():
-                        logger.info("Services discovered, subscribing to battery...")
+                        logger.info(f"{LOG_PREFIX} Services discovered, subscribing to battery...")
                         self.connection_stage = ConnectionStage.BATTERY_SUBSCRIBE
                     else:
-                        logger.error("Service discovery failed")
+                        logger.error(f"{LOG_PREFIX} Service discovery failed")
                         await self.disconnect()
                         
                 elif self.connection_stage == ConnectionStage.BATTERY_SUBSCRIBE:
                     if await self._subscribe_to_notifications(BATTERY_CHAR_UUID):
-                        logger.info("Battery subscribed, subscribing to status...")
+                        logger.info(f"{LOG_PREFIX} Battery subscribed, subscribing to status...")
                         self.connection_stage = ConnectionStage.STATUS_SUBSCRIBE
                     else:
-                        logger.error("Battery subscription failed")
+                        logger.error(f"{LOG_PREFIX} Battery subscription failed")
                         await self.disconnect()
                         
                 elif self.connection_stage == ConnectionStage.STATUS_SUBSCRIBE:
                     if await self._subscribe_to_notifications(NOTIFY_CHAR_UUID):
-                        logger.info("Status subscribed, syncing parameters...")
+                        logger.info(f"{LOG_PREFIX} Status subscribed, syncing parameters...")
                         self.connection_stage = ConnectionStage.SYNC_PARAMETERS
                     else:
-                        logger.error("Status subscription failed")
+                        logger.error(f"{LOG_PREFIX} Status subscription failed")
                         await self.disconnect()
                         
                 elif self.connection_stage == ConnectionStage.SYNC_PARAMETERS:
                     if await self._send_parameters():
-                        logger.info("Parameters synced, connection complete")
+                        logger.info(f"{LOG_PREFIX} Parameters synced, connection complete")
                         # TODO: wait for ACK so we know device is ready
                         self.connection_stage = ConnectionStage.CONNECTED
                     else:
-                        logger.error("Parameter sync failed")
+                        logger.error(f"{LOG_PREFIX} Parameter sync failed")
                         await self.disconnect()
                         
                 elif self.connection_stage == ConnectionStage.CONNECTED:
@@ -185,7 +190,7 @@ class CoyoteDevice(OutputDevice, QObject):
                     prev_stage = self.connection_stage
                 
             except Exception as e:
-                logger.error(f"Connection loop error: {e}")
+                logger.error(f"{LOG_PREFIX} Connection loop error: {e}")
                 # raise e
                 await self.disconnect()
                 
@@ -193,25 +198,25 @@ class CoyoteDevice(OutputDevice, QObject):
             await asyncio.sleep(0.1)
 
     def start_updates(self, algorithm: Optional[any]):
-        logger.info("start_updates called")
+        logger.info(f"{LOG_PREFIX} start_updates called")
         self.algorithm = algorithm
         self.running = True
 
         future = None
         if self._event_loop:
-            logger.info("scheduling update_loop in event loop")
+            logger.info(f"{LOG_PREFIX} scheduling update_loop in event loop")
             future = asyncio.run_coroutine_threadsafe(self.update_loop(), self._event_loop)
         else:
-            logger.error("No event loop present!")
+            logger.error(f"{LOG_PREFIX} No event loop present!")
 
         if future:
-            logger.info("Future scheduled")
+            logger.info(f"{LOG_PREFIX} Future scheduled")
         else:
-            logger.warning("Update loop not scheduled")
+            logger.warning(f"{LOG_PREFIX} Update loop not scheduled")
 
     def stop_updates(self):
         """Stop the update loop but maintain connection"""
-        logger.info("Stopping updates")
+        logger.info(f"{LOG_PREFIX} Stopping updates")
         self.running = False
         self.algorithm = None
         
@@ -219,7 +224,7 @@ class CoyoteDevice(OutputDevice, QObject):
         """Handle battery level notifications"""
         battery_level = data[0]
 
-        logger.info(f"Battery level notification received: {battery_level}%")
+        logger.info(f"{LOG_PREFIX} Battery level notification received: {battery_level}%")
         
         self.battery_level = battery_level
         self.battery_level_changed.emit(battery_level)
@@ -228,7 +233,7 @@ class CoyoteDevice(OutputDevice, QObject):
         """Handle incoming status notifications from the device."""
 
         if not data:
-            logger.warning("Received empty status notification")
+            logger.warning(f"{LOG_PREFIX} Received empty status notification")
             return
 
         # if len(data) != 4:
@@ -241,23 +246,23 @@ class CoyoteDevice(OutputDevice, QObject):
         power_b = data[3]
 
         if command_id == 0xB1:
-            logger.debug(f"Power level update (seq={sequence_number}) - Channel A: {power_a}, Channel B: {power_b}")
+            logger.debug(f"{LOG_PREFIX} Power level update (seq={sequence_number}) - Channel A: {power_a}, Channel B: {power_b}")
             self.strengths.channel_a = power_a
             self.strengths.channel_b = power_b
             self.power_levels_changed.emit(self.strengths)
 
         elif command_id == 0x51:
-            logger.debug(f"Command acknowledged (seq={sequence_number})")
+            logger.debug(f"{LOG_PREFIX} Command acknowledged (seq={sequence_number})")
         
         elif command_id == 0x53:
             if len(data) < 4:
-                logger.warning(f"Malformed active power notification: {list(data)}")
+                logger.warning(f"{LOG_PREFIX} Malformed active power notification: {list(data)}")
                 return
 
             power_a = data[2]
             power_b = data[3]
 
-            logger.debug(f"Active power update - Channel A: {power_a}, Channel B: {power_b}")
+            logger.debug(f"{LOG_PREFIX} Active power update - Channel A: {power_a}, Channel B: {power_b}")
 
             # self.strengths.channel_a = power_a
             # self.strengths.channel_b = power_b
@@ -268,13 +273,13 @@ class CoyoteDevice(OutputDevice, QObject):
             #     logger.debug(f"Extra fields in 0x53 notification (undocumented): {list(extra)}")
 
         else:
-            logger.warning(f"Unknown notification type: 0x{command_id:02X} (seq={sequence_number})")
-            logger.debug(f"Raw notification: {list(data)}")
+            logger.warning(f"{LOG_PREFIX} Unknown notification type: 0x{command_id:02X} (seq={sequence_number})")
+            logger.debug(f"{LOG_PREFIX} Raw notification: {list(data)}")
 
     async def _send_parameters(self):
         """Send device parameters"""
         logger.info(
-            f"Syncing parameters - "
+            f"{LOG_PREFIX} Syncing parameters - "
             f"Limits: A={self.parameters.channel_a_limit}, B={self.parameters.channel_b_limit}, "
             f"Freq Balance: A={self.parameters.channel_a_freq_balance}, B={self.parameters.channel_b_freq_balance}, "
             f"Intensity Balance: A={self.parameters.channel_a_intensity_balance}, B={self.parameters.channel_b_intensity_balance}"
@@ -294,7 +299,7 @@ class CoyoteDevice(OutputDevice, QObject):
             await self.client.write_gatt_char(WRITE_CHAR_UUID, command)
             return True
         except Exception as e:
-            logger.error(f"Failed to sync parameters: {str(e)}")
+            logger.error(f"{LOG_PREFIX} Failed to sync parameters: {e}")
             return False
 
     async def _subscribe_to_notifications(self, char_uuid: str) -> bool:
@@ -305,25 +310,24 @@ class CoyoteDevice(OutputDevice, QObject):
                 else self._handle_status_notification)
             return True
         except Exception as e:
-            logger.error(f"Failed to subscribe to {char_uuid}: {e}")
+            logger.error(f"{LOG_PREFIX} Failed to subscribe to {char_uuid}: {e}")
             return False
 
     async def _scan_for_device(self):
         """Scan for Coyote device"""
         try:
-            logger.info(f"Scanning for device: {self.device_name}")
+            logger.info(f"{LOG_PREFIX} Scanning for device: {self.device_name}")
             device = await BleakScanner.find_device_by_name(self.device_name)
             if device:
-                logger.info(f"Found device: {device.name} ({device.address})")
+                logger.info(f"{LOG_PREFIX} Found device: {device.name} ({device.address})")
                 self.client = BleakClient(device)
                 self.connection_stage = ConnectionStage.CONNECTING
                 return True
             else:
-                logger.warning(f"Device not found: {self.device_name}")
-                await self.disconnect()
+                logger.debug(f"{LOG_PREFIX} No BLE advertisement for {self.device_name} detected during scan window")
                 return False
         except Exception as e:
-            logger.error(f"Scan error: {str(e)}")
+            logger.error(f"{LOG_PREFIX} Scan error: {e}")
             await self.disconnect()
             return False
 
@@ -352,7 +356,7 @@ class CoyoteDevice(OutputDevice, QObject):
             return
 
         if not strengths and not pulses:
-            logger.warning("send_command called with no data")
+            logger.warning(f"{LOG_PREFIX} send_command called with no data")
             return
 
         # Determine strength interpretation (default absolute set if new strength provided)
@@ -385,25 +389,32 @@ class CoyoteDevice(OutputDevice, QObject):
             command.extend([0] * 16)  # No pulses = zero padding
 
         # Log what we're sending
-        logger.info(f"Sending command (seq={self.sequence_number}): ")
-                    # f"Channel A = {strengths.channel_a if strengths else self.strengths.channel_a}, "
-                    # f"Channel B = {strengths.channel_b if strengths else 'N/A'}")
+        logger.info(f"{LOG_PREFIX} Sending command (seq={self.sequence_number}):")
 
-        if pulses:
-            pulses_a = "\n".join([f"  Pulse {i+1}: Freq={a.frequency} Hz, Intensity={a.intensity}" for i, a in enumerate(pulses.channel_a)])
-            pulses_b = "\n".join([f"  Pulse {i+1}: Freq={b.frequency} Hz, Intensity={b.intensity}" for i, b in enumerate(pulses.channel_b)])
-            logger.debug(f"Channel A ({self.strengths.channel_a}):\n{pulses_a}\nChannel B ({self.strengths.channel_b}):\n{pulses_b}")
+        if pulses and logger.isEnabledFor(logging.DEBUG):
+            pulses_a = "\n".join(
+                f"  Pulse {i+1}: Freq={pulse.frequency} Hz, Intensity={pulse.intensity}"
+                for i, pulse in enumerate(pulses.channel_a)
+            )
+            pulses_b = "\n".join(
+                f"  Pulse {i+1}: Freq={pulse.frequency} Hz, Intensity={pulse.intensity}"
+                for i, pulse in enumerate(pulses.channel_b)
+            )
+            logger.debug(
+                f"{LOG_PREFIX} Channel A ({self.strengths.channel_a}):\n{pulses_a}\n"
+                f"{LOG_PREFIX} Channel B ({self.strengths.channel_b}):\n{pulses_b}"
+            )
 
         # Send the final command
         try:
             await self.client.write_gatt_char(WRITE_CHAR_UUID, command)
             self.sequence_number = (self.sequence_number + 1) % 16  # Wrap seq at 4 bits (0-15)
         except Exception as e:
-            logger.error(f"Failed to send command: {e}")
+            logger.error(f"{LOG_PREFIX} Failed to send command: {e}")
     
     async def disconnect(self):
         """Disconnect from device"""
-        logger.info("Disconnecting from Coyote device")
+        logger.info(f"{LOG_PREFIX} Disconnecting from device")
 
         if self.client:
             self.running = False
@@ -419,15 +430,15 @@ class CoyoteDevice(OutputDevice, QObject):
         self.connection_stage = ConnectionStage.DISCONNECTED
 
     async def update_loop(self):
-        logger.info(f"Starting update loop, running={self.running}, algorithm={self.algorithm}")
-    
+        logger.info(f"{LOG_PREFIX} Starting update loop, running={self.running}, algorithm={self.algorithm}")
+
         try:
-            logger.info(f"Update loop started, running={self.running}")
+            logger.info(f"{LOG_PREFIX} Update loop started, running={self.running}")
 
             while self.running:
                 try:
                     if not self.algorithm:
-                        logger.debug("Algorithm not yet set")
+                        logger.debug(f"{LOG_PREFIX} Algorithm not yet set")
                         await asyncio.sleep(0.1)
                         continue
 
@@ -444,14 +455,14 @@ class CoyoteDevice(OutputDevice, QObject):
                     await asyncio.sleep(sleep_time)
 
                 except Exception as inner_e:
-                    logger.exception(f"Exception inside update loop iteration: {inner_e}")
+                    logger.exception(f"{LOG_PREFIX} Exception inside update loop iteration: {inner_e}")
                     await asyncio.sleep(0.1)  # prevent tight-crash-loop
 
         except Exception as outer_e:
-            logger.exception(f"Fatal exception in update_loop: {outer_e}")
+            logger.exception(f"{LOG_PREFIX} Fatal exception in update_loop: {outer_e}")
 
         finally:
-            logger.info("Update loop stopped")
+            logger.info(f"{LOG_PREFIX} Update loop stopped")
     
     def is_connected_and_running(self) -> bool:
         return (self.connection_stage == ConnectionStage.CONNECTED and 

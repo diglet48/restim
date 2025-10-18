@@ -1,4 +1,5 @@
 import asyncio
+import logging
 import time
 from dataclasses import dataclass
 from typing import Dict, Optional
@@ -16,14 +17,17 @@ class CoyoteSettingsWidget(QtWidgets.QWidget):
         super().__init__(parent)
         self.device: Optional[CoyoteDevice] = None
         self.channel_controls: Dict[str, ChannelControl] = {}
+        self.coyote_logger = logging.getLogger('restim.coyote')
+        self._base_log_level = self.coyote_logger.getEffectiveLevel()
         self.setupUi()
+        self.apply_debug_logging(settings.coyote_debug_logging.get())
 
     def setupUi(self):
         self.setLayout(QVBoxLayout())
 
-        self.label_connection_status = QLabel("Disconnected")
-        self.label_connection_stage = QLabel("")
-        self.label_battery_level = QLabel("")
+        self.label_connection_status = QLabel("Device: Disconnected")
+        self.label_connection_stage = QLabel("Stage: Waiting")
+        self.label_battery_level = QLabel("Battery: —")
         status_layout = QHBoxLayout()
         status_layout.addWidget(self.label_connection_status)
         status_layout.addWidget(self.label_connection_stage)
@@ -81,9 +85,16 @@ class CoyoteSettingsWidget(QtWidgets.QWidget):
         self.device.strengths = strengths
 
     def on_connection_status_changed(self, connected: bool, stage: str = None):
-        self.label_connection_status.setText("Connected" if connected else "Disconnected")
+        self.label_connection_status.setText("Device: Connected" if connected else "Device: Disconnected")
         if stage:
-            self.label_connection_stage.setText(stage)
+            normalized_stage = stage.strip()
+            if connected and normalized_stage.lower() == "connected":
+                stage_text = "Ready"
+            else:
+                stage_text = normalized_stage
+            self.label_connection_stage.setText(f"Stage: {stage_text}")
+        else:
+            self.label_connection_stage.setText("Stage: —")
 
     def on_battery_level_changed(self, level: int):
         self.label_battery_level.setText(f"Battery: {level}%")
@@ -101,6 +112,10 @@ class CoyoteSettingsWidget(QtWidgets.QWidget):
 
         for control in self.channel_controls.values():
             control.apply_pulses(pulses, self.device.strengths)
+
+    def apply_debug_logging(self, enabled: bool):
+        new_level = logging.DEBUG if enabled else logging.INFO
+        self.coyote_logger.setLevel(new_level)
 
 @dataclass(frozen=True)
 class ChannelConfig:

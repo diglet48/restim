@@ -520,6 +520,16 @@ class Ui_PreferencesDialog(object):
 
         self.formLayout_coyote.setWidget(6, QFormLayout.FieldRole, self.coyote_channel_b_intensity_balance)
 
+        self.label_coyote_debug_logging = QLabel(self.tab_coyote)
+        self.label_coyote_debug_logging.setObjectName(u"label_coyote_debug_logging")
+
+        self.formLayout_coyote.setWidget(7, QFormLayout.LabelRole, self.label_coyote_debug_logging)
+
+        self.coyote_debug_logging = QCheckBox(self.tab_coyote)
+        self.coyote_debug_logging.setObjectName(u"coyote_debug_logging")
+
+        self.formLayout_coyote.setWidget(7, QFormLayout.FieldRole, self.coyote_debug_logging)
+
 
         self.verticalLayout_coyote.addLayout(self.formLayout_coyote)
 
@@ -913,6 +923,8 @@ class Ui_PreferencesDialog(object):
         self.label_coyote_channel_b_freq_balance.setText(QCoreApplication.translate("PreferencesDialog", u"Channel B Freq Balance", None))
         self.label_coyote_channel_a_intensity_balance.setText(QCoreApplication.translate("PreferencesDialog", u"Channel A Intensity Balance", None))
         self.label_coyote_channel_b_intensity_balance.setText(QCoreApplication.translate("PreferencesDialog", u"Channel B Intensity Balance", None))
+        self.label_coyote_debug_logging.setText(QCoreApplication.translate("PreferencesDialog", u"Debug logging", None))
+        self.coyote_debug_logging.setText("")
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_coyote), QCoreApplication.translate("PreferencesDialog", u"Coyote", None))
         self.groupBox_3.setTitle(QCoreApplication.translate("PreferencesDialog", u"MPC-HC", None))
         self.label_31.setText(QCoreApplication.translate("PreferencesDialog", u"address:port", None))
@@ -944,4 +956,3 @@ class Ui_PreferencesDialog(object):
         ___qtablewidgetitem1.setText(QCoreApplication.translate("PreferencesDialog", u"Enabled", None));
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_patterns), QCoreApplication.translate("PreferencesDialog", u"Patterns", None))
     # retranslateUi
-
