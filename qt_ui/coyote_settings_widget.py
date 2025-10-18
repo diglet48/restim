@@ -808,7 +808,7 @@ class CoyoteSettingsWidget(QtWidgets.QWidget):
         self.freq_min_a.setRange(10, 500)
         self.freq_min_a.setValue(settings.coyote_channel_a_freq_min.get())
         self.freq_min_a.setSingleStep(10)
-        freq_min_a_controls.addWidget(QLabel("Min (Hz)"))
+        freq_min_a_controls.addWidget(QLabel("Min Freq (Hz)"))
         freq_min_a_controls.addWidget(self.freq_min_a)
         
         freq_max_a_controls = QHBoxLayout()
@@ -816,7 +816,7 @@ class CoyoteSettingsWidget(QtWidgets.QWidget):
         self.freq_max_a.setRange(10, 500)
         self.freq_max_a.setValue(settings.coyote_channel_a_freq_max.get())
         self.freq_max_a.setSingleStep(10)
-        freq_max_a_controls.addWidget(QLabel("Max (Hz)"))
+        freq_max_a_controls.addWidget(QLabel("Max Freq (Hz)"))
         freq_max_a_controls.addWidget(self.freq_max_a)
         
         # Max strength controls for Channel A
@@ -867,7 +867,7 @@ class CoyoteSettingsWidget(QtWidgets.QWidget):
         self.freq_min_b.setRange(10, 500)
         self.freq_min_b.setValue(settings.coyote_channel_b_freq_min.get())
         self.freq_min_b.setSingleStep(10)
-        freq_min_b_controls.addWidget(QLabel("Min (Hz)"))
+        freq_min_b_controls.addWidget(QLabel("Min Freq (Hz)"))
         freq_min_b_controls.addWidget(self.freq_min_b)
         
         freq_max_b_controls = QHBoxLayout()
@@ -875,7 +875,7 @@ class CoyoteSettingsWidget(QtWidgets.QWidget):
         self.freq_max_b.setRange(10, 500)
         self.freq_max_b.setValue(settings.coyote_channel_b_freq_max.get())
         self.freq_max_b.setSingleStep(10)
-        freq_max_b_controls.addWidget(QLabel("Max (Hz)"))
+        freq_max_b_controls.addWidget(QLabel("Max Freq (Hz)"))
         freq_max_b_controls.addWidget(self.freq_max_b)
         
         # Max strength controls for Channel B
