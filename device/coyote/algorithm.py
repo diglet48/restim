@@ -149,13 +149,15 @@ class ContinuousSignal:
 
     def __init__(self, params: CoyoteAlgorithmParams, channel_params: 'CoyoteChannelParams',
                  carrier_freq_limits: Tuple[float, float], pulse_freq_limits: Tuple[float, float],
-                 pulse_width_limits: Tuple[float, float], pulse_rise_time_limits: Tuple[float, float]):
+                 pulse_width_limits: Tuple[float, float], pulse_rise_time_limits: Tuple[float, float],
+                 channel_name: str = ""):
         self.params = params
         self.channel_params = channel_params
         self.carrier_freq_limits = carrier_freq_limits
         self.pulse_freq_limits = pulse_freq_limits
         self.pulse_width_limits = pulse_width_limits
         self.pulse_rise_time_limits = pulse_rise_time_limits
+        self.channel_name = channel_name
         
         # Timing state
         self._last_pulse_time = 0.0
@@ -302,17 +304,18 @@ class ContinuousSignal:
         # Intensity is supplied by the caller (already smoothed). Do not modulate here.
         final_intensity = int(np.clip(base_intensity, 0, 100))
 
-        # Debug: trace pulse generation values (do not remove)
-        try:
-            print(
-                f"[DEBUG] COYOTE get_pulse_at: t={current_time:.3f} idx={pulse_index} "
-                f"pf_raw={raw_pf:.2f}Hz pf_norm={pf_norm:.2f} mapped={mapped_freq:.2f}Hz limits=({min_freq:.1f},{max_freq:.1f})Hz "
-                f"dur_limits=({min_dur},{max_dur})ms base_dur={base_duration:.2f}ms jitter={jitter:.2f} width_norm={width_norm:.2f} tex_mode={tex_mode} "
-                f"tex_up={amp_up_ms:.2f}ms tex_dn={amp_dn_ms:.2f}ms tex_used={texture_amplitude_ms:.2f}ms desired={desired_ms:.2f}ms residual={self._duration_residual_ms:+.2f}ms "
-                f"final_dur={pulse_duration}ms final_freq={final_frequency}Hz intensity={final_intensity}%"
+        # Debug: log pulse generation details
+        if logger.isEnabledFor(logging.DEBUG):
+            logger.debug(
+                f"  [{self.channel_name}] pulse #{pulse_index}: "
+                f"freq_raw={raw_pf:.1f} Hz, freq_norm={pf_norm:.2f}, freq_mapped={mapped_freq:.1f} Hz, "
+                f"freq_limits=({min_freq:.1f}-{max_freq:.1f}) Hz | "
+                f"base_dur={base_duration:.1f} ms, dur_limits=({min_dur}-{max_dur}) ms, width_norm={width_norm:.2f}, "
+                f"jitter={jitter:.0%} | "
+                f"texture_mode={tex_mode}, texture_up={amp_up_ms:.2f} ms, texture_dn={amp_dn_ms:.2f} ms, texture_used={texture_amplitude_ms:.2f} ms | "
+                f"desired={desired_ms:.2f} ms, residual={self._duration_residual_ms:+.2f} ms | "
+                f"result: dur={pulse_duration} ms, freq={final_frequency} Hz, intensity={final_intensity}%"
             )
-        except Exception:
-            pass
 
         return CoyotePulse(
             duration=pulse_duration,
@@ -348,6 +351,9 @@ class ChannelController:
         # Smoothing state
         self._last_intensity: float | None = None
         self._last_intensity_time: float | None = None
+        
+        # Fill summary for logging
+        self._last_fill_summary = None
 
     def _generate_single_pulse(self, t_pulse: float, seq_index: int) -> CoyotePulse:
         volume = compute_volume(self.media, self.params.volume, t_pulse)
@@ -382,18 +388,51 @@ class ChannelController:
         coverage_s = sum(p.duration for p in self.queue) / 1000.0
         end_time = now_s + coverage_s
         horizon_end = now_s + self.queue_horizon_s
+        
         seq_index = 0
+        new_pulses = []
         while end_time < horizon_end or len(self.queue) < COYOTE_PULSES_PER_PACKET:
             pulse = self._generate_single_pulse(end_time, seq_index)
             self.queue.append(pulse)
+            new_pulses.append(pulse)
             end_time += pulse.duration / 1000.0
             seq_index += 1
 
         self.queue_end_time = end_time
-        try:
-            print(f"[DEBUG] COYOTE fill_queue {self.name}: size={len(self.queue)} coverage={coverage_s:.3f}s horizon={self.queue_horizon_s:.3f}s")
-        except Exception:
-            pass
+        
+        # Log queue fill summary
+        if logger.isEnabledFor(logging.DEBUG):
+            if new_pulses:
+                durations = [p.duration for p in new_pulses]
+                frequencies = [p.frequency for p in new_pulses]
+                total_ms = sum(durations)
+                logger.debug(
+                    f"  [{self.name}] Queue filled: "
+                    f"added={len(new_pulses)}, "
+                    f"dur_range={min(durations)}-{max(durations)} ms, "
+                    f"freq_range={min(frequencies)}-{max(frequencies)} Hz, "
+                    f"total_added={total_ms} ms | "
+                    f"queue_size={len(self.queue)}, "
+                    f"coverage={coverage_s * 1000:.0f} ms, "
+                    f"horizon={self.queue_horizon_s * 1000:.0f} ms\n"
+                )
+                self._last_fill_summary = (
+                    len(new_pulses),
+                    min(durations),
+                    max(durations),
+                    min(frequencies),
+                    max(frequencies)
+                )
+            else:
+                logger.debug(
+                    f"  [{self.name}] Queue status: "
+                    f"queue_size={len(self.queue)}, "
+                    f"coverage={coverage_s * 1000:.0f} ms, "
+                    f"horizon={self.queue_horizon_s * 1000:.0f} ms (no refill needed)\n"
+                )
+                self._last_fill_summary = None
+        else:
+            self._last_fill_summary = None
 
     def pop_packet(self) -> List[CoyotePulse]:
         packet: List[CoyotePulse] = []
@@ -422,9 +461,9 @@ class CoyoteAlgorithm:
         self.position = ThreePhasePosition(params.position, params.transform)
 
         self.signal_a = ContinuousSignal(params, params.channel_a, carrier_freq_limits, pulse_freq_limits,
-                                         pulse_width_limits, pulse_rise_time_limits)
+                                         pulse_width_limits, pulse_rise_time_limits, channel_name="A")
         self.signal_b = ContinuousSignal(params, params.channel_b, carrier_freq_limits, pulse_freq_limits,
-                                         pulse_width_limits, pulse_rise_time_limits)
+                                         pulse_width_limits, pulse_rise_time_limits, channel_name="B")
 
         self.channel_a = ChannelState()
         self.channel_b = ChannelState()
@@ -571,42 +610,53 @@ class CoyoteAlgorithm:
         return ready or low_queue
 
     def _schedule_next_update(self, current_time: float, packet_duration_a: float, 
-                             packet_duration_b: float, margin: float = 0.8) -> None:
-        """Schedule the next update time based on packet durations."""
+                             packet_duration_b: float, margin: float = 0.8) -> float:
+        """Schedule the next update time based on packet durations. Returns next update delta in ms."""
         min_duration = min(packet_duration_a, packet_duration_b)
         self.next_update_time = current_time + min_duration * margin
-        try:
-            print(f"[DEBUG] COYOTE schedule: next_update in {min_duration*margin:.3f}s (A={packet_duration_a:.3f}s B={packet_duration_b:.3f}s)")
-        except Exception:
-            pass
+        return min_duration * margin * 1000
 
     def _log_packet_debug(self, current_time: float, alpha: float, beta: float, 
                          pulses_a: List[CoyotePulse], pulses_b: List[CoyotePulse],
-                         total_duration_a: float, total_duration_b: float) -> None:
+                         total_duration_a: float, total_duration_b: float, next_update_ms: float, margin: float) -> None:
         """Log debug information for generated packet."""
+        if not logger.isEnabledFor(logging.DEBUG):
+            return
+            
         hours, minutes, seconds, millis = self._get_display_time(current_time)
         media_type = self._get_media_type()
-        
-        # Calculate volume for logging (using first pulse time)
         volume = compute_volume(self.media, self.params.volume, current_time)
         
+        # Get common intensity (they should all be the same within a channel)
+        intensity_a = pulses_a[0].intensity if pulses_a else 0
+        intensity_b = pulses_b[0].intensity if pulses_b else 0
+        
         log_lines = [
+            "=" * 72,
+            f"Packet Generated @ {hours:02}:{minutes:02}:{seconds:02}.{millis:03} [{media_type}]",
+            "=" * 72,
+            f"Position: alpha={alpha:+.2f}, beta={beta:+.2f}, volume={volume:.0%}",
             "",
-            f"=== Generating packet at {hours:02}:{minutes:02}:{seconds:02}:{millis:03} === [{media_type}]",
-            f"  Position: alpha={alpha:.2f}, beta={beta:.2f}, volume={volume:.2f}",
-            f"Channel A ({total_duration_a:.0f} ms):"
+            f"Channel A: duration={total_duration_a:.0f} ms, intensity={intensity_a}%",
         ]
         
-        for i, pulse in enumerate(pulses_a):
-            log_lines.append(f"  Pulse {i+1}: duration={pulse.duration} ms, freq={pulse.frequency} Hz, intensity={pulse.intensity}%")
+        for i, p in enumerate(pulses_a, 1):
+            log_lines.append(f"  Pulse {i}: {p.duration} ms @ {p.frequency} Hz")
         
         log_lines.extend([
             "",
-            f"Channel B ({total_duration_b:.0f} ms):"
+            f"Channel B: duration={total_duration_b:.0f} ms, intensity={intensity_b}%"
         ])
         
-        for i, pulse in enumerate(pulses_b):
-            log_lines.append(f"  Pulse {i+1}: duration={pulse.duration} ms, freq={pulse.frequency} Hz, intensity={pulse.intensity}%")
+        for i, p in enumerate(pulses_b, 1):
+            log_lines.append(f"  Pulse {i}: {p.duration} ms @ {p.frequency} Hz")
+        
+        log_lines.extend([
+            "",
+            f"Next update: {next_update_ms:.0f} ms (packet_dur_a={total_duration_a:.0f} ms, packet_dur_b={total_duration_b:.0f} ms, margin={margin:.0%})",
+            "=" * 72,
+            ""
+        ])
         
         logger.debug("\n".join(log_lines))
 
@@ -648,7 +698,12 @@ class CoyoteAlgorithm:
         self._update_envelope_preview(current_time)
 
         # Ensure queues are filled ahead of time
+        if logger.isEnabledFor(logging.DEBUG):
+            logger.debug("=== Channel A: Filling Queue ===")
         self.ctrl_a.fill_queue(current_time)
+        
+        if logger.isEnabledFor(logging.DEBUG):
+            logger.debug("=== Channel B: Filling Queue ===")
         self.ctrl_b.fill_queue(current_time)
 
         # Assemble packets by popping from queues (atomic update for A and B)
@@ -665,11 +720,11 @@ class CoyoteAlgorithm:
         except Exception:
             pass
 
+        # Schedule next update and get the delta for logging
+        next_update_ms = self._schedule_next_update(current_time, duration_a / 1000.0, duration_b / 1000.0, PACKET_MARGIN)
+        
         # Log debug information
-        self._log_packet_debug(current_time, alpha, beta, pulses_a, pulses_b, duration_a, duration_b)
-
-        # Schedule next update
-        self._schedule_next_update(current_time, duration_a / 1000.0, duration_b / 1000.0, PACKET_MARGIN)
+        self._log_packet_debug(current_time, alpha, beta, pulses_a, pulses_b, duration_a, duration_b, next_update_ms, PACKET_MARGIN)
 
         return CoyotePulses(pulses_a, pulses_b)
 
