@@ -421,6 +421,8 @@ class Window(QMainWindow, Ui_MainWindow):
 
         self.refresh_pattern_combobox()
 
+        self.refresh_pattern_combobox()
+
     def pattern_selection_changed(self, index):
         pattern = self.comboBox_patternSelect.currentData()
         self.motion_3.set_pattern(pattern)
