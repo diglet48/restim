@@ -1,72 +1,33 @@
 import asyncio
-from dataclasses import dataclass
 import logging
-from typing import Optional, Callable
+from typing import Optional
 import time
 import threading
 
 from bleak import BleakClient, BleakScanner
 from device.output_device import OutputDevice
-#from stim_math.audio_gen.coyote import CoyoteThreePhaseAlgorithm #blegh, circular import
+
 from PySide6.QtCore import QObject, Signal
+from device.coyote.constants import (
+    LOG_PREFIX,
+    WRITE_CHAR_UUID,
+    NOTIFY_CHAR_UUID,
+    BATTERY_CHAR_UUID,
+    CMD_B0,
+    CMD_POWER_UPDATE,
+    CMD_ACK,
+    CMD_ACTIVE_POWER,
+    INTERP_ABSOLUTE_SET,
+    INTERP_NO_CHANGE,
+    SEQUENCE_MODULO,
+    B0_NO_PULSES_PAD_BYTES,
+    PULSES_PER_PACKET,
+    SCAN_RETRY_SECONDS,
+)
+from device.coyote.types import CoyoteParams, CoyotePulse, CoyotePulses, CoyoteStrengths, ConnectionStage
+from device.coyote.algorithm import CoyoteAlgorithm
 
 logger = logging.getLogger('restim.coyote')
-LOG_PREFIX = "[Coyote]"
-
-# Coyote BLE UUIDs
-BATTERY_SERVICE_UUID = "0000180A-0000-1000-8000-00805f9b34fb"
-MAIN_SERVICE_UUID = "0000180C-0000-1000-8000-00805f9b34fb"
-WRITE_CHAR_UUID = "0000150A-0000-1000-8000-00805f9b34fb"
-NOTIFY_CHAR_UUID = "0000150B-0000-1000-8000-00805f9b34fb"
-BATTERY_CHAR_UUID = "00001500-0000-1000-8000-00805f9b34fb"
-
-class ConnectionStage:
-    DISCONNECTED = "Disconnected"
-    SCANNING = "Scanning for device..."
-    CONNECTING = "Connecting..."
-    SERVICE_DISCOVERY = "Discovering services..."
-    BATTERY_SUBSCRIBE = "Setting up battery notifications..."
-    STATUS_SUBSCRIBE = "Setting up status notifications..."
-    SYNC_PARAMETERS = "Syncing parameters..."
-    CONNECTED = "Connected"
-
-@dataclass
-class CoyoteParams:
-    """
-    Represents configurable parameters for the Coyote device
-    channel_a_limit: 0-200 power limit for channel A
-    channel_b_limit: 0-200 power limit for channel B
-    channel_a_freq_balance: 0-255 frequency balance for channel A
-    channel_b_freq_balance: 0-255 frequency balance for channel B
-    channel_a_intensity_balance: 0-255 intensity balance for channel A
-    channel_b_intensity_balance: 0-255 intensity balance for channel B
-    """
-    channel_a_limit: int
-    channel_b_limit: int
-    channel_a_freq_balance: int
-    channel_b_freq_balance: int
-    channel_a_intensity_balance: int
-    channel_b_intensity_balance: int
-
-@dataclass
-class CoyotePulse:
-    frequency: int # Calculated from duration: 1000/duration_ms, range ~4-200 Hz
-    intensity: int   # 0-100
-    duration: int   # 5-240ms (spec says 10-240, but 5ms works)
-
-@dataclass
-class CoyotePulses:
-    channel_a: list[CoyotePulse]  # Exactly 4 pulses
-    channel_b: list[CoyotePulse]  # Exactly 4 pulses
-
-    def duration() -> int:
-        return 0
-
-@dataclass
-class CoyoteStrengths:
-    """Represents channel strength (volume) settings"""
-    channel_a: int  # 0-100
-    channel_b: int  # 0-100
 
 class CoyoteDevice(OutputDevice, QObject):
     parameters: CoyoteParams = None
@@ -81,7 +42,7 @@ class CoyoteDevice(OutputDevice, QObject):
         QObject.__init__(self)
         self.device_name = device_name
         self.client: Optional[BleakClient] = None
-        self.algorithm: Optional[any] = None
+        self.algorithm: Optional[CoyoteAlgorithm] = None
         self.running = False
         self.connection_stage = ConnectionStage.DISCONNECTED
         self.strengths = CoyoteStrengths(channel_a=0, channel_b=0)
@@ -133,8 +94,8 @@ class CoyoteDevice(OutputDevice, QObject):
                         self.connection_stage = ConnectionStage.CONNECTING
                     else:
                         attempt_counter += 1
-                        logger.info(f"{LOG_PREFIX} Device not found (attempt {attempt_counter}); retrying in 5 seconds...")
-                        await asyncio.sleep(5)
+                        logger.info(f"{LOG_PREFIX} Device not found (attempt {attempt_counter}); retrying in {SCAN_RETRY_SECONDS} seconds...")
+                        await asyncio.sleep(SCAN_RETRY_SECONDS)
                         
                 elif self.connection_stage == ConnectionStage.CONNECTING:
                     if await self.client.connect():
@@ -243,16 +204,16 @@ class CoyoteDevice(OutputDevice, QObject):
         power_a = data[2]
         power_b = data[3]
 
-        if command_id == 0xB1:
+        if command_id == CMD_POWER_UPDATE:
             logger.debug(f"{LOG_PREFIX} Power level update (seq={sequence_number}) - Channel A: {power_a}, Channel B: {power_b}")
             self.strengths.channel_a = power_a
             self.strengths.channel_b = power_b
             self.power_levels_changed.emit(self.strengths)
 
-        elif command_id == 0x51:
+        elif command_id == CMD_ACK:
             logger.debug(f"{LOG_PREFIX} Command acknowledged (seq={sequence_number})")
         
-        elif command_id == 0x53:
+        elif command_id == CMD_ACTIVE_POWER:
             if len(data) < 4:
                 logger.warning(f"{LOG_PREFIX} Malformed active power notification: {list(data)}")
                 return
@@ -359,11 +320,11 @@ class CoyoteDevice(OutputDevice, QObject):
 
         # Determine strength interpretation (default absolute set if new strength provided)
         if strengths:
-            interp_a = 0b11  # Absolute set for Channel A
-            interp_b = 0b11  # Absolute set for Channel B
+            interp_a = INTERP_ABSOLUTE_SET  # Absolute set for Channel A
+            interp_b = INTERP_ABSOLUTE_SET  # Absolute set for Channel B
         else:
-            interp_a = 0b00  # No change
-            interp_b = 0b00  # No change
+            interp_a = INTERP_NO_CHANGE  # No change
+            interp_b = INTERP_NO_CHANGE  # No change
 
         # Pack sequence number + interpretation into 1 byte (upper 4 = seq, lower 4 = interp)
         request_ack = not pulses
@@ -371,7 +332,7 @@ class CoyoteDevice(OutputDevice, QObject):
 
         # Build base command (B0 packet structure)
         command = bytearray([
-            0xB0,                     # Command ID
+            CMD_B0,            # Command ID
             control_byte,              # Combined seq + interpretation
             strengths.channel_a if strengths else 0,
             strengths.channel_b if strengths else 0,
@@ -384,7 +345,7 @@ class CoyoteDevice(OutputDevice, QObject):
             command.extend([b.duration for b in pulses.channel_b])
             command.extend([b.intensity for b in pulses.channel_b])
         else:
-            command.extend([0] * 16)  # No pulses = zero padding
+            command.extend([0] * B0_NO_PULSES_PAD_BYTES)  # No pulses = zero padding
 
         # Log what we're sending
         logger.info(f"{LOG_PREFIX} Sending command (seq={self.sequence_number}):")
@@ -406,7 +367,7 @@ class CoyoteDevice(OutputDevice, QObject):
         # Send the final command
         try:
             await self.client.write_gatt_char(WRITE_CHAR_UUID, command)
-            self.sequence_number = (self.sequence_number + 1) % 16  # Wrap seq at 4 bits (0-15)
+            self.sequence_number = (self.sequence_number + 1) % SEQUENCE_MODULO  # Wrap seq at 4 bits (0-15)
         except Exception as e:
             logger.error(f"{LOG_PREFIX} Failed to send command: {e}")
     
@@ -419,8 +380,8 @@ class CoyoteDevice(OutputDevice, QObject):
 
             # Send zero pulses to turn off outputs
             zero_pulses = CoyotePulses(
-                channel_a=[CoyotePulse(frequency=0, intensity=0, duration=0)] * 4,
-                channel_b=[CoyotePulse(frequency=0, intensity=0, duration=0)] * 4
+                channel_a=[CoyotePulse(frequency=0, intensity=0, duration=0)] * PULSES_PER_PACKET,
+                channel_b=[CoyotePulse(frequency=0, intensity=0, duration=0)] * PULSES_PER_PACKET
             )
             await self.send_command(pulses=zero_pulses)
             await self.client.disconnect()

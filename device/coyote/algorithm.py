@@ -56,12 +56,28 @@ import time
 import numpy as np
 from collections import deque
 from typing import List, Tuple, Deque, Optional
+from device.coyote.constants import (
+    MIN_PULSE_DURATION_MS,
+    MAX_PULSE_DURATION_MS,
+    HARDWARE_MIN_FREQ_HZ,
+    HARDWARE_MAX_FREQ_HZ,
+    PULSES_PER_PACKET,
+    QUEUE_HORIZON_S,
+    PACKET_MARGIN,
+    TEXTURE_MIN_HZ,
+    TEXTURE_MAX_HZ,
+    TEXTURE_MAX_DEPTH_FRACTION,
+    JITTER_CLAMP_FRACTION,
+    RANDOMIZATION_LIMIT_FRACTION,
+    RESIDUAL_BOUND,
+    DEFAULT_MAX_CHANGE_PER_PULSE,
+)
 
 from stim_math.axis import AbstractMediaSync, AbstractAxis
 from stim_math.threephase import ThreePhaseCenterCalibration
 from stim_math.audio_gen.params import CoyoteAlgorithmParams, VolumeParams, SafetyParams
 from stim_math.audio_gen.various import ThreePhasePosition
-from device.coyote.device import CoyotePulse, CoyotePulses
+from device.coyote.types import CoyotePulse, CoyotePulses
 try:
     # Optional import; keeps algorithm functional in headless contexts
     from qt_ui import settings as ui_settings
@@ -70,9 +86,7 @@ except Exception:  # pragma: no cover - setting import is best-effort
 
 logger = logging.getLogger('restim.coyote')
 
-COYOTE_PULSES_PER_PACKET = 4
-COYOTE_MIN_PULSE_DURATION = 5
-COYOTE_MAX_PULSE_DURATION = 240
+ 
 
 
 def compute_volume(media: AbstractMediaSync, volume_params: VolumeParams, t: float) -> float:
@@ -182,8 +196,8 @@ class ContinuousSignal:
         """Calculate effective frequency limits considering hardware constraints."""
         channel_min = self.channel_params.minimum_frequency.get()
         channel_max = self.channel_params.maximum_frequency.get()
-        hardware_max = 1000.0 / COYOTE_MIN_PULSE_DURATION  # ~200 Hz
-        hardware_min = 1000.0 / COYOTE_MAX_PULSE_DURATION  # ~4.17 Hz
+        hardware_max = HARDWARE_MAX_FREQ_HZ  # ~200 Hz
+        hardware_min = HARDWARE_MIN_FREQ_HZ  # ~4.17 Hz
         
         effective_min = max(channel_min, hardware_min)
         effective_max = min(channel_max, hardware_max)
@@ -201,8 +215,8 @@ class ContinuousSignal:
         if randomization_strength <= 0:
             return base_frequency
             
-        # Limit randomization to 10% of the setting
-        random_percentage = randomization_strength / 100.0 * 0.1
+        # Limit randomization to a fraction of the setting
+        random_percentage = randomization_strength / 100.0 * RANDOMIZATION_LIMIT_FRACTION
         random_factor = 1.0 + (np.random.rand() - 0.5) * 2 * random_percentage
         randomized_freq = base_frequency * random_factor
         
@@ -223,8 +237,8 @@ class ContinuousSignal:
 
         # Effective channel limits → convert to duration window
         min_freq, max_freq = self._calculate_effective_frequency_limits()
-        min_dur = max(COYOTE_MIN_PULSE_DURATION, int(round(1000.0 / max_freq)))
-        max_dur = min(COYOTE_MAX_PULSE_DURATION, int(round(1000.0 / min_freq)))
+        min_dur = max(MIN_PULSE_DURATION_MS, int(round(1000.0 / max_freq)))
+        max_dur = min(MAX_PULSE_DURATION_MS, int(round(1000.0 / min_freq)))
 
         # Map global funscript pulse_frequency into the channel's preferred range
         # 1) Normalize funscript value using global pulse_freq_limits (kit limits)
@@ -241,8 +255,8 @@ class ContinuousSignal:
 
         # Optional jitter around base duration (from funscript)
         jitter = float(self.params.pulse_interval_random.interpolate(current_time))
-        # Treat jitter as a 0..1 fraction; clamp to ±50% to avoid pathological spans
-        jitter = float(np.clip(jitter, 0.0, 0.5))
+        # Treat jitter as a 0..1 fraction; clamp to avoid pathological spans
+        jitter = float(np.clip(jitter, 0.0, JITTER_CLAMP_FRACTION))
         jitter_factor = 1.0 + (np.random.rand() * 2.0 - 1.0) * jitter
 
         # Micro-texture from pulse_width (depth) with phase advanced in _advance_channel_states
@@ -257,7 +271,6 @@ class ContinuousSignal:
         amp_up_ms = max(0.0, max_dur_f - base_duration)  # can increase duration up to this much
         amp_dn_ms = max(0.0, base_duration - min_dur_f)  # can decrease duration up to this much
 
-        TEXTURE_MAX_DEPTH_FRACTION = 0.5
         amp_up_ms *= TEXTURE_MAX_DEPTH_FRACTION * width_norm
         amp_dn_ms *= TEXTURE_MAX_DEPTH_FRACTION * width_norm
 
@@ -290,10 +303,10 @@ class ContinuousSignal:
         pulse_duration = int(np.floor(accum + 0.5))  # nearest int
         self._duration_residual_ms = accum - pulse_duration
         # Keep residual bounded for numerical stability
-        if self._duration_residual_ms > 0.49:
-            self._duration_residual_ms = 0.49
-        elif self._duration_residual_ms < -0.49:
-            self._duration_residual_ms = -0.49
+        if self._duration_residual_ms > RESIDUAL_BOUND:
+            self._duration_residual_ms = RESIDUAL_BOUND
+        elif self._duration_residual_ms < -RESIDUAL_BOUND:
+            self._duration_residual_ms = -RESIDUAL_BOUND
 
         # Clamp to channel-specific duration window and hardware bounds
         clamped = False
@@ -344,7 +357,7 @@ class ChannelController:
                  signal: ContinuousSignal,
                  get_positional_intensities,
                  max_change_per_pulse: float,
-                 queue_horizon_s: float = 0.75):
+                 queue_horizon_s: float = QUEUE_HORIZON_S):
         self.name = name  # 'A' or 'B'
         self.media = media
         self.params = params
@@ -399,7 +412,7 @@ class ChannelController:
         
         seq_index = 0
         new_pulses = []
-        while end_time < horizon_end or len(self.queue) < COYOTE_PULSES_PER_PACKET:
+        while end_time < horizon_end or len(self.queue) < PULSES_PER_PACKET:
             pulse = self._generate_single_pulse(end_time, seq_index)
             self.queue.append(pulse)
             new_pulses.append(pulse)
@@ -444,11 +457,11 @@ class ChannelController:
 
     def pop_packet(self) -> List[CoyotePulse]:
         packet: List[CoyotePulse] = []
-        while len(packet) < COYOTE_PULSES_PER_PACKET:
+        while len(packet) < PULSES_PER_PACKET:
             if self.queue:
                 packet.append(self.queue.popleft())
             else:
-                packet.append(CoyotePulse(frequency=0, intensity=0, duration=COYOTE_MIN_PULSE_DURATION))
+                packet.append(CoyotePulse(frequency=0, intensity=0, duration=MIN_PULSE_DURATION_MS))
         return packet
 
     def has_minimum_pulses(self, n: int) -> bool:
@@ -482,7 +495,7 @@ class CoyoteAlgorithm:
         self.next_update_time = 0.0
 
         # Global per-pulse cap (percentage points). Read from settings if available.
-        self._max_change_per_pulse = 3.0
+        self._max_change_per_pulse = DEFAULT_MAX_CHANGE_PER_PULSE
         try:
             if ui_settings is not None:
                 self._max_change_per_pulse = float(ui_settings.coyote_max_intensity_change_per_pulse.get())
@@ -494,13 +507,13 @@ class CoyoteAlgorithm:
             'A', self.media, self.params, self.signal_a,
             get_positional_intensities=self._get_positional_intensities,
             max_change_per_pulse=self._max_change_per_pulse,
-            queue_horizon_s=0.75,
+            queue_horizon_s=QUEUE_HORIZON_S,
         )
         self.ctrl_b = ChannelController(
             'B', self.media, self.params, self.signal_b,
             get_positional_intensities=self._get_positional_intensities,
             max_change_per_pulse=self._max_change_per_pulse,
-            queue_horizon_s=0.75,
+            queue_horizon_s=QUEUE_HORIZON_S,
         )
 
         # Smoothing state handled by ChannelController
@@ -594,8 +607,6 @@ class CoyoteAlgorithm:
         # Advance shared micro-texture phase using carrier axis as speed control (mapped to ~0.5..5 Hz)
         carrier_norm, _, _, _ = _get_normalized_parameters(
             self.params, current_time, self.signal_a.carrier_freq_limits, self.signal_a.pulse_freq_limits)
-        TEXTURE_MIN_HZ = 0.5
-        TEXTURE_MAX_HZ = 5.0
         texture_speed_hz = TEXTURE_MIN_HZ + (TEXTURE_MAX_HZ - TEXTURE_MIN_HZ) * (carrier_norm / 100.0)
         delta_time_s = delta_time_ms / 1000.0
         phase_change = (delta_time_s * texture_speed_hz) * 2 * np.pi
@@ -609,14 +620,14 @@ class CoyoteAlgorithm:
         We also allow proactive generation if queues are running low, to avoid
         starving the device with repeats for too long.
         """
-        low_queue = (not self.ctrl_a.has_minimum_pulses(COYOTE_PULSES_PER_PACKET) or
-                     not self.ctrl_b.has_minimum_pulses(COYOTE_PULSES_PER_PACKET))
+        low_queue = (not self.ctrl_a.has_minimum_pulses(PULSES_PER_PACKET) or
+                     not self.ctrl_b.has_minimum_pulses(PULSES_PER_PACKET))
         ready = (self.channel_a.is_ready_for_next_packet() or
                  self.channel_b.is_ready_for_next_packet())
         return ready or low_queue
 
     def _schedule_next_update(self, current_time: float, packet_duration_a: float, 
-                             packet_duration_b: float, margin: float = 0.8) -> float:
+                             packet_duration_b: float, margin: float = PACKET_MARGIN) -> float:
         """Schedule the next update time based on packet durations. Returns next update delta in ms."""
         min_duration = min(packet_duration_a, packet_duration_b)
         self.next_update_time = current_time + min_duration * margin
@@ -668,7 +679,7 @@ class CoyoteAlgorithm:
 
     def generate_packet(self, current_time: float) -> Optional[CoyotePulses]:
         """Generate one packet of pulses for both channels."""
-        PACKET_MARGIN = 0.8  # Request next packet after 80% of current one has played
+        # Request next packet after threshold of current one has played
         
         # Initialize timing on first call
         if self.last_update_time_s == 0.0:
