@@ -205,7 +205,7 @@ class CoyoteDevice(OutputDevice, QObject):
         power_b = data[3]
 
         if command_id == CMD_POWER_UPDATE:
-            logger.debug(f"{LOG_PREFIX} Power level update (seq={sequence_number}) - Channel A: {power_a}, Channel B: {power_b}")
+            logger.info(f"{LOG_PREFIX} Power level update (seq={sequence_number}) - Channel A: {power_a}, Channel B: {power_b}")
             self.strengths.channel_a = power_a
             self.strengths.channel_b = power_b
             self.power_levels_changed.emit(self.strengths)
@@ -221,7 +221,7 @@ class CoyoteDevice(OutputDevice, QObject):
             power_a = data[2]
             power_b = data[3]
 
-            logger.debug(f"{LOG_PREFIX} Active power update - Channel A: {power_a}, Channel B: {power_b}")
+            logger.info(f"{LOG_PREFIX} Active power update - Channel A: {power_a}, Channel B: {power_b}")
 
             # self.strengths.channel_a = power_a
             # self.strengths.channel_b = power_b
@@ -229,11 +229,11 @@ class CoyoteDevice(OutputDevice, QObject):
 
             # if len(data) > 4:
             #     extra = data[4:]
-            #     logger.debug(f"Extra fields in 0x53 notification (undocumented): {list(extra)}")
+            #     logger.warning(f"Extra fields in 0x53 notification (undocumented): {list(extra)}")
 
         else:
             logger.warning(f"{LOG_PREFIX} Unknown notification type: 0x{command_id:02X} (seq={sequence_number})")
-            logger.debug(f"{LOG_PREFIX} Raw notification: {list(data)}")
+            logger.warning(f"{LOG_PREFIX} Raw notification: {list(data)}")
 
     async def _send_parameters(self):
         """Send device parameters"""
@@ -283,7 +283,7 @@ class CoyoteDevice(OutputDevice, QObject):
                 self.connection_stage = ConnectionStage.CONNECTING
                 return True
             else:
-                logger.debug(f"{LOG_PREFIX} No BLE advertisement for {self.device_name} detected during scan window")
+                logger.info(f"{LOG_PREFIX} No BLE advertisement for {self.device_name} detected during scan window")
                 return False
         except Exception as e:
             logger.error(f"{LOG_PREFIX} Scan error: {e}")
@@ -348,21 +348,23 @@ class CoyoteDevice(OutputDevice, QObject):
             command.extend([0] * B0_NO_PULSES_PAD_BYTES)  # No pulses = zero padding
 
         # Log what we're sending
-        logger.info(f"{LOG_PREFIX} Sending command (seq={self.sequence_number}):")
+        if logger.isEnabledFor(logging.DEBUG):
+            logger.debug(f"{LOG_PREFIX} Sending command (seq={self.sequence_number}):")
 
-        if pulses and logger.isEnabledFor(logging.DEBUG):
-            pulses_a = "\n".join(
-                f"  Pulse {i+1}: Freq={pulse.frequency} Hz, Intensity={pulse.intensity}"
-                for i, pulse in enumerate(pulses.channel_a)
-            )
-            pulses_b = "\n".join(
-                f"  Pulse {i+1}: Freq={pulse.frequency} Hz, Intensity={pulse.intensity}"
-                for i, pulse in enumerate(pulses.channel_b)
-            )
-            logger.debug(
-                f"{LOG_PREFIX} Channel A ({self.strengths.channel_a}):\n{pulses_a}\n"
-                f"{LOG_PREFIX} Channel B ({self.strengths.channel_b}):\n{pulses_b}"
-            )
+            if pulses:
+                pulses_a = "\n".join(
+                    f"  Pulse {i+1}: Freq={pulse.frequency} Hz, Intensity={pulse.intensity}"
+                    for i, pulse in enumerate(pulses.channel_a)
+                )
+                pulses_b = "\n".join(
+                    f"  Pulse {i+1}: Freq={pulse.frequency} Hz, Intensity={pulse.intensity}"
+                    for i, pulse in enumerate(pulses.channel_b)
+                )
+                
+                logger.debug(
+                    f"{LOG_PREFIX} Channel A ({self.strengths.channel_a}):\n{pulses_a}\n"
+                    f"{LOG_PREFIX} Channel B ({self.strengths.channel_b}):\n{pulses_b}"
+                )
 
         # Send the final command
         try:
@@ -397,7 +399,7 @@ class CoyoteDevice(OutputDevice, QObject):
             while self.running:
                 try:
                     if not self.algorithm:
-                        logger.debug(f"{LOG_PREFIX} Algorithm not yet set")
+                        logger.warning(f"{LOG_PREFIX} Algorithm not yet set")
                         await asyncio.sleep(0.1)
                         continue
 
