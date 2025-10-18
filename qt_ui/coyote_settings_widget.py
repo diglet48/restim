@@ -1,18 +1,293 @@
 import asyncio
 import time
-import numpy as np
-from PySide6 import QtCore, QtWidgets
-from PySide6.QtWidgets import (QWidget, QVBoxLayout, QLabel, QSlider, QHBoxLayout, 
-                            QGraphicsView, QGraphicsScene, QGraphicsLineItem, QDoubleSpinBox, QSpinBox,
-                            QGraphicsRectItem, QToolTip, QGraphicsItem, QGraphicsEllipseItem, QGraphicsPathItem)
-from PySide6.QtCore import Qt, QTimer, QPointF, QRectF
+from dataclasses import dataclass
+from typing import Dict, Optional
+from PySide6 import QtWidgets
+from PySide6.QtWidgets import (QWidget, QVBoxLayout, QLabel, QSlider, QHBoxLayout,
+                            QGraphicsView, QGraphicsScene, QGraphicsLineItem, QSpinBox,
+                            QGraphicsRectItem, QToolTip, QGraphicsEllipseItem)
+from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QPen, QColor, QBrush, QPainterPath
 from device.coyote.device import CoyoteDevice, CoyotePulse, CoyotePulses, CoyoteStrengths
 from qt_ui import settings
 
-# Channel color constants for use throughout the UI
-CHANNEL_A_COLOR = QColor(160, 90, 255)  # Purple
-CHANNEL_B_COLOR = QColor(255, 170, 50)  # Orange
+class CoyoteSettingsWidget(QtWidgets.QWidget):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.device: Optional[CoyoteDevice] = None
+        self.channel_controls: Dict[str, ChannelControl] = {}
+        self.setupUi()
+
+    def setupUi(self):
+        self.setLayout(QVBoxLayout())
+
+        self.label_connection_status = QLabel("Disconnected")
+        self.label_connection_stage = QLabel("")
+        self.label_battery_level = QLabel("")
+        status_layout = QHBoxLayout()
+        status_layout.addWidget(self.label_connection_status)
+        status_layout.addWidget(self.label_connection_stage)
+        status_layout.addWidget(self.label_battery_level)
+        self.layout().addLayout(status_layout)
+
+        configs = (
+            ChannelConfig(
+                channel_id='A',
+                freq_min_setting=settings.coyote_channel_a_freq_min,
+                freq_max_setting=settings.coyote_channel_a_freq_max,
+                strength_max_setting=settings.coyote_channel_a_strength_max,
+            ),
+            ChannelConfig(
+                channel_id='B',
+                freq_min_setting=settings.coyote_channel_b_freq_min,
+                freq_max_setting=settings.coyote_channel_b_freq_max,
+                strength_max_setting=settings.coyote_channel_b_strength_max,
+            ),
+        )
+
+        for config in configs:
+            control = ChannelControl(self, config)
+            self.channel_controls[config.channel_id] = control
+            self.layout().addLayout(control.build_ui())
+            control.reset_volume()
+
+    def setup_device(self, device: CoyoteDevice):
+        self.device = device
+
+        self.device.connection_status_changed.connect(self.on_connection_status_changed)
+        self.device.battery_level_changed.connect(self.on_battery_level_changed)
+        self.device.parameters_changed.connect(self.on_parameters_changed)
+        self.device.power_levels_changed.connect(self.on_power_levels_changed)
+        self.device.pulse_sent.connect(self.on_pulse_sent)
+
+        for control in self.channel_controls.values():
+            control.reset_volume()
+
+        if device.strengths:
+            for control in self.channel_controls.values():
+                control.update_from_device(device.strengths)
+
+    def update_channel_strength(self, control: 'ChannelControl', value: int):
+        if not self.device or not self.device._event_loop:
+            return
+
+        strengths = control.with_strength(self.device.strengths, value)
+
+        asyncio.run_coroutine_threadsafe(
+            self.device.send_command(strengths),
+            self.device._event_loop
+        )
+
+        self.device.strengths = strengths
+
+    def on_connection_status_changed(self, connected: bool, stage: str = None):
+        self.label_connection_status.setText("Connected" if connected else "Disconnected")
+        if stage:
+            self.label_connection_stage.setText(stage)
+
+    def on_battery_level_changed(self, level: int):
+        self.label_battery_level.setText(f"Battery: {level}%")
+
+    def on_parameters_changed(self):
+        pass
+
+    def on_power_levels_changed(self, strengths: CoyoteStrengths):
+        for control in self.channel_controls.values():
+            control.update_from_device(strengths)
+
+    def on_pulse_sent(self, pulses: CoyotePulses):
+        if not self.device:
+            return
+
+        for control in self.channel_controls.values():
+            control.apply_pulses(pulses, self.device.strengths)
+
+@dataclass(frozen=True)
+class ChannelConfig:
+    channel_id: str
+    freq_min_setting: settings.Setting
+    freq_max_setting: settings.Setting
+    strength_max_setting: settings.Setting
+
+class ChannelControl:
+    def __init__(self, parent: 'CoyoteSettingsWidget', config: ChannelConfig):
+        self.parent = parent
+        self.config = config
+
+        self.freq_min: Optional[QSpinBox] = None
+        self.freq_max: Optional[QSpinBox] = None
+        self.strength_max: Optional[QSpinBox] = None
+        self.volume_slider: Optional[QSlider] = None
+        self.volume_label: Optional[QLabel] = None
+        self.pulse_graph: Optional[PulseGraphContainer] = None
+        self.stats_label: Optional[QLabel] = None
+
+    @property
+    def channel_id(self) -> str:
+        return self.config.channel_id
+
+    @property
+    def _is_channel_a(self) -> bool:
+        return self.channel_id.upper() == 'A'
+
+    def build_ui(self) -> QHBoxLayout:
+        layout = QHBoxLayout()
+
+        left = QVBoxLayout()
+        left.addWidget(QLabel(f"Channel {self.channel_id}"))
+
+        freq_min_layout = QHBoxLayout()
+        self.freq_min = QSpinBox()
+        self.freq_min.setRange(10, 500)
+        self.freq_min.setSingleStep(10)
+        self.freq_min.setValue(self.config.freq_min_setting.get())
+        self.freq_min.valueChanged.connect(self.on_freq_min_changed)
+        freq_min_layout.addWidget(QLabel("Min Freq (Hz)"))
+        freq_min_layout.addWidget(self.freq_min)
+        left.addLayout(freq_min_layout)
+
+        freq_max_layout = QHBoxLayout()
+        self.freq_max = QSpinBox()
+        self.freq_max.setRange(10, 500)
+        self.freq_max.setSingleStep(10)
+        self.freq_max.setValue(self.config.freq_max_setting.get())
+        self.freq_max.valueChanged.connect(self.on_freq_max_changed)
+        freq_max_layout.addWidget(QLabel("Max Freq (Hz)"))
+        freq_max_layout.addWidget(self.freq_max)
+        left.addLayout(freq_max_layout)
+
+        strength_layout = QHBoxLayout()
+        strength_layout.addWidget(QLabel("Max Strength"))
+        self.strength_max = QSpinBox()
+        self.strength_max.setRange(1, 200)
+        self.strength_max.setSingleStep(1)
+        self.strength_max.setValue(self.config.strength_max_setting.get())
+        self.strength_max.valueChanged.connect(self.on_strength_max_changed)
+        strength_layout.addWidget(self.strength_max)
+        left.addLayout(strength_layout)
+
+        layout.addLayout(left)
+
+        self.pulse_graph = PulseGraphContainer(self.freq_min, self.freq_max)
+        self.pulse_graph.plot.setMinimumHeight(100)
+
+        graph_column = QVBoxLayout()
+        graph_column.addWidget(self.pulse_graph)
+
+        self.stats_label = QLabel("Intensity: 0%\nFrequency: 0 Hz")
+        self.stats_label.setAlignment(Qt.AlignHCenter)
+        self.pulse_graph.attach_stats_label(self.stats_label)
+        graph_column.addWidget(self.stats_label)
+
+        layout.addLayout(graph_column)
+
+        volume_layout = QVBoxLayout()
+        self.volume_slider = QSlider(Qt.Vertical)
+        self.volume_slider.setRange(0, self.config.strength_max_setting.get())
+        self.volume_slider.valueChanged.connect(self.on_volume_changed)
+        self.volume_label = QLabel()
+        self.volume_label.setAlignment(Qt.AlignHCenter)
+        volume_layout.addWidget(self.volume_slider)
+        volume_layout.addWidget(self.volume_label)
+        layout.addLayout(volume_layout)
+
+        self.update_volume_label(self.volume_slider.value())
+        return layout
+
+    def reset_volume(self):
+        self.set_strength_from_device(0)
+
+    def select_strength(self, strengths: CoyoteStrengths) -> int:
+        return strengths.channel_a if self._is_channel_a else strengths.channel_b
+
+    def with_strength(self, strengths: CoyoteStrengths, value: int) -> CoyoteStrengths:
+        if self._is_channel_a:
+            return CoyoteStrengths(channel_a=value, channel_b=strengths.channel_b)
+        return CoyoteStrengths(channel_a=strengths.channel_a, channel_b=value)
+
+    def extract_pulses(self, pulses: CoyotePulses) -> list[CoyotePulse]:
+        return pulses.channel_a if self._is_channel_a else pulses.channel_b
+
+    def update_from_device(self, strengths: CoyoteStrengths):
+        self.set_strength_from_device(self.select_strength(strengths))
+
+    def apply_pulses(self, pulses: CoyotePulses, strengths: CoyoteStrengths):
+        channel_pulses = self.extract_pulses(pulses)
+        if not channel_pulses:
+            return
+        self.handle_pulses(channel_pulses, self.select_strength(strengths))
+
+    def on_volume_changed(self, value: int):
+        self.update_volume_label(value)
+        self.parent.update_channel_strength(self, value)
+
+    def update_volume_label(self, value: int):
+        max_strength = max(1, self.config.strength_max_setting.get())
+        percentage = int((value / max_strength) * 100)
+        self.volume_label.setText(f"{value} ({percentage}%)")
+
+    def set_strength_from_device(self, value: int):
+        if self.volume_slider is None:
+            return
+        self.volume_slider.blockSignals(True)
+        self.volume_slider.setValue(value)
+        self.volume_slider.blockSignals(False)
+        self.update_volume_label(value)
+
+    def on_strength_max_changed(self, value: int):
+        self.config.strength_max_setting.set(value)
+
+        current_value = self.volume_slider.value() if self.volume_slider else 0
+        if self.volume_slider:
+            self.volume_slider.blockSignals(True)
+            self.volume_slider.setRange(0, value)
+            clamped_value = min(current_value, value)
+            self.volume_slider.setValue(clamped_value)
+            self.volume_slider.blockSignals(False)
+            self.update_volume_label(clamped_value)
+            current_value = clamped_value
+
+        self.parent.update_channel_strength(self, current_value)
+
+    def on_freq_min_changed(self, value: int):
+        if self.freq_min is None or self.freq_max is None:
+            return
+
+        corrected = value
+        if value >= self.freq_max.value():
+            corrected = max(self.freq_max.value() - self.freq_min.singleStep(), self.freq_min.minimum())
+        if corrected != value:
+            self.freq_min.blockSignals(True)
+            self.freq_min.setValue(corrected)
+            self.freq_min.blockSignals(False)
+        self.config.freq_min_setting.set(corrected)
+
+    def on_freq_max_changed(self, value: int):
+        if self.freq_min is None or self.freq_max is None:
+            return
+
+        corrected = value
+        if value <= self.freq_min.value():
+            corrected = min(self.freq_min.value() + self.freq_max.singleStep(), self.freq_max.maximum())
+        if corrected != value:
+            self.freq_max.blockSignals(True)
+            self.freq_max.setValue(corrected)
+            self.freq_max.blockSignals(False)
+        self.config.freq_max_setting.set(corrected)
+
+    def handle_pulses(self, pulses: list[CoyotePulse], strength: int):
+        if not self.pulse_graph or not pulses:
+            return
+
+        channel_limit = self.config.strength_max_setting.get()
+        for pulse in pulses:
+            self.pulse_graph.add_pulse(
+                frequency=pulse.frequency,
+                intensity=pulse.intensity,
+                duration=pulse.duration,
+                current_strength=strength,
+                channel_limit=channel_limit,
+            )
 
 class PulseGraphContainer(QWidget):
     def __init__(self, freq_min: QSpinBox, freq_max: QSpinBox, *args, **kwargs):
@@ -20,26 +295,26 @@ class PulseGraphContainer(QWidget):
         # Store frequency range controls
         self.freq_min = freq_min
         self.freq_max = freq_max
-        
+
         # Initialize entries list to store CoyotePulse objects
         self.entries = []
-        
+
         # Time window for stats display (in seconds)
         self.stats_window = 3.0  # Match the graph's time window
-        
+
         # Create layout
         self.layout = QVBoxLayout(self)
-        
+
         # Create plot widget
         self.plot = PulseGraph(*args, **kwargs)
-        
-        # Create and setup label
-        self.label = QLabel("Intensity: 0%\nFrequency: 0 Hz")
-        self.label.setAlignment(Qt.AlignCenter)
-        
-        # Add widgets to layout
         self.layout.addWidget(self.plot)
-        self.layout.addWidget(self.label)
+
+        # Optional stats label managed by parent component
+        self.stats_label: Optional[QLabel] = None
+
+    def attach_stats_label(self, label: QLabel):
+        self.stats_label = label
+        self.stats_label.setText("Intensity: 0%\nFrequency: 0 Hz")
         
     def get_frequency_range_text(self, entries) -> str:
         """Get the frequency range text from the given entries."""
@@ -89,8 +364,8 @@ class PulseGraphContainer(QWidget):
         intensities = [entry.intensity for entry in recent_entries]
         intensity_text = self.format_intensity_text(intensities)
 
-        # Update label with frequency and intensity information
-        self.label.setText(f"Intensity: {intensity_text}\nFrequency: {freq_text}")
+        if self.stats_label:
+            self.stats_label.setText(f"Intensity: {intensity_text}\nFrequency: {freq_text}")
 
     def add_pulse(self, frequency, intensity, duration, current_strength, channel_limit):
         # Calculate effective intensity after applying current strength
@@ -117,33 +392,6 @@ class PulseGraphContainer(QWidget):
         # Update the plot - even zero intensity pulses are sent through for visualization
         self.plot.add_pulse(pulse, effective_intensity, channel_limit)
 
-# Create a custom graphics rect item with hover capability
-class PulseRectItem(QGraphicsRectItem):
-    def __init__(self, x, y, width, height, pulse):
-        super().__init__(x, y, width, height)
-        self.pulse = pulse
-        self.setAcceptHoverEvents(True)
-        
-    def hoverEnterEvent(self, event):
-        # Show tooltip with pulse information
-        freq = self.pulse.frequency
-        intensity = self.pulse.intensity
-        duration = self.pulse.duration
-        
-        tooltip_text = f"Frequency: {freq} Hz\nIntensity: {intensity}%\nDuration: {duration} ms"
-        QToolTip.showText(event.screenPos(), tooltip_text)
-        
-        # Change appearance on hover
-        current_pen = self.pen()
-        current_pen.setWidth(2)  # Make border thicker
-        self.setPen(current_pen)
-        
-    def hoverLeaveEvent(self, event):
-        # Restore original appearance
-        current_pen = self.pen()
-        current_pen.setWidth(1)  # Restore original border width
-        self.setPen(current_pen)
-        
 class PulseGraph(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -404,708 +652,29 @@ class PulseGraph(QWidget):
                         tick.setPen(QPen(QColor("white"), 1))
                         self.scene.addItem(tick)
 
-class EnvelopeGraph(QWidget):
-    """
-    Displays a dynamic visualization of how the envelope pattern affects pulses.
-    """
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.setLayout(QVBoxLayout())
+class PulseRectItem(QGraphicsRectItem):
+    def __init__(self, x, y, width, height, pulse):
+        super().__init__(x, y, width, height)
+        self.pulse = pulse
+        self.setAcceptHoverEvents(True)
         
-        self.view = QGraphicsView()
-        self.scene = QGraphicsScene()
-        self.view.setScene(self.scene)
+    def hoverEnterEvent(self, event):
+        # Show tooltip with pulse information
+        freq = self.pulse.frequency
+        intensity = self.pulse.intensity
+        duration = self.pulse.duration
         
-        # Disable scrolling and user interaction
-        self.view.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        self.view.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        self.view.setInteractive(True)  # Enable for tooltip hover events
-        self.view.setDragMode(QGraphicsView.NoDrag)
-        self.view.setViewportUpdateMode(QGraphicsView.SmartViewportUpdate)
+        tooltip_text = f"Frequency: {freq} Hz\nIntensity: {intensity}%\nDuration: {duration} ms"
+        QToolTip.showText(event.screenPos(), tooltip_text)
         
-        self.layout().addWidget(self.view)
+        # Change appearance on hover
+        current_pen = self.pen()
+        current_pen.setWidth(2)  # Make border thicker
+        self.setPen(current_pen)
         
-        # Period preview mode: not using an envelope curve
-        self.envelope_data = np.array([])
-        self.envelope_period = 0.0
+    def hoverLeaveEvent(self, event):
+        # Restore original appearance
+        current_pen = self.pen()
+        current_pen.setWidth(1)  # Restore original border width
+        self.setPen(current_pen)
         
-        # Store recent pulses for overlay
-        self.recent_pulses = []
-        # Keep enough pulses to cover ~2s even at higher rates (both channels)
-        self.max_pulses = 400
-        self.max_pulse_age = 2.0  # seconds
-        
-        # Colors for visualization
-        self.envelope_color = QColor(0, 180, 255, 150)
-        self.pulse_colors = [CHANNEL_A_COLOR, CHANNEL_B_COLOR]
-        self.line_colors = [QColor(170, 120, 255, 200), QColor(255, 190, 80, 200)]
-        
-        # Add margin to avoid clipping
-        self.margin = 20
-        
-        # Simplified timer
-        self.timer = QTimer(self)
-        self.timer.timeout.connect(self.refresh)
-        self.timer.start(100)  # 10fps
-        
-        # Initialize scene size
-        self.updateSceneRect()
-    
-    def resizeEvent(self, event):
-        """Handle resize events by updating the scene rectangle"""
-        super().resizeEvent(event)
-        self.updateSceneRect()
-    
-    def updateSceneRect(self):
-        """Update the scene rectangle to match the view size"""
-        if self.view:
-            width = self.view.viewport().width()
-            height = self.view.viewport().height()
-            self.view.setSceneRect(0, 0, width, height)
-    
-    def setEnvelopeData(self, envelope_data, envelope_period):
-        """
-        Set new envelope data to display
-        
-        Args:
-            envelope_data: numpy array of envelope values (0 to 1)
-                0 = minimum envelope, 1 = maximum envelope
-            envelope_period: period of the envelope in seconds (duration of one full envelope cycle)
-        """
-        if envelope_data is None or not isinstance(envelope_data, np.ndarray) or len(envelope_data) == 0:
-            return
-            
-        # Make a copy to avoid reference issues
-        self.envelope_data = np.array(envelope_data).copy()
-        
-        # Make sure we have valid data
-        if np.isnan(self.envelope_data).any() or np.isinf(self.envelope_data).any():
-            self.envelope_data = np.nan_to_num(self.envelope_data)
-            
-        # Validate period
-        if envelope_period > 0:
-            self.envelope_period = envelope_period
-    
-    def addPulse(self, channel_idx, intensity, duration, timestamp=None):
-        """
-        Add a pulse to visualize
-        
-        Args:
-            channel_idx: 0 for channel A, 1 for channel B
-            intensity: Pulse intensity (0-100)
-            duration: Pulse duration in ms
-            timestamp: When the pulse occurred (defaults to now)
-        """
-        if timestamp is None:
-            timestamp = time.time()
-            
-        # Create a new pulse entry
-        new_pulse = {
-            'channel': channel_idx,
-            'intensity': intensity,
-            'duration': duration,
-            'timestamp': timestamp
-        }
-        
-        # Add to beginning for efficient removal of old ones
-        self.recent_pulses.insert(0, new_pulse)
-        
-        # Limit the number of pulses
-        while len(self.recent_pulses) > self.max_pulses:
-            self.recent_pulses.pop()
-    
-    def refresh(self):
-        """Simple redraw method without any complex error handling"""
-        # Skip if not visible
-        if not self.isVisible():
-            return
-            
-        # Get current time for pulse age calculations
-        current_time = time.time()
-            
-        # Clean old pulses first
-        self.recent_pulses = [p for p in self.recent_pulses if current_time - p['timestamp'] <= self.max_pulse_age]
-            
-        # Clear scene
-        self.scene.clear()
-        
-        # Get dimensions
-        width = self.view.viewport().width()
-        height = self.view.viewport().height()
-        
-        # Calculate scaling for [0, 1] envelope (y=0 at bottom, y=1 at top)
-        graph_top = self.margin
-        graph_bottom = height - self.margin
-        graph_height = graph_bottom - graph_top
-        
-        # Draw simple grid
-        self._drawGrid(width, height, graph_top, graph_bottom)
-        
-        # No envelope curve in period preview mode
-        
-        # Draw pulses
-        self._drawPulses(width, height, graph_top, graph_bottom, graph_height, current_time)
-        
-        # Draw frequency label
-        self._drawFrequencyLabel(width, height)
-    
-    def _drawGrid(self, width, height, graph_top, graph_bottom):
-        # Simple horizontal lines at 0, 0.5, 1 and vertical lines every 0.5 s
-        pen = QPen(QColor(60, 60, 60))
-        pen.setStyle(Qt.DashLine)
-        self.scene.addLine(self.margin, graph_bottom, width - self.margin, graph_bottom, pen)
-        self.scene.addLine(self.margin, (graph_top + graph_bottom)/2, width - self.margin, (graph_top + graph_bottom)/2, pen)
-        self.scene.addLine(self.margin, graph_top, width - self.margin, graph_top, pen)
-        # Vertical ticks
-        usable_width = width - 2 * self.margin
-        n_ticks = 4
-        for i in range(1, n_ticks):
-            x = self.margin + (i / n_ticks) * usable_width
-            self.scene.addLine(x, graph_top, x, graph_bottom, pen)
-    
-    def _drawEnvelope(self, width, height, graph_top, graph_bottom, graph_height):
-        """Draw envelope curve (0 at bottom, 1 at top)"""
-        if len(self.envelope_data) == 0:
-            return
-        usable_width = width - 2 * self.margin
-        path = QPainterPath()
-        num_points = min(len(self.envelope_data), int(usable_width / 3))
-        if num_points < 2:
-            return
-        step = (len(self.envelope_data) - 1) / (num_points - 1)
-        x = self.margin
-        y = graph_bottom - (self.envelope_data[0] * graph_height)
-        path.moveTo(x, y)
-        for i in range(1, num_points):
-            x = self.margin + (i / (num_points - 1)) * usable_width
-            idx = int(i * step)
-            if idx >= len(self.envelope_data):
-                idx = len(self.envelope_data) - 1
-            y = graph_bottom - (self.envelope_data[idx] * graph_height)
-            path.lineTo(x, y)
-        pen = QPen(self.envelope_color, 2)
-        self.scene.addPath(path, pen)
-    
-    def _drawPulses(self, width, height, graph_top, graph_bottom, graph_height, current_time):
-        """Draw pulse dots using normalized duration and time window"""
-        if not self.recent_pulses:
-            return
-        usable_width = width - 2 * self.margin
-        # Drop old pulses
-        cutoff = current_time - self.max_pulse_age
-        self.recent_pulses = [p for p in self.recent_pulses if p['timestamp'] >= cutoff]
-        # Split pulses by channel and build polylines (newest on right)
-        series = {0: [], 1: []}
-        step = max(1, int(len(self.recent_pulses) / 300))
-        for i, p in enumerate(self.recent_pulses):
-            if i % step != 0:
-                continue
-            age = current_time - p['timestamp']
-            frac = max(0.0, min(1.0, 1.0 - age / self.max_pulse_age))
-            x = self.margin + frac * usable_width
-            norm = p.get('norm', 0.5)
-            y = graph_bottom - (norm * graph_height)
-            series[p['channel']].append((x, y, p))
-
-        for ch in (0, 1):
-            pts = series[ch]
-            if len(pts) < 2:
-                continue
-            # Sort by x to draw from left to right
-            pts.sort(key=lambda t: t[0])
-            path = QPainterPath()
-            path.moveTo(pts[0][0], pts[0][1])
-            for x, y, _ in pts[1:]:
-                path.lineTo(x, y)
-            pen = QPen(self.line_colors[ch], 2)
-            self.scene.addPath(path, pen)
-
-            # Draw dots on top with intensity-sized markers
-            for x, y, p in pts:
-                size = 3 + (9 * p['intensity'] / 100.0)
-                dot = QGraphicsEllipseItem(x - size/2, y - size/2, size, size)
-                dot.setBrush(QBrush(self.pulse_colors[ch]))
-                dot.setPen(QPen(Qt.NoPen))
-                hz = 0 if p['duration'] <= 0 else int(round(1000.0 / p['duration']))
-                dot.setToolTip(f"Channel: {'A' if ch == 0 else 'B'}\n"
-                               f"Intensity: {p['intensity']}%\n"
-                               f"Duration: {p['duration']} ms ({hz} Hz)\n"
-                               f"Normalized: {p.get('norm', 0.5):.2f}")
-                self.scene.addItem(dot)
-
-        # Right-side labels: current freq estimate per channel
-        for ch in (0, 1):
-            pts = series[ch]
-            if not pts:
-                continue
-            _, _, last = pts[-1]
-            hz = 0 if last['duration'] <= 0 else int(round(1000.0 / last['duration']))
-            label = self.scene.addText(f"{'A' if ch == 0 else 'B'}: {hz} Hz")
-            label.setDefaultTextColor(self.pulse_colors[ch])
-            label.setPos(width - self.margin - 80, graph_top + ch * 18)
-    
-    def _drawFrequencyLabel(self, width, height):
-        """Draw frequency information"""
-        # No frequency label in period preview mode
-
-class EnvelopeGraphContainer(QWidget):
-    """
-    Container for the envelope graph with title and labels.
-    """
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        
-        # Create layout
-        self.layout = QVBoxLayout(self)
-        self.layout.setContentsMargins(0, 0, 0, 0)  # Remove margins for better alignment
-        
-        # Add top controls row
-        top_row = QHBoxLayout()
-        
-        # Add description
-        self.description = QLabel("Pulse Period Preview (last 2 s)")
-        self.description.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
-        top_row.addWidget(self.description)
-        
-        # Add spacer
-        top_row.addStretch(1)
-        
-        # No waveform selector in period preview mode
-        
-        self.layout.addLayout(top_row)
-        
-        # Stats row
-        stats_row = QHBoxLayout()
-        self.statsA = QLabel("A: —")
-        self.statsB = QLabel("B: —")
-        self.statsA.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
-        self.statsB.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
-        stats_row.addWidget(self.statsA)
-        stats_row.addStretch(1)
-        stats_row.addWidget(self.statsB)
-        self.layout.addLayout(stats_row)
-
-        # Create envelope graph
-        self.graph = EnvelopeGraph()
-        self.layout.addWidget(self.graph)
-        
-        # We don't need a complex buffer or cleanup timer since
-        # the graph now handles its own pulse cleanup and display
-        self.received_real_data = False
-    
-    def setEnvelopeData(self, envelope_data, envelope_period):
-        # Not used in period preview mode
-        pass
-    
-    def addPulse(self, channel_id, intensity, duration, strength=100, min_hz=None, max_hz=None):
-        """
-        Add a pulse to the visualization
-        
-        Args:
-            channel_id: 'A' or 'B'
-            intensity: Pulse intensity
-            duration: Pulse duration in ms
-            strength: Current channel strength (0-100)
-        """
-        # Calculate effective intensity
-        effective_intensity = intensity * (strength / 100)
-        
-        # Skip very low intensity pulses
-        if effective_intensity < 1:
-            return
-            
-        # Convert channel ID to index (0 for A, 1 for B)
-        channel_idx = 0 if channel_id == 'A' else 1
-        
-        # Compute normalized duration using provided channel range
-        if min_hz and max_hz and max_hz > min_hz and min_hz > 0 and max_hz > 0:
-            d_min = 1000.0 / max_hz
-            d_max = 1000.0 / min_hz
-            norm = (duration - d_min) / max(1e-6, (d_max - d_min))
-            norm = max(0.0, min(1.0, norm))
-        else:
-            norm = 0.5
-        # Add to graph and attach normalized value
-        self.graph.addPulse(channel_idx, intensity, duration)
-        if self.graph.recent_pulses:
-            self.graph.recent_pulses[0]['norm'] = norm
-        # Update stats after each pulse
-        self.updateStats()
-
-    def updateStats(self):
-        def fmt_stats(ch):
-            pulses = [p for p in self.graph.recent_pulses if p['channel'] == ch]
-            if not pulses:
-                return "—"
-            # Current from most recent
-            now_hz = int(round(1000.0 / pulses[0]['duration'])) if pulses[0]['duration'] > 0 else 0
-            # Compute frequency and period arrays
-            hz = [1000.0 / p['duration'] for p in pulses if p['duration'] > 0]
-            if not hz:
-                return f"{'A' if ch == 0 else 'B'}: —"
-            avg_hz = sum(hz) / len(hz)
-            min_hz = int(min(hz))
-            max_hz = int(max(hz))
-            # Period jitter (% of mean period)
-            periods = [p['duration'] for p in pulses]
-            mu = sum(periods) / len(periods)
-            if len(periods) > 1:
-                var = sum((x - mu) ** 2 for x in periods) / (len(periods) - 1)
-                sd = var ** 0.5
-                jitter = int(round((sd / mu) * 100)) if mu > 0 else 0
-            else:
-                jitter = 0
-            return f"{'A' if ch == 0 else 'B'}: {now_hz} Hz • avg {int(round(avg_hz))} ({min_hz}–{max_hz}) • jitter {jitter}% • n={len(pulses)}"
-
-        self.statsA.setText(fmt_stats(0))
-        self.statsB.setText(fmt_stats(1))
-
-class CoyoteSettingsWidget(QtWidgets.QWidget):
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        
-        self.setupUi(self)
-        
-        # Always initialize volume sliders to 0 (non-persistent)
-        self.volume_a_slider.setValue(0)
-        self.volume_b_slider.setValue(0)
-        
-        # Connect signals
-        self.volume_a_slider.valueChanged.connect(self.update_channel_a)
-        self.volume_b_slider.valueChanged.connect(self.update_channel_b)
-        self.freq_min_a.valueChanged.connect(self.update_freq_min_a)
-        self.freq_max_a.valueChanged.connect(self.update_freq_max_a)
-        self.freq_min_b.valueChanged.connect(self.update_freq_min_b)
-        self.freq_max_b.valueChanged.connect(self.update_freq_max_b)
-        self.strength_max_a.valueChanged.connect(self.update_strength_max_a)
-        self.strength_max_b.valueChanged.connect(self.update_strength_max_b)
-
-    def setupUi(self, CoyoteSettingsWidget):
-        self.setLayout(QVBoxLayout())
-
-        # Connection/Battery Status
-        self.label_connection_status = QLabel("Disconnected")
-        self.label_connection_stage = QLabel("")
-        self.label_battery_level = QLabel("")
-        status_layout = QHBoxLayout()
-        status_layout.addWidget(self.label_connection_status)
-        status_layout.addWidget(self.label_connection_stage)
-        status_layout.addWidget(self.label_battery_level)
-        self.layout().addLayout(status_layout)
-        
-        # No envelope/period preview section
-
-        # Channel A Row
-        channel_a_layout = QHBoxLayout()
-        
-        # Left side layout for Channel A (label and frequency controls)
-        channel_a_left = QVBoxLayout()
-        channel_a_label = QLabel("Channel A")
-        
-        # Frequency controls in horizontal layouts
-        freq_min_a_controls = QHBoxLayout()
-        self.freq_min_a = QSpinBox()
-        self.freq_min_a.setRange(10, 500)
-        self.freq_min_a.setValue(settings.coyote_channel_a_freq_min.get())
-        self.freq_min_a.setSingleStep(10)
-        freq_min_a_controls.addWidget(QLabel("Min Freq (Hz)"))
-        freq_min_a_controls.addWidget(self.freq_min_a)
-        
-        freq_max_a_controls = QHBoxLayout()
-        self.freq_max_a = QSpinBox()
-        self.freq_max_a.setRange(10, 500)
-        self.freq_max_a.setValue(settings.coyote_channel_a_freq_max.get())
-        self.freq_max_a.setSingleStep(10)
-        freq_max_a_controls.addWidget(QLabel("Max Freq (Hz)"))
-        freq_max_a_controls.addWidget(self.freq_max_a)
-        
-        # Max strength controls for Channel A
-        strength_max_a_controls = QHBoxLayout()
-        strength_max_a_controls.addWidget(QLabel("Max Strength"))
-        self.strength_max_a = QSpinBox()
-        self.strength_max_a.setRange(1, 200)
-        self.strength_max_a.setValue(settings.coyote_channel_a_strength_max.get())
-        self.strength_max_a.setSingleStep(1)
-        self.strength_max_a.valueChanged.connect(self.update_strength_max_a)
-        strength_max_a_controls.addWidget(self.strength_max_a)
-        
-        channel_a_left.addWidget(channel_a_label)
-        channel_a_left.addLayout(freq_min_a_controls)
-        channel_a_left.addLayout(freq_max_a_controls)
-        channel_a_left.addLayout(strength_max_a_controls)
-
-        # Pulse graph for Channel A
-        self.pulse_graph_a = PulseGraphContainer(self.freq_min_a, self.freq_max_a)
-        self.pulse_graph_a.plot.setMinimumHeight(100)
-
-        # Volume slider layout for Channel A
-        volume_a_layout = QVBoxLayout()
-        self.volume_a_label = QLabel("0 (0%)")
-        self.volume_a_label.setAlignment(Qt.AlignHCenter)
-        self.volume_a_slider = QSlider(Qt.Vertical)
-        self.volume_a_slider.setRange(0, settings.coyote_channel_a_strength_max.get())
-        self.volume_a_slider.valueChanged.connect(self.update_volume_a_label)
-        volume_a_layout.addWidget(self.volume_a_slider)
-        volume_a_layout.addWidget(self.volume_a_label)
-
-        channel_a_layout.addLayout(channel_a_left)
-        channel_a_layout.addWidget(self.pulse_graph_a)
-        channel_a_layout.addLayout(volume_a_layout)
-
-        self.layout().addLayout(channel_a_layout)
-
-        # Channel B Row
-        channel_b_layout = QHBoxLayout()
-        
-        # Left side layout for Channel B (label and frequency controls)
-        channel_b_left = QVBoxLayout()
-        channel_b_label = QLabel("Channel B")
-        
-        # Frequency controls in horizontal layouts
-        freq_min_b_controls = QHBoxLayout()
-        self.freq_min_b = QSpinBox()
-        self.freq_min_b.setRange(10, 500)
-        self.freq_min_b.setValue(settings.coyote_channel_b_freq_min.get())
-        self.freq_min_b.setSingleStep(10)
-        freq_min_b_controls.addWidget(QLabel("Min Freq (Hz)"))
-        freq_min_b_controls.addWidget(self.freq_min_b)
-        
-        freq_max_b_controls = QHBoxLayout()
-        self.freq_max_b = QSpinBox()
-        self.freq_max_b.setRange(10, 500)
-        self.freq_max_b.setValue(settings.coyote_channel_b_freq_max.get())
-        self.freq_max_b.setSingleStep(10)
-        freq_max_b_controls.addWidget(QLabel("Max Freq (Hz)"))
-        freq_max_b_controls.addWidget(self.freq_max_b)
-        
-        # Max strength controls for Channel B
-        strength_max_b_controls = QHBoxLayout()
-        strength_max_b_controls.addWidget(QLabel("Max Strength"))
-        self.strength_max_b = QSpinBox()
-        self.strength_max_b.setRange(1, 200)
-        self.strength_max_b.setValue(settings.coyote_channel_b_strength_max.get())
-        self.strength_max_b.setSingleStep(1)
-        self.strength_max_b.valueChanged.connect(self.update_strength_max_b)
-        strength_max_b_controls.addWidget(self.strength_max_b)
-        
-        channel_b_left.addWidget(channel_b_label)
-        channel_b_left.addLayout(freq_min_b_controls)
-        channel_b_left.addLayout(freq_max_b_controls)
-        channel_b_left.addLayout(strength_max_b_controls)
-
-        # Pulse graph for Channel B
-        self.pulse_graph_b = PulseGraphContainer(self.freq_min_b, self.freq_max_b)
-        self.pulse_graph_b.plot.setMinimumHeight(100)
-
-        # Volume slider layout for Channel B
-        volume_b_layout = QVBoxLayout()
-        self.volume_b_label = QLabel("0 (0%)")
-        self.volume_b_label.setAlignment(Qt.AlignHCenter)
-        self.volume_b_slider = QSlider(Qt.Vertical)
-        self.volume_b_slider.setRange(0, settings.coyote_channel_b_strength_max.get())
-        self.volume_b_slider.valueChanged.connect(self.update_volume_b_label)
-        volume_b_layout.addWidget(self.volume_b_slider)
-        volume_b_layout.addWidget(self.volume_b_label)
-
-        channel_b_layout.addLayout(channel_b_left)
-        channel_b_layout.addWidget(self.pulse_graph_b)
-        channel_b_layout.addLayout(volume_b_layout)
-
-        self.layout().addLayout(channel_b_layout)
-
-    def setup_device(self, device: CoyoteDevice):
-        self.device = device
-
-        # Connect device signals
-        self.device.connection_status_changed.connect(self.on_connection_status_changed)
-        self.device.battery_level_changed.connect(self.on_battery_level_changed)
-        self.device.parameters_changed.connect(self.on_parameters_changed)
-        self.device.power_levels_changed.connect(self.on_power_levels_changed)
-        self.device.pulse_sent.connect(self.on_pulse_sent)
-
-        # Initialize labels
-        self.update_volume_a_label(0)
-        self.update_volume_b_label(0)
-        
-        # If we are already connected to a device, initialize with its values
-        if device.strengths:
-            self.update_channel_a(0)
-            self.update_channel_b(0)
-        
-        # No envelope preview polling
-
-    def update_channel_a(self, value):
-        """Update channel A strength (volume) in the device."""
-        if self.device._event_loop:
-            # value is already the actual strength value (not a percentage)
-            asyncio.run_coroutine_threadsafe(
-                self.device.send_command(CoyoteStrengths(value, self.device.strengths.channel_b)),
-                self.device._event_loop
-            )
-
-    def update_channel_b(self, value):
-        """Update channel B strength (volume) in the device."""
-        if self.device._event_loop:
-            # value is already the actual strength value (not a percentage)
-            asyncio.run_coroutine_threadsafe(
-                self.device.send_command(CoyoteStrengths(self.device.strengths.channel_a, value)),
-                self.device._event_loop
-            )
-
-    def on_connection_status_changed(self, connected: bool, stage: str = None):
-        """Update connection status and stage in UI"""
-        self.label_connection_status.setText("Connected" if connected else "Disconnected")
-        if stage:
-            self.label_connection_stage.setText(stage)
-        # Enable/disable sliders based on connection status
-        # self.volume_a_slider.setEnabled(connected)
-        # self.volume_b_slider.setEnabled(connected)
-
-    def on_battery_level_changed(self, level: int):
-        """Update battery level display"""
-        self.label_battery_level.setText(f"Battery: {level}%")
-
-    def on_parameters_changed(self):
-        """Update UI when device parameters change"""
-        self.volume_a_slider.blockSignals(True)
-        self.volume_b_slider.blockSignals(True)
-        
-        # self.volume_a_slider.setValue(self.device.parameters.channel_a_intensity_balance)
-        # self.volume_b_slider.setValue(self.device.parameters.channel_b_intensity_balance)
-        
-        self.volume_a_slider.blockSignals(False)
-        self.volume_b_slider.blockSignals(False)
-
-    def on_power_levels_changed(self, strengths: CoyoteStrengths):
-        """Update sliders when device power levels change"""
-        self.volume_a_slider.blockSignals(True)
-        self.volume_b_slider.blockSignals(True)
-        
-        self.volume_a_slider.setValue(strengths.channel_a)
-        self.volume_b_slider.setValue(strengths.channel_b)
-        
-        self.volume_a_slider.blockSignals(False)
-        self.volume_b_slider.blockSignals(False)
-        
-        # Update labels
-        self.update_volume_a_label(strengths.channel_a)
-        self.update_volume_b_label(strengths.channel_b)
-    
-    def on_pulse_sent(self, pulses: CoyotePulses):
-        # Update Channel A
-        if pulses.channel_a:
-            # Get the actual strength value
-            strength_a = self.device.strengths.channel_a
-            # Get the max strength from settings
-            max_strength_a = settings.coyote_channel_a_strength_max.get()
-            
-            for pulse in pulses.channel_a:
-                # Calculate effective intensity
-                effective_intensity = pulse.intensity * (strength_a / 100)
-                
-                self.pulse_graph_a.add_pulse(
-                    frequency=pulse.frequency,
-                    intensity=pulse.intensity,
-                    duration=pulse.duration,
-                    current_strength=strength_a,
-                    channel_limit=max_strength_a
-                )
-                
-                # No envelope preview
-
-        # Update Channel B
-        if pulses.channel_b:
-            # Get the actual strength value
-            strength_b = self.device.strengths.channel_b
-            # Get the max strength from settings
-            max_strength_b = settings.coyote_channel_b_strength_max.get()
-            
-            for pulse in pulses.channel_b:
-                # Calculate effective intensity
-                effective_intensity = pulse.intensity * (strength_b / 100)
-                
-                self.pulse_graph_b.add_pulse(
-                    frequency=pulse.frequency,
-                    intensity=pulse.intensity,
-                    duration=pulse.duration,
-                    current_strength=strength_b,
-                    channel_limit=max_strength_b
-                )
-                
-                # No envelope preview
-
-    def update_freq_min_a(self, value):
-        """Update minimum frequency for channel A"""
-        if value >= self.freq_max_a.value():
-            self.freq_min_a.setValue(self.freq_max_a.value() - 10)
-        else:
-            settings.coyote_channel_a_freq_min.set(value)
-
-    def update_freq_max_a(self, value):
-        """Update maximum frequency for channel A"""
-        if value <= self.freq_min_a.value():
-            self.freq_max_a.setValue(self.freq_min_a.value() + 10)
-        else:
-            settings.coyote_channel_a_freq_max.set(value)
-
-    def update_freq_min_b(self, value):
-        """Update minimum frequency for channel B"""
-        if value >= self.freq_max_b.value():
-            self.freq_min_b.setValue(self.freq_max_b.value() - 10)
-        else:
-            settings.coyote_channel_b_freq_min.set(value)
-
-    def update_freq_max_b(self, value):
-        """Update maximum frequency for channel B"""
-        if value <= self.freq_min_b.value():
-            self.freq_max_b.setValue(self.freq_min_b.value() + 10)
-        else:
-            settings.coyote_channel_b_freq_max.set(value)
-
-    def update_volume_a_label(self, value):
-        # Calculate percentage based on max strength
-        percentage = int((value / max(1, settings.coyote_channel_a_strength_max.get())) * 100)
-        self.volume_a_label.setText(f"{value} ({percentage}%)")
-
-    def update_volume_b_label(self, value):
-        # Calculate percentage based on max strength
-        percentage = int((value / max(1, settings.coyote_channel_b_strength_max.get())) * 100)
-        self.volume_b_label.setText(f"{value} ({percentage}%)")
-        
-    def update_strength_max_a(self, value):
-        """Update max strength for channel A and save to settings."""
-        settings.coyote_channel_a_strength_max.set(value)
-        
-        # Update volume slider range
-        current_value = self.volume_a_slider.value()
-        self.volume_a_slider.setRange(0, value)
-        
-        # Update the volume label to reflect the new max strength
-        self.update_volume_a_label(current_value)
-        
-        # If the current value exceeds the new max, cap it
-        if current_value > value:
-            self.volume_a_slider.setValue(value)
-        
-        # Send updated strength to device
-        self.update_channel_a(self.volume_a_slider.value())
-        
-    def update_strength_max_b(self, value):
-        """Update max strength for channel B and save to settings."""
-        settings.coyote_channel_b_strength_max.set(value)
-        
-        # Update volume slider range
-        current_value = self.volume_b_slider.value()
-        self.volume_b_slider.setRange(0, value)
-        
-        # Update the volume label to reflect the new max strength
-        self.update_volume_b_label(current_value)
-        
-        # If the current value exceeds the new max, cap it
-        if current_value > value:
-            self.volume_b_slider.setValue(value)
-            
-        # Send updated strength to device
-        self.update_channel_b(self.volume_b_slider.value())
-
-    # No envelope preview
