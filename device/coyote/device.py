@@ -448,7 +448,11 @@ class CoyoteDevice(OutputDevice, QObject):
                         pulses = self.algorithm.generate_packet(current_time)
                         if pulses is not None:
                             await self.send_command(pulses=pulses)
-                        sleep_time = max(0.001, self.algorithm.next_update_time - time.time())
+                        # Check if algorithm still exists after generate_packet()
+                        if self.algorithm:
+                            sleep_time = max(0.001, self.algorithm.next_update_time - time.time())
+                        else:
+                            sleep_time = 0.01
                     else:
                         sleep_time = 0.01
 
