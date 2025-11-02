@@ -7,7 +7,7 @@ import stream # pystream-protobuf
 
 import google.protobuf.text_format
 from PySide6.QtSerialPort import QSerialPort
-from PySide6.QtCore import QIODevice, QTimer, QObject
+from PySide6.QtCore import QIODevice, QTimer, QObject, Qt
 from PySide6.QtNetwork import QAbstractSocket
 from PySide6.QtNetwork import QTcpSocket
 
@@ -98,6 +98,7 @@ class FOCStimProtoDevice(QObject, OutputDevice):
 
         logger.info(f"connecting to FOC-Stim at {host_address}:{port}")
         self.transport = QTcpSocket(self)
+        self.transport.setSocketOption(QAbstractSocket.SocketOption.LowDelayOption, 1)
         self.transport.connected.connect(self.on_transport_connected)
         self.transport.errorOccurred.connect(self.on_connection_error)
         self.transport.connectToHost(host_address, port)
@@ -378,9 +379,11 @@ class FOCStimProtoDevice(QObject, OutputDevice):
             if self.teleplot:
                 self.teleplot.write_metrics(
                     temp_stm32=notif.focstimv3.temp_stm32,
-                    v_sys=notif.focstimv3.v_sys,
-                    v_boost=notif.focstimv3.v_boost,
-                    boost_duty_cycle=notif.focstimv3.boost_duty_cycle
+                    boost_duty_cycle=notif.focstimv3.boost_duty_cycle,
+                    v_boost_min=notif.focstimv3.v_boost_min,
+                    v_boost_max=notif.focstimv3.v_boost_max,
+                    v_sys_min=notif.focstimv3.v_sys_min,
+                    v_sys_max=notif.focstimv3.v_sys_max,
                 )
 
     def handle_notification_signal_stats(self, notif: NotificationSignalStats):

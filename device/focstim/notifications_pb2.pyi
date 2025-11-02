@@ -85,19 +85,23 @@ class SystemStatsESC1(_message.Message):
         ...
 
 class SystemStatsFocstimV3(_message.Message):
-    __slots__ = ('temp_stm32', 'v_sys', 'v_ref', 'v_boost', 'boost_duty_cycle')
+    __slots__ = ('temp_stm32', 'v_sys_min', 'v_sys_max', 'v_ref', 'v_boost_min', 'v_boost_max', 'boost_duty_cycle')
     TEMP_STM32_FIELD_NUMBER: _ClassVar[int]
-    V_SYS_FIELD_NUMBER: _ClassVar[int]
+    V_SYS_MIN_FIELD_NUMBER: _ClassVar[int]
+    V_SYS_MAX_FIELD_NUMBER: _ClassVar[int]
     V_REF_FIELD_NUMBER: _ClassVar[int]
-    V_BOOST_FIELD_NUMBER: _ClassVar[int]
+    V_BOOST_MIN_FIELD_NUMBER: _ClassVar[int]
+    V_BOOST_MAX_FIELD_NUMBER: _ClassVar[int]
     BOOST_DUTY_CYCLE_FIELD_NUMBER: _ClassVar[int]
     temp_stm32: float
-    v_sys: float
+    v_sys_min: float
+    v_sys_max: float
     v_ref: float
-    v_boost: float
+    v_boost_min: float
+    v_boost_max: float
     boost_duty_cycle: float
 
-    def __init__(self, temp_stm32: _Optional[float]=..., v_sys: _Optional[float]=..., v_ref: _Optional[float]=..., v_boost: _Optional[float]=..., boost_duty_cycle: _Optional[float]=...) -> None:
+    def __init__(self, temp_stm32: _Optional[float]=..., v_sys_min: _Optional[float]=..., v_sys_max: _Optional[float]=..., v_ref: _Optional[float]=..., v_boost_min: _Optional[float]=..., v_boost_max: _Optional[float]=..., boost_duty_cycle: _Optional[float]=...) -> None:
         ...
 
 class NotificationSystemStats(_message.Message):
