@@ -191,6 +191,7 @@ class CoyoteAlgorithmParams:
     pulse_width: AbstractAxis       # carrier cycles
     pulse_interval_random: AbstractAxis
     pulse_rise_time: AbstractAxis
+    max_intensity_change_per_pulse: settings.Setting
 
     channel_a: CoyoteChannelParams
     channel_b: CoyoteChannelParams

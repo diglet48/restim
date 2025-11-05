@@ -155,13 +155,15 @@ class PreferencesDialog(QDialog, Ui_PreferencesDialog):
         self.neostim_port.setCurrentIndex(self.neostim_port.findData(qt_ui.settings.neostim_serial_port.get()))
 
         # Coyote 3
-        self.coyote_device_name.setText(qt_ui.settings.coyote_device_name.get())
         self.coyote_channel_a_limit.setValue(qt_ui.settings.coyote_channel_a_limit.get())
         self.coyote_channel_b_limit.setValue(qt_ui.settings.coyote_channel_b_limit.get())
         self.coyote_channel_a_freq_balance.setValue(qt_ui.settings.coyote_channel_a_freq_balance.get())
         self.coyote_channel_b_freq_balance.setValue(qt_ui.settings.coyote_channel_b_freq_balance.get())
         self.coyote_channel_a_intensity_balance.setValue(qt_ui.settings.coyote_channel_a_intensity_balance.get())
         self.coyote_channel_b_intensity_balance.setValue(qt_ui.settings.coyote_channel_b_intensity_balance.get())
+        self.coyote_max_intensity_change_per_pulse.setValue(
+            qt_ui.settings.coyote_max_intensity_change_per_pulse.get()
+        )
         self.coyote_graph_window.setValue(qt_ui.settings.coyote_graph_window.get())
         self.coyote_debug_logging.setChecked(qt_ui.settings.coyote_debug_logging.get())
 
@@ -330,13 +332,15 @@ class PreferencesDialog(QDialog, Ui_PreferencesDialog):
         qt_ui.settings.neostim_serial_port.set(str(self.neostim_port.currentData()))
 
         # Coyote 3
-        qt_ui.settings.coyote_device_name.set(self.coyote_device_name.text())
         qt_ui.settings.coyote_channel_a_limit.set(self.coyote_channel_a_limit.value())
         qt_ui.settings.coyote_channel_b_limit.set(self.coyote_channel_b_limit.value())
         qt_ui.settings.coyote_channel_a_freq_balance.set(self.coyote_channel_a_freq_balance.value())
         qt_ui.settings.coyote_channel_b_freq_balance.set(self.coyote_channel_b_freq_balance.value())
         qt_ui.settings.coyote_channel_a_intensity_balance.set(self.coyote_channel_a_intensity_balance.value())
         qt_ui.settings.coyote_channel_b_intensity_balance.set(self.coyote_channel_b_intensity_balance.value())
+        qt_ui.settings.coyote_max_intensity_change_per_pulse.set(
+            self.coyote_max_intensity_change_per_pulse.value()
+        )
         qt_ui.settings.coyote_graph_window.set(self.coyote_graph_window.value())
         qt_ui.settings.coyote_debug_logging.set(self.coyote_debug_logging.isChecked())
 

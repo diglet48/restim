@@ -69,8 +69,7 @@ from device.coyote.constants import (
     TEXTURE_MAX_DEPTH_FRACTION,
     JITTER_CLAMP_FRACTION,
     RANDOMIZATION_LIMIT_FRACTION,
-    RESIDUAL_BOUND,
-    DEFAULT_MAX_CHANGE_PER_PULSE,
+    RESIDUAL_BOUND
 )
 
 from stim_math.axis import AbstractMediaSync, AbstractAxis
@@ -78,11 +77,7 @@ from stim_math.threephase import ThreePhaseCenterCalibration
 from stim_math.audio_gen.params import CoyoteAlgorithmParams, VolumeParams, SafetyParams
 from stim_math.audio_gen.various import ThreePhasePosition
 from device.coyote.types import CoyotePulse, CoyotePulses
-try:
-    # Optional import; keeps algorithm functional in headless contexts
-    from qt_ui import settings as ui_settings
-except Exception:  # pragma: no cover - setting import is best-effort
-    ui_settings = None
+from qt_ui import settings
 
 logger = logging.getLogger('restim.coyote')
 
@@ -356,14 +351,12 @@ class ChannelController:
                  params: CoyoteAlgorithmParams,
                  signal: ContinuousSignal,
                  get_positional_intensities,
-                 max_change_per_pulse: float,
                  queue_horizon_s: float = QUEUE_HORIZON_S):
         self.name = name  # 'A' or 'B'
         self.media = media
         self.params = params
         self.signal = signal
         self.get_positional_intensities = get_positional_intensities
-        self.max_change_per_pulse = max_change_per_pulse
         self.queue_horizon_s = queue_horizon_s
 
         self.queue: Deque[CoyotePulse] = deque()
@@ -392,8 +385,9 @@ class ChannelController:
         else:
             dt = max(0.0, t_pulse - last_t)
             allowed = (dt / tau_s) * 100.0
-            if self.max_change_per_pulse > 0:
-                allowed = min(allowed, self.max_change_per_pulse)
+            max_change = self.params.max_intensity_change_per_pulse.get()
+            if max_change > 0:
+                allowed = min(allowed, max_change)
             delta = np.clip(target_intensity - last_y, -allowed, allowed)
             y = last_y + delta
 
@@ -494,25 +488,15 @@ class CoyoteAlgorithm:
         self.last_update_time_s = 0.0
         self.next_update_time = 0.0
 
-        # Global per-pulse cap (percentage points). Read from settings if available.
-        self._max_change_per_pulse = DEFAULT_MAX_CHANGE_PER_PULSE
-        try:
-            if ui_settings is not None:
-                self._max_change_per_pulse = float(ui_settings.coyote_max_intensity_change_per_pulse.get())
-        except Exception:
-            pass
-
         # Per-channel controllers (queues, smoothing, assembly)
         self.ctrl_a = ChannelController(
             'A', self.media, self.params, self.signal_a,
             get_positional_intensities=self._get_positional_intensities,
-            max_change_per_pulse=self._max_change_per_pulse,
             queue_horizon_s=QUEUE_HORIZON_S,
         )
         self.ctrl_b = ChannelController(
             'B', self.media, self.params, self.signal_b,
             get_positional_intensities=self._get_positional_intensities,
-            max_change_per_pulse=self._max_change_per_pulse,
             queue_horizon_s=QUEUE_HORIZON_S,
         )
 

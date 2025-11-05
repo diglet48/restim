@@ -32,6 +32,7 @@ from qt_ui.models.funscript_kit import FunscriptKitModel
 from device.focstim.proto_device import FOCStimProtoDevice
 from device.neostim.neostim_device import NeoStim
 from device.coyote.device import CoyoteDevice, CoyoteParams
+from device.coyote.constants import DEVICE_NAME
 from qt_ui.widgets.icon_with_connection_status import IconWithConnectionStatus
 from stim_math.axis import create_temporal_axis
 
@@ -408,7 +409,7 @@ class Window(QMainWindow, Ui_MainWindow):
             )
         
         if config.device_type == DeviceType.COYOTE_THREE_PHASE:
-            self.output_device = CoyoteDevice(qt_ui.settings.coyote_device_name.get())
+            self.output_device = CoyoteDevice(DEVICE_NAME)
             self.output_device.parameters = CoyoteParams(
                 channel_a_limit=qt_ui.settings.coyote_channel_a_limit.get(),
                 channel_b_limit=qt_ui.settings.coyote_channel_b_limit.get(),

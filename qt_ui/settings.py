@@ -166,7 +166,6 @@ focstim_ip = Setting("focstim/wifi_ip", '', str)
 
 neostim_serial_port = Setting("neostim/serial_port", '', str)
 
-coyote_device_name = Setting('coyote/device_name', '47L121000', str)
 coyote_channel_a_limit = Setting("coyote/channel_a_limit", 200, int)
 coyote_channel_b_limit = Setting("coyote/channel_b_limit", 200, int)
 coyote_channel_a_freq_balance = Setting("coyote/channel_a_freq_balance", 160, int)

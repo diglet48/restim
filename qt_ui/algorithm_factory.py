@@ -273,6 +273,7 @@ class AlgorithmFactory:
                 pulse_width=self.get_axis_pulse_width(),
                 pulse_interval_random=self.get_axis_pulse_interval_random(),
                 pulse_rise_time=self.get_axis_pulse_rise_time(),
+                max_intensity_change_per_pulse=settings.coyote_max_intensity_change_per_pulse,
                 channel_a=CoyoteChannelParams(
                     minimum_frequency=settings.coyote_channel_a_freq_min,
                     maximum_frequency=settings.coyote_channel_a_freq_max,

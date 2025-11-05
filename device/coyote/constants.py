@@ -1,3 +1,6 @@
+# BLE device identification
+DEVICE_NAME = "47L121000"
+
 # Coyote hardware timing and derived limits
 # Pulse duration limits in milliseconds
 MIN_PULSE_DURATION_MS = 5
@@ -19,7 +22,6 @@ TEXTURE_MAX_DEPTH_FRACTION = 0.5
 JITTER_CLAMP_FRACTION = 0.5
 RANDOMIZATION_LIMIT_FRACTION = 0.1  # limit randomization to 10% of setting
 RESIDUAL_BOUND = 0.49  # clamp fractional residual for rounding fairness
-DEFAULT_MAX_CHANGE_PER_PULSE = 3.0  # percentage points per pulse if setting unavailable
 
 # BLE / Protocol constants
 LOG_PREFIX = "[Coyote]"
