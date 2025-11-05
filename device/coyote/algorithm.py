@@ -644,29 +644,25 @@ class CoyoteAlgorithm:
         media_type = self._get_media_type()
         volume = compute_volume(self.media, self.params.volume, current_time)
         
-        # Get common intensity (they should all be the same within a channel)
-        intensity_a = pulses_a[0].intensity if pulses_a else 0
-        intensity_b = pulses_b[0].intensity if pulses_b else 0
-        
         log_lines = [
             "=" * 72,
             f"Packet Generated @ {hours:02}:{minutes:02}:{seconds:02}.{millis:03} [{media_type}]",
             "=" * 72,
             f"Position: alpha={alpha:+.2f}, beta={beta:+.2f}, volume={volume:.0%}",
             "",
-            f"Channel A: duration={total_duration_a:.0f} ms, intensity={intensity_a}%",
+            f"Channel A: duration={total_duration_a:.0f} ms",
         ]
         
         for i, p in enumerate(pulses_a, 1):
-            log_lines.append(f"  Pulse {i}: {p.duration} ms @ {p.frequency} Hz")
+            log_lines.append(f"  Pulse {i}: {p.duration} ms @ {p.frequency} Hz ({p.intensity}%)")
         
         log_lines.extend([
             "",
-            f"Channel B: duration={total_duration_b:.0f} ms, intensity={intensity_b}%"
+            f"Channel B: duration={total_duration_b:.0f} ms"
         ])
         
         for i, p in enumerate(pulses_b, 1):
-            log_lines.append(f"  Pulse {i}: {p.duration} ms @ {p.frequency} Hz")
+            log_lines.append(f"  Pulse {i}: {p.duration} ms @ {p.frequency} Hz ({p.intensity}%)")
         
         log_lines.extend([
             "",
