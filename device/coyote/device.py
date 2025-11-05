@@ -98,16 +98,18 @@ class CoyoteDevice(OutputDevice, QObject):
                         await asyncio.sleep(SCAN_RETRY_SECONDS)
                         
                 elif self.connection_stage == ConnectionStage.CONNECTING:
-                    if await self.client.connect():
+                    try:
+                        await self.client.connect()
                         logger.info(f"{LOG_PREFIX} Connected, discovering services...")
                         self.connection_stage = ConnectionStage.SERVICE_DISCOVERY
-                    else:
-                        logger.error(f"{LOG_PREFIX} Connection failed")
+                    except Exception as e:
+                        logger.error(f"{LOG_PREFIX} Connection failed: {e}")
                         await self.disconnect()
                         
                 elif self.connection_stage == ConnectionStage.SERVICE_DISCOVERY:
-                    if await self.client.get_services():
-                        logger.info(f"{LOG_PREFIX} Services discovered, subscribing to battery...")
+                    services = self.client.services.services
+                    if len(services) > 0:
+                        logger.info(f"{LOG_PREFIX} Services discovered ({len(services)}), subscribing to battery...")
                         self.connection_stage = ConnectionStage.BATTERY_SUBSCRIBE
                     else:
                         logger.error(f"{LOG_PREFIX} Service discovery failed")
@@ -264,6 +266,11 @@ class CoyoteDevice(OutputDevice, QObject):
     async def _subscribe_to_notifications(self, char_uuid: str) -> bool:
         """Subscribe to notifications for a characteristic"""
         try:
+            char = self.client.services.get_characteristic(char_uuid)
+            if not char:
+                logger.error(f"{LOG_PREFIX} Characteristic {char_uuid} not found")
+                return False
+            
             await self.client.start_notify(char_uuid, 
                 self._handle_battery_notification if char_uuid == BATTERY_CHAR_UUID 
                 else self._handle_status_notification)
