@@ -162,6 +162,7 @@ class PreferencesDialog(QDialog, Ui_PreferencesDialog):
         self.coyote_channel_b_freq_balance.setValue(qt_ui.settings.coyote_channel_b_freq_balance.get())
         self.coyote_channel_a_intensity_balance.setValue(qt_ui.settings.coyote_channel_a_intensity_balance.get())
         self.coyote_channel_b_intensity_balance.setValue(qt_ui.settings.coyote_channel_b_intensity_balance.get())
+        self.coyote_graph_window.setValue(qt_ui.settings.coyote_graph_window.get())
         self.coyote_debug_logging.setChecked(qt_ui.settings.coyote_debug_logging.get())
 
         # media sync settings
@@ -336,6 +337,7 @@ class PreferencesDialog(QDialog, Ui_PreferencesDialog):
         qt_ui.settings.coyote_channel_b_freq_balance.set(self.coyote_channel_b_freq_balance.value())
         qt_ui.settings.coyote_channel_a_intensity_balance.set(self.coyote_channel_a_intensity_balance.value())
         qt_ui.settings.coyote_channel_b_intensity_balance.set(self.coyote_channel_b_intensity_balance.value())
+        qt_ui.settings.coyote_graph_window.set(self.coyote_graph_window.value())
         qt_ui.settings.coyote_debug_logging.set(self.coyote_debug_logging.isChecked())
 
         # media sync settings

@@ -181,6 +181,7 @@ coyote_channel_b_freq_min = Setting("coyote/channel_b_freq_min", 30, int)
 coyote_channel_b_freq_max = Setting("coyote/channel_b_freq_max", 60, int)
 coyote_max_intensity_change_per_pulse = Setting("coyote/max_intensity_change_per_pulse", 3.0, float)
 coyote_debug_logging = Setting("coyote/debug_logging", False, bool)
+coyote_graph_window = Setting("coyote/graph_window", 3.0, float)
 
 # Pattern preferences - we'll store this as a JSON string and convert to dict
 import json

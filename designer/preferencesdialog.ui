@@ -742,13 +742,39 @@
            </widget>
           </item>
           <item row="7" column="0">
-           <widget class="QLabel" name="label_coyote_debug_logging">
+           <widget class="QLabel" name="label_coyote_graph_window">
             <property name="text">
-             <string>Debug logging</string>
+             <string>Graph Window (s)</string>
             </property>
            </widget>
           </item>
           <item row="7" column="1">
+           <widget class="QDoubleSpinBox" name="coyote_graph_window">
+            <property name="decimals">
+             <number>1</number>
+            </property>
+            <property name="minimum">
+             <double>0.1</double>
+            </property>
+            <property name="maximum">
+             <double>10.0</double>
+            </property>
+            <property name="singleStep">
+             <double>0.1</double>
+            </property>
+            <property name="value">
+             <double>3.0</double>
+            </property>
+           </widget>
+          </item>
+          <item row="8" column="0">
+           <widget class="QLabel" name="label_coyote_debug_logging">
+            <property name="text">
+             <string>Debug Logging</string>
+            </property>
+           </widget>
+          </item>
+          <item row="8" column="1">
            <widget class="QCheckBox" name="coyote_debug_logging">
             <property name="text">
              <string/>

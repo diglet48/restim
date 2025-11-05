@@ -520,15 +520,30 @@ class Ui_PreferencesDialog(object):
 
         self.formLayout_coyote.setWidget(6, QFormLayout.FieldRole, self.coyote_channel_b_intensity_balance)
 
+        self.label_coyote_graph_window = QLabel(self.tab_coyote)
+        self.label_coyote_graph_window.setObjectName(u"label_coyote_graph_window")
+
+        self.formLayout_coyote.setWidget(7, QFormLayout.LabelRole, self.label_coyote_graph_window)
+
+        self.coyote_graph_window = QDoubleSpinBox(self.tab_coyote)
+        self.coyote_graph_window.setObjectName(u"coyote_graph_window")
+        self.coyote_graph_window.setDecimals(1)
+        self.coyote_graph_window.setMinimum(0.1)
+        self.coyote_graph_window.setMaximum(10.0)
+        self.coyote_graph_window.setSingleStep(0.1)
+        self.coyote_graph_window.setValue(3.0)
+
+        self.formLayout_coyote.setWidget(7, QFormLayout.FieldRole, self.coyote_graph_window)
+
         self.label_coyote_debug_logging = QLabel(self.tab_coyote)
         self.label_coyote_debug_logging.setObjectName(u"label_coyote_debug_logging")
 
-        self.formLayout_coyote.setWidget(7, QFormLayout.LabelRole, self.label_coyote_debug_logging)
+        self.formLayout_coyote.setWidget(8, QFormLayout.LabelRole, self.label_coyote_debug_logging)
 
         self.coyote_debug_logging = QCheckBox(self.tab_coyote)
         self.coyote_debug_logging.setObjectName(u"coyote_debug_logging")
 
-        self.formLayout_coyote.setWidget(7, QFormLayout.FieldRole, self.coyote_debug_logging)
+        self.formLayout_coyote.setWidget(8, QFormLayout.FieldRole, self.coyote_debug_logging)
 
 
         self.verticalLayout_coyote.addLayout(self.formLayout_coyote)
@@ -923,7 +938,8 @@ class Ui_PreferencesDialog(object):
         self.label_coyote_channel_b_freq_balance.setText(QCoreApplication.translate("PreferencesDialog", u"Channel B Freq Balance", None))
         self.label_coyote_channel_a_intensity_balance.setText(QCoreApplication.translate("PreferencesDialog", u"Channel A Intensity Balance", None))
         self.label_coyote_channel_b_intensity_balance.setText(QCoreApplication.translate("PreferencesDialog", u"Channel B Intensity Balance", None))
-        self.label_coyote_debug_logging.setText(QCoreApplication.translate("PreferencesDialog", u"Debug logging", None))
+        self.label_coyote_graph_window.setText(QCoreApplication.translate("PreferencesDialog", u"Graph Window (s)", None))
+        self.label_coyote_debug_logging.setText(QCoreApplication.translate("PreferencesDialog", u"Debug Logging", None))
         self.coyote_debug_logging.setText("")
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_coyote), QCoreApplication.translate("PreferencesDialog", u"Coyote", None))
         self.groupBox_3.setTitle(QCoreApplication.translate("PreferencesDialog", u"MPC-HC", None))

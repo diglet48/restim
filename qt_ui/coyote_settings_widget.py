@@ -7,7 +7,7 @@ from PySide6 import QtWidgets
 from PySide6.QtWidgets import (QWidget, QVBoxLayout, QLabel, QSlider, QHBoxLayout,
                             QGraphicsView, QGraphicsScene, QGraphicsLineItem, QSpinBox,
                             QGraphicsRectItem, QToolTip, QGraphicsEllipseItem)
-from PySide6.QtCore import Qt, QTimer
+from PySide6.QtCore import QSettings, Qt, QTimer
 from PySide6.QtGui import QPen, QColor, QBrush, QPainterPath
 from device.coyote.device import CoyoteDevice, CoyotePulse, CoyotePulses, CoyoteStrengths
 from qt_ui import settings
@@ -19,6 +19,7 @@ class CoyoteSettingsWidget(QtWidgets.QWidget):
         self.channel_controls: Dict[str, ChannelControl] = {}
         self.coyote_logger = logging.getLogger('restim.coyote')
         self._base_log_level = self.coyote_logger.getEffectiveLevel()
+        self.graph_window = settings.coyote_graph_window
         self.setupUi()
         self.apply_debug_logging(settings.coyote_debug_logging.get())
 
@@ -183,7 +184,7 @@ class ChannelControl:
 
         layout.addLayout(left)
 
-        self.pulse_graph = PulseGraphContainer(self.freq_min, self.freq_max)
+        self.pulse_graph = PulseGraphContainer(self.parent.graph_window, self.freq_min, self.freq_max)
         self.pulse_graph.plot.setMinimumHeight(100)
 
         graph_column = QVBoxLayout()
@@ -305,7 +306,7 @@ class ChannelControl:
             )
 
 class PulseGraphContainer(QWidget):
-    def __init__(self, freq_min: QSpinBox, freq_max: QSpinBox, *args, **kwargs):
+    def __init__(self, window_seconds: settings.Setting, freq_min: QSpinBox, freq_max: QSpinBox, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # Store frequency range controls
         self.freq_min = freq_min
@@ -315,13 +316,13 @@ class PulseGraphContainer(QWidget):
         self.entries = []
 
         # Time window for stats display (in seconds)
-        self.stats_window = 3.0  # Match the graph's time window
+        self.stats_window = window_seconds
 
         # Create layout
         self.layout = QVBoxLayout(self)
 
         # Create plot widget
-        self.plot = PulseGraph(*args, **kwargs)
+        self.plot = PulseGraph(window_seconds, *args, **kwargs)
         self.layout.addWidget(self.plot)
 
         # Optional stats label managed by parent component
@@ -363,7 +364,8 @@ class PulseGraphContainer(QWidget):
     def clean_old_entries(self):
         """Remove entries outside the time window"""
         current_time = time.time()
-        self.entries = [e for e in self.entries if current_time - e.timestamp <= self.stats_window]
+        stats_window = self.stats_window.get()
+        self.entries = [e for e in self.entries if current_time - e.timestamp <= stats_window]
 
     def update_label_text(self):
         # Clean up old entries
@@ -408,7 +410,7 @@ class PulseGraphContainer(QWidget):
         self.plot.add_pulse(pulse, effective_intensity, channel_limit)
 
 class PulseGraph(QWidget):
-    def __init__(self, parent=None):
+    def __init__(self, window_seconds: settings.Setting, parent=None):
         super().__init__(parent)
         self.setLayout(QVBoxLayout())
         
@@ -431,7 +433,7 @@ class PulseGraph(QWidget):
         self.layout().addWidget(self.view)
         
         # Configuration for time window (in seconds)
-        self.time_window = 3  # Show pulses from the last 3 seconds
+        self.time_window = window_seconds
         
         # Store pulses for visualization
         self.pulses = []
@@ -477,11 +479,12 @@ class PulseGraph(QWidget):
     def clean_old_pulses(self):
         """Remove pulses outside the time window"""
         current_time = time.time()
-        self.pulses = [p for p in self.pulses if current_time - p.timestamp <= self.time_window]
+        time_window = self.time_window.get()
+        self.pulses = [p for p in self.pulses if current_time - p.timestamp <= time_window]
         
         # Also clean up old fingerprints
         for fingerprint, timestamp in list(self.pulse_fingerprints.items()):
-            if current_time - timestamp > self.time_window:
+            if current_time - timestamp > time_window:
                 self.pulse_fingerprints.pop(fingerprint)
 
     def add_pulse(self, pulse: CoyotePulse, applied_intensity: float, channel_limit: int):
@@ -555,9 +558,10 @@ class PulseGraph(QWidget):
         
         # Get the time span of the visible pulses
         now = time.time()
-        oldest_time = now - self.time_window
+        time_window = self.time_window.get()
+        oldest_time = now - time_window
         newest_time = now
-        time_span_sec = self.time_window
+        time_span_sec = time_window
         
         # Calculate total width available for all pulses
         usable_width = width - 10  # Leave small margin on right side
