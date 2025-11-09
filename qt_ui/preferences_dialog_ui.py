@@ -314,11 +314,6 @@ class Ui_PreferencesDialog(object):
         self.groupBox_10.setObjectName(u"groupBox_10")
         self.gridLayout_7 = QGridLayout(self.groupBox_10)
         self.gridLayout_7.setObjectName(u"gridLayout_7")
-        self.label_22 = QLabel(self.groupBox_10)
-        self.label_22.setObjectName(u"label_22")
-
-        self.gridLayout_7.addWidget(self.label_22, 3, 0, 1, 1)
-
         self.focstim_ssid = QLineEdit(self.groupBox_10)
         self.focstim_ssid.setObjectName(u"focstim_ssid")
 
@@ -334,11 +329,6 @@ class Ui_PreferencesDialog(object):
 
         self.gridLayout_7.addWidget(self.label_21, 1, 0, 1, 1)
 
-        self.focstim_read_ip = QToolButton(self.groupBox_10)
-        self.focstim_read_ip.setObjectName(u"focstim_read_ip")
-
-        self.gridLayout_7.addWidget(self.focstim_read_ip, 3, 2, 1, 1)
-
         self.focstim_password = QLineEdit(self.groupBox_10)
         self.focstim_password.setObjectName(u"focstim_password")
 
@@ -352,7 +342,17 @@ class Ui_PreferencesDialog(object):
         self.focstim_ip = QLineEdit(self.groupBox_10)
         self.focstim_ip.setObjectName(u"focstim_ip")
 
-        self.gridLayout_7.addWidget(self.focstim_ip, 3, 1, 1, 1)
+        self.gridLayout_7.addWidget(self.focstim_ip, 4, 1, 1, 1)
+
+        self.label_22 = QLabel(self.groupBox_10)
+        self.label_22.setObjectName(u"label_22")
+
+        self.gridLayout_7.addWidget(self.label_22, 4, 0, 1, 1)
+
+        self.focstim_read_ip = QToolButton(self.groupBox_10)
+        self.focstim_read_ip.setObjectName(u"focstim_read_ip")
+
+        self.gridLayout_7.addWidget(self.focstim_read_ip, 4, 2, 1, 1)
 
 
         self.verticalLayout_5.addWidget(self.groupBox_10)
@@ -361,15 +361,15 @@ class Ui_PreferencesDialog(object):
         self.groupBox_9.setObjectName(u"groupBox_9")
         self.formLayout_8 = QFormLayout(self.groupBox_9)
         self.formLayout_8.setObjectName(u"formLayout_8")
-        self.label_18 = QLabel(self.groupBox_9)
-        self.label_18.setObjectName(u"label_18")
+        self.label_15 = QLabel(self.groupBox_9)
+        self.label_15.setObjectName(u"label_15")
 
-        self.formLayout_8.setWidget(2, QFormLayout.ItemRole.LabelRole, self.label_18)
+        self.formLayout_8.setWidget(0, QFormLayout.ItemRole.LabelRole, self.label_15)
 
-        self.focstim_dump_notifications = QCheckBox(self.groupBox_9)
-        self.focstim_dump_notifications.setObjectName(u"focstim_dump_notifications")
+        self.focstim_use_teleplot = QCheckBox(self.groupBox_9)
+        self.focstim_use_teleplot.setObjectName(u"focstim_use_teleplot")
 
-        self.formLayout_8.setWidget(2, QFormLayout.ItemRole.FieldRole, self.focstim_dump_notifications)
+        self.formLayout_8.setWidget(0, QFormLayout.ItemRole.FieldRole, self.focstim_use_teleplot)
 
         self.label_16 = QLabel(self.groupBox_9)
         self.label_16.setObjectName(u"label_16")
@@ -381,15 +381,15 @@ class Ui_PreferencesDialog(object):
 
         self.formLayout_8.setWidget(1, QFormLayout.ItemRole.FieldRole, self.focstim_teleplot_prefix)
 
-        self.label_15 = QLabel(self.groupBox_9)
-        self.label_15.setObjectName(u"label_15")
+        self.label_18 = QLabel(self.groupBox_9)
+        self.label_18.setObjectName(u"label_18")
 
-        self.formLayout_8.setWidget(0, QFormLayout.ItemRole.LabelRole, self.label_15)
+        self.formLayout_8.setWidget(2, QFormLayout.ItemRole.LabelRole, self.label_18)
 
-        self.focstim_use_teleplot = QCheckBox(self.groupBox_9)
-        self.focstim_use_teleplot.setObjectName(u"focstim_use_teleplot")
+        self.focstim_dump_notifications = QCheckBox(self.groupBox_9)
+        self.focstim_dump_notifications.setObjectName(u"focstim_dump_notifications")
 
-        self.formLayout_8.setWidget(0, QFormLayout.ItemRole.FieldRole, self.focstim_use_teleplot)
+        self.formLayout_8.setWidget(2, QFormLayout.ItemRole.FieldRole, self.focstim_dump_notifications)
 
 
         self.verticalLayout_5.addWidget(self.groupBox_9)
@@ -436,117 +436,138 @@ class Ui_PreferencesDialog(object):
         self.tab_coyote.setObjectName(u"tab_coyote")
         self.verticalLayout_coyote = QVBoxLayout(self.tab_coyote)
         self.verticalLayout_coyote.setObjectName(u"verticalLayout_coyote")
-        self.formLayout_coyote = QFormLayout()
-        self.formLayout_coyote.setObjectName(u"formLayout_coyote")
-        self.label_coyote_device_name = QLabel(self.tab_coyote)
-        self.label_coyote_device_name.setObjectName(u"label_coyote_device_name")
-
-        self.formLayout_coyote.setWidget(0, QFormLayout.LabelRole, self.label_coyote_device_name)
-
-        self.coyote_device_name = QLineEdit(self.tab_coyote)
-        self.coyote_device_name.setObjectName(u"coyote_device_name")
-
-        self.formLayout_coyote.setWidget(0, QFormLayout.FieldRole, self.coyote_device_name)
-
-        self.label_coyote_channel_a_limit = QLabel(self.tab_coyote)
+        self.groupBox_coyote_params = QGroupBox(self.tab_coyote)
+        self.groupBox_coyote_params.setObjectName(u"groupBox_coyote_params")
+        self.formLayout_coyote_params = QFormLayout(self.groupBox_coyote_params)
+        self.formLayout_coyote_params.setObjectName(u"formLayout_coyote_params")
+        self.label_coyote_channel_a_limit = QLabel(self.groupBox_coyote_params)
         self.label_coyote_channel_a_limit.setObjectName(u"label_coyote_channel_a_limit")
 
-        self.formLayout_coyote.setWidget(1, QFormLayout.LabelRole, self.label_coyote_channel_a_limit)
+        self.formLayout_coyote_params.setWidget(0, QFormLayout.ItemRole.LabelRole, self.label_coyote_channel_a_limit)
 
-        self.coyote_channel_a_limit = QSpinBox(self.tab_coyote)
+        self.coyote_channel_a_limit = QSpinBox(self.groupBox_coyote_params)
         self.coyote_channel_a_limit.setObjectName(u"coyote_channel_a_limit")
         self.coyote_channel_a_limit.setMinimum(0)
         self.coyote_channel_a_limit.setMaximum(200)
 
-        self.formLayout_coyote.setWidget(1, QFormLayout.FieldRole, self.coyote_channel_a_limit)
+        self.formLayout_coyote_params.setWidget(0, QFormLayout.ItemRole.FieldRole, self.coyote_channel_a_limit)
 
-        self.label_coyote_channel_b_limit = QLabel(self.tab_coyote)
+        self.label_coyote_channel_b_limit = QLabel(self.groupBox_coyote_params)
         self.label_coyote_channel_b_limit.setObjectName(u"label_coyote_channel_b_limit")
 
-        self.formLayout_coyote.setWidget(2, QFormLayout.LabelRole, self.label_coyote_channel_b_limit)
+        self.formLayout_coyote_params.setWidget(1, QFormLayout.ItemRole.LabelRole, self.label_coyote_channel_b_limit)
 
-        self.coyote_channel_b_limit = QSpinBox(self.tab_coyote)
+        self.coyote_channel_b_limit = QSpinBox(self.groupBox_coyote_params)
         self.coyote_channel_b_limit.setObjectName(u"coyote_channel_b_limit")
         self.coyote_channel_b_limit.setMinimum(0)
         self.coyote_channel_b_limit.setMaximum(200)
 
-        self.formLayout_coyote.setWidget(2, QFormLayout.FieldRole, self.coyote_channel_b_limit)
+        self.formLayout_coyote_params.setWidget(1, QFormLayout.ItemRole.FieldRole, self.coyote_channel_b_limit)
 
-        self.label_coyote_channel_a_freq_balance = QLabel(self.tab_coyote)
+        self.label_coyote_channel_a_freq_balance = QLabel(self.groupBox_coyote_params)
         self.label_coyote_channel_a_freq_balance.setObjectName(u"label_coyote_channel_a_freq_balance")
 
-        self.formLayout_coyote.setWidget(3, QFormLayout.LabelRole, self.label_coyote_channel_a_freq_balance)
+        self.formLayout_coyote_params.setWidget(2, QFormLayout.ItemRole.LabelRole, self.label_coyote_channel_a_freq_balance)
 
-        self.coyote_channel_a_freq_balance = QSpinBox(self.tab_coyote)
+        self.coyote_channel_a_freq_balance = QSpinBox(self.groupBox_coyote_params)
         self.coyote_channel_a_freq_balance.setObjectName(u"coyote_channel_a_freq_balance")
         self.coyote_channel_a_freq_balance.setMinimum(0)
         self.coyote_channel_a_freq_balance.setMaximum(255)
 
-        self.formLayout_coyote.setWidget(3, QFormLayout.FieldRole, self.coyote_channel_a_freq_balance)
+        self.formLayout_coyote_params.setWidget(2, QFormLayout.ItemRole.FieldRole, self.coyote_channel_a_freq_balance)
 
-        self.label_coyote_channel_b_freq_balance = QLabel(self.tab_coyote)
+        self.label_coyote_channel_b_freq_balance = QLabel(self.groupBox_coyote_params)
         self.label_coyote_channel_b_freq_balance.setObjectName(u"label_coyote_channel_b_freq_balance")
 
-        self.formLayout_coyote.setWidget(4, QFormLayout.LabelRole, self.label_coyote_channel_b_freq_balance)
+        self.formLayout_coyote_params.setWidget(3, QFormLayout.ItemRole.LabelRole, self.label_coyote_channel_b_freq_balance)
 
-        self.coyote_channel_b_freq_balance = QSpinBox(self.tab_coyote)
+        self.coyote_channel_b_freq_balance = QSpinBox(self.groupBox_coyote_params)
         self.coyote_channel_b_freq_balance.setObjectName(u"coyote_channel_b_freq_balance")
         self.coyote_channel_b_freq_balance.setMinimum(0)
         self.coyote_channel_b_freq_balance.setMaximum(255)
 
-        self.formLayout_coyote.setWidget(4, QFormLayout.FieldRole, self.coyote_channel_b_freq_balance)
+        self.formLayout_coyote_params.setWidget(3, QFormLayout.ItemRole.FieldRole, self.coyote_channel_b_freq_balance)
 
-        self.label_coyote_channel_a_intensity_balance = QLabel(self.tab_coyote)
+        self.label_coyote_channel_a_intensity_balance = QLabel(self.groupBox_coyote_params)
         self.label_coyote_channel_a_intensity_balance.setObjectName(u"label_coyote_channel_a_intensity_balance")
 
-        self.formLayout_coyote.setWidget(5, QFormLayout.LabelRole, self.label_coyote_channel_a_intensity_balance)
+        self.formLayout_coyote_params.setWidget(4, QFormLayout.ItemRole.LabelRole, self.label_coyote_channel_a_intensity_balance)
 
-        self.coyote_channel_a_intensity_balance = QSpinBox(self.tab_coyote)
+        self.coyote_channel_a_intensity_balance = QSpinBox(self.groupBox_coyote_params)
         self.coyote_channel_a_intensity_balance.setObjectName(u"coyote_channel_a_intensity_balance")
         self.coyote_channel_a_intensity_balance.setMinimum(0)
         self.coyote_channel_a_intensity_balance.setMaximum(255)
 
-        self.formLayout_coyote.setWidget(5, QFormLayout.FieldRole, self.coyote_channel_a_intensity_balance)
+        self.formLayout_coyote_params.setWidget(4, QFormLayout.ItemRole.FieldRole, self.coyote_channel_a_intensity_balance)
 
-        self.label_coyote_channel_b_intensity_balance = QLabel(self.tab_coyote)
+        self.label_coyote_channel_b_intensity_balance = QLabel(self.groupBox_coyote_params)
         self.label_coyote_channel_b_intensity_balance.setObjectName(u"label_coyote_channel_b_intensity_balance")
 
-        self.formLayout_coyote.setWidget(6, QFormLayout.LabelRole, self.label_coyote_channel_b_intensity_balance)
+        self.formLayout_coyote_params.setWidget(5, QFormLayout.ItemRole.LabelRole, self.label_coyote_channel_b_intensity_balance)
 
-        self.coyote_channel_b_intensity_balance = QSpinBox(self.tab_coyote)
+        self.coyote_channel_b_intensity_balance = QSpinBox(self.groupBox_coyote_params)
         self.coyote_channel_b_intensity_balance.setObjectName(u"coyote_channel_b_intensity_balance")
         self.coyote_channel_b_intensity_balance.setMinimum(0)
         self.coyote_channel_b_intensity_balance.setMaximum(255)
 
-        self.formLayout_coyote.setWidget(6, QFormLayout.FieldRole, self.coyote_channel_b_intensity_balance)
+        self.formLayout_coyote_params.setWidget(5, QFormLayout.ItemRole.FieldRole, self.coyote_channel_b_intensity_balance)
 
-        self.label_coyote_graph_window = QLabel(self.tab_coyote)
+
+        self.verticalLayout_coyote.addWidget(self.groupBox_coyote_params)
+
+        self.groupBox_coyote_algorithm = QGroupBox(self.tab_coyote)
+        self.groupBox_coyote_algorithm.setObjectName(u"groupBox_coyote_algorithm")
+        self.formLayout_coyote_algorithm = QFormLayout(self.groupBox_coyote_algorithm)
+        self.formLayout_coyote_algorithm.setObjectName(u"formLayout_coyote_algorithm")
+        self.label_coyote_max_intensity_change_per_pulse = QLabel(self.groupBox_coyote_algorithm)
+        self.label_coyote_max_intensity_change_per_pulse.setObjectName(u"label_coyote_max_intensity_change_per_pulse")
+
+        self.formLayout_coyote_algorithm.setWidget(0, QFormLayout.ItemRole.LabelRole, self.label_coyote_max_intensity_change_per_pulse)
+
+        self.coyote_max_intensity_change_per_pulse = QDoubleSpinBox(self.groupBox_coyote_algorithm)
+        self.coyote_max_intensity_change_per_pulse.setObjectName(u"coyote_max_intensity_change_per_pulse")
+        self.coyote_max_intensity_change_per_pulse.setDecimals(1)
+        self.coyote_max_intensity_change_per_pulse.setMinimum(0.000000000000000)
+        self.coyote_max_intensity_change_per_pulse.setMaximum(100.000000000000000)
+        self.coyote_max_intensity_change_per_pulse.setSingleStep(0.100000000000000)
+        self.coyote_max_intensity_change_per_pulse.setValue(3.000000000000000)
+
+        self.formLayout_coyote_algorithm.setWidget(0, QFormLayout.ItemRole.FieldRole, self.coyote_max_intensity_change_per_pulse)
+
+
+        self.verticalLayout_coyote.addWidget(self.groupBox_coyote_algorithm)
+
+        self.groupBox_coyote_display = QGroupBox(self.tab_coyote)
+        self.groupBox_coyote_display.setObjectName(u"groupBox_coyote_display")
+        self.formLayout_coyote_display = QFormLayout(self.groupBox_coyote_display)
+        self.formLayout_coyote_display.setObjectName(u"formLayout_coyote_display")
+        self.label_coyote_graph_window = QLabel(self.groupBox_coyote_display)
         self.label_coyote_graph_window.setObjectName(u"label_coyote_graph_window")
 
-        self.formLayout_coyote.setWidget(7, QFormLayout.LabelRole, self.label_coyote_graph_window)
+        self.formLayout_coyote_display.setWidget(0, QFormLayout.ItemRole.LabelRole, self.label_coyote_graph_window)
 
-        self.coyote_graph_window = QDoubleSpinBox(self.tab_coyote)
+        self.coyote_graph_window = QDoubleSpinBox(self.groupBox_coyote_display)
         self.coyote_graph_window.setObjectName(u"coyote_graph_window")
         self.coyote_graph_window.setDecimals(1)
-        self.coyote_graph_window.setMinimum(0.1)
-        self.coyote_graph_window.setMaximum(10.0)
-        self.coyote_graph_window.setSingleStep(0.1)
-        self.coyote_graph_window.setValue(3.0)
+        self.coyote_graph_window.setMinimum(0.100000000000000)
+        self.coyote_graph_window.setMaximum(10.000000000000000)
+        self.coyote_graph_window.setSingleStep(0.100000000000000)
+        self.coyote_graph_window.setValue(3.000000000000000)
 
-        self.formLayout_coyote.setWidget(7, QFormLayout.FieldRole, self.coyote_graph_window)
+        self.formLayout_coyote_display.setWidget(0, QFormLayout.ItemRole.FieldRole, self.coyote_graph_window)
 
-        self.label_coyote_debug_logging = QLabel(self.tab_coyote)
+        self.label_coyote_debug_logging = QLabel(self.groupBox_coyote_display)
         self.label_coyote_debug_logging.setObjectName(u"label_coyote_debug_logging")
 
-        self.formLayout_coyote.setWidget(8, QFormLayout.LabelRole, self.label_coyote_debug_logging)
+        self.formLayout_coyote_display.setWidget(1, QFormLayout.ItemRole.LabelRole, self.label_coyote_debug_logging)
 
-        self.coyote_debug_logging = QCheckBox(self.tab_coyote)
+        self.coyote_debug_logging = QCheckBox(self.groupBox_coyote_display)
         self.coyote_debug_logging.setObjectName(u"coyote_debug_logging")
 
-        self.formLayout_coyote.setWidget(8, QFormLayout.FieldRole, self.coyote_debug_logging)
+        self.formLayout_coyote_display.setWidget(1, QFormLayout.ItemRole.FieldRole, self.coyote_debug_logging)
 
 
-        self.verticalLayout_coyote.addLayout(self.formLayout_coyote)
+        self.verticalLayout_coyote.addWidget(self.groupBox_coyote_display)
 
         self.tabWidget.addTab(self.tab_coyote, "")
         self.tab_media_settings = QWidget()
@@ -807,9 +828,7 @@ class Ui_PreferencesDialog(object):
         QWidget.setTabOrder(self.focstim_refresh_serial_devices, self.focstim_ssid)
         QWidget.setTabOrder(self.focstim_ssid, self.focstim_password)
         QWidget.setTabOrder(self.focstim_password, self.focstim_sync)
-        QWidget.setTabOrder(self.focstim_sync, self.focstim_ip)
-        QWidget.setTabOrder(self.focstim_ip, self.focstim_read_ip)
-        QWidget.setTabOrder(self.focstim_read_ip, self.focstim_use_teleplot)
+        QWidget.setTabOrder(self.focstim_sync, self.focstim_use_teleplot)
         QWidget.setTabOrder(self.focstim_use_teleplot, self.focstim_teleplot_prefix)
         QWidget.setTabOrder(self.focstim_teleplot_prefix, self.focstim_dump_notifications)
         QWidget.setTabOrder(self.focstim_dump_notifications, self.tcp_port)
@@ -911,33 +930,35 @@ class Ui_PreferencesDialog(object):
         self.label_14.setText(QCoreApplication.translate("PreferencesDialog", u"Serial port", None))
         self.focstim_refresh_serial_devices.setText(QCoreApplication.translate("PreferencesDialog", u"Refresh", None))
         self.groupBox_10.setTitle(QCoreApplication.translate("PreferencesDialog", u"Network", None))
-        self.label_22.setText(QCoreApplication.translate("PreferencesDialog", u"IP", None))
-        self.focstim_sync.setText(QCoreApplication.translate("PreferencesDialog", u"Sync with device", None))
+        self.focstim_sync.setText(QCoreApplication.translate("PreferencesDialog", u"Upload ssid/password", None))
         self.label_21.setText(QCoreApplication.translate("PreferencesDialog", u"Password", None))
-        self.focstim_read_ip.setText(QCoreApplication.translate("PreferencesDialog", u"Read from device", None))
         self.label_20.setText(QCoreApplication.translate("PreferencesDialog", u"SSID", None))
+        self.label_22.setText(QCoreApplication.translate("PreferencesDialog", u"IP", None))
+        self.focstim_read_ip.setText(QCoreApplication.translate("PreferencesDialog", u"Read from device", None))
         self.groupBox_9.setTitle(QCoreApplication.translate("PreferencesDialog", u"Advanced", None))
-        self.label_18.setText(QCoreApplication.translate("PreferencesDialog", u"Dump notifications to file", None))
-        self.focstim_dump_notifications.setText("")
+        self.label_15.setText(QCoreApplication.translate("PreferencesDialog", u"Use teleplot", None))
+        self.focstim_use_teleplot.setText("")
 #if QT_CONFIG(tooltip)
         self.label_16.setToolTip(QCoreApplication.translate("PreferencesDialog", u"Useful if you have multiple FOC-Stim boxes", None))
 #endif // QT_CONFIG(tooltip)
         self.label_16.setText(QCoreApplication.translate("PreferencesDialog", u"teleplot prefix (?)", None))
-        self.label_15.setText(QCoreApplication.translate("PreferencesDialog", u"Use teleplot", None))
-        self.focstim_use_teleplot.setText("")
+        self.label_18.setText(QCoreApplication.translate("PreferencesDialog", u"Dump notifications to file", None))
+        self.focstim_dump_notifications.setText("")
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_foc), QCoreApplication.translate("PreferencesDialog", u"FOC-Stim", None))
         self.groupBox_4.setTitle(QCoreApplication.translate("PreferencesDialog", u"NeoStim", None))
         self.neostim_refresh_serial_devices.setText(QCoreApplication.translate("PreferencesDialog", u"Refresh", None))
         self.label_17.setText(QCoreApplication.translate("PreferencesDialog", u"Serial port", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_neostim), QCoreApplication.translate("PreferencesDialog", u"NeoStim", None))
-        self.label_coyote_device_name.setText(QCoreApplication.translate("PreferencesDialog", u"Device Name", None))
-        self.coyote_device_name.setText(QCoreApplication.translate("PreferencesDialog", u"47L121000", None))
+        self.groupBox_coyote_params.setTitle(QCoreApplication.translate("PreferencesDialog", u"Device", None))
         self.label_coyote_channel_a_limit.setText(QCoreApplication.translate("PreferencesDialog", u"Channel A Limit", None))
         self.label_coyote_channel_b_limit.setText(QCoreApplication.translate("PreferencesDialog", u"Channel B Limit", None))
         self.label_coyote_channel_a_freq_balance.setText(QCoreApplication.translate("PreferencesDialog", u"Channel A Freq Balance", None))
         self.label_coyote_channel_b_freq_balance.setText(QCoreApplication.translate("PreferencesDialog", u"Channel B Freq Balance", None))
         self.label_coyote_channel_a_intensity_balance.setText(QCoreApplication.translate("PreferencesDialog", u"Channel A Intensity Balance", None))
         self.label_coyote_channel_b_intensity_balance.setText(QCoreApplication.translate("PreferencesDialog", u"Channel B Intensity Balance", None))
+        self.groupBox_coyote_algorithm.setTitle(QCoreApplication.translate("PreferencesDialog", u"Algorithm", None))
+        self.label_coyote_max_intensity_change_per_pulse.setText(QCoreApplication.translate("PreferencesDialog", u"Max Intensity Change per Pulse (%)", None))
+        self.groupBox_coyote_display.setTitle(QCoreApplication.translate("PreferencesDialog", u"Display", None))
         self.label_coyote_graph_window.setText(QCoreApplication.translate("PreferencesDialog", u"Graph Window (s)", None))
         self.label_coyote_debug_logging.setText(QCoreApplication.translate("PreferencesDialog", u"Debug Logging", None))
         self.coyote_debug_logging.setText("")
@@ -972,3 +993,4 @@ class Ui_PreferencesDialog(object):
         ___qtablewidgetitem1.setText(QCoreApplication.translate("PreferencesDialog", u"Enabled", None));
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_patterns), QCoreApplication.translate("PreferencesDialog", u"Patterns", None))
     # retranslateUi
+

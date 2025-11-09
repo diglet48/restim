@@ -10,18 +10,8 @@ MAX_PULSE_DURATION_MS = 240
 HARDWARE_MAX_FREQ_HZ = 1000.0 / MIN_PULSE_DURATION_MS  # ~200 Hz
 HARDWARE_MIN_FREQ_HZ = 1000.0 / MAX_PULSE_DURATION_MS  # ~4.17 Hz
 
-# Packet and queue behavior
+# Packet behaviour
 PULSES_PER_PACKET = 4
-QUEUE_HORIZON_S = 0.75
-PACKET_MARGIN = 0.8  # request next packet when ~80% of current one has played
-
-# Pulse generation behavior
-TEXTURE_MIN_HZ = 0.5
-TEXTURE_MAX_HZ = 5.0
-TEXTURE_MAX_DEPTH_FRACTION = 0.5
-JITTER_CLAMP_FRACTION = 0.5
-RANDOMIZATION_LIMIT_FRACTION = 0.1  # limit randomization to 10% of setting
-RESIDUAL_BOUND = 0.49  # clamp fractional residual for rounding fairness
 
 # BLE / Protocol constants
 LOG_PREFIX = "[Coyote]"

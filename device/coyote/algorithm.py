@@ -51,666 +51,232 @@ smooth sensations by varying pulse duration and intensity, but results will diff
 from audio-based continuous algorithms due to fundamental hardware limitations.
 """
 
+from __future__ import annotations
+
 import logging
 import time
-import numpy as np
-from collections import deque
-from typing import List, Tuple, Deque, Optional
-from device.coyote.constants import (
-    MIN_PULSE_DURATION_MS,
-    MAX_PULSE_DURATION_MS,
-    HARDWARE_MIN_FREQ_HZ,
-    HARDWARE_MAX_FREQ_HZ,
-    PULSES_PER_PACKET,
-    QUEUE_HORIZON_S,
-    PACKET_MARGIN,
-    TEXTURE_MIN_HZ,
-    TEXTURE_MAX_HZ,
-    TEXTURE_MAX_DEPTH_FRACTION,
-    JITTER_CLAMP_FRACTION,
-    RANDOMIZATION_LIMIT_FRACTION,
-    RESIDUAL_BOUND
-)
+from dataclasses import dataclass
+from typing import Dict, List, Optional, Tuple
 
-from stim_math.axis import AbstractMediaSync, AbstractAxis
-from stim_math.threephase import ThreePhaseCenterCalibration
-from stim_math.audio_gen.params import CoyoteAlgorithmParams, VolumeParams, SafetyParams
-from stim_math.audio_gen.various import ThreePhasePosition
+from device.coyote.channel_controller import ChannelController
+from device.coyote.channel_state import ChannelState
+from device.coyote.common import normalize, split_seconds, volume_at
+from device.coyote.config import PulseTuning, load_pulse_tuning
+from device.coyote.constants import PULSES_PER_PACKET
+from device.coyote.pulse_generator import PulseGenerator
 from device.coyote.types import CoyotePulse, CoyotePulses
-from qt_ui import settings
+from stim_math.axis import AbstractMediaSync
+from stim_math.audio_gen.params import CoyoteAlgorithmParams, SafetyParams
+from stim_math.audio_gen.various import ThreePhasePosition
+from stim_math.threephase import ThreePhaseCenterCalibration
 
-logger = logging.getLogger('restim.coyote')
-
- 
-
-
-def compute_volume(media: AbstractMediaSync, volume_params: VolumeParams, t: float) -> float:
-    """Calculate the overall volume multiplier from all volume sources."""
-    if not media.is_playing():
-        return 0.0
-
-    master = np.clip(volume_params.master.last_value(), 0, 1)
-    api = np.clip(volume_params.api.interpolate(t), 0, 1)
-    inactivity = np.clip(volume_params.inactivity.last_value(), 0, 1)
-    external = np.clip(volume_params.external.last_value(), 0, 1)
-
-    if inactivity == 0:
-        inactivity = 1.0
-
-    volume = master * api * inactivity * external
-
-    return volume
+logger = logging.getLogger("restim.coyote")
 
 
+@dataclass
+class ChannelPipeline:
+    name: str
+    generator: PulseGenerator
+    controller: ChannelController
+    state: ChannelState
 
-class ChannelState:
-    """Holds the state for a single channel's pulse packet and timing."""
-    def __init__(self):
-        self.current_packet: Deque[CoyotePulse] = deque()
-        self.time_in_packet_ms = 0.0
-        self.total_packet_duration_ms = 0.0
-        self.packet_start_time_s = 0.0
-        self.packet_finish_time_s = 0.0
-
-    def set_new_packet(self, t: float, packet: List[CoyotePulse], time_to_finish_s: float):
-        """Updates the channel with a new packet and its timing information."""
-        self.current_packet = deque(packet)
-        self.packet_start_time_s = t
-        self.packet_finish_time_s = self.packet_start_time_s + time_to_finish_s
-        self.total_packet_duration_ms = sum(p.duration for p in packet)
-        self.time_in_packet_ms = 0.0
-
-    def advance_time(self, delta_time_ms: float):
-        self.time_in_packet_ms += delta_time_ms
-
-    def is_ready_for_next_packet(self) -> bool:
-        """Returns True if the current packet has finished playing."""
-        return self.get_remaining_time_ms() <= 0
-
-    def get_remaining_time_ms(self) -> float:
-        if self.total_packet_duration_ms == 0:
-            return 0.0  # Ready for first packet
-        return max(0.0, self.total_packet_duration_ms - self.time_in_packet_ms)
-
-
-def _normalize_axis(value: float, limits: Tuple[float, float]) -> float:
-    """Normalize a raw axis value to a 0-100 scale based on its limits."""
-    min_val, max_val = limits
-    if max_val <= min_val:
-        return 0.0
-    return (value - min_val) / (max_val - min_val) * 100.0
-
-
-def _get_normalized_parameters(params: CoyoteAlgorithmParams, t: float, 
-                              carrier_freq_limits: Tuple[float, float],
-                              pulse_freq_limits: Tuple[float, float]) -> Tuple[float, float, float, float]:
-    """Get parameter values: normalize frequency axes (Hz), return raw cycle values."""
-    carrier_freq_raw = params.carrier_frequency.interpolate(t)
-    pulse_freq_raw = params.pulse_frequency.interpolate(t)
-    
-    # Normalize frequency axes from Hz ranges
-    carrier_freq = _normalize_axis(carrier_freq_raw, carrier_freq_limits)
-    pulse_freq = _normalize_axis(pulse_freq_raw, pulse_freq_limits)
-    
-    # Return raw cycle values for pulse_width and pulse_rise_time
-    pulse_width_cycles = params.pulse_width.interpolate(t)
-    pulse_rise_time_cycles = params.pulse_rise_time.interpolate(t)
-    
-    return carrier_freq, pulse_freq, pulse_width_cycles, pulse_rise_time_cycles
-
-
-class ContinuousSignal:
-    """Models a single channel's pulse generation.
-
-    Generates pulses with duration anchored to the funscript pulse_frequency parameter,
-    mapped into the channel's configured frequency range. Applies optional jitter and
-    zero-mean micro-texture modulation via the pulse_width parameter.
-    
-    The carrier_frequency parameter controls the speed of the texture modulation phase.
-    """
-
-    def __init__(self, params: CoyoteAlgorithmParams, channel_params: 'CoyoteChannelParams',
-                 carrier_freq_limits: Tuple[float, float], pulse_freq_limits: Tuple[float, float],
-                 pulse_width_limits: Tuple[float, float], pulse_rise_time_limits: Tuple[float, float],
-                 channel_name: str = ""):
-        self.params = params
-        self.channel_params = channel_params
-        self.carrier_freq_limits = carrier_freq_limits
-        self.pulse_freq_limits = pulse_freq_limits
-        self.pulse_width_limits = pulse_width_limits
-        self.pulse_rise_time_limits = pulse_rise_time_limits
-        self.channel_name = channel_name
-        
-        # Timing state
-        self._last_pulse_time = 0.0
-        self._start_time = None
-        self.modulation_phase = 0.0
-        self._duration_residual_ms = 0.0  # fractional ms accumulator to reduce rounding jitter
-
-    def _calculate_effective_frequency_limits(self) -> Tuple[float, float]:
-        """Calculate effective frequency limits considering hardware constraints."""
-        channel_min = self.channel_params.minimum_frequency.get()
-        channel_max = self.channel_params.maximum_frequency.get()
-        hardware_max = HARDWARE_MAX_FREQ_HZ  # ~200 Hz
-        hardware_min = HARDWARE_MIN_FREQ_HZ  # ~4.17 Hz
-        
-        effective_min = max(channel_min, hardware_min)
-        effective_max = min(channel_max, hardware_max)
-        
-        # Fallback to hardware limits if channel limits are invalid
-        if effective_min >= effective_max:
-            effective_min = hardware_min
-            effective_max = hardware_max
-            
-        return effective_min, effective_max
-
-    def _apply_frequency_randomization(self, base_frequency: float, randomization_strength: float,
-                                     min_freq: float, max_freq: float) -> float:
-        """Apply limited randomization to frequency."""
-        if randomization_strength <= 0:
-            return base_frequency
-            
-        # Limit randomization to a fraction of the setting
-        random_percentage = randomization_strength / 100.0 * RANDOMIZATION_LIMIT_FRACTION
-        random_factor = 1.0 + (np.random.rand() - 0.5) * 2 * random_percentage
-        randomized_freq = base_frequency * random_factor
-        
-        return np.clip(randomized_freq, min_freq, max_freq)
-
-    def get_pulse_at(self, current_time: float, base_intensity: float, pulse_index: int = 0) -> CoyotePulse:
-        """Generate a pulse anchored to the requested pulse_frequency with optional jitter.
-
-        - pulse_frequency: controls the base repetition rate (Hz)
-        - pulse_interval_random: ±fractional jitter of the base duration
-        - pulse_width: controls zero-mean micro-texture depth (duration modulation)
-        - intensity: provided by caller (volume × position, smoothed elsewhere)
-        """
-        # Initialize timing state
-        if self._start_time is None:
-            self._start_time = current_time
-        self._last_pulse_time = current_time
-
-        # Effective channel limits → convert to duration window
-        min_freq, max_freq = self._calculate_effective_frequency_limits()
-        min_dur = max(MIN_PULSE_DURATION_MS, int(round(1000.0 / max_freq)))
-        max_dur = min(MAX_PULSE_DURATION_MS, int(round(1000.0 / min_freq)))
-
-        # Map global funscript pulse_frequency into the channel's preferred range
-        # 1) Normalize funscript value using global pulse_freq_limits (kit limits)
-        raw_pf = float(self.params.pulse_frequency.interpolate(current_time))
-        pf_min, pf_max = self.pulse_freq_limits
-        if pf_max <= pf_min:
-            pf_norm = 0.0
-        else:
-            pf_norm = float(np.clip((raw_pf - pf_min) / (pf_max - pf_min), 0.0, 1.0))
-        # 2) Map normalized value into channel-specific [min_freq, max_freq]
-        mapped_freq = min_freq + pf_norm * (max_freq - min_freq)
-        mapped_freq = float(np.clip(mapped_freq, min_freq, max_freq))
-        base_duration = 1000.0 / mapped_freq if mapped_freq > 0 else max_dur
-
-        # Optional jitter around base duration (from funscript)
-        jitter = float(self.params.pulse_interval_random.interpolate(current_time))
-        # Treat jitter as a 0..1 fraction; clamp to avoid pathological spans
-        jitter = float(np.clip(jitter, 0.0, JITTER_CLAMP_FRACTION))
-        jitter_factor = 1.0 + (np.random.rand() * 2.0 - 1.0) * jitter
-
-        # Micro-texture from pulse_width (depth) with phase advanced in _advance_channel_states
-        # Normalize pulse_width cycles to 0..1 using limits
-        width_cycles = float(self.params.pulse_width.interpolate(current_time))
-        min_w, max_w = self.pulse_width_limits
-        width_norm = 0.0 if max_w <= min_w else np.clip((width_cycles - min_w) / (max_w - min_w), 0.0, 1.0)
-
-        # Floating headroom on each side of base (use float limits, clamp to >=0)
-        min_dur_f = 1000.0 / max_freq
-        max_dur_f = 1000.0 / min_freq
-        amp_up_ms = max(0.0, max_dur_f - base_duration)  # can increase duration up to this much
-        amp_dn_ms = max(0.0, base_duration - min_dur_f)  # can decrease duration up to this much
-
-        amp_up_ms *= TEXTURE_MAX_DEPTH_FRACTION * width_norm
-        amp_dn_ms *= TEXTURE_MAX_DEPTH_FRACTION * width_norm
-
-        # Zero-mean texture respecting asymmetric headroom
-        s = np.sin(self.modulation_phase)
-        if amp_up_ms > 1e-6 and amp_dn_ms > 1e-6:
-            # Symmetric case: use sine with symmetric amplitude
-            texture_amplitude_ms = min(amp_up_ms, amp_dn_ms)
-            texture_ms = texture_amplitude_ms * s
-            tex_mode = 'sym'
-        elif amp_up_ms > 1e-6:
-            # One-sided (can only go up). Use rectified sine and subtract DC (E|sin|=2/π)
-            texture_amplitude_ms = amp_up_ms
-            texture_ms = amp_up_ms * (abs(s) - 2.0/np.pi)
-            tex_mode = 'up'
-        elif amp_dn_ms > 1e-6:
-            # One-sided (can only go down). Negative rectified sine with DC removed
-            texture_amplitude_ms = amp_dn_ms
-            texture_ms = -amp_dn_ms * (abs(s) - 2.0/np.pi)
-            tex_mode = 'down'
-        else:
-            texture_amplitude_ms = 0.0
-            texture_ms = 0.0
-            tex_mode = 'none'
-
-        desired_ms = base_duration * jitter_factor + texture_ms
-
-        # Fractional-duration accumulation to reduce jagged 10↔11ms toggling
-        accum = self._duration_residual_ms + desired_ms
-        pulse_duration = int(np.floor(accum + 0.5))  # nearest int
-        self._duration_residual_ms = accum - pulse_duration
-        # Keep residual bounded for numerical stability
-        if self._duration_residual_ms > RESIDUAL_BOUND:
-            self._duration_residual_ms = RESIDUAL_BOUND
-        elif self._duration_residual_ms < -RESIDUAL_BOUND:
-            self._duration_residual_ms = -RESIDUAL_BOUND
-
-        # Clamp to channel-specific duration window and hardware bounds
-        clamped = False
-        if pulse_duration < min_dur:
-            pulse_duration = min_dur
-            clamped = True
-        elif pulse_duration > max_dur:
-            pulse_duration = max_dur
-            clamped = True
-        # If clamped to bounds, do not let residual drift; rounding is only for integer fairness
-        if clamped:
-            self._duration_residual_ms = 0.0
-
-        final_frequency = int(max(1, round(1000.0 / pulse_duration)))
-
-        # Intensity is supplied by the caller (already smoothed). Do not modulate here.
-        final_intensity = int(np.clip(base_intensity, 0, 100))
-
-        # Debug: log pulse generation details
-        if logger.isEnabledFor(logging.DEBUG):
-            logger.debug(
-                f"  [{self.channel_name}] pulse #{pulse_index}: "
-                f"freq_raw={raw_pf:.1f} Hz, freq_norm={pf_norm:.2f}, freq_mapped={mapped_freq:.1f} Hz, "
-                f"freq_limits=({min_freq:.1f}-{max_freq:.1f}) Hz | "
-                f"base_dur={base_duration:.1f} ms, dur_limits=({min_dur}-{max_dur}) ms, width_norm={width_norm:.2f}, "
-                f"jitter={jitter:.0%} | "
-                f"texture_mode={tex_mode}, texture_up={amp_up_ms:.2f} ms, texture_dn={amp_dn_ms:.2f} ms, texture_used={texture_amplitude_ms:.2f} ms | "
-                f"desired={desired_ms:.2f} ms, residual={self._duration_residual_ms:+.2f} ms | "
-                f"result: dur={pulse_duration} ms, freq={final_frequency} Hz, intensity={final_intensity}%"
-            )
-
-        return CoyotePulse(
-            duration=pulse_duration,
-            intensity=final_intensity,
-            frequency=final_frequency,
-        )
-
-
-
-
-class ChannelController:
-    """Encapsulates per-channel queuing, smoothing, and packet assembly."""
-
-    def __init__(self,
-                 name: str,
-                 media: AbstractMediaSync,
-                 params: CoyoteAlgorithmParams,
-                 signal: ContinuousSignal,
-                 get_positional_intensities,
-                 queue_horizon_s: float = QUEUE_HORIZON_S):
-        self.name = name  # 'A' or 'B'
-        self.media = media
-        self.params = params
-        self.signal = signal
-        self.get_positional_intensities = get_positional_intensities
-        self.queue_horizon_s = queue_horizon_s
-
-        self.queue: Deque[CoyotePulse] = deque()
-        self.queue_end_time: float | None = None
-
-        # Smoothing state
-        self._last_intensity: float | None = None
-        self._last_intensity_time: float | None = None
-        
-        # Fill summary for logging
-        self._last_fill_summary = None
-
-    def _generate_single_pulse(self, t_pulse: float, seq_index: int) -> CoyotePulse:
-        volume = compute_volume(self.media, self.params.volume, t_pulse)
-        ia, ib = self.get_positional_intensities(t_pulse, volume)
-        target_intensity = float(ia if self.name == 'A' else ib)
-
-        carrier_hz = float(self.params.carrier_frequency.interpolate(t_pulse))
-        rise_cycles = float(self.params.pulse_rise_time.interpolate(t_pulse))
-        tau_s = 0.0 if carrier_hz <= 0 else (rise_cycles / carrier_hz)
-
-        last_y = self._last_intensity
-        last_t = self._last_intensity_time
-        if last_y is None or tau_s <= 0 or last_t is None:
-            y = target_intensity
-        else:
-            dt = max(0.0, t_pulse - last_t)
-            allowed = (dt / tau_s) * 100.0
-            max_change = self.params.max_intensity_change_per_pulse.get()
-            if max_change > 0:
-                allowed = min(allowed, max_change)
-            delta = np.clip(target_intensity - last_y, -allowed, allowed)
-            y = last_y + delta
-
-        self._last_intensity = y
-        self._last_intensity_time = t_pulse
-
-        intensity = int(np.clip(round(y), 0, 100))
-        pulse = self.signal.get_pulse_at(t_pulse, intensity, seq_index)
-        return pulse
-
-    def fill_queue(self, now_s: float) -> None:
-        # Compute end_time from current queue coverage relative to now
-        coverage_s = sum(p.duration for p in self.queue) / 1000.0
-        end_time = now_s + coverage_s
-        horizon_end = now_s + self.queue_horizon_s
-        
-        seq_index = 0
-        new_pulses = []
-        while end_time < horizon_end or len(self.queue) < PULSES_PER_PACKET:
-            pulse = self._generate_single_pulse(end_time, seq_index)
-            self.queue.append(pulse)
-            new_pulses.append(pulse)
-            end_time += pulse.duration / 1000.0
-            seq_index += 1
-
-        self.queue_end_time = end_time
-        
-        # Log queue fill summary
-        if logger.isEnabledFor(logging.DEBUG):
-            if new_pulses:
-                durations = [p.duration for p in new_pulses]
-                frequencies = [p.frequency for p in new_pulses]
-                total_ms = sum(durations)
-                logger.debug(
-                    f"  [{self.name}] Queue filled: "
-                    f"added={len(new_pulses)}, "
-                    f"dur_range={min(durations)}-{max(durations)} ms, "
-                    f"freq_range={min(frequencies)}-{max(frequencies)} Hz, "
-                    f"total_added={total_ms} ms | "
-                    f"queue_size={len(self.queue)}, "
-                    f"coverage={coverage_s * 1000:.0f} ms, "
-                    f"horizon={self.queue_horizon_s * 1000:.0f} ms\n"
-                )
-                self._last_fill_summary = (
-                    len(new_pulses),
-                    min(durations),
-                    max(durations),
-                    min(frequencies),
-                    max(frequencies)
-                )
-            else:
-                logger.debug(
-                    f"  [{self.name}] Queue status: "
-                    f"queue_size={len(self.queue)}, "
-                    f"coverage={coverage_s * 1000:.0f} ms, "
-                    f"horizon={self.queue_horizon_s * 1000:.0f} ms (no refill needed)\n"
-                )
-                self._last_fill_summary = None
-        else:
-            self._last_fill_summary = None
-
-    def pop_packet(self) -> List[CoyotePulse]:
-        packet: List[CoyotePulse] = []
-        while len(packet) < PULSES_PER_PACKET:
-            if self.queue:
-                packet.append(self.queue.popleft())
-            else:
-                packet.append(CoyotePulse(frequency=0, intensity=0, duration=MIN_PULSE_DURATION_MS))
-        return packet
-
-    def has_minimum_pulses(self, n: int) -> bool:
-        return len(self.queue) >= n
 
 class CoyoteAlgorithm:
-    """Coyote 3.0 pulse generation algorithm.
-    
-    Coordinates dual-channel pulse generation using ContinuousSignal instances.
-    Handles packet timing, positional intensity distribution, and smoothed intensity transitions.
-    Each channel maintains an independent pulse queue for continuous output.
-    """
-    def __init__(self, media: AbstractMediaSync, params: CoyoteAlgorithmParams, safety_limits: SafetyParams,
-                 carrier_freq_limits: Tuple[float, float], pulse_freq_limits: Tuple[float, float],
-                 pulse_width_limits: Tuple[float, float], pulse_rise_time_limits: Tuple[float, float]):
+    def __init__(
+        self,
+        media: AbstractMediaSync,
+        params: CoyoteAlgorithmParams,
+        safety_limits: SafetyParams,
+        carrier_freq_limits: Tuple[float, float],
+        pulse_freq_limits: Tuple[float, float],
+        pulse_width_limits: Tuple[float, float],
+        pulse_rise_time_limits: Tuple[float, float],
+        tuning: Optional[PulseTuning] = None,
+    ) -> None:
         self.media = media
         self.params = params
-        self.calibration = ThreePhaseCenterCalibration(params.calibrate)
+        self.safety_limits = safety_limits
+        self._carrier_limits = carrier_freq_limits
+        self._pulse_rise_time_limits = pulse_rise_time_limits  # retained for API compatibility
+        self.tuning = tuning or load_pulse_tuning()
+
         self.position = ThreePhasePosition(params.position, params.transform)
 
-        self.signal_a = ContinuousSignal(params, params.channel_a, carrier_freq_limits, pulse_freq_limits,
-                                         pulse_width_limits, pulse_rise_time_limits, channel_name="A")
-        self.signal_b = ContinuousSignal(params, params.channel_b, carrier_freq_limits, pulse_freq_limits,
-                                         pulse_width_limits, pulse_rise_time_limits, channel_name="B")
+        channels: List[ChannelPipeline] = []
+        for name, channel_params in (("A", params.channel_a), ("B", params.channel_b)):
+            generator = PulseGenerator(name, params, channel_params, carrier_freq_limits, pulse_freq_limits, pulse_width_limits, self.tuning)
+            controller = ChannelController(name, media, params, generator, self._positional_intensity, self.tuning)
+            state = ChannelState()
+            channels.append(ChannelPipeline(name, generator, controller, state))
+        self._channels: Tuple[ChannelPipeline, ...] = tuple(channels)
 
-        self.channel_a = ChannelState()
-        self.channel_b = ChannelState()
-
-        self.start_time = None
-        self.last_update_time_s = 0.0
-        self.next_update_time = 0.0
-
-        # Per-channel controllers (queues, smoothing, assembly)
-        self.ctrl_a = ChannelController(
-            'A', self.media, self.params, self.signal_a,
-            get_positional_intensities=self._get_positional_intensities,
-            queue_horizon_s=QUEUE_HORIZON_S,
-        )
-        self.ctrl_b = ChannelController(
-            'B', self.media, self.params, self.signal_b,
-            get_positional_intensities=self._get_positional_intensities,
-            queue_horizon_s=QUEUE_HORIZON_S,
-        )
-
-        # Smoothing state handled by ChannelController
-
-    # Channel-specific pulse generation and queues moved to ChannelController
-
-    def _get_positional_intensities(self, t: float, volume: float) -> Tuple[int, int]:
-        """Barycentric phase diagram mapping: (beta, alpha) with left=+1, right=-1, neutral=+1 (top)."""
-        alpha, beta = self.position.get_position(t)
-
-        # Barycentric weights for triangle corners
-        w_L = max(0.0, (beta + 1) / 2)
-        w_R = max(0.0, (1 - beta) / 2)
-        w_N = max(0.0, alpha)
-        sum_w = w_L + w_R + w_N
-        if sum_w > 0:
-            w_L /= sum_w
-            w_R /= sum_w
-            w_N /= sum_w
-        else:
-            w_L = w_R = w_N = 0.0
-
-        # Calibration scaling
-        center_val = self.params.calibrate.center.last_value()
-        center_calib = ThreePhaseCenterCalibration(center_val)
-        scale = center_calib.get_scale(alpha, beta)
-
-        # Channel mapping: A = left+neutral, B = right+neutral
-        intensity_a = int((w_L + w_N) * volume * scale * 100.0)
-        intensity_b = int((w_R + w_N) * volume * scale * 100.0)
-
-        return intensity_a, intensity_b
-
-    # Per-channel pulse generation was refactored into ChannelController
-
-    def _get_media_type(self) -> str:
-        """Determine the media type for logging purposes."""
-        if hasattr(self.media, 'media_type'):
-            return str(getattr(self.media, 'media_type'))
-        
-        class_name = self.media.__class__.__name__.lower()
-        if class_name.startswith('internal'):
-            return 'internal'
-        elif 'vlc' in class_name:
-            return 'vlc'
-        elif 'mpv' in class_name:
-            return 'mpv'
-        else:
-            return class_name
-
-    def _get_display_time(self, current_time: float) -> Tuple[int, int, int, int]:
-        """Get formatted time for debug logging."""
-        media_type = self._get_media_type()
-        
-        # Try to use media timestamp if available
-        if (media_type != 'internal' and 
-            hasattr(self.media, 'is_playing') and self.media.is_playing() and 
-            hasattr(self.media, 'map_timestamp')):
-            try:
-                rel_time_s = self.media.map_timestamp(time.time())
-                if rel_time_s is not None and rel_time_s >= 0:
-                    return self._seconds_to_time_components(rel_time_s)
-            except Exception:
-                pass
-        
-        # Use local time for internal media
-        if media_type == 'internal':
-            now = time.localtime()
-            millis = int((time.time() - int(time.time())) * 1000)
-            return now.tm_hour, now.tm_min, now.tm_sec, millis
-        
-        # Use relative time from start
-        if self.start_time is None:
-            self.start_time = current_time
-        rel_time_s = current_time - self.start_time
-        return self._seconds_to_time_components(rel_time_s)
-
-    def _seconds_to_time_components(self, seconds: float) -> Tuple[int, int, int, int]:
-        """Convert seconds to (hours, minutes, seconds, milliseconds)."""
-        hours = int(seconds // 3600)
-        minutes = int((seconds % 3600) // 60)
-        secs = int(seconds % 60)
-        millis = int((seconds - int(seconds)) * 1000)
-        return hours, minutes, secs, millis
-
-    def _advance_channel_states(self, current_time: float, delta_time_ms: float) -> None:
-        """Advance channel timing and modulation phase for the next packet."""
-        self.channel_a.advance_time(delta_time_ms)
-        self.channel_b.advance_time(delta_time_ms)
-
-        # Advance shared micro-texture phase using carrier axis as speed control (mapped to ~0.5..5 Hz)
-        carrier_norm, _, _, _ = _get_normalized_parameters(
-            self.params, current_time, self.signal_a.carrier_freq_limits, self.signal_a.pulse_freq_limits)
-        texture_speed_hz = TEXTURE_MIN_HZ + (TEXTURE_MAX_HZ - TEXTURE_MIN_HZ) * (carrier_norm / 100.0)
-        delta_time_s = delta_time_ms / 1000.0
-        phase_change = (delta_time_s * texture_speed_hz) * 2 * np.pi
-        # Keep both channels in sync for texture phase
-        self.signal_a.modulation_phase = (self.signal_a.modulation_phase + phase_change) % (2 * np.pi)
-        self.signal_b.modulation_phase = (self.signal_b.modulation_phase + phase_change) % (2 * np.pi)
-
-    def _is_packet_generation_needed(self) -> bool:
-        """Check if either channel needs a new packet.
-
-        We also allow proactive generation if queues are running low, to avoid
-        starving the device with repeats for too long.
-        """
-        low_queue = (not self.ctrl_a.has_minimum_pulses(PULSES_PER_PACKET) or
-                     not self.ctrl_b.has_minimum_pulses(PULSES_PER_PACKET))
-        ready = (self.channel_a.is_ready_for_next_packet() or
-                 self.channel_b.is_ready_for_next_packet())
-        return ready or low_queue
-
-    def _schedule_next_update(self, current_time: float, packet_duration_a: float, 
-                             packet_duration_b: float, margin: float = PACKET_MARGIN) -> float:
-        """Schedule the next update time based on packet durations. Returns next update delta in ms."""
-        min_duration = min(packet_duration_a, packet_duration_b)
-        self.next_update_time = current_time + min_duration * margin
-        return min_duration * margin * 1000
-
-    def _log_packet_debug(self, current_time: float, alpha: float, beta: float, 
-                         pulses_a: List[CoyotePulse], pulses_b: List[CoyotePulse],
-                         total_duration_a: float, total_duration_b: float, next_update_ms: float, margin: float) -> None:
-        """Log debug information for generated packet."""
-        if not logger.isEnabledFor(logging.DEBUG):
-            return
-            
-        hours, minutes, seconds, millis = self._get_display_time(current_time)
-        media_type = self._get_media_type()
-        volume = compute_volume(self.media, self.params.volume, current_time)
-        
-        log_lines = [
-            "=" * 72,
-            f"Packet Generated @ {hours:02}:{minutes:02}:{seconds:02}.{millis:03} [{media_type}]",
-            "=" * 72,
-            f"Position: alpha={alpha:+.2f}, beta={beta:+.2f}, volume={volume:.0%}",
-            "",
-            f"Channel A: duration={total_duration_a:.0f} ms",
-        ]
-        
-        for i, p in enumerate(pulses_a, 1):
-            log_lines.append(f"  Pulse {i}: {p.duration} ms @ {p.frequency} Hz ({p.intensity}%)")
-        
-        log_lines.extend([
-            "",
-            f"Channel B: duration={total_duration_b:.0f} ms"
-        ])
-        
-        for i, p in enumerate(pulses_b, 1):
-            log_lines.append(f"  Pulse {i}: {p.duration} ms @ {p.frequency} Hz ({p.intensity}%)")
-        
-        log_lines.extend([
-            "",
-            f"Next update: {next_update_ms:.0f} ms (packet_dur_a={total_duration_a:.0f} ms, packet_dur_b={total_duration_b:.0f} ms, margin={margin:.0%})",
-            "=" * 72,
-            ""
-        ])
-        
-        logger.debug("\n".join(log_lines))
+        self._last_update_time: Optional[float] = None
+        self.next_update_time: float = 0.0
+        self._start_time: Optional[float] = None
 
     def generate_packet(self, current_time: float) -> Optional[CoyotePulses]:
-        """Generate one packet of pulses for both channels."""
-        # Request next packet after threshold of current one has played
-        
-        # Initialize timing on first call
-        if self.last_update_time_s == 0.0:
-            self.last_update_time_s = current_time
+        if self._last_update_time is None:
+            self._last_update_time = current_time
 
-        # Advance channel states
-        delta_time_ms = (current_time - self.last_update_time_s) * 1000.0
-        self.last_update_time_s = current_time
-        self._advance_channel_states(current_time, delta_time_ms)
+        delta_ms = max(0.0, (current_time - self._last_update_time) * 1000.0)
+        self._last_update_time = current_time
 
-        # Check if packet generation is needed
-        if not self._is_packet_generation_needed():
-            # Schedule next update based on remaining time
-            remaining_time_ms = min(
-                self.channel_a.get_remaining_time_ms(),
-                self.channel_b.get_remaining_time_ms()
-            )
-            self.next_update_time = current_time + (remaining_time_ms / 1000.0) * PACKET_MARGIN
+        self._advance_state(current_time, delta_ms)
+
+        if not self._needs_packet():
+            self._schedule_from_remaining(current_time)
             return None
 
-        # Ensure queues are filled ahead of time
-        if logger.isEnabledFor(logging.DEBUG):
-            logger.debug("=== Channel A: Filling Queue ===")
-        self.ctrl_a.fill_queue(current_time)
-        
-        if logger.isEnabledFor(logging.DEBUG):
-            logger.debug("=== Channel B: Filling Queue ===")
-        self.ctrl_b.fill_queue(current_time)
+        for channel in self._channels:
+            channel.controller.fill_queue(current_time)
 
-        # Assemble packets by popping from queues (atomic update for A and B)
-        alpha, beta = self.position.get_position(current_time)
-        pulses_a = self.ctrl_a.pop_packet()
-        pulses_b = self.ctrl_b.pop_packet()
-        duration_a = sum(p.duration for p in pulses_a)
-        duration_b = sum(p.duration for p in pulses_b)
+        packet_map: Dict[str, List[CoyotePulse]] = {}
+        duration_map: Dict[str, int] = {}
+        for channel in self._channels:
+            pulses = channel.controller.next_packet()
+            channel.state.load_packet(current_time, pulses)
+            packet_map[channel.name] = pulses
+            duration_map[channel.name] = sum(p.duration for p in pulses)
 
-        # Update channel states so readiness reflects packet progress
-        try:
-            self.channel_a.set_new_packet(current_time, pulses_a, duration_a / 1000.0)
-            self.channel_b.set_new_packet(current_time, pulses_b, duration_b / 1000.0)
-        except Exception:
-            pass
+        pulses_a = packet_map.get("A", [])
+        pulses_b = packet_map.get("B", [])
+        duration_a_ms = duration_map.get("A", 0)
+        duration_b_ms = duration_map.get("B", 0)
 
-        # Schedule next update and get the delta for logging
-        next_update_ms = self._schedule_next_update(current_time, duration_a / 1000.0, duration_b / 1000.0, PACKET_MARGIN)
-        
-        # Log debug information
-        self._log_packet_debug(current_time, alpha, beta, pulses_a, pulses_b, duration_a, duration_b, next_update_ms, PACKET_MARGIN)
+        durations = [duration for duration in duration_map.values() if duration > 0]
+        if not durations:
+            durations = [1]
+        min_duration_ms = max(1, min(durations))
+        self.next_update_time = current_time + (min_duration_ms / 1000.0) * self.tuning.packet_margin
+
+        self._log_packet(current_time, pulses_a, pulses_b, duration_a_ms, duration_b_ms)
 
         return CoyotePulses(pulses_a, pulses_b)
 
-
     def get_next_update_time(self) -> float:
         return self.next_update_time
+
+    def _needs_packet(self) -> bool:
+        queue_low = any(not channel.controller.has_pulses(PULSES_PER_PACKET) for channel in self._channels)
+        ready = any(channel.state.ready() for channel in self._channels)
+        return ready or queue_low
+
+    def _advance_state(self, current_time: float, delta_ms: float) -> None:
+        for channel in self._channels:
+            channel.state.advance(delta_ms)
+
+        delta_s = delta_ms / 1000.0
+        if delta_s <= 0:
+            return
+
+        carrier_hz = float(self.params.carrier_frequency.interpolate(current_time))
+        carrier_norm = normalize(carrier_hz, self._carrier_limits)
+        texture_speed = self.tuning.texture_min_hz + (self.tuning.texture_max_hz - self.tuning.texture_min_hz) * carrier_norm
+
+        for channel in self._channels:
+            channel.generator.advance_phase(texture_speed, delta_s)
+
+    def _schedule_from_remaining(self, current_time: float) -> None:
+        remaining = min(channel.state.remaining_ms() for channel in self._channels)
+        self.next_update_time = current_time + (remaining / 1000.0) * self.tuning.packet_margin
+
+    def _positional_intensity(self, time_s: float, volume: float) -> Tuple[int, int]:
+        alpha, beta = self.position.get_position(time_s)
+
+        w_left = max(0.0, (beta + 1.0) / 2.0)
+        w_right = max(0.0, (1.0 - beta) / 2.0)
+        w_neutral = max(0.0, alpha)
+
+        total = w_left + w_right + w_neutral
+        if total > 0:
+            w_left /= total
+            w_right /= total
+            w_neutral /= total
+        else:
+            w_left = w_right = w_neutral = 0.0
+
+        center_db = float(self.params.calibrate.center.last_value())
+        scale = ThreePhaseCenterCalibration(center_db).get_scale(alpha, beta)
+
+        intensity_a = int((w_left + w_neutral) * volume * scale * 100.0)
+        intensity_b = int((w_right + w_neutral) * volume * scale * 100.0)
+        return intensity_a, intensity_b
+
+    def _log_packet(
+        self,
+        current_time: float,
+        pulses_a: List[CoyotePulse],
+        pulses_b: List[CoyotePulse],
+        duration_a_ms: int,
+        duration_b_ms: int,
+    ) -> None:
+        if not logger.isEnabledFor(logging.DEBUG):
+            return
+
+        alpha, beta = self.position.get_position(current_time)
+        comps = self._display_time_components(current_time)
+        media_type = self._media_type()
+        volume = volume_at(self.media, self.params.volume, current_time)
+
+        lines = [
+            "=" * 72,
+            f"Packet Generated @ {comps[0]:02}:{comps[1]:02}:{comps[2]:02}.{comps[3]:03} [{media_type}]",
+            "=" * 72,
+            f"Position: alpha={alpha:+.2f}, beta={beta:+.2f}, volume={volume:.0%}",
+            "",
+            f"Channel A: duration={duration_a_ms:.0f} ms",
+        ]
+
+        for idx, pulse in enumerate(pulses_a, 1):
+            lines.append(f"  Pulse {idx}: {pulse.duration} ms @ {pulse.frequency} Hz ({pulse.intensity}%)")
+
+        lines.extend(["", f"Channel B: duration={duration_b_ms:.0f} ms"])
+        for idx, pulse in enumerate(pulses_b, 1):
+            lines.append(f"  Pulse {idx}: {pulse.duration} ms @ {pulse.frequency} Hz ({pulse.intensity}%)")
+
+        next_ms = max(0.0, (self.next_update_time - current_time) * 1000.0)
+        lines.extend(
+            [
+                "",
+                f"Next update: {next_ms:.0f} ms "
+                f"(packet_dur_a={duration_a_ms:.0f} ms, packet_dur_b={duration_b_ms:.0f} ms, margin={self.tuning.packet_margin:.0%})",
+                "=" * 72,
+                "",
+            ]
+        )
+
+        logger.debug("\n".join(lines))
+
+    def _media_type(self) -> str:
+        media_type = getattr(self.media, "media_type", None)
+        if media_type:
+            return str(media_type)
+        class_name = self.media.__class__.__name__.lower()
+        if class_name.startswith("internal"):
+            return "internal"
+        if "vlc" in class_name:
+            return "vlc"
+        if "mpv" in class_name:
+            return "mpv"
+        return class_name
+
+    def _display_time_components(self, current_time: float):
+        media_type = getattr(self.media, "media_type", None)
+        if media_type and str(media_type).lower() != "internal":
+            mapper = getattr(self.media, "map_timestamp", None)
+            if callable(mapper) and self.media.is_playing():
+                try:
+                    rel_time = mapper(time.time())
+                    if rel_time is not None and rel_time >= 0:
+                        return split_seconds(rel_time)
+                except Exception:  # pragma: no cover - defensive
+                    pass
+
+        if media_type and str(media_type).lower() == "internal":
+            now = time.localtime()
+            millis = int((time.time() - int(time.time())) * 1000)
+            return now.tm_hour, now.tm_min, now.tm_sec, millis
+
+        if self._start_time is None:
+            self._start_time = current_time
+        return split_seconds(current_time - self._start_time)
