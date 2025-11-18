@@ -1,4 +1,5 @@
 import logging
+import os.path
 import numpy as np
 import time
 
@@ -118,7 +119,18 @@ class AudioWriteDialog(QDialog, Ui_AudioWriteDialog):
                 self.progress.emit(0)
                 start_time = time.time()
                 try:
-                    file = sf.SoundFile(filename, mode='w', samplerate=samplerate, channels=algo.channel_count())
+                    _, ext = os.path.splitext(filename)
+                    if ext.lower() == 'mp3':
+                        # use constant instead of variable bitrate for mp3
+                        # to improve seeking accuracy in VLC and other players
+                        compression_level = 0.9
+                        bitrate_mode = 'CONSTANT'
+                    else:
+                        compression_level = None
+                        bitrate_mode = None
+
+                    file = sf.SoundFile(filename, mode='w', samplerate=samplerate, channels=algo.channel_count(),
+                                        compression_level=compression_level, bitrate_mode=bitrate_mode)
                 except TypeError as e:
                     logger.error("Could not open output file. Error message is:")
                     logger.error(e.__str__())
