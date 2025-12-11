@@ -1,5 +1,7 @@
 <RCC>
   <qresource prefix="restim">
+    <file>phase diagram foc.svg</file>
+    <file>phase diagram stereostim.svg</file>
     <file>favicon.png</file>
     <file>wizard/continuous.svg</file>
     <file>wizard/pulse_based.svg</file>

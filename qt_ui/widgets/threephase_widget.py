@@ -39,11 +39,9 @@ class ThreephaseWidgetBase(QtWidgets.QGraphicsView):
 
         scene = QtWidgets.QGraphicsScene()
         self.setScene(scene)
-        svg = QtSvgWidgets.QGraphicsSvgItem(resources.phase_diagram_bg)
-        scene.addItem(svg)
-        svg.setPos(-svg.boundingRect().width()/2.0, -svg.boundingRect().height()/2.0)
-        self.svg = svg
         self.scene = scene
+        self.background_svg = None
+        self.set_background(stereo=True)
         self.setBackgroundBrush(Qt.white)
 
         self.setMouseTracking(True)
@@ -70,7 +68,7 @@ class ThreephaseWidgetBase(QtWidgets.QGraphicsView):
     def mouse_event_screen_pos(self, mouse_x, mouse_y, buttons: QtCore.Qt.MouseButtons):
         view_pos = QPoint(mouse_x, mouse_y)
         scene_pos = self.mapToScene(view_pos)
-        item_pos = self.svg.mapToItem(self.svg, scene_pos)
+        item_pos = self.background_svg.mapToItem(self.background_svg, scene_pos)
         a, b = item_pos_to_ab(item_pos.x(), item_pos.y())
         return self.mouse_event(a, b, buttons)
 
@@ -80,6 +78,20 @@ class ThreephaseWidgetBase(QtWidgets.QGraphicsView):
         #     do stuff
         pass
 
+    def set_background(self, stereo=False, foc=False):
+        if self.background_svg:
+            self.scene.removeItem(self.background_svg)
+
+        if stereo:
+            self.background_svg = QtSvgWidgets.QGraphicsSvgItem(":/restim/phase diagram stereostim.svg")
+        else:
+            self.background_svg = QtSvgWidgets.QGraphicsSvgItem(":/restim/phase diagram foc.svg")
+
+        self.scene.addItem(self.background_svg)
+        self.background_svg.setPos(
+            -self.background_svg.boundingRect().width()/2.0,
+            -self.background_svg.boundingRect().height()/2.0)
+        self.background_svg.setZValue(-1)
 
 
 class ThreephaseWidgetAlphaBeta(ThreephaseWidgetBase):

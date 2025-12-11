@@ -24,6 +24,7 @@ import qt_ui.simfile_conversion_dialog
 import qt_ui.focstim_flash_dialog
 import qt_ui.funscript_decomposition_dialog
 import qt_ui.preferences_dialog
+import qt_ui.about_dialog
 import qt_ui.settings
 import net.serialproxy
 import net.buttplug_wsdm_client
@@ -194,6 +195,9 @@ class Window(QMainWindow, Ui_MainWindow):
 
         self.settings_dialog = qt_ui.preferences_dialog.PreferencesDialog()
         self.actionPreferences.triggered.connect(self.open_preferences_dialog)
+
+        self.about_dialog = qt_ui.about_dialog.AboutDialog(self)
+        self.actionAbout.triggered.connect(self.open_about_dialog)
 
         self.iconMedia = IconWithConnectionStatus(self.actionMedia.icon(), self.toolBar.widgetForAction(self.actionMedia))
         self.actionMedia.setIcon(QIcon(self.iconMedia))
@@ -402,6 +406,13 @@ class Window(QMainWindow, Ui_MainWindow):
                 self.stackedWidget_visual.indexOf(self.page_fourphase)
             )
 
+        if config.device_type == DeviceType.AUDIO_THREE_PHASE:
+            self.graphicsView_threephase.set_background(stereo=True)
+            self.tab_threephase.phase_widget_calibration.set_background(stereo=True)
+        else:
+            self.graphicsView_threephase.set_background(foc=True)
+            self.tab_threephase.phase_widget_calibration.set_background(foc=True)
+
         self.refresh_pattern_combobox()
 
     def pattern_selection_changed(self, index):
@@ -525,6 +536,10 @@ class Window(QMainWindow, Ui_MainWindow):
         self.signal_stop(PlayState.STOPPED)
         self.settings_dialog.exec()
         self.reload_settings()
+
+    def open_about_dialog(self):
+        self.signal_stop(PlayState.STOPPED)
+        self.about_dialog.exec()
 
     def open_write_audio_dialog(self):
         device = DeviceConfiguration.from_settings()

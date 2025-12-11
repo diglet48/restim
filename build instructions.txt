@@ -19,6 +19,7 @@
 ./venv/Scripts/pyside6-uic.exe  -o ./qt_ui/neostim_settings_widget_ui.py ./designer/neostimsettingswidget.ui
 ./venv/Scripts/pyside6-uic.exe  -o ./qt_ui/simfile_conversion_dialog_ui.py ./designer/simfileconversiondialog.ui
 ./venv/Scripts/pyside6-uic.exe  -o ./qt_ui/focstim_flash_dialog_ui.py ./designer/focstimflashdialog.ui
+./venv/Scripts/pyside6-uic.exe  -o ./qt_ui/about_dialog_ui.py ./designer/aboutdialog.ui
 
 ./venv/Scripts/pyside6-uic.exe  -o ./qt_ui/device_wizard/type_select_ui.py ./designer/device_wizard/type_select.ui
 ./venv/Scripts/pyside6-uic.exe  -o ./qt_ui/device_wizard/waveform_select_ui.py ./designer/device_wizard/waveform_select.ui
@@ -37,5 +38,6 @@
 
 git clone
 setup venv with pycharm
+Modify the version number in version.py
 ./venv/Scripts/pip.exe install pyinstaller
-./venv/Scripts/pyinstaller.exe --clean --onefile --paths "." --add-data "resources/phase diagram bg.svg;resources/" --add-data "resources/favicon.png;resources/" --icon resources/favicon.ico --distpath dist-onefile restim.py
+./venv/Scripts/pyinstaller.exe --clean --onefile --paths "." --add-data "resources/favicon.png;resources/" --icon resources/favicon.ico --distpath dist-onefile restim.py
