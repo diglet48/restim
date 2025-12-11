@@ -14,8 +14,8 @@ from PySide6.QtNetwork import QTcpSocket
 import qt_ui.settings
 from device.focstim.proto_api import FOCStimProtoAPI
 from device.focstim.notifications_pb2 import NotificationBoot, NotificationPotentiometer, NotificationCurrents, \
-    NotificationModelEstimation, NotificationSystemStats, NotificationSignalStats, NotificationDebugString, \
-    NotificationBattery, NotificationDebugAS5311
+    NotificationModelEstimation, NotificationSystemStats, NotificationSignalStats, NotificationBattery, \
+    NotificationLSM6DSOX, NotificationDebugString, NotificationDebugAS5311
 from device.focstim.teleplot import Teleplot
 from device.output_device import OutputDevice
 from stim_math.audio_gen.base_classes import RemoteGenerationAlgorithm
@@ -182,6 +182,7 @@ class FOCStimProtoDevice(QObject, OutputDevice):
         self.api.on_notification_system_stats.connect(self.handle_notification_system_stats)
         self.api.on_notification_signal_stats.connect(self.handle_notification_signal_stats)
         self.api.on_notification_battery.connect(self.handle_notification_battery)
+        self.api.on_notification_lsm6dsox.connect(self.handle_notification_lsm6dsox)
         self.api.on_notification_debug_string.connect(self.handle_notification_debug_string)
         self.api.on_notification_debug_as5311.connect(self.handle_notification_debug_as5311)
 
@@ -401,6 +402,10 @@ class FOCStimProtoDevice(QObject, OutputDevice):
                 battery_soc=notif.battery_soc,
                 temp_bq27411=notif.chip_temperature,
             )
+
+    def handle_notification_lsm6dsox(self, notif: NotificationLSM6DSOX):
+        # TODO: fill in
+        pass
 
     def handle_notification_debug_string(self, notif: NotificationDebugString):
         logger.warning(notif.message)

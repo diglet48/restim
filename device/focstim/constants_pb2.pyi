@@ -28,7 +28,7 @@ class BoardIdentifier(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
     __slots__ = ()
     BOARD_UNKNOWN: _ClassVar[BoardIdentifier]
     BOARD_B_G431B_ESC1: _ClassVar[BoardIdentifier]
-    BOARD_FOCSTIM_V3: _ClassVar[BoardIdentifier]
+    BOARD_FOCSTIM_V4: _ClassVar[BoardIdentifier]
 
 class OutputMode(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
     __slots__ = ()
@@ -69,7 +69,7 @@ AXIS_CALIBRATION_4_C: AxisType
 AXIS_CALIBRATION_4_D: AxisType
 BOARD_UNKNOWN: BoardIdentifier
 BOARD_B_G431B_ESC1: BoardIdentifier
-BOARD_FOCSTIM_V3: BoardIdentifier
+BOARD_FOCSTIM_V4: BoardIdentifier
 OUTPUT_UNKNOWN: OutputMode
 OUTPUT_THREEPHASE: OutputMode
 OUTPUT_FOURPHASE: OutputMode

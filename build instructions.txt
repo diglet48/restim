@@ -31,7 +31,7 @@
 
 # generate proto files
 
-.\venv\Scripts\protol.exe --in-place --python-out=device/focstim/ protoc --proto-path=../FOC-Stim/proto/focstim/ --python_out=device/focstim/ --pyi_out=device/focstim focstim_rpc.proto constants.proto messages.proto notifications.proto
+./venv/Scripts/protol.exe --in-place --python-out=device/focstim/ protoc --proto-path=../FOC-Stim/proto/focstim/ --python_out=device/focstim/ --pyi_out=device/focstim focstim_rpc.proto constants.proto messages.proto notifications.proto
 
 # build release package
 

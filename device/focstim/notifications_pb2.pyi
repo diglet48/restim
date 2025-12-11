@@ -140,6 +140,24 @@ class NotificationBattery(_message.Message):
     def __init__(self, battery_voltage: _Optional[float]=..., battery_charge_rate_watt: _Optional[float]=..., battery_soc: _Optional[float]=..., wall_power_present: bool=..., chip_temperature: _Optional[float]=...) -> None:
         ...
 
+class NotificationLSM6DSOX(_message.Message):
+    __slots__ = ('acc_x', 'acc_y', 'acc_z', 'gyr_x', 'gyr_y', 'gyr_z')
+    ACC_X_FIELD_NUMBER: _ClassVar[int]
+    ACC_Y_FIELD_NUMBER: _ClassVar[int]
+    ACC_Z_FIELD_NUMBER: _ClassVar[int]
+    GYR_X_FIELD_NUMBER: _ClassVar[int]
+    GYR_Y_FIELD_NUMBER: _ClassVar[int]
+    GYR_Z_FIELD_NUMBER: _ClassVar[int]
+    acc_x: int
+    acc_y: int
+    acc_z: int
+    gyr_x: int
+    gyr_y: int
+    gyr_z: int
+
+    def __init__(self, acc_x: _Optional[int]=..., acc_y: _Optional[int]=..., acc_z: _Optional[int]=..., gyr_x: _Optional[int]=..., gyr_y: _Optional[int]=..., gyr_z: _Optional[int]=...) -> None:
+        ...
+
 class NotificationDebugString(_message.Message):
     __slots__ = ('message',)
     MESSAGE_FIELD_NUMBER: _ClassVar[int]
