@@ -95,6 +95,7 @@ class MediaSettingsWidget(QtWidgets.QWidget, Ui_MediaSettingsWidget, metaclass=_
 
         self.add_funscript_button.clicked.connect(self.open_add_funscripts_dialog)
         self.additional_search_paths_button.clicked.connect(self.open_search_paths_dialog)
+        self.reload_scripts_button.clicked.connect(self.reload_scripts)
         self.media_index_changed()
 
     def open_add_funscripts_dialog(self):
@@ -122,6 +123,9 @@ class MediaSettingsWidget(QtWidgets.QWidget, Ui_MediaSettingsWidget, metaclass=_
         if dlg.exec():
             # Attempt to re-load funscripts
             self.detect_resources_for_media_file(self.loaded_media_path)
+
+    def reload_scripts(self):
+        self.detect_resources_for_media_file(self.loaded_media_path)
 
     def on_data_changed(self, topleft, bottomright, roles):
         if Qt.EditRole in roles:

@@ -3,7 +3,7 @@
 ################################################################################
 ## Form generated from reading UI file 'mediasettingswidget.ui'
 ##
-## Created by: Qt User Interface Compiler version 6.8.3
+## Created by: Qt User Interface Compiler version 6.9.0
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
@@ -38,8 +38,8 @@ class Ui_MediaSettingsWidget(object):
         sizePolicy.setHeightForWidth(self.frame.sizePolicy().hasHeightForWidth())
         self.frame.setSizePolicy(sizePolicy)
         self.frame.setMinimumSize(QSize(150, 0))
-        self.frame.setFrameShape(QFrame.StyledPanel)
-        self.frame.setFrameShadow(QFrame.Raised)
+        self.frame.setFrameShape(QFrame.Shape.StyledPanel)
+        self.frame.setFrameShadow(QFrame.Shadow.Raised)
         self.formLayout = QFormLayout(self.frame)
         self.formLayout.setObjectName(u"formLayout")
         self.formLayout.setContentsMargins(0, 0, 0, 0)
@@ -64,7 +64,7 @@ class Ui_MediaSettingsWidget(object):
         self.horizontalLayout.addWidget(self.connection_status)
 
 
-        self.formLayout.setWidget(0, QFormLayout.LabelRole, self.widget)
+        self.formLayout.setWidget(0, QFormLayout.ItemRole.LabelRole, self.widget)
 
         self.widget_2 = QWidget(self.frame)
         self.widget_2.setObjectName(u"widget_2")
@@ -83,7 +83,7 @@ class Ui_MediaSettingsWidget(object):
         self.horizontalLayout_3.addWidget(self.lineEdit)
 
 
-        self.formLayout.setWidget(1, QFormLayout.SpanningRole, self.widget_2)
+        self.formLayout.setWidget(1, QFormLayout.ItemRole.SpanningRole, self.widget_2)
 
 
         self.verticalLayout.addWidget(self.frame)
@@ -118,6 +118,11 @@ class Ui_MediaSettingsWidget(object):
 
         self.horizontalLayout_2.addWidget(self.additional_search_paths_button)
 
+        self.reload_scripts_button = QPushButton(self.widget_21)
+        self.reload_scripts_button.setObjectName(u"reload_scripts_button")
+
+        self.horizontalLayout_2.addWidget(self.reload_scripts_button)
+
         self.horizontalSpacer = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
 
         self.horizontalLayout_2.addItem(self.horizontalSpacer)
@@ -140,5 +145,6 @@ class Ui_MediaSettingsWidget(object):
         self.add_funscript_button.setText(QCoreApplication.translate("MediaSettingsWidget", u"Add funscript", None))
         self.bake_audio_button.setText(QCoreApplication.translate("MediaSettingsWidget", u"Bake audio", None))
         self.additional_search_paths_button.setText(QCoreApplication.translate("MediaSettingsWidget", u"Search paths", None))
+        self.reload_scripts_button.setText(QCoreApplication.translate("MediaSettingsWidget", u"Reload scripts", None))
     # retranslateUi
 
