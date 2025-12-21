@@ -14,7 +14,7 @@ from device.focstim.proto_api import FOCStimProtoAPI
 from device.focstim.notifications_pb2 import NotificationBoot, NotificationPotentiometer, NotificationCurrents, \
     NotificationModelEstimation, NotificationSystemStats, NotificationSignalStats, NotificationDebugString, \
     NotificationBattery, NotificationDebugAS5311
-from device.focstim.teleplot import Teleplot
+from net.teleplot import Teleplot
 from device.output_device import OutputDevice
 from stim_math.audio_gen.base_classes import RemoteGenerationAlgorithm
 
