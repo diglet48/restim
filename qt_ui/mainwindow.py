@@ -32,6 +32,8 @@ from qt_ui import resources
 from qt_ui.models.funscript_kit import FunscriptKitModel
 from device.focstim.proto_device import FOCStimProtoDevice
 from device.neostim.neostim_device import NeoStim
+from device.coyote.device import CoyoteDevice, CoyoteParams
+from device.coyote.constants import DEVICE_NAME
 from qt_ui.widgets.icon_with_connection_status import IconWithConnectionStatus
 from stim_math.axis import create_temporal_axis
 
@@ -353,7 +355,8 @@ class Window(QMainWindow, Ui_MainWindow):
                     self.tab_vibrate,
                     self.tab_details,
                     self.tab_a_b_testing,
-                    self.tab_neostim}
+                    self.tab_neostim,
+                    self.tab_coyote}
 
         visible = {self.tab_threephase, self.tab_volume, self.tab_vibrate, self.tab_details}
 
@@ -376,6 +379,9 @@ class Window(QMainWindow, Ui_MainWindow):
         if config.device_type == DeviceType.NEOSTIM_THREE_PHASE:
             visible |= {self.tab_neostim}
             visible -= {self.tab_vibrate, self.tab_details}
+        if config.device_type == DeviceType.COYOTE_THREE_PHASE:
+            visible |= {self.tab_coyote, self.tab_pulse_settings}
+            visible -= {self.tab_vibrate}
 
         for tab in all_tabs:
             set_visible(tab, tab in visible)
@@ -392,7 +398,7 @@ class Window(QMainWindow, Ui_MainWindow):
             self.tcode_command_router.set_carrier_axis(self.tab_pulse_settings.axis_carrier_frequency)
 
         # populate motion generator and patterns combobox
-        if config.device_type in (DeviceType.AUDIO_THREE_PHASE, DeviceType.NEOSTIM_THREE_PHASE, DeviceType.FOCSTIM_THREE_PHASE):
+        if config.device_type in (DeviceType.AUDIO_THREE_PHASE, DeviceType.NEOSTIM_THREE_PHASE, DeviceType.FOCSTIM_THREE_PHASE, DeviceType.COYOTE_THREE_PHASE):
             self.motion_3.set_enable(True)
             self.motion_4.set_enable(False)
             self.stackedWidget_visual.setCurrentIndex(
@@ -405,6 +411,20 @@ class Window(QMainWindow, Ui_MainWindow):
             self.stackedWidget_visual.setCurrentIndex(
                 self.stackedWidget_visual.indexOf(self.page_fourphase)
             )
+        
+        if config.device_type == DeviceType.COYOTE_THREE_PHASE:
+            self.output_device = CoyoteDevice(DEVICE_NAME)
+            self.output_device.parameters = CoyoteParams(
+                channel_a_limit=qt_ui.settings.coyote_channel_a_limit.get(),
+                channel_b_limit=qt_ui.settings.coyote_channel_b_limit.get(),
+                channel_a_freq_balance=qt_ui.settings.coyote_channel_a_freq_balance.get(),
+                channel_b_freq_balance=qt_ui.settings.coyote_channel_b_freq_balance.get(),
+                channel_a_intensity_balance=qt_ui.settings.coyote_channel_a_intensity_balance.get(),
+                channel_b_intensity_balance=qt_ui.settings.coyote_channel_b_intensity_balance.get()
+            )
+            self.tab_coyote.setup_device(self.output_device)
+
+        self.refresh_pattern_combobox()
 
         if config.device_type == DeviceType.AUDIO_THREE_PHASE:
             self.graphicsView_threephase.set_background(stereo=True)
@@ -427,10 +447,11 @@ class Window(QMainWindow, Ui_MainWindow):
             self.signal_stop(PlayState.STOPPED)
 
     def signal_start(self):
-        assert self.output_device is None
-
         self.autostart_timer.stop()
         device = DeviceConfiguration.from_settings()
+
+        assert (self.output_device is None or device.device_type == DeviceType.COYOTE_THREE_PHASE)
+
         algorithm_factory = AlgorithmFactory(
             self,
             FunscriptKitModel.load_from_settings(),
@@ -485,13 +506,25 @@ class Window(QMainWindow, Ui_MainWindow):
                 self.playstate = PlayState.PLAYING
                 self.tab_volume.set_play_state(self.playstate)
                 self.refresh_play_button_icon()
+        elif device.device_type == DeviceType.COYOTE_THREE_PHASE:
+            if not self.output_device:
+                logger.warning("Coyote device is no longer initialized")
+                return
+
+            self.output_device.start_updates(algorithm)
+            self.playstate = PlayState.PLAYING
+            self.refresh_play_button_icon()
         else:
             raise RuntimeError("Unknown device type")
 
     def signal_stop(self, new_playstate: PlayState = PlayState.STOPPED):
+        """Stop signal generation."""
         if self.output_device is not None:
-            self.output_device.stop()
-            self.output_device = None
+            if isinstance(self.output_device, CoyoteDevice):
+                self.output_device.stop_updates()  # Only stop sending to device
+            else:
+                self.output_device.stop()  # Other devices may need full stop
+                self.output_device = None
         self.playstate = new_playstate
         self.tab_volume.set_play_state(self.playstate)
         self.refresh_play_button_icon()
@@ -566,7 +599,7 @@ class Window(QMainWindow, Ui_MainWindow):
         config = DeviceConfiguration.from_settings()
         currently_selected_text = self.comboBox_patternSelect.currentText()
 
-        if config.device_type in (DeviceType.AUDIO_THREE_PHASE, DeviceType.NEOSTIM_THREE_PHASE, DeviceType.FOCSTIM_THREE_PHASE):
+        if config.device_type in (DeviceType.AUDIO_THREE_PHASE, DeviceType.NEOSTIM_THREE_PHASE, DeviceType.FOCSTIM_THREE_PHASE, DeviceType.COYOTE_THREE_PHASE):
             self.comboBox_patternSelect.clear()
             for pattern in self.motion_3.patterns:
                 self.comboBox_patternSelect.addItem(pattern.name(), pattern)

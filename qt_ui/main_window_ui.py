@@ -23,6 +23,7 @@ from PySide6.QtWidgets import (QApplication, QComboBox, QDoubleSpinBox, QFrame,
 
 from qt_ui.ab_test_widget import ABTestWidget
 from qt_ui.carrier_settings_widget import CarrierSettingsWidget
+from qt_ui.coyote_settings_widget import CoyoteSettingsWidget
 from qt_ui.four_phase_settings_widget import FourPhaseSettingsWidget
 from qt_ui.media_settings_widget import MediaSettingsWidget
 from qt_ui.neostim_settings_widget import NeoStimSettingsWidget
@@ -207,6 +208,9 @@ class Ui_MainWindow(object):
         self.tab_carrier = CarrierSettingsWidget()
         self.tab_carrier.setObjectName(u"tab_carrier")
         self.tabWidget.addTab(self.tab_carrier, "")
+        self.tab_coyote = CoyoteSettingsWidget()
+        self.tab_coyote.setObjectName(u"tab_coyote")
+        self.tabWidget.addTab(self.tab_coyote, "")
         self.tab_pulse_settings = PulseSettingsWidget()
         self.tab_pulse_settings.setObjectName(u"tab_pulse_settings")
         self.tabWidget.addTab(self.tab_pulse_settings, "")
@@ -315,6 +319,7 @@ class Ui_MainWindow(object):
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_threephase), QCoreApplication.translate("MainWindow", u"3-phase", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_fourphase), QCoreApplication.translate("MainWindow", u"4-phase", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_carrier), QCoreApplication.translate("MainWindow", u"Carrier settings", None))
+        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_coyote), QCoreApplication.translate("MainWindow", u"Coyote", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_pulse_settings), QCoreApplication.translate("MainWindow", u"Pulse settings", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_neostim), QCoreApplication.translate("MainWindow", u"NeoStim", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_a_b_testing), QCoreApplication.translate("MainWindow", u"A/B testing", None))
