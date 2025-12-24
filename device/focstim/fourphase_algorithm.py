@@ -9,9 +9,6 @@ from stim_math.axis import AbstractMediaSync
 from device.focstim.constants_pb2 import AxisType
 from stim_math import limits
 
-FOC_MIN_FREQUENCY = 500
-FOC_MAX_FREQUENCY = 2000
-
 
 class FOCStimFourphaseAlgorithm(RemoteGenerationAlgorithm):
     def __init__(self, media: AbstractMediaSync, params: FourphaseFOCStimParams, safety_limits: SafetyParamsFOC):
@@ -42,10 +39,10 @@ class FOCStimFourphaseAlgorithm(RemoteGenerationAlgorithm):
             np.clip(self.params.volume.inactivity.last_value(), 0, 1) * \
             np.clip(self.params.volume.external.last_value(), 0, 1)
 
-        maximum_frequency = np.clip(FOC_MAX_FREQUENCY,
+        maximum_frequency = np.clip(limits.CarrierFrequencyFOC.max,
                                     self.safety_limits.minimum_carrier_frequency,
                                     self.safety_limits.maximum_carrier_frequency)
-        minimum_frequency = np.clip(FOC_MIN_FREQUENCY,
+        minimum_frequency = np.clip(limits.CarrierFrequencyFOC.min,
                                     self.safety_limits.minimum_carrier_frequency,
                                     self.safety_limits.maximum_carrier_frequency)
         tau = self.params.tau.last_value() * 1e-6
@@ -65,7 +62,7 @@ class FOCStimFourphaseAlgorithm(RemoteGenerationAlgorithm):
             AxisType.AXIS_POSITION_BETA: beta,
             AxisType.AXIS_POSITION_GAMMA: gamma,
             AxisType.AXIS_WAVEFORM_AMPLITUDE_AMPS: volume * volume * self.safety_limits.waveform_amplitude_amps,
-            AxisType.AXIS_CARRIER_FREQUENCY_HZ: self.params.carrier_frequency.interpolate(t),
+            AxisType.AXIS_CARRIER_FREQUENCY_HZ: carrier_frequency,
             AxisType.AXIS_PULSE_FREQUENCY_HZ: self.params.pulse_frequency.interpolate(t),
             AxisType.AXIS_PULSE_WIDTH_IN_CYCLES: self.params.pulse_width.interpolate(t),
             AxisType.AXIS_PULSE_RISE_TIME_CYCLES: self.params.pulse_rise_time.interpolate(t),

@@ -28,7 +28,7 @@ minimum_amplitude_modulation_feature_length = 3
 
 
 class CarrierFrequencyFOC:
-    min = 500   # Hz
+    min = 300   # Hz
     max = 2000
 
 class WaveformAmpltiudeFOC:
