@@ -17,6 +17,8 @@ from .spirograph import SpirographPattern
 from .tremor_circle import TremorCirclePattern
 from .vertical_oscillation import VerticalOscillationPattern
 from .w_shape import WShapePattern
+from .panning1 import PanningPattern1
+from .panning2 import PanningPattern2
 
 # Make patterns available at package level
 __all__ = [
@@ -25,5 +27,5 @@ __all__ = [
     'JerkyStrokePattern', 'LightningStrikePattern', 'MicroCirclesPattern',
     'OrbitingCirclesPattern', 'RandomWalkPattern', 'RoseCurvePattern',
     'SpirographPattern', 'TremorCirclePattern', 'VerticalOscillationPattern',
-    'WShapePattern'
+    'WShapePattern', 'PanningPattern1', 'PanningPattern2'
 ]
