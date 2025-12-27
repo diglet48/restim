@@ -8,6 +8,7 @@ from stim_math.audio_gen.various import ThreePhasePosition
 from stim_math.axis import AbstractMediaSync
 from device.focstim.constants_pb2 import AxisType
 from stim_math import limits
+from stim_math.sensors.imu import IMUAlgorithm
 
 
 class FOCStimThreephaseAlgorithm(RemoteGenerationAlgorithm):
@@ -21,6 +22,8 @@ class FOCStimThreephaseAlgorithm(RemoteGenerationAlgorithm):
         epsilon = 0.0001
         assert safety_limits.waveform_amplitude_amps >= (limits.WaveformAmpltiudeFOC.min - epsilon)
         assert safety_limits.waveform_amplitude_amps <= (limits.WaveformAmpltiudeFOC.max + epsilon)
+
+        self.imu_algorithm: IMUAlgorithm = None
 
     def outputs(self):
         return 3
@@ -52,6 +55,10 @@ class FOCStimThreephaseAlgorithm(RemoteGenerationAlgorithm):
         volume *= np.clip(derating, 0, 1)
 
         alpha, beta = self.position_params.get_position(t)
+
+        if self.imu_algorithm:
+            # TODO: insert filter before limits/transform
+            volume, alpha, beta = self.imu_algorithm.transform_threephase(volume, alpha, beta)
 
         if not self.media.is_playing():
             volume *= 0

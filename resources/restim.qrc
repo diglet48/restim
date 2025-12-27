@@ -1,5 +1,6 @@
 <RCC>
   <qresource prefix="restim">
+    <file>activity-1_poly.svg</file>
     <file>phase diagram foc.svg</file>
     <file>phase diagram stereostim.svg</file>
     <file>favicon.png</file>

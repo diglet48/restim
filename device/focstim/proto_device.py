@@ -7,7 +7,7 @@ import stream # pystream-protobuf
 
 import google.protobuf.text_format
 from PySide6.QtSerialPort import QSerialPort
-from PySide6.QtCore import QIODevice, QTimer, QObject, Qt
+from PySide6.QtCore import QIODevice, QTimer, QObject, Signal
 from PySide6.QtNetwork import QAbstractSocket
 from PySide6.QtNetwork import QTcpSocket
 
@@ -24,6 +24,8 @@ from device.focstim.focstim_rpc_pb2 import Response
 from device.focstim.messages_pb2 import ResponseCapabilitiesGet, ResponseFirmwareVersion
 from device.focstim.constants_pb2 import OutputMode
 
+from stim_math.sensors.imu import IMUData
+
 logger = logging.getLogger('restim.focstim')
 
 teleplot_addr = "127.0.0.1"
@@ -33,6 +35,10 @@ FOCSTIM_VERSION = "1.0"
 
 TIMEOUT_SETUP = 2000    # ms
 TIMEOUT_UPDATE = 4000   # ms
+
+LSM6DSOX_SAMPLERATE_HZ = 104
+LSM6DSOX_ACC_FULLSCALE = 4
+LSM6DSOX_GYR_FULLSCALE = 500
 
 
 class FOCStimProtoDevice(QObject, OutputDevice):
@@ -64,6 +70,9 @@ class FOCStimProtoDevice(QObject, OutputDevice):
         self.clear_dirty_params_timer = QTimer()
         self.clear_dirty_params_timer.setInterval(1000)
         self.clear_dirty_params_timer.timeout.connect(self.clear_dirty_params)
+
+        self.acc_sensitivity = 0
+        self.gyr_sensitivity = 0
 
         def print_data_rate():
             if self.api and self.teleplot:
@@ -222,12 +231,35 @@ class FOCStimProtoDevice(QObject, OutputDevice):
             # TODO: check error
             s = google.protobuf.text_format.MessageToString(response.response_capabilities_get, as_one_line=True, print_unknown_fields=True)
             logger.info(s)
-            self.start_signal_generation()
+            if response.response_capabilities_get.lsm6dsox:
+                self.start_lsm6dsox()
+            else:
+                self.start_signal_generation()
 
         fut = self.api.request_capabilities_get()
         fut.set_timeout(TIMEOUT_SETUP)
         fut.on_timeout.connect(on_capabilities_timeout)
         fut.on_result.connect(on_capabilities_response)
+
+    def start_lsm6dsox(self):
+        logger.info("starting IMU datastream...")
+
+        def on_lsm6dsox_timeout(id):
+            logger.error("timeout requesting capabilities")
+            self.stop()
+
+        def on_lsm6dsox_response(response: Response):
+            s = google.protobuf.text_format.MessageToString(response.response_lsm6dsox_start, as_one_line=True,
+                                                            print_unknown_fields=True)
+            logger.info(s)
+            self.acc_sensitivity = response.response_lsm6dsox_start.acc_sensitivity
+            self.gyr_sensitivity = response.response_lsm6dsox_start.gyr_sensitivity
+            self.start_signal_generation()
+
+        fut = self.api.request_lsm6dsox_start(LSM6DSOX_SAMPLERATE_HZ, LSM6DSOX_ACC_FULLSCALE, LSM6DSOX_GYR_FULLSCALE)
+        fut.set_timeout(TIMEOUT_SETUP)
+        fut.on_timeout.connect(on_lsm6dsox_timeout)
+        fut.on_result.connect(on_lsm6dsox_response)
 
     def start_signal_generation(self):
         logger.info("start signal...")
@@ -291,6 +323,7 @@ class FOCStimProtoDevice(QObject, OutputDevice):
         transmit_time = time.time()
         def completed(_):
             elapsed = time.time() - transmit_time
+            # self.teleplot.write_metrics(latency=elapsed)
             if elapsed > self.max_latency:
                 self.max_latency = elapsed
                 logger.warning(f"max command latency: {elapsed} seconds")
@@ -404,8 +437,18 @@ class FOCStimProtoDevice(QObject, OutputDevice):
             )
 
     def handle_notification_lsm6dsox(self, notif: NotificationLSM6DSOX):
-        # TODO: fill in
-        pass
+        if self.acc_sensitivity and self.gyr_sensitivity:
+            self.new_imu_sensor_data.emit(
+                IMUData(
+                    LSM6DSOX_SAMPLERATE_HZ,
+                    notif.acc_x * self.acc_sensitivity,
+                    notif.acc_y * self.acc_sensitivity,
+                    notif.acc_z * self.acc_sensitivity,
+                    notif.gyr_x * self.gyr_sensitivity,
+                    notif.gyr_y * self.gyr_sensitivity,
+                    notif.gyr_z * self.gyr_sensitivity,
+                )
+            )
 
     def handle_notification_debug_string(self, notif: NotificationDebugString):
         logger.warning(notif.message)
@@ -417,3 +460,5 @@ class FOCStimProtoDevice(QObject, OutputDevice):
                 as5311_um=notif.tracked * (2000.0 / 4096),
                 as5311_flags=notif.flags,
             )
+
+    new_imu_sensor_data = Signal(IMUData)

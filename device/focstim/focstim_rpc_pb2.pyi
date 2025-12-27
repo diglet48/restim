@@ -38,7 +38,7 @@ class Notification(_message.Message):
         ...
 
 class Request(_message.Message):
-    __slots__ = ('id', 'request_firmware_version', 'request_capabilities_get', 'request_signal_start', 'request_signal_stop', 'request_axis_move_to', 'request_timestamp_set', 'request_timestamp_get', 'request_wifi_parameters_set', 'request_wifi_ip_get', 'request_debug_stm32_deep_sleep', 'request_debug_enter_bootloader')
+    __slots__ = ('id', 'request_firmware_version', 'request_capabilities_get', 'request_signal_start', 'request_signal_stop', 'request_axis_move_to', 'request_timestamp_set', 'request_timestamp_get', 'request_wifi_parameters_set', 'request_wifi_ip_get', 'request_lsm6dsox_start', 'request_lsm6dsox_stop', 'request_debug_stm32_deep_sleep', 'request_debug_enter_bootloader')
     ID_FIELD_NUMBER: _ClassVar[int]
     REQUEST_FIRMWARE_VERSION_FIELD_NUMBER: _ClassVar[int]
     REQUEST_CAPABILITIES_GET_FIELD_NUMBER: _ClassVar[int]
@@ -49,6 +49,8 @@ class Request(_message.Message):
     REQUEST_TIMESTAMP_GET_FIELD_NUMBER: _ClassVar[int]
     REQUEST_WIFI_PARAMETERS_SET_FIELD_NUMBER: _ClassVar[int]
     REQUEST_WIFI_IP_GET_FIELD_NUMBER: _ClassVar[int]
+    REQUEST_LSM6DSOX_START_FIELD_NUMBER: _ClassVar[int]
+    REQUEST_LSM6DSOX_STOP_FIELD_NUMBER: _ClassVar[int]
     REQUEST_DEBUG_STM32_DEEP_SLEEP_FIELD_NUMBER: _ClassVar[int]
     REQUEST_DEBUG_ENTER_BOOTLOADER_FIELD_NUMBER: _ClassVar[int]
     id: int
@@ -61,14 +63,16 @@ class Request(_message.Message):
     request_timestamp_get: _messages_pb2.RequestTimestampGet
     request_wifi_parameters_set: _messages_pb2.RequestWifiParametersSet
     request_wifi_ip_get: _messages_pb2.RequestWifiIPGet
+    request_lsm6dsox_start: _messages_pb2.RequestLSM6DSOXStart
+    request_lsm6dsox_stop: _messages_pb2.RequestLSM6DSOXStop
     request_debug_stm32_deep_sleep: _messages_pb2.RequestDebugStm32DeepSleep
     request_debug_enter_bootloader: _messages_pb2.RequestDebugEnterBootloader
 
-    def __init__(self, id: _Optional[int]=..., request_firmware_version: _Optional[_Union[_messages_pb2.RequestFirmwareVersion, _Mapping]]=..., request_capabilities_get: _Optional[_Union[_messages_pb2.RequestCapabilitiesGet, _Mapping]]=..., request_signal_start: _Optional[_Union[_messages_pb2.RequestSignalStart, _Mapping]]=..., request_signal_stop: _Optional[_Union[_messages_pb2.RequestSignalStop, _Mapping]]=..., request_axis_move_to: _Optional[_Union[_messages_pb2.RequestAxisMoveTo, _Mapping]]=..., request_timestamp_set: _Optional[_Union[_messages_pb2.RequestTimestampSet, _Mapping]]=..., request_timestamp_get: _Optional[_Union[_messages_pb2.RequestTimestampGet, _Mapping]]=..., request_wifi_parameters_set: _Optional[_Union[_messages_pb2.RequestWifiParametersSet, _Mapping]]=..., request_wifi_ip_get: _Optional[_Union[_messages_pb2.RequestWifiIPGet, _Mapping]]=..., request_debug_stm32_deep_sleep: _Optional[_Union[_messages_pb2.RequestDebugStm32DeepSleep, _Mapping]]=..., request_debug_enter_bootloader: _Optional[_Union[_messages_pb2.RequestDebugEnterBootloader, _Mapping]]=...) -> None:
+    def __init__(self, id: _Optional[int]=..., request_firmware_version: _Optional[_Union[_messages_pb2.RequestFirmwareVersion, _Mapping]]=..., request_capabilities_get: _Optional[_Union[_messages_pb2.RequestCapabilitiesGet, _Mapping]]=..., request_signal_start: _Optional[_Union[_messages_pb2.RequestSignalStart, _Mapping]]=..., request_signal_stop: _Optional[_Union[_messages_pb2.RequestSignalStop, _Mapping]]=..., request_axis_move_to: _Optional[_Union[_messages_pb2.RequestAxisMoveTo, _Mapping]]=..., request_timestamp_set: _Optional[_Union[_messages_pb2.RequestTimestampSet, _Mapping]]=..., request_timestamp_get: _Optional[_Union[_messages_pb2.RequestTimestampGet, _Mapping]]=..., request_wifi_parameters_set: _Optional[_Union[_messages_pb2.RequestWifiParametersSet, _Mapping]]=..., request_wifi_ip_get: _Optional[_Union[_messages_pb2.RequestWifiIPGet, _Mapping]]=..., request_lsm6dsox_start: _Optional[_Union[_messages_pb2.RequestLSM6DSOXStart, _Mapping]]=..., request_lsm6dsox_stop: _Optional[_Union[_messages_pb2.RequestLSM6DSOXStop, _Mapping]]=..., request_debug_stm32_deep_sleep: _Optional[_Union[_messages_pb2.RequestDebugStm32DeepSleep, _Mapping]]=..., request_debug_enter_bootloader: _Optional[_Union[_messages_pb2.RequestDebugEnterBootloader, _Mapping]]=...) -> None:
         ...
 
 class Response(_message.Message):
-    __slots__ = ('id', 'response_firmware_version', 'response_capabilities_get', 'response_signal_start', 'response_signal_stop', 'response_axis_move_to', 'response_timestamp_set', 'response_timestamp_get', 'response_wifi_parameters_set', 'response_wifi_ip_get', 'response_debug_stm32_deep_sleep', 'error')
+    __slots__ = ('id', 'response_firmware_version', 'response_capabilities_get', 'response_signal_start', 'response_signal_stop', 'response_axis_move_to', 'response_timestamp_set', 'response_timestamp_get', 'response_wifi_parameters_set', 'response_wifi_ip_get', 'response_lsm6dsox_start', 'response_lsm6dsox_stop', 'response_debug_stm32_deep_sleep', 'error')
     ID_FIELD_NUMBER: _ClassVar[int]
     RESPONSE_FIRMWARE_VERSION_FIELD_NUMBER: _ClassVar[int]
     RESPONSE_CAPABILITIES_GET_FIELD_NUMBER: _ClassVar[int]
@@ -79,6 +83,8 @@ class Response(_message.Message):
     RESPONSE_TIMESTAMP_GET_FIELD_NUMBER: _ClassVar[int]
     RESPONSE_WIFI_PARAMETERS_SET_FIELD_NUMBER: _ClassVar[int]
     RESPONSE_WIFI_IP_GET_FIELD_NUMBER: _ClassVar[int]
+    RESPONSE_LSM6DSOX_START_FIELD_NUMBER: _ClassVar[int]
+    RESPONSE_LSM6DSOX_STOP_FIELD_NUMBER: _ClassVar[int]
     RESPONSE_DEBUG_STM32_DEEP_SLEEP_FIELD_NUMBER: _ClassVar[int]
     ERROR_FIELD_NUMBER: _ClassVar[int]
     id: int
@@ -91,10 +97,12 @@ class Response(_message.Message):
     response_timestamp_get: _messages_pb2.ResponseTimestampGet
     response_wifi_parameters_set: _messages_pb2.ResponseWifiParametersSet
     response_wifi_ip_get: _messages_pb2.ResponseWifiIPGet
+    response_lsm6dsox_start: _messages_pb2.ResponseLSM6DSOXStart
+    response_lsm6dsox_stop: _messages_pb2.ResponseLSM6DSOXStop
     response_debug_stm32_deep_sleep: _messages_pb2.ResponseDebugStm32DeepSleep
     error: Error
 
-    def __init__(self, id: _Optional[int]=..., response_firmware_version: _Optional[_Union[_messages_pb2.ResponseFirmwareVersion, _Mapping]]=..., response_capabilities_get: _Optional[_Union[_messages_pb2.ResponseCapabilitiesGet, _Mapping]]=..., response_signal_start: _Optional[_Union[_messages_pb2.ResponseSignalStart, _Mapping]]=..., response_signal_stop: _Optional[_Union[_messages_pb2.ResponseSignalStop, _Mapping]]=..., response_axis_move_to: _Optional[_Union[_messages_pb2.ResponseAxisMoveTo, _Mapping]]=..., response_timestamp_set: _Optional[_Union[_messages_pb2.ResponseTimestampSet, _Mapping]]=..., response_timestamp_get: _Optional[_Union[_messages_pb2.ResponseTimestampGet, _Mapping]]=..., response_wifi_parameters_set: _Optional[_Union[_messages_pb2.ResponseWifiParametersSet, _Mapping]]=..., response_wifi_ip_get: _Optional[_Union[_messages_pb2.ResponseWifiIPGet, _Mapping]]=..., response_debug_stm32_deep_sleep: _Optional[_Union[_messages_pb2.ResponseDebugStm32DeepSleep, _Mapping]]=..., error: _Optional[_Union[Error, _Mapping]]=...) -> None:
+    def __init__(self, id: _Optional[int]=..., response_firmware_version: _Optional[_Union[_messages_pb2.ResponseFirmwareVersion, _Mapping]]=..., response_capabilities_get: _Optional[_Union[_messages_pb2.ResponseCapabilitiesGet, _Mapping]]=..., response_signal_start: _Optional[_Union[_messages_pb2.ResponseSignalStart, _Mapping]]=..., response_signal_stop: _Optional[_Union[_messages_pb2.ResponseSignalStop, _Mapping]]=..., response_axis_move_to: _Optional[_Union[_messages_pb2.ResponseAxisMoveTo, _Mapping]]=..., response_timestamp_set: _Optional[_Union[_messages_pb2.ResponseTimestampSet, _Mapping]]=..., response_timestamp_get: _Optional[_Union[_messages_pb2.ResponseTimestampGet, _Mapping]]=..., response_wifi_parameters_set: _Optional[_Union[_messages_pb2.ResponseWifiParametersSet, _Mapping]]=..., response_wifi_ip_get: _Optional[_Union[_messages_pb2.ResponseWifiIPGet, _Mapping]]=..., response_lsm6dsox_start: _Optional[_Union[_messages_pb2.ResponseLSM6DSOXStart, _Mapping]]=..., response_lsm6dsox_stop: _Optional[_Union[_messages_pb2.ResponseLSM6DSOXStop, _Mapping]]=..., response_debug_stm32_deep_sleep: _Optional[_Union[_messages_pb2.ResponseDebugStm32DeepSleep, _Mapping]]=..., error: _Optional[_Union[Error, _Mapping]]=...) -> None:
         ...
 
 class Error(_message.Message):

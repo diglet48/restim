@@ -27,19 +27,21 @@ class RequestCapabilitiesGet(_message.Message):
         ...
 
 class ResponseCapabilitiesGet(_message.Message):
-    __slots__ = ('threephase', 'fourphase', 'battery', 'potentiometer', 'maximum_waveform_amplitude_amps')
+    __slots__ = ('threephase', 'fourphase', 'battery', 'potentiometer', 'maximum_waveform_amplitude_amps', 'lsm6dsox')
     THREEPHASE_FIELD_NUMBER: _ClassVar[int]
     FOURPHASE_FIELD_NUMBER: _ClassVar[int]
     BATTERY_FIELD_NUMBER: _ClassVar[int]
     POTENTIOMETER_FIELD_NUMBER: _ClassVar[int]
     MAXIMUM_WAVEFORM_AMPLITUDE_AMPS_FIELD_NUMBER: _ClassVar[int]
+    LSM6DSOX_FIELD_NUMBER: _ClassVar[int]
     threephase: bool
     fourphase: bool
     battery: bool
     potentiometer: bool
     maximum_waveform_amplitude_amps: float
+    lsm6dsox: bool
 
-    def __init__(self, threephase: bool=..., fourphase: bool=..., battery: bool=..., potentiometer: bool=..., maximum_waveform_amplitude_amps: _Optional[float]=...) -> None:
+    def __init__(self, threephase: bool=..., fourphase: bool=..., battery: bool=..., potentiometer: bool=..., maximum_waveform_amplitude_amps: _Optional[float]=..., lsm6dsox: bool=...) -> None:
         ...
 
 class RequestSignalStart(_message.Message):
@@ -182,6 +184,40 @@ class ResponseWifiIPGet(_message.Message):
     ip: int
 
     def __init__(self, ip: _Optional[int]=...) -> None:
+        ...
+
+class RequestLSM6DSOXStart(_message.Message):
+    __slots__ = ('imu_samplerate', 'acc_fullscale', 'gyr_fullscale')
+    IMU_SAMPLERATE_FIELD_NUMBER: _ClassVar[int]
+    ACC_FULLSCALE_FIELD_NUMBER: _ClassVar[int]
+    GYR_FULLSCALE_FIELD_NUMBER: _ClassVar[int]
+    imu_samplerate: float
+    acc_fullscale: float
+    gyr_fullscale: float
+
+    def __init__(self, imu_samplerate: _Optional[float]=..., acc_fullscale: _Optional[float]=..., gyr_fullscale: _Optional[float]=...) -> None:
+        ...
+
+class ResponseLSM6DSOXStart(_message.Message):
+    __slots__ = ('acc_sensitivity', 'gyr_sensitivity')
+    ACC_SENSITIVITY_FIELD_NUMBER: _ClassVar[int]
+    GYR_SENSITIVITY_FIELD_NUMBER: _ClassVar[int]
+    acc_sensitivity: float
+    gyr_sensitivity: float
+
+    def __init__(self, acc_sensitivity: _Optional[float]=..., gyr_sensitivity: _Optional[float]=...) -> None:
+        ...
+
+class RequestLSM6DSOXStop(_message.Message):
+    __slots__ = ()
+
+    def __init__(self) -> None:
+        ...
+
+class ResponseLSM6DSOXStop(_message.Message):
+    __slots__ = ()
+
+    def __init__(self) -> None:
         ...
 
 class RequestDebugStm32DeepSleep(_message.Message):

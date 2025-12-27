@@ -17,13 +17,15 @@ from PySide6.QtGui import (QAction, QBrush, QColor, QConicalGradient,
     QPainter, QPalette, QPixmap, QRadialGradient,
     QTransform)
 from PySide6.QtWidgets import (QApplication, QComboBox, QDoubleSpinBox, QFrame,
-    QGroupBox, QHBoxLayout, QMainWindow, QMenu,
-    QMenuBar, QSizePolicy, QSpacerItem, QStackedWidget,
-    QTabWidget, QToolBar, QVBoxLayout, QWidget)
+    QGroupBox, QHBoxLayout, QLabel, QMainWindow,
+    QMenu, QMenuBar, QSizePolicy, QSpacerItem,
+    QStackedWidget, QTabWidget, QToolBar, QVBoxLayout,
+    QWidget)
 
 from qt_ui.ab_test_widget import ABTestWidget
 from qt_ui.carrier_settings_widget import CarrierSettingsWidget
 from qt_ui.four_phase_settings_widget import FourPhaseSettingsWidget
+from qt_ui.imu_settings_widget import IMUSettingsWidget
 from qt_ui.media_settings_widget import MediaSettingsWidget
 from qt_ui.neostim_settings_widget import NeoStimSettingsWidget
 from qt_ui.pulse_settings_widget import PulseSettingsWidget
@@ -40,7 +42,7 @@ class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         if not MainWindow.objectName():
             MainWindow.setObjectName(u"MainWindow")
-        MainWindow.resize(843, 663)
+        MainWindow.resize(843, 657)
         icon = QIcon()
         icon.addFile(u":/restim/favicon.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
         MainWindow.setWindowIcon(icon)
@@ -71,6 +73,7 @@ class Ui_MainWindow(object):
         self.actionDevice.setIcon(icon3)
         self.actionStart = QAction(MainWindow)
         self.actionStart.setObjectName(u"actionStart")
+        self.actionStart.setCheckable(False)
         icon4 = QIcon()
         icon4.addFile(u":/restim/play_poly.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
         self.actionStart.setIcon(icon4)
@@ -88,6 +91,12 @@ class Ui_MainWindow(object):
         self.actionFirmware_updater.setObjectName(u"actionFirmware_updater")
         self.actionAbout = QAction(MainWindow)
         self.actionAbout.setObjectName(u"actionAbout")
+        self.actionSensors = QAction(MainWindow)
+        self.actionSensors.setObjectName(u"actionSensors")
+        self.actionSensors.setCheckable(True)
+        icon6 = QIcon()
+        icon6.addFile(u":/restim/activity-1_poly.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.actionSensors.setIcon(icon6)
         self.centralwidget = QWidget(MainWindow)
         self.centralwidget.setObjectName(u"centralwidget")
         self.horizontalLayout = QHBoxLayout(self.centralwidget)
@@ -232,6 +241,26 @@ class Ui_MainWindow(object):
         self.page_media = MediaSettingsWidget()
         self.page_media.setObjectName(u"page_media")
         self.stackedWidget.addWidget(self.page_media)
+        self.page_sensors = QWidget()
+        self.page_sensors.setObjectName(u"page_sensors")
+        self.horizontalLayout_3 = QHBoxLayout(self.page_sensors)
+        self.horizontalLayout_3.setObjectName(u"horizontalLayout_3")
+        self.horizontalLayout_3.setContentsMargins(-1, 0, -1, 0)
+        self.tabWidget_2 = QTabWidget(self.page_sensors)
+        self.tabWidget_2.setObjectName(u"tabWidget_2")
+        self.tab_imu = IMUSettingsWidget()
+        self.tab_imu.setObjectName(u"tab_imu")
+        self.tabWidget_2.addTab(self.tab_imu, "")
+        self.tab_AS5311 = QWidget()
+        self.tab_AS5311.setObjectName(u"tab_AS5311")
+        self.label = QLabel(self.tab_AS5311)
+        self.label.setObjectName(u"label")
+        self.label.setGeometry(QRect(20, 30, 131, 16))
+        self.tabWidget_2.addTab(self.tab_AS5311, "")
+
+        self.horizontalLayout_3.addWidget(self.tabWidget_2)
+
+        self.stackedWidget.addWidget(self.page_sensors)
 
         self.horizontalLayout.addWidget(self.stackedWidget)
 
@@ -266,13 +295,15 @@ class Ui_MainWindow(object):
         self.menuHelp.addAction(self.actionAbout)
         self.toolBar.addAction(self.actionControl)
         self.toolBar.addAction(self.actionMedia)
+        self.toolBar.addAction(self.actionSensors)
         self.toolBar.addAction(self.actionStart)
 
         self.retranslateUi(MainWindow)
 
         self.stackedWidget.setCurrentIndex(0)
         self.stackedWidget_visual.setCurrentIndex(1)
-        self.tabWidget.setCurrentIndex(6)
+        self.tabWidget.setCurrentIndex(8)
+        self.tabWidget_2.setCurrentIndex(0)
 
 
         QMetaObject.connectSlotsByName(MainWindow)
@@ -304,6 +335,10 @@ class Ui_MainWindow(object):
         self.actionFunscript_decomposition.setText(QCoreApplication.translate("MainWindow", u"Funscript decomposition", None))
         self.actionFirmware_updater.setText(QCoreApplication.translate("MainWindow", u"Firmware updater", None))
         self.actionAbout.setText(QCoreApplication.translate("MainWindow", u"About", None))
+        self.actionSensors.setText(QCoreApplication.translate("MainWindow", u"Sensors", None))
+#if QT_CONFIG(shortcut)
+        self.actionSensors.setShortcut(QCoreApplication.translate("MainWindow", u"Ctrl+3", None))
+#endif // QT_CONFIG(shortcut)
         self.groupBox_volume.setTitle(QCoreApplication.translate("MainWindow", u"volume", None))
         self.groupBox_pattern.setTitle(QCoreApplication.translate("MainWindow", u"Pattern generator", None))
         self.comboBox_patternSelect.setItemText(0, QCoreApplication.translate("MainWindow", u"Mouse", None))
@@ -321,6 +356,9 @@ class Ui_MainWindow(object):
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_volume), QCoreApplication.translate("MainWindow", u"Volume", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_vibrate), QCoreApplication.translate("MainWindow", u"Vibration", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_details), QCoreApplication.translate("MainWindow", u"Details", None))
+        self.tabWidget_2.setTabText(self.tabWidget_2.indexOf(self.tab_imu), QCoreApplication.translate("MainWindow", u"IMU", None))
+        self.label.setText(QCoreApplication.translate("MainWindow", u"Not implemented yet", None))
+        self.tabWidget_2.setTabText(self.tabWidget_2.indexOf(self.tab_AS5311), QCoreApplication.translate("MainWindow", u"AS5311", None))
         self.menuSetup.setTitle(QCoreApplication.translate("MainWindow", u"Setup", None))
         self.menuTools.setTitle(QCoreApplication.translate("MainWindow", u"Tools", None))
         self.menuHelp.setTitle(QCoreApplication.translate("MainWindow", u"Help", None))

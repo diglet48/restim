@@ -10,7 +10,8 @@ from device.focstim.focstim_rpc_pb2 import Request, RpcMessage, Response
 from device.focstim.hdlc import HDLC
 from device.focstim.messages_pb2 import RequestFirmwareVersion, RequestAxisSet, RequestAxisMoveTo, RequestTimestampSet, \
     RequestSignalStart, RequestSignalStop, RequestCapabilitiesGet, RequestDebugStm32DeepSleep, \
-    RequestDebugEnterBootloader, RequestWifiParametersSet, RequestWifiIPGet
+    RequestDebugEnterBootloader, RequestWifiParametersSet, RequestWifiIPGet, RequestLSM6DSOXStart, \
+    RequestLSM6DSOXStop
 from device.focstim.notifications_pb2 import NotificationBoot, NotificationPotentiometer, NotificationCurrents, \
     NotificationModelEstimation, NotificationSystemStats, NotificationSignalStats, NotificationBattery, \
     NotificationLSM6DSOX, NotificationDebugString, NotificationDebugAS5311
@@ -135,7 +136,7 @@ class FOCStimProtoAPI(QObject):
             self.bytes_read += len(block)
             # logger.info(f'incoming bytes: {block}')
             for frame in self.hdlc.parse(block):
-                # logger.info(f'parsed frame: {frame}')
+                # logger.info(f'parsed frame ({len(frame)} bytes): {frame}')
                 try:
                     msg = RpcMessage.FromString(frame)
                     # logger.info(f'{msg}')
@@ -224,6 +225,22 @@ class FOCStimProtoAPI(QObject):
         return self.send_request(Request(
             id=self.next_request_id(),
             request_wifi_ip_get=RequestWifiIPGet()
+        ))
+
+    def request_lsm6dsox_start(self, imu_samplerate, acc_fullscale, gyr_fullscale) -> Future:
+        return self.send_request(Request(
+            id=self.next_request_id(),
+            request_lsm6dsox_start=RequestLSM6DSOXStart(
+                imu_samplerate=imu_samplerate,
+                acc_fullscale=acc_fullscale,
+                gyr_fullscale=gyr_fullscale,
+            )
+        ))
+
+    def request_lsm6dsox_stop(self) -> Future:
+        return self.send_request(Request(
+            id=self.next_request_id(),
+            request_lsm6dsox_stop=RequestLSM6DSOXStop()
         ))
 
     def request_debug_stm32_deep_sleep(self) -> Future:

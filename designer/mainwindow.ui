@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>843</width>
-    <height>663</height>
+    <height>657</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -237,7 +237,7 @@
            <bool>true</bool>
           </property>
           <property name="currentIndex">
-           <number>6</number>
+           <number>8</number>
           </property>
           <widget class="ThreePhaseSettingsWidget" name="tab_threephase">
            <attribute name="title">
@@ -289,6 +289,46 @@
        </layout>
       </widget>
       <widget class="MediaSettingsWidget" name="page_media"/>
+      <widget class="QWidget" name="page_sensors">
+       <layout class="QHBoxLayout" name="horizontalLayout_3">
+        <property name="topMargin">
+         <number>0</number>
+        </property>
+        <property name="bottomMargin">
+         <number>0</number>
+        </property>
+        <item>
+         <widget class="QTabWidget" name="tabWidget_2">
+          <property name="currentIndex">
+           <number>0</number>
+          </property>
+          <widget class="IMUSettingsWidget" name="tab_imu">
+           <attribute name="title">
+            <string>IMU</string>
+           </attribute>
+          </widget>
+          <widget class="QWidget" name="tab_AS5311">
+           <attribute name="title">
+            <string>AS5311</string>
+           </attribute>
+           <widget class="QLabel" name="label">
+            <property name="geometry">
+             <rect>
+              <x>20</x>
+              <y>30</y>
+              <width>131</width>
+              <height>16</height>
+             </rect>
+            </property>
+            <property name="text">
+             <string>Not implemented yet</string>
+            </property>
+           </widget>
+          </widget>
+         </widget>
+        </item>
+       </layout>
+      </widget>
      </widget>
     </item>
    </layout>
@@ -353,6 +393,7 @@
    </attribute>
    <addaction name="actionControl"/>
    <addaction name="actionMedia"/>
+   <addaction name="actionSensors"/>
    <addaction name="actionStart"/>
   </widget>
   <action name="actionFunscript_conversion">
@@ -419,6 +460,9 @@
    </property>
   </action>
   <action name="actionStart">
+   <property name="checkable">
+    <bool>false</bool>
+   </property>
    <property name="icon">
     <iconset resource="../resources/restim.qrc">
      <normaloff>:/restim/play_poly.svg</normaloff>:/restim/play_poly.svg</iconset>
@@ -460,6 +504,21 @@
   <action name="actionAbout">
    <property name="text">
     <string>About</string>
+   </property>
+  </action>
+  <action name="actionSensors">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="../resources/restim.qrc">
+     <normaloff>:/restim/activity-1_poly.svg</normaloff>:/restim/activity-1_poly.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Sensors</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+3</string>
    </property>
   </action>
  </widget>
@@ -537,6 +596,12 @@
    <class>FourPhaseSettingsWidget</class>
    <extends>QWidget</extends>
    <header>qt_ui/four_phase_settings_widget.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>IMUSettingsWidget</class>
+   <extends>QWidget</extends>
+   <header>qt_ui/imu_settings_widget.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

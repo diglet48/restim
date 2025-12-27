@@ -30,7 +30,7 @@ import net.serialproxy
 import net.buttplug_wsdm_client
 from qt_ui import resources
 from qt_ui.models.funscript_kit import FunscriptKitModel
-from device.focstim.proto_device import FOCStimProtoDevice
+from device.focstim.proto_device import FOCStimProtoDevice, LSM6DSOX_SAMPLERATE_HZ
 from device.neostim.neostim_device import NeoStim
 from qt_ui.widgets.icon_with_connection_status import IconWithConnectionStatus
 from stim_math.axis import create_temporal_axis
@@ -42,6 +42,7 @@ from qt_ui.device_wizard.wizard import DeviceSelectionWizard
 from qt_ui.device_wizard.enums import DeviceConfiguration, DeviceType, WaveformType
 
 from qt_ui.tcode_command_router import TCodeCommandRouter
+from stim_math.sensors.imu import IMUAlgorithm
 
 logger = logging.getLogger('restim.main')
 
@@ -224,6 +225,7 @@ class Window(QMainWindow, Ui_MainWindow):
         def uncheck():
             self.actionControl.setChecked(False)
             self.actionMedia.setChecked(False)
+            self.actionSensors.setChecked(False)
             # self.actionDevice.setChecked(False)
             # self.actionLog.setChecked(False)
 
@@ -237,6 +239,11 @@ class Window(QMainWindow, Ui_MainWindow):
             self.actionMedia.setChecked(True)
             self.stackedWidget.setCurrentIndex(self.stackedWidget.indexOf(self.page_media))
 
+        def show_sensors():
+            uncheck()
+            self.actionSensors.setChecked(True)
+            self.stackedWidget.setCurrentIndex(self.stackedWidget.indexOf(self.page_sensors))
+
         # def show_device():
         #     uncheck()
         #     self.actionDevice.setChecked(True)
@@ -249,6 +256,7 @@ class Window(QMainWindow, Ui_MainWindow):
 
         self.actionControl.triggered.connect(show_control)
         self.actionMedia.triggered.connect(show_media)
+        self.actionSensors.triggered.connect(show_sensors)
         # self.actionDevice.triggered.connect(show_device)
         # self.actionLog.triggered.connect(show_log)
         self.actionStart.triggered.connect(self.signal_start_stop)
@@ -353,7 +361,8 @@ class Window(QMainWindow, Ui_MainWindow):
                     self.tab_vibrate,
                     self.tab_details,
                     self.tab_a_b_testing,
-                    self.tab_neostim}
+                    self.tab_neostim,
+                    self.tab_imu}
 
         visible = {self.tab_threephase, self.tab_volume, self.tab_vibrate, self.tab_details}
 
@@ -368,7 +377,7 @@ class Window(QMainWindow, Ui_MainWindow):
             if config.waveform_type == WaveformType.A_B_TESTING:
                 visible |= {self.tab_a_b_testing}
         if config.device_type == DeviceType.FOCSTIM_THREE_PHASE:
-            visible |= {self.tab_pulse_settings}
+            visible |= {self.tab_pulse_settings, self.tab_imu}
             visible -= {self.tab_vibrate}
         if config.device_type == DeviceType.FOCSTIM_FOUR_PHASE:
             visible |= {self.tab_pulse_settings, self.tab_fourphase}
@@ -471,11 +480,26 @@ class Window(QMainWindow, Ui_MainWindow):
             else:
                 ip = qt_ui.settings.focstim_ip.get()
                 output_device.start_tcp(ip, 55533, use_teleplot, dump_notifications, algorithm)
+
             if output_device.is_connected_and_running():
                 self.output_device = output_device
                 self.playstate = PlayState.PLAYING
                 self.tab_volume.set_play_state(self.playstate)
                 self.refresh_play_button_icon()
+
+                imu_algo = IMUAlgorithm(
+                    self.tab_imu.axis_movement_amplitude_in,
+                    self.tab_imu.axis_movement_amplitude_out,
+                    self.tab_imu.axis_velocity_amplitude,
+                    self.tab_imu.axis_intensity_increase,
+                    LSM6DSOX_SAMPLERATE_HZ
+                )
+                output_device.new_imu_sensor_data.connect(imu_algo.update)
+                algorithm.imu_algorithm = imu_algo
+                self.graphicsView_threephase.imu_algorithm = imu_algo
+                self.tab_imu.set_imu(imu_algo)
+
+
         elif device.device_type == DeviceType.NEOSTIM_THREE_PHASE:
             output_device = NeoStim()
             serial_port_name = qt_ui.settings.neostim_serial_port.get()

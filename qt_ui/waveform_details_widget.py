@@ -1,9 +1,5 @@
 from __future__ import unicode_literals
-import matplotlib
 import numpy as np
-
-# Make sure that we are using QT5
-matplotlib.use('Qt5Agg')
 
 from stim_math import threephase, trig
 from stim_math.audio_gen.params import ThreephaseCalibrationParams, ThreephasePositionTransformParams

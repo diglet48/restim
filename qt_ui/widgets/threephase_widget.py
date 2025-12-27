@@ -132,11 +132,16 @@ class ThreephaseWidgetAlphaBeta(ThreephaseWidgetBase):
         self.last_state = None
         self.refresh_transform()
 
+        self.imu_algorithm = None
+
     def set_transform_params(self, transform_params: ThreephasePositionTransformParams):
         self.transform_params = transform_params
 
     def set_cursor_position_ab(self, a, b):
         self.refresh_transform()    # TODO: optimize me away
+
+        if self.imu_algorithm:
+            _, a, b = self.imu_algorithm.transform_threephase(0, a, b)
 
         state = (a, b, self.transform)
         if state == self.last_state:
