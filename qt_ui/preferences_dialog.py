@@ -24,6 +24,9 @@ class PreferencesDialog(QDialog, Ui_PreferencesDialog):
 
         self.tabWidget.setCurrentIndex(0)
 
+        self._coyote_logger = logging.getLogger('restim.coyote')
+        self._coyote_default_log_level = self._coyote_logger.getEffectiveLevel()
+
         # Initialize pattern service and cache pattern data immediately
         self.pattern_service = PatternControlService()
         self._cached_patterns = None
@@ -151,6 +154,19 @@ class PreferencesDialog(QDialog, Ui_PreferencesDialog):
         # neostim settings
         self.neostim_port.setCurrentIndex(self.neostim_port.findData(qt_ui.settings.neostim_serial_port.get()))
 
+        # Coyote 3
+        self.coyote_channel_a_limit.setValue(qt_ui.settings.coyote_channel_a_limit.get())
+        self.coyote_channel_b_limit.setValue(qt_ui.settings.coyote_channel_b_limit.get())
+        self.coyote_channel_a_freq_balance.setValue(qt_ui.settings.coyote_channel_a_freq_balance.get())
+        self.coyote_channel_b_freq_balance.setValue(qt_ui.settings.coyote_channel_b_freq_balance.get())
+        self.coyote_channel_a_intensity_balance.setValue(qt_ui.settings.coyote_channel_a_intensity_balance.get())
+        self.coyote_channel_b_intensity_balance.setValue(qt_ui.settings.coyote_channel_b_intensity_balance.get())
+        self.coyote_max_intensity_change_per_pulse.setValue(
+            qt_ui.settings.coyote_max_intensity_change_per_pulse.get()
+        )
+        self.coyote_graph_window.setValue(qt_ui.settings.coyote_graph_window.get())
+        self.coyote_debug_logging.setChecked(qt_ui.settings.coyote_debug_logging.get())
+
         # media sync settings
         self.mpc_address.setText(qt_ui.settings.media_sync_mpc_address.get())
         self.heresphere_address.setText(qt_ui.settings.media_sync_heresphere_address.get())
@@ -168,6 +184,8 @@ class PreferencesDialog(QDialog, Ui_PreferencesDialog):
         
         # refresh pattern preferences (just reload checkboxes from settings)
         self.refresh_pattern_preferences()
+
+        self.apply_coyote_logging()
 
     def repopulate_audio_devices(self):
         self.audio_output_device.clear()
@@ -313,6 +331,19 @@ class PreferencesDialog(QDialog, Ui_PreferencesDialog):
         # neoStim
         qt_ui.settings.neostim_serial_port.set(str(self.neostim_port.currentData()))
 
+        # Coyote 3
+        qt_ui.settings.coyote_channel_a_limit.set(self.coyote_channel_a_limit.value())
+        qt_ui.settings.coyote_channel_b_limit.set(self.coyote_channel_b_limit.value())
+        qt_ui.settings.coyote_channel_a_freq_balance.set(self.coyote_channel_a_freq_balance.value())
+        qt_ui.settings.coyote_channel_b_freq_balance.set(self.coyote_channel_b_freq_balance.value())
+        qt_ui.settings.coyote_channel_a_intensity_balance.set(self.coyote_channel_a_intensity_balance.value())
+        qt_ui.settings.coyote_channel_b_intensity_balance.set(self.coyote_channel_b_intensity_balance.value())
+        qt_ui.settings.coyote_max_intensity_change_per_pulse.set(
+            self.coyote_max_intensity_change_per_pulse.value()
+        )
+        qt_ui.settings.coyote_graph_window.set(self.coyote_graph_window.value())
+        qt_ui.settings.coyote_debug_logging.set(self.coyote_debug_logging.isChecked())
+
         # media sync settings
         qt_ui.settings.media_sync_mpc_address.set(self.mpc_address.text())
         qt_ui.settings.media_sync_heresphere_address.set(self.heresphere_address.text())
@@ -339,6 +370,13 @@ class PreferencesDialog(QDialog, Ui_PreferencesDialog):
                     is_enabled = checkbox.isChecked()
                     if was_enabled != is_enabled:
                         self.pattern_service.set_pattern_enabled(pattern_name, is_enabled)
+
+        self.apply_coyote_logging()
+
+    def apply_coyote_logging(self):
+        enabled = qt_ui.settings.coyote_debug_logging.get()
+        new_level = logging.DEBUG if enabled else logging.INFO
+        self._coyote_logger.setLevel(new_level)
 
     def funscript_reset_defaults(self):
         self.tableView.model().reset_to_defaults()
@@ -417,4 +455,3 @@ class PreferencesDialog(QDialog, Ui_PreferencesDialog):
             widget = self.patterns_table.cellWidget(row, 1)
             if isinstance(widget, QCheckBox):
                 widget.setChecked(False)
-

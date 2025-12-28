@@ -170,6 +170,34 @@ class NeoStimParams:
     debug: AbstractAxis         # NeoStimDebugSettings
 
 
+
+from qt_ui import settings
+
+@dataclass
+class CoyoteChannelParams:
+    minimum_frequency: settings.Setting
+    maximum_frequency: settings.Setting
+    maximum_strength: settings.Setting 
+    vibration: VibrationParams # TODO: modulate channel A/B freq
+
+@dataclass
+class CoyoteAlgorithmParams:
+    position: ThreephasePositionParams
+    transform: ThreephasePositionTransformParams
+    calibrate: ThreephaseCalibrationParams
+    volume: VolumeParams
+    carrier_frequency: AbstractAxis # Hz
+    pulse_frequency: AbstractAxis   # Hz
+    pulse_width: AbstractAxis       # carrier cycles
+    pulse_interval_random: AbstractAxis
+    pulse_rise_time: AbstractAxis
+    max_intensity_change_per_pulse: settings.Setting
+
+    channel_a: CoyoteChannelParams
+    channel_b: CoyoteChannelParams
+
+
+
 @dataclass
 class SafetyParams:
     minimum_carrier_frequency: float

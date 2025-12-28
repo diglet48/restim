@@ -254,6 +254,11 @@
             <string>Carrier settings</string>
            </attribute>
           </widget>
+          <widget class="CoyoteSettingsWidget" name="tab_coyote">
+           <attribute name="title">
+            <string>Coyote</string>
+           </attribute>
+          </widget>
           <widget class="PulseSettingsWidget" name="tab_pulse_settings">
            <attribute name="title">
             <string>Pulse settings</string>
@@ -496,6 +501,12 @@
    <class>ThreePhaseSettingsWidget</class>
    <extends>QWidget</extends>
    <header>qt_ui/three_phase_settings_widget.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>CoyoteSettingsWidget</class>
+   <extends>QWidget</extends>
+   <header>qt_ui/coyote_settings_widget.h</header>
    <container>1</container>
   </customwidget>
   <customwidget>

@@ -612,6 +612,208 @@
        </item>
       </layout>
      </widget>
+     <widget class="QWidget" name="tab_coyote">
+      <attribute name="title">
+       <string>Coyote</string>
+      </attribute>
+      <layout class="QVBoxLayout" name="verticalLayout_coyote">
+       <item>
+        <widget class="QGroupBox" name="groupBox_coyote_params">
+         <property name="title">
+          <string>Device</string>
+         </property>
+         <layout class="QFormLayout" name="formLayout_coyote_params">
+          <item row="0" column="0">
+           <widget class="QLabel" name="label_coyote_channel_a_limit">
+            <property name="text">
+             <string>Channel A Limit</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="1">
+           <widget class="QSpinBox" name="coyote_channel_a_limit">
+            <property name="minimum">
+             <number>0</number>
+            </property>
+            <property name="maximum">
+             <number>200</number>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <widget class="QLabel" name="label_coyote_channel_b_limit">
+            <property name="text">
+             <string>Channel B Limit</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="1">
+           <widget class="QSpinBox" name="coyote_channel_b_limit">
+            <property name="minimum">
+             <number>0</number>
+            </property>
+            <property name="maximum">
+             <number>200</number>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="0">
+           <widget class="QLabel" name="label_coyote_channel_a_freq_balance">
+            <property name="text">
+             <string>Channel A Freq Balance</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="1">
+           <widget class="QSpinBox" name="coyote_channel_a_freq_balance">
+            <property name="minimum">
+             <number>0</number>
+            </property>
+            <property name="maximum">
+             <number>255</number>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="0">
+           <widget class="QLabel" name="label_coyote_channel_b_freq_balance">
+            <property name="text">
+             <string>Channel B Freq Balance</string>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="1">
+           <widget class="QSpinBox" name="coyote_channel_b_freq_balance">
+            <property name="minimum">
+             <number>0</number>
+            </property>
+            <property name="maximum">
+             <number>255</number>
+            </property>
+           </widget>
+          </item>
+          <item row="4" column="0">
+           <widget class="QLabel" name="label_coyote_channel_a_intensity_balance">
+            <property name="text">
+             <string>Channel A Intensity Balance</string>
+            </property>
+           </widget>
+          </item>
+          <item row="4" column="1">
+           <widget class="QSpinBox" name="coyote_channel_a_intensity_balance">
+            <property name="minimum">
+             <number>0</number>
+            </property>
+            <property name="maximum">
+             <number>255</number>
+            </property>
+           </widget>
+          </item>
+          <item row="5" column="0">
+           <widget class="QLabel" name="label_coyote_channel_b_intensity_balance">
+            <property name="text">
+             <string>Channel B Intensity Balance</string>
+            </property>
+           </widget>
+          </item>
+          <item row="5" column="1">
+           <widget class="QSpinBox" name="coyote_channel_b_intensity_balance">
+            <property name="minimum">
+             <number>0</number>
+            </property>
+            <property name="maximum">
+             <number>255</number>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <widget class="QGroupBox" name="groupBox_coyote_algorithm">
+         <property name="title">
+          <string>Algorithm</string>
+         </property>
+         <layout class="QFormLayout" name="formLayout_coyote_algorithm">
+          <item row="0" column="0">
+           <widget class="QLabel" name="label_coyote_max_intensity_change_per_pulse">
+            <property name="text">
+             <string>Max Intensity Change per Pulse (%)</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="1">
+           <widget class="QDoubleSpinBox" name="coyote_max_intensity_change_per_pulse">
+            <property name="decimals">
+             <number>1</number>
+            </property>
+            <property name="minimum">
+             <double>0.0</double>
+            </property>
+            <property name="maximum">
+             <double>100.0</double>
+            </property>
+            <property name="singleStep">
+             <double>0.1</double>
+            </property>
+            <property name="value">
+             <double>3.0</double>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <widget class="QGroupBox" name="groupBox_coyote_display">
+         <property name="title">
+          <string>Display</string>
+         </property>
+         <layout class="QFormLayout" name="formLayout_coyote_display">
+          <item row="0" column="0">
+           <widget class="QLabel" name="label_coyote_graph_window">
+            <property name="text">
+             <string>Graph Window (s)</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="1">
+           <widget class="QDoubleSpinBox" name="coyote_graph_window">
+            <property name="decimals">
+             <number>1</number>
+            </property>
+            <property name="minimum">
+             <double>0.1</double>
+            </property>
+            <property name="maximum">
+             <double>10.0</double>
+            </property>
+            <property name="singleStep">
+             <double>0.1</double>
+            </property>
+            <property name="value">
+             <double>3.0</double>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <widget class="QLabel" name="label_coyote_debug_logging">
+            <property name="text">
+             <string>Debug Logging</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="1">
+           <widget class="QCheckBox" name="coyote_debug_logging">
+            <property name="text">
+             <string/>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+      </layout>
+     </widget>
      <widget class="QWidget" name="tab_media_settings">
       <attribute name="title">
        <string>Media sync</string>
