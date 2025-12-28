@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 
 import numpy as np
-import scipy
 
 from ahrs import Quaternion
 from ahrs.common.orientation import acc2q
@@ -22,15 +21,30 @@ class IMUData:
     gyr_z: float
 
 
-# TODO: optimize away scipy
+# scipy implementation
+# class HighPass:
+#     def __init__(self, bandlimit, samplerate):
+#         self.sos = scipy.signal.butter(1, bandlimit, 'highpass', fs=samplerate, output='sos')
+#         self.zi = scipy.signal.sosfilt_zi(self.sos)
+#         self.zi *= 0
+#
+#     def update(self, data):
+#         out, self.zi = scipy.signal.sosfilt(self.sos, [data], zi=self.zi)
+#         return out[0]
+
+# numpy implementation, does not depend on scipy
 class HighPass:
     def __init__(self, bandlimit, samplerate):
-        self.sos = scipy.signal.butter(1, bandlimit, 'highpass', fs=samplerate, output='sos')
-        self.zi = scipy.signal.sosfilt_zi(self.sos)
-        self.zi *= 0
+        K = np.tan(np.pi * bandlimit / samplerate)
+        alpha = (1 - K) / (1 + K)
+        self.b = np.array([(1 + alpha) / 2, -(1 + alpha) / 2])
+        self.a = np.array([1, -alpha])
+
+        self.zi = np.array([0])
 
     def update(self, data):
-        out, self.zi = scipy.signal.sosfilt(self.sos, [data], zi=self.zi)
+        out = self.b[0] * data + self.zi
+        self.zi = self.b[1] * data - self.a[1] * out
         return out[0]
 
 
@@ -84,13 +98,13 @@ class IMUAlgorithm:
 
         # calibration for my device.
         # TODO: make calibration configurable
-        gyr_offset = np.array([426.68551375, -846.5071164, 365.27666212])
-        gyr = gyr - gyr_offset
-        acc_offsets = np.array([-11.26820513, -19.80804002, 12.53697226])
-        acc_matrix = np.array([[9.88870903e-01, 0.00000000e+00, 0.00000000e+00],
-                               [8.66923473e-04, 1.00103198e+00, 0.00000000e+00],
-                               [-7.18050029e-03, -1.13429312e-03, 1.00070187e+00]])
-        acc = (acc_matrix @ (acc - acc_offsets).T).T
+        # gyr_offset = np.array([426.68551375, -846.5071164, 365.27666212])
+        # gyr = gyr - gyr_offset
+        # acc_offsets = np.array([-11.26820513, -19.80804002, 12.53697226])
+        # acc_matrix = np.array([[9.88870903e-01, 0.00000000e+00, 0.00000000e+00],
+        #                        [8.66923473e-04, 1.00103198e+00, 0.00000000e+00],
+        #                        [-7.18050029e-03, -1.13429312e-03, 1.00070187e+00]])
+        # acc = (acc_matrix @ (acc - acc_offsets).T).T
 
 
         mdps_to_rads = 1 / 360 / 1000 * (2 * np.pi)
