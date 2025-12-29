@@ -19,7 +19,7 @@ from PySide6.QtWidgets import (QApplication, QCheckBox, QDoubleSpinBox, QFormLay
     QGroupBox, QLabel, QSizePolicy, QSpacerItem,
     QVBoxLayout, QWidget)
 
-from pyqtgraph import PlotWidget
+from pyqtgraph import GraphicsLayoutWidget
 
 class Ui_IMUSettingsWidget(object):
     def setupUi(self, IMUSettingsWidget):
@@ -116,7 +116,7 @@ class Ui_IMUSettingsWidget(object):
 
         self.verticalLayout_2.addWidget(self.checkBox)
 
-        self.graph = PlotWidget(self.groupBox_3)
+        self.graph = GraphicsLayoutWidget(self.groupBox_3)
         self.graph.setObjectName(u"graph")
         sizePolicy2 = QSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Maximum)
         sizePolicy2.setHorizontalStretch(0)
@@ -124,7 +124,7 @@ class Ui_IMUSettingsWidget(object):
         sizePolicy2.setHeightForWidth(self.graph.sizePolicy().hasHeightForWidth())
         self.graph.setSizePolicy(sizePolicy2)
         self.graph.setMinimumSize(QSize(0, 50))
-        self.graph.setMaximumSize(QSize(16777215, 300))
+        self.graph.setMaximumSize(QSize(16777215, 500))
 
         self.verticalLayout_2.addWidget(self.graph)
 

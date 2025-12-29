@@ -154,7 +154,7 @@ negative: decrease when moving</string>
        </widget>
       </item>
       <item>
-       <widget class="PlotWidget" name="graph" native="true">
+       <widget class="GraphicsLayoutWidget" name="graph" native="true">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
           <horstretch>0</horstretch>
@@ -170,7 +170,7 @@ negative: decrease when moving</string>
         <property name="maximumSize">
          <size>
           <width>16777215</width>
-          <height>300</height>
+          <height>500</height>
          </size>
         </property>
        </widget>
@@ -198,7 +198,7 @@ negative: decrease when moving</string>
  </widget>
  <customwidgets>
   <customwidget>
-   <class>PlotWidget</class>
+   <class>GraphicsLayoutWidget</class>
    <extends>QWidget</extends>
    <header>pyqtgraph.h</header>
    <container>1</container>

@@ -42,17 +42,26 @@ class IMUSettingsWidget(QtWidgets.QWidget, Ui_IMUSettingsWidget):
 
         self.checkBox.clicked.connect(self.update_checkbox_changed)
 
-        self.legend = self.graph.addLegend()
+        self.p1 = self.graph.addPlot()
+        self.graph.nextRow()
+        self.p2 = self.graph.addPlot()
+        self.p2.setXLink(self.p1)
+
+        self.p1.setLabels(left=('Position', 'm'))
+        self.p2.setLabels(left=('Speed', 'm/s'))
+
+        self.p1.addLegend(offset=(30, 5))
+        self.p2.addLegend(offset=(30, 5))
+
         self.position_plot_item = pg.PlotDataItem(name='position')
-        self.position_plot_item.setPen(pg.mkPen({'color': "white", 'width': 1}))
-        self.graph.addItem(self.position_plot_item)
+        self.position_plot_item.setPen(pg.mkPen({'color': "blue", 'width': 1}))
+        self.p1.addItem(self.position_plot_item)
 
         self.velocity_plot_item = pg.PlotDataItem(name='velocity')
         self.velocity_plot_item.setPen(pg.mkPen({'color': "orange", 'width': 1}))
-        self.graph.addItem(self.velocity_plot_item)
+        self.p2.addItem(self.velocity_plot_item)
 
-        self.graph.setXRange(-10, 0, padding=0.05)
-        self.graph.setLabel('left', "meters / meters per second")
+        self.p1.setXRange(-10, 0, padding=0.05)
 
         self.x = []
         self.y_pos = []
