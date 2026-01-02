@@ -42,4 +42,4 @@ git clone
 setup venv with pycharm
 Modify the version number in version.py
 ./venv/Scripts/pip.exe install pyinstaller
-./venv/Scripts/pyinstaller.exe --clean --onefile --paths "." --add-data "resources/favicon.png;resources/" --icon resources/favicon.ico --distpath dist-onefile restim.py
+./venv/Scripts/pyinstaller.exe --clean --onefile --paths "." --add-data "resources/favicon.png;resources/" --icon resources/favicon.ico --additional-hooks-dir 'pyinstaller-hooks' --distpath dist-onefile restim.py
