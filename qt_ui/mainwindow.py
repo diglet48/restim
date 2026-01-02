@@ -42,6 +42,7 @@ from qt_ui.device_wizard.wizard import DeviceSelectionWizard
 from qt_ui.device_wizard.enums import DeviceConfiguration, DeviceType, WaveformType
 
 from qt_ui.tcode_command_router import TCodeCommandRouter
+from stim_math.sensors.as5311 import AS5311Algorithm
 from stim_math.sensors.imu import IMUAlgorithm
 
 logger = logging.getLogger('restim.main')
@@ -496,8 +497,17 @@ class Window(QMainWindow, Ui_MainWindow):
                 )
                 output_device.new_imu_sensor_data.connect(imu_algo.update)
                 algorithm.imu_algorithm = imu_algo
-                self.graphicsView_threephase.imu_algorithm = imu_algo
                 self.tab_imu.set_imu(imu_algo)
+                self.graphicsView_threephase.imu_algorithm = imu_algo
+
+                as5311_algo = AS5311Algorithm(
+                    self.tab_AS5311.axis_range,
+                    self.tab_AS5311.axis_reduction,
+                )
+                algorithm.as5311_algorithm = as5311_algo
+                self.output_device.new_as5311_sensor_data.connect(as5311_algo.update)
+                self.tab_AS5311.set_as5311(as5311_algo)
+
 
 
         elif device.device_type == DeviceType.NEOSTIM_THREE_PHASE:

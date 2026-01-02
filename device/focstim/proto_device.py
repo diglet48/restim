@@ -23,6 +23,7 @@ from stim_math.audio_gen.base_classes import RemoteGenerationAlgorithm
 from device.focstim.focstim_rpc_pb2 import Response
 from device.focstim.messages_pb2 import ResponseCapabilitiesGet, ResponseFirmwareVersion
 from device.focstim.constants_pb2 import OutputMode
+from stim_math.sensors.as5311 import AS5311Data
 
 from stim_math.sensors.imu import IMUData
 
@@ -460,5 +461,8 @@ class FOCStimProtoDevice(QObject, OutputDevice):
                 as5311_um=notif.tracked * (2000.0 / 4096),
                 as5311_flags=notif.flags,
             )
+            m = notif.tracked * (2000.0 / 4096) * 1e-6
+            self.new_as5311_sensor_data.emit(AS5311Data(m))
 
     new_imu_sensor_data = Signal(IMUData)
+    new_as5311_sensor_data = Signal(AS5311Data)

@@ -307,23 +307,10 @@
             <string>IMU</string>
            </attribute>
           </widget>
-          <widget class="QWidget" name="tab_AS5311">
+          <widget class="AS5311SettingsWidget" name="tab_AS5311">
            <attribute name="title">
             <string>AS5311</string>
            </attribute>
-           <widget class="QLabel" name="label">
-            <property name="geometry">
-             <rect>
-              <x>20</x>
-              <y>30</y>
-              <width>131</width>
-              <height>16</height>
-             </rect>
-            </property>
-            <property name="text">
-             <string>Not implemented yet</string>
-            </property>
-           </widget>
           </widget>
          </widget>
         </item>
@@ -602,6 +589,12 @@
    <class>IMUSettingsWidget</class>
    <extends>QWidget</extends>
    <header>qt_ui/imu_settings_widget.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>AS5311SettingsWidget</class>
+   <extends>QWidget</extends>
+   <header>qt_ui/as5311_settings_widget.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

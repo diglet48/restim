@@ -17,12 +17,12 @@ from PySide6.QtGui import (QAction, QBrush, QColor, QConicalGradient,
     QPainter, QPalette, QPixmap, QRadialGradient,
     QTransform)
 from PySide6.QtWidgets import (QApplication, QComboBox, QDoubleSpinBox, QFrame,
-    QGroupBox, QHBoxLayout, QLabel, QMainWindow,
-    QMenu, QMenuBar, QSizePolicy, QSpacerItem,
-    QStackedWidget, QTabWidget, QToolBar, QVBoxLayout,
-    QWidget)
+    QGroupBox, QHBoxLayout, QMainWindow, QMenu,
+    QMenuBar, QSizePolicy, QSpacerItem, QStackedWidget,
+    QTabWidget, QToolBar, QVBoxLayout, QWidget)
 
 from qt_ui.ab_test_widget import ABTestWidget
+from qt_ui.as5311_settings_widget import AS5311SettingsWidget
 from qt_ui.carrier_settings_widget import CarrierSettingsWidget
 from qt_ui.four_phase_settings_widget import FourPhaseSettingsWidget
 from qt_ui.imu_settings_widget import IMUSettingsWidget
@@ -251,11 +251,8 @@ class Ui_MainWindow(object):
         self.tab_imu = IMUSettingsWidget()
         self.tab_imu.setObjectName(u"tab_imu")
         self.tabWidget_2.addTab(self.tab_imu, "")
-        self.tab_AS5311 = QWidget()
+        self.tab_AS5311 = AS5311SettingsWidget()
         self.tab_AS5311.setObjectName(u"tab_AS5311")
-        self.label = QLabel(self.tab_AS5311)
-        self.label.setObjectName(u"label")
-        self.label.setGeometry(QRect(20, 30, 131, 16))
         self.tabWidget_2.addTab(self.tab_AS5311, "")
 
         self.horizontalLayout_3.addWidget(self.tabWidget_2)
@@ -357,7 +354,6 @@ class Ui_MainWindow(object):
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_vibrate), QCoreApplication.translate("MainWindow", u"Vibration", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_details), QCoreApplication.translate("MainWindow", u"Details", None))
         self.tabWidget_2.setTabText(self.tabWidget_2.indexOf(self.tab_imu), QCoreApplication.translate("MainWindow", u"IMU", None))
-        self.label.setText(QCoreApplication.translate("MainWindow", u"Not implemented yet", None))
         self.tabWidget_2.setTabText(self.tabWidget_2.indexOf(self.tab_AS5311), QCoreApplication.translate("MainWindow", u"AS5311", None))
         self.menuSetup.setTitle(QCoreApplication.translate("MainWindow", u"Setup", None))
         self.menuTools.setTitle(QCoreApplication.translate("MainWindow", u"Tools", None))
