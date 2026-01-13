@@ -132,7 +132,10 @@ class ThreephaseWidgetAlphaBeta(ThreephaseWidgetBase):
         self.last_state = None
         self.refresh_transform()
 
-        self.imu_algorithm = None
+        self.sensor_widget = None
+
+    def set_sensor_widget(self, sensor_widget):
+        self.sensor_widget = sensor_widget
 
     def set_transform_params(self, transform_params: ThreephasePositionTransformParams):
         self.transform_params = transform_params
@@ -140,8 +143,11 @@ class ThreephaseWidgetAlphaBeta(ThreephaseWidgetBase):
     def set_cursor_position_ab(self, a, b):
         self.refresh_transform()    # TODO: optimize me away
 
-        if self.imu_algorithm:
-            _, a, b = self.imu_algorithm.transform_threephase(0, a, b)
+        if self.sensor_widget:
+            d = {'alpha': a, 'beta': b}
+            self.sensor_widget.process(d)
+            a = d['alpha']
+            b = d['beta']
 
         state = (a, b, self.transform)
         if state == self.last_state:

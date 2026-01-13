@@ -42,8 +42,6 @@ from qt_ui.device_wizard.wizard import DeviceSelectionWizard
 from qt_ui.device_wizard.enums import DeviceConfiguration, DeviceType, WaveformType
 
 from qt_ui.tcode_command_router import TCodeCommandRouter
-from stim_math.sensors.as5311 import AS5311Algorithm
-from stim_math.sensors.imu import IMUAlgorithm
 
 logger = logging.getLogger('restim.main')
 
@@ -126,6 +124,7 @@ class Window(QMainWindow, Ui_MainWindow):
         self.graphicsView_threephase.set_transform_params(self.tab_threephase.transform_params)
         self.graphicsView_threephase.mousePositionChanged.connect(self.motion_3.mouse_event)
         self.motion_3.position_updated.connect(self.graphicsView_threephase.set_cursor_position_ab)
+        self.graphicsView_threephase.set_sensor_widget(self.page_sensors)
 
         # fourphase view
         self.motion_4 = qt_ui.patterns.fourphase_patterns.FourphaseMotionGenerator(self, self.alpha, self.beta, self.gamma)
@@ -362,8 +361,7 @@ class Window(QMainWindow, Ui_MainWindow):
                     self.tab_vibrate,
                     self.tab_details,
                     self.tab_a_b_testing,
-                    self.tab_neostim,
-                    self.tab_imu}
+                    self.tab_neostim}
 
         visible = {self.tab_threephase, self.tab_volume, self.tab_vibrate, self.tab_details}
 
@@ -378,7 +376,7 @@ class Window(QMainWindow, Ui_MainWindow):
             if config.waveform_type == WaveformType.A_B_TESTING:
                 visible |= {self.tab_a_b_testing}
         if config.device_type == DeviceType.FOCSTIM_THREE_PHASE:
-            visible |= {self.tab_pulse_settings, self.tab_imu}
+            visible |= {self.tab_pulse_settings}
             visible -= {self.tab_vibrate}
         if config.device_type == DeviceType.FOCSTIM_FOUR_PHASE:
             visible |= {self.tab_pulse_settings, self.tab_fourphase}
@@ -488,26 +486,10 @@ class Window(QMainWindow, Ui_MainWindow):
                 self.tab_volume.set_play_state(self.playstate)
                 self.refresh_play_button_icon()
 
-                imu_algo = IMUAlgorithm(
-                    self.tab_imu.axis_movement_amplitude_in,
-                    self.tab_imu.axis_movement_amplitude_out,
-                    self.tab_imu.axis_velocity_amplitude,
-                    self.tab_imu.axis_intensity_increase,
-                    LSM6DSOX_SAMPLERATE_HZ
-                )
-                output_device.new_imu_sensor_data.connect(imu_algo.update)
-                algorithm.imu_algorithm = imu_algo
-                self.tab_imu.set_imu(imu_algo)
-                self.graphicsView_threephase.imu_algorithm = imu_algo
-
-                as5311_algo = AS5311Algorithm(
-                    self.tab_AS5311.axis_range,
-                    self.tab_AS5311.axis_reduction,
-                )
-                algorithm.as5311_algorithm = as5311_algo
-                self.output_device.new_as5311_sensor_data.connect(as5311_algo.update)
-                self.tab_AS5311.set_as5311(as5311_algo)
-
+                output_device.new_as5311_sensor_data.connect(self.page_sensors.new_as5311_sensor_data)
+                output_device.new_imu_sensor_data.connect(self.page_sensors.new_imu_sensor_data)
+                output_device.new_pressure_sensor_data.connect(self.page_sensors.new_pressure_sensor_data)
+                algorithm.sensor_node = self.page_sensors
 
 
         elif device.device_type == DeviceType.NEOSTIM_THREE_PHASE:

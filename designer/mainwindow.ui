@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>843</width>
-    <height>657</height>
+    <height>656</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -289,33 +289,7 @@
        </layout>
       </widget>
       <widget class="MediaSettingsWidget" name="page_media"/>
-      <widget class="QWidget" name="page_sensors">
-       <layout class="QHBoxLayout" name="horizontalLayout_3">
-        <property name="topMargin">
-         <number>0</number>
-        </property>
-        <property name="bottomMargin">
-         <number>0</number>
-        </property>
-        <item>
-         <widget class="QTabWidget" name="tabWidget_2">
-          <property name="currentIndex">
-           <number>0</number>
-          </property>
-          <widget class="IMUSettingsWidget" name="tab_imu">
-           <attribute name="title">
-            <string>IMU</string>
-           </attribute>
-          </widget>
-          <widget class="AS5311SettingsWidget" name="tab_AS5311">
-           <attribute name="title">
-            <string>AS5311</string>
-           </attribute>
-          </widget>
-         </widget>
-        </item>
-       </layout>
-      </widget>
+      <widget class="SensorsWidget" name="page_sensors"/>
      </widget>
     </item>
    </layout>
@@ -586,15 +560,9 @@
    <container>1</container>
   </customwidget>
   <customwidget>
-   <class>IMUSettingsWidget</class>
+   <class>SensorsWidget</class>
    <extends>QWidget</extends>
-   <header>qt_ui/imu_settings_widget.h</header>
-   <container>1</container>
-  </customwidget>
-  <customwidget>
-   <class>AS5311SettingsWidget</class>
-   <extends>QWidget</extends>
-   <header>qt_ui/as5311_settings_widget.h</header>
+   <header>qt_ui/sensors_widget.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

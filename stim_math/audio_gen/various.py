@@ -72,6 +72,9 @@ class ThreePhasePosition:
     def get_position(self, command_timeline):
         alpha = self.position_params.alpha.interpolate(command_timeline)
         beta = self.position_params.beta.interpolate(command_timeline)
+        return self.transform_position(alpha, beta)
+
+    def transform_position(self, alpha, beta):
 
         # normalize (alpha, beta) to be within the unit circle.
         norm = np.clip(trig.norm(alpha, beta), 1.0, None)

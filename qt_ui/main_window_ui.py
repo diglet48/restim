@@ -22,13 +22,12 @@ from PySide6.QtWidgets import (QApplication, QComboBox, QDoubleSpinBox, QFrame,
     QTabWidget, QToolBar, QVBoxLayout, QWidget)
 
 from qt_ui.ab_test_widget import ABTestWidget
-from qt_ui.as5311_settings_widget import AS5311SettingsWidget
 from qt_ui.carrier_settings_widget import CarrierSettingsWidget
 from qt_ui.four_phase_settings_widget import FourPhaseSettingsWidget
-from qt_ui.imu_settings_widget import IMUSettingsWidget
 from qt_ui.media_settings_widget import MediaSettingsWidget
 from qt_ui.neostim_settings_widget import NeoStimSettingsWidget
 from qt_ui.pulse_settings_widget import PulseSettingsWidget
+from qt_ui.sensors_widget import SensorsWidget
 from qt_ui.three_phase_settings_widget import ThreePhaseSettingsWidget
 from qt_ui.vibration_settings_widget import VibrationSettingsWidget
 from qt_ui.volume_control_widget import VolumeControlWidget
@@ -42,7 +41,7 @@ class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         if not MainWindow.objectName():
             MainWindow.setObjectName(u"MainWindow")
-        MainWindow.resize(843, 657)
+        MainWindow.resize(843, 656)
         icon = QIcon()
         icon.addFile(u":/restim/favicon.png", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
         MainWindow.setWindowIcon(icon)
@@ -241,22 +240,8 @@ class Ui_MainWindow(object):
         self.page_media = MediaSettingsWidget()
         self.page_media.setObjectName(u"page_media")
         self.stackedWidget.addWidget(self.page_media)
-        self.page_sensors = QWidget()
+        self.page_sensors = SensorsWidget()
         self.page_sensors.setObjectName(u"page_sensors")
-        self.horizontalLayout_3 = QHBoxLayout(self.page_sensors)
-        self.horizontalLayout_3.setObjectName(u"horizontalLayout_3")
-        self.horizontalLayout_3.setContentsMargins(-1, 0, -1, 0)
-        self.tabWidget_2 = QTabWidget(self.page_sensors)
-        self.tabWidget_2.setObjectName(u"tabWidget_2")
-        self.tab_imu = IMUSettingsWidget()
-        self.tab_imu.setObjectName(u"tab_imu")
-        self.tabWidget_2.addTab(self.tab_imu, "")
-        self.tab_AS5311 = AS5311SettingsWidget()
-        self.tab_AS5311.setObjectName(u"tab_AS5311")
-        self.tabWidget_2.addTab(self.tab_AS5311, "")
-
-        self.horizontalLayout_3.addWidget(self.tabWidget_2)
-
         self.stackedWidget.addWidget(self.page_sensors)
 
         self.horizontalLayout.addWidget(self.stackedWidget)
@@ -300,7 +285,6 @@ class Ui_MainWindow(object):
         self.stackedWidget.setCurrentIndex(0)
         self.stackedWidget_visual.setCurrentIndex(1)
         self.tabWidget.setCurrentIndex(8)
-        self.tabWidget_2.setCurrentIndex(0)
 
 
         QMetaObject.connectSlotsByName(MainWindow)
@@ -353,8 +337,6 @@ class Ui_MainWindow(object):
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_volume), QCoreApplication.translate("MainWindow", u"Volume", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_vibrate), QCoreApplication.translate("MainWindow", u"Vibration", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_details), QCoreApplication.translate("MainWindow", u"Details", None))
-        self.tabWidget_2.setTabText(self.tabWidget_2.indexOf(self.tab_imu), QCoreApplication.translate("MainWindow", u"IMU", None))
-        self.tabWidget_2.setTabText(self.tabWidget_2.indexOf(self.tab_AS5311), QCoreApplication.translate("MainWindow", u"AS5311", None))
         self.menuSetup.setTitle(QCoreApplication.translate("MainWindow", u"Setup", None))
         self.menuTools.setTitle(QCoreApplication.translate("MainWindow", u"Tools", None))
         self.menuHelp.setTitle(QCoreApplication.translate("MainWindow", u"Help", None))

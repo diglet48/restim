@@ -8,8 +8,6 @@ from stim_math.audio_gen.various import ThreePhasePosition
 from stim_math.axis import AbstractMediaSync
 from device.focstim.constants_pb2 import AxisType
 from stim_math import limits
-from stim_math.sensors.as5311 import AS5311Algorithm
-from stim_math.sensors.imu import IMUAlgorithm
 
 
 class FOCStimThreephaseAlgorithm(RemoteGenerationAlgorithm):
@@ -24,17 +22,12 @@ class FOCStimThreephaseAlgorithm(RemoteGenerationAlgorithm):
         assert safety_limits.waveform_amplitude_amps >= (limits.WaveformAmpltiudeFOC.min - epsilon)
         assert safety_limits.waveform_amplitude_amps <= (limits.WaveformAmpltiudeFOC.max + epsilon)
 
-        self.imu_algorithm: IMUAlgorithm = None
-        self.as5311_algorithm: AS5311Algorithm = None
+        self.sensor_node = None
 
     def outputs(self):
         return 3
 
     def parameter_dict(self) -> dict:
-        def remap(value, min_value, max_value):
-            p = (value - min_value) / (max_value - min_value)
-            return np.clip(p, 0, 1)
-
         t = time.time()
 
         volume = \
@@ -56,14 +49,18 @@ class FOCStimThreephaseAlgorithm(RemoteGenerationAlgorithm):
         derating = self.frequency_derating_factor(maximum_frequency, carrier_frequency, tau)
         volume *= np.clip(derating, 0, 1)
 
-        alpha, beta = self.position_params.get_position(t)
+        alpha = self.position_params.position_params.alpha.interpolate(t)
+        beta = self.position_params.position_params.beta.interpolate(t)
 
-        if self.imu_algorithm:
-            # TODO: insert filter before limits/transform
-            volume, alpha, beta = self.imu_algorithm.transform_threephase(volume, alpha, beta)
+        if self.sensor_node:
+            d = {'volume': volume, 'alpha': alpha, 'beta': beta}
+            self.sensor_node.process(d)
+            # safety: new volume must be less than original
+            volume = np.clip(d['volume'], 0, volume)
+            alpha = d['alpha']
+            beta = d['beta']
 
-        if self.as5311_algorithm:
-            volume, alpha, beta = self.as5311_algorithm.transform_threephase(volume, alpha, beta)
+        alpha, beta = self.position_params.transform_position(alpha, beta)
 
         if not self.media.is_playing():
             volume *= 0

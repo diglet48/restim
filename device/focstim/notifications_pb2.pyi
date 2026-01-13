@@ -158,6 +158,14 @@ class NotificationLSM6DSOX(_message.Message):
     def __init__(self, acc_x: _Optional[int]=..., acc_y: _Optional[int]=..., acc_z: _Optional[int]=..., gyr_x: _Optional[int]=..., gyr_y: _Optional[int]=..., gyr_z: _Optional[int]=...) -> None:
         ...
 
+class NotificationPressure(_message.Message):
+    __slots__ = ('pressure',)
+    PRESSURE_FIELD_NUMBER: _ClassVar[int]
+    pressure: float
+
+    def __init__(self, pressure: _Optional[float]=...) -> None:
+        ...
+
 class NotificationDebugString(_message.Message):
     __slots__ = ('message',)
     MESSAGE_FIELD_NUMBER: _ClassVar[int]

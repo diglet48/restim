@@ -14,7 +14,7 @@ from device.focstim.messages_pb2 import RequestFirmwareVersion, RequestAxisSet, 
     RequestLSM6DSOXStop
 from device.focstim.notifications_pb2 import NotificationBoot, NotificationPotentiometer, NotificationCurrents, \
     NotificationModelEstimation, NotificationSystemStats, NotificationSignalStats, NotificationBattery, \
-    NotificationLSM6DSOX, NotificationDebugString, NotificationDebugAS5311
+    NotificationLSM6DSOX, NotificationPressure, NotificationDebugString, NotificationDebugAS5311
 
 logger = logging.getLogger('restim.focstim')
 
@@ -123,6 +123,8 @@ class FOCStimProtoAPI(QObject):
                 self.on_notification_battery.emit(message.notification.notification_battery)
             elif message.notification.HasField('notification_lsm6dsox'):
                 self.on_notification_lsm6dsox.emit(message.notification.notification_lsm6dsox)
+            elif message.notification.HasField('notification_pressure'):
+                self.on_notification_pressure.emit(message.notification.notification_pressure)
             elif message.notification.HasField('notification_debug_string'):
                 self.on_notification_debug_string.emit(message.notification.notification_debug_string)
             elif message.notification.HasField('notification_debug_as5311'):
@@ -263,5 +265,6 @@ class FOCStimProtoAPI(QObject):
     on_notification_signal_stats = Signal(NotificationSignalStats)
     on_notification_battery = Signal(NotificationBattery)
     on_notification_lsm6dsox = Signal(NotificationLSM6DSOX)
+    on_notification_pressure = Signal(NotificationPressure)
     on_notification_debug_string = Signal(NotificationDebugString)
     on_notification_debug_as5311 = Signal(NotificationDebugAS5311)

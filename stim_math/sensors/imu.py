@@ -7,6 +7,7 @@ from ahrs.common.orientation import acc2q
 from ahrs.filters import Madgwick
 
 from net import teleplot
+from stim_math.sensors.filters import HighPass
 
 GRAVITY_MAGNITUDE = 9.80
 
@@ -21,44 +22,8 @@ class IMUData:
     gyr_z: float
 
 
-# scipy implementation
-# class HighPass:
-#     def __init__(self, bandlimit, samplerate):
-#         self.sos = scipy.signal.butter(1, bandlimit, 'highpass', fs=samplerate, output='sos')
-#         self.zi = scipy.signal.sosfilt_zi(self.sos)
-#         self.zi *= 0
-#
-#     def update(self, data):
-#         out, self.zi = scipy.signal.sosfilt(self.sos, [data], zi=self.zi)
-#         return out[0]
-
-# numpy implementation, does not depend on scipy
-class HighPass:
-    def __init__(self, bandlimit, samplerate):
-        K = np.tan(np.pi * bandlimit / samplerate)
-        alpha = (1 - K) / (1 + K)
-        self.b = np.array([(1 + alpha) / 2, -(1 + alpha) / 2])
-        self.a = np.array([1, -alpha])
-
-        self.zi = np.array([0])
-
-    def update(self, data):
-        out = self.b[0] * data + self.zi
-        self.zi = self.b[1] * data - self.a[1] * out
-        return out[0]
-
-
-class IMUAlgorithm:
-    def __init__(self,
-                 axis_movement_fullscale, axis_movement_out,
-                 axis_velocity_fullscale, axis_intensity_increase,
-                 samplerate):
-
-        self.axis_movement_fullscale = axis_movement_fullscale
-        self.axis_movement_out = axis_movement_out
-        self.axis_velocity_fullscale = axis_velocity_fullscale
-        self.axis_intensity_increase = axis_intensity_increase
-
+class IMUForwardPositionFilter:
+    def __init__(self, samplerate):
         self.q = None
         self.orientation_filter = Madgwick(frequency=samplerate)
         self.velocity = np.zeros(3, dtype=np.float64)
@@ -81,10 +46,6 @@ class IMUAlgorithm:
 
         self.forward_velocity = 0
         self.forward_position = 0
-
-    # TODO: implement if needed
-    def set_calibration(self):
-        pass
 
     def last_position(self):
         return self.forward_position
@@ -150,31 +111,3 @@ class IMUAlgorithm:
             f_v=self.forward_velocity,
             f_p=self.forward_position,
         )
-
-    def transform_threephase(self, volume: float, alpha: float, beta: float):
-        movement_amplitude_in = self.axis_movement_fullscale.last_value() / 100   # meters
-        movement_amplitude_out = self.axis_movement_out.last_value()
-
-        if movement_amplitude_in != 0 and movement_amplitude_out != 0:
-            alpha += np.clip(self.forward_position / movement_amplitude_in, -1, 1) * movement_amplitude_out
-
-            # clip alpha, beta to unit circle
-            r = (alpha**2 + beta**2)**.5
-            if r > 1:
-                alpha /= r
-                beta /= r
-
-        velocity_amplitude_in = self.axis_velocity_fullscale.last_value() / 100   # m/s
-        velocity_amplitude_out = np.clip(self.axis_intensity_increase.last_value(), -1, 1)
-
-        if velocity_amplitude_in and velocity_amplitude_out and volume:
-            s = np.clip(np.abs(self.forward_velocity / velocity_amplitude_in), 0, 1)
-            if velocity_amplitude_out >= 0:
-                # increase with speed
-                volume *= 1 - velocity_amplitude_out * (1 - s)
-            else:
-                # decrease with speed
-                volume *= 1 + velocity_amplitude_out * s
-
-        return volume, alpha, beta
-

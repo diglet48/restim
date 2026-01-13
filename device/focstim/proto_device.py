@@ -15,7 +15,7 @@ import qt_ui.settings
 from device.focstim.proto_api import FOCStimProtoAPI
 from device.focstim.notifications_pb2 import NotificationBoot, NotificationPotentiometer, NotificationCurrents, \
     NotificationModelEstimation, NotificationSystemStats, NotificationSignalStats, NotificationBattery, \
-    NotificationLSM6DSOX, NotificationDebugString, NotificationDebugAS5311
+    NotificationLSM6DSOX, NotificationDebugString, NotificationDebugAS5311, NotificationPressure
 from net.teleplot import Teleplot
 from device.output_device import OutputDevice
 from stim_math.audio_gen.base_classes import RemoteGenerationAlgorithm
@@ -26,6 +26,7 @@ from device.focstim.constants_pb2 import OutputMode
 from stim_math.sensors.as5311 import AS5311Data
 
 from stim_math.sensors.imu import IMUData
+from stim_math.sensors.pressure import PressureData
 
 logger = logging.getLogger('restim.focstim')
 
@@ -193,6 +194,7 @@ class FOCStimProtoDevice(QObject, OutputDevice):
         self.api.on_notification_signal_stats.connect(self.handle_notification_signal_stats)
         self.api.on_notification_battery.connect(self.handle_notification_battery)
         self.api.on_notification_lsm6dsox.connect(self.handle_notification_lsm6dsox)
+        self.api.on_notification_pressure.connect(self.handle_notification_pressure)
         self.api.on_notification_debug_string.connect(self.handle_notification_debug_string)
         self.api.on_notification_debug_as5311.connect(self.handle_notification_debug_as5311)
 
@@ -451,6 +453,11 @@ class FOCStimProtoDevice(QObject, OutputDevice):
                 )
             )
 
+    def handle_notification_pressure(self, notif: NotificationPressure):
+        self.new_pressure_sensor_data.emit(
+            PressureData(notif.pressure)
+        )
+
     def handle_notification_debug_string(self, notif: NotificationDebugString):
         logger.warning(notif.message)
 
@@ -461,8 +468,9 @@ class FOCStimProtoDevice(QObject, OutputDevice):
                 as5311_um=notif.tracked * (2000.0 / 4096),
                 as5311_flags=notif.flags,
             )
-            m = notif.tracked * (2000.0 / 4096) * 1e-6
-            self.new_as5311_sensor_data.emit(AS5311Data(m))
+        m = notif.tracked * (2000.0 / 4096) * 1e-6
+        self.new_as5311_sensor_data.emit(AS5311Data(m))
 
     new_imu_sensor_data = Signal(IMUData)
     new_as5311_sensor_data = Signal(AS5311Data)
+    new_pressure_sensor_data = Signal(PressureData)
