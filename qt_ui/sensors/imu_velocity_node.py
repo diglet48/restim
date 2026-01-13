@@ -25,8 +25,7 @@ class IMUVelocityNode(QtWidgets.QWidget, SensorNodeInterface):
         self.groupbox = QGroupBox(self)
         self.groupbox.setTitle("Settings")
         self.verticalLayout.addWidget(self.groupbox)
-        self.formLayout = QFormLayout(self)
-        self.groupbox.setLayout(self.formLayout)
+        self.formLayout = QFormLayout(self.groupbox)
 
         self.spinbox_high = pg.SpinBox(None, 0.0, compactHeight=False, suffix='deg/s', int=True)
         self.spinbox_low = pg.SpinBox(None, 0.0, compactHeight=False, suffix='deg/s', int=True)

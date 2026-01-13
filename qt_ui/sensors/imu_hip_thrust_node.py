@@ -27,14 +27,12 @@ class IMUHipThrustNode(QtWidgets.QWidget, SensorNodeInterface):
         self.groupbox = QGroupBox(self)
         self.groupbox.setTitle("Movement")
         self.verticalLayout.addWidget(self.groupbox)
-        self.formLayout = QFormLayout(self)
-        self.groupbox.setLayout(self.formLayout)
+        self.formLayout = QFormLayout(self.groupbox)
 
         self.groupbox2 = QGroupBox(self)
         self.groupbox2.setTitle("Velocity")
         self.verticalLayout.addWidget(self.groupbox2)
-        self.formLayout2 = QFormLayout(self)
-        self.groupbox2.setLayout(self.formLayout2)
+        self.formLayout2 = QFormLayout(self.groupbox2)
 
         self.spinbox_position = pg.SpinBox(None, 0.0, compactHeight=False, suffix='m', siPrefix=True, dec=True, minStep=1e-4)
         self.spinbox_alpha = pg.SpinBox(None, 0.0, compactHeight=False, suffix='', dec=True, minStep=0.01)

@@ -23,8 +23,7 @@ class PressureDepletionSensorNode(QWidget, SensorNodeInterface):
         self.groupbox = QGroupBox(self)
         self.groupbox.setTitle("Settings")
         self.verticalLayout.addWidget(self.groupbox)
-        self.formLayout = QFormLayout(self)
-        self.groupbox.setLayout(self.formLayout)
+        self.formLayout = QFormLayout(self.groupbox)
 
         self.spinbox_arousal_threshold = pg.SpinBox(None, 1300, compactHeight=False, suffix='Pa', siPrefix=True, dec=True, minStep=100)
         self.spinbox_ramp_time = pg.SpinBox(None, 30, compactHeight=False, suffix='s', int=True, bounds=(1, 10000))

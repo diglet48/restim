@@ -24,8 +24,7 @@ class PressureAbsoluteSensorNode(QWidget, SensorNodeInterface):
         self.groupbox = QGroupBox(self)
         self.groupbox.setTitle("Settings")
         self.verticalLayout.addWidget(self.groupbox)
-        self.formLayout = QFormLayout(self)
-        self.groupbox.setLayout(self.formLayout)
+        self.formLayout = QFormLayout(self.groupbox)
 
         self.spinbox_low = pg.SpinBox(None, 100000, compactHeight=False, suffix='Pa', siPrefix=True, dec=True, minStep=100)
         self.spinbox_high = pg.SpinBox(None, 110000, compactHeight=False, suffix='Pa', siPrefix=True, dec=True, minStep=100)
