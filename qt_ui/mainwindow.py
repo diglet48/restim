@@ -472,6 +472,8 @@ class Window(QMainWindow, Ui_MainWindow):
             output_device = FOCStimProtoDevice()
             use_teleplot = qt_ui.settings.focstim_use_teleplot.get()
             dump_notifications = qt_ui.settings.focstim_dump_notifications_to_file.get()
+
+            # Connect to physical device for output
             comms_wifi = qt_ui.settings.focstim_communication_wifi.get()
             if not comms_wifi:
                 serial_port_name = qt_ui.settings.focstim_serial_port.get()
@@ -486,7 +488,24 @@ class Window(QMainWindow, Ui_MainWindow):
                 self.tab_volume.set_play_state(self.playstate)
                 self.refresh_play_button_icon()
 
+                # Setup AS5311 sensor data connection
                 output_device.new_as5311_sensor_data.connect(self.page_sensors.new_as5311_sensor_data)
+
+                # Check AS5311 sensor data source setting
+                as5311_source = qt_ui.settings.focstim_as5311_source.get()
+
+                if as5311_source == 1:
+                    # Remote mode - connect to Master instance for AS5311 sensor data
+                    server_address = qt_ui.settings.focstim_as5311_server_address.get()
+                    server_port = qt_ui.settings.focstim_as5311_server_port.get()
+                    output_device.start_remote_sensor_client(server_address, server_port)
+                    logger.info(f"Started remote AS5311 sensor data client (server: {server_address}:{server_port})")
+
+                # Check if we should broadcast AS5311 sensor data (from the connected device)
+                if as5311_source == 0 and qt_ui.settings.focstim_as5311_serve.get():
+                    serve_port = qt_ui.settings.focstim_as5311_serve_port.get()
+                    output_device.start_broadcasting(serve_port)
+
                 output_device.new_imu_sensor_data.connect(self.page_sensors.new_imu_sensor_data)
                 output_device.new_pressure_sensor_data.connect(self.page_sensors.new_pressure_sensor_data)
                 algorithm.sensor_node = self.page_sensors

@@ -164,6 +164,13 @@ focstim_ssid = Setting("focstim/wifi_ssid", '', str)
 focstim_password = Setting("focstim/wifi_password", '', str)
 focstim_ip = Setting("focstim/wifi_ip", '', str)
 
+# AS5311 Sensor Data Sharing
+focstim_as5311_source = Setting("focstim/as5311_source", 0, int)
+focstim_as5311_serve = Setting("focstim/as5311_serve", False, bool)
+focstim_as5311_serve_port = Setting("focstim/as5311_serve_port", 55534, int)
+focstim_as5311_server_address = Setting("focstim/as5311_server_address", "127.0.0.1", str)
+focstim_as5311_server_port = Setting("focstim/as5311_server_port", 55534, int)
+
 neostim_serial_port = Setting("neostim/serial_port", '', str)
 
 # Pattern preferences - we'll store this as a JSON string and convert to dict

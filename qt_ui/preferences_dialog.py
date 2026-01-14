@@ -29,6 +29,9 @@ class PreferencesDialog(QDialog, Ui_PreferencesDialog):
         self._cached_patterns = None
         self._cache_patterns_data()
 
+        # Setup AS5311 Sensor Data Sharing UI before loading settings
+        self.setup_as5311_sensor_ui()
+
         self.loadSettings()
 
         self.audio_api.currentIndexChanged.connect(self.repopulate_audio_devices)
@@ -75,6 +78,82 @@ class PreferencesDialog(QDialog, Ui_PreferencesDialog):
         # focstim buttons
         self.focstim_read_ip.clicked.connect(self.read_focstim_ip)
         self.focstim_sync.clicked.connect(self.upload_focstim_ssid)
+
+    def setup_as5311_sensor_ui(self):
+        """Setup AS5311 Sensor Data Sharing UI controls"""
+        from PySide6.QtWidgets import QGroupBox, QVBoxLayout, QRadioButton, QLabel, QSpinBox, QLineEdit, QHBoxLayout, QCheckBox
+
+        # Create group box for AS5311 sensor data settings
+        self.as5311_groupbox = QGroupBox("AS5311 Sensor Data", self.tab_foc)
+        layout = QVBoxLayout(self.as5311_groupbox)
+
+        # Radio button 1: From the box (Default)
+        self.as5311_radio_from_box = QRadioButton("From the box (Default)")
+        layout.addWidget(self.as5311_radio_from_box)
+
+        # Sub-options for "From the box"
+        self.as5311_serve_checkbox = QCheckBox("Serve data for other instances")
+        self.as5311_serve_checkbox.setContentsMargins(20, 0, 0, 0)
+        layout.addWidget(self.as5311_serve_checkbox)
+
+        # Port spinbox for serving
+        port_layout = QHBoxLayout()
+        port_layout.addSpacing(40)
+        port_label = QLabel("Port:")
+        self.as5311_serve_port = QSpinBox()
+        self.as5311_serve_port.setMinimum(1024)
+        self.as5311_serve_port.setMaximum(65535)
+        self.as5311_serve_port.setValue(55534)
+        port_layout.addWidget(port_label)
+        port_layout.addWidget(self.as5311_serve_port)
+        port_layout.addStretch()
+        layout.addLayout(port_layout)
+
+        # Radio button 2: From the server
+        self.as5311_radio_from_server = QRadioButton("From the server")
+        layout.addWidget(self.as5311_radio_from_server)
+
+        # Sub-options for "From the server" - using FormLayout for alignment
+        from PySide6.QtWidgets import QFormLayout
+        server_form_layout = QFormLayout()
+        server_form_layout.setContentsMargins(40, 0, 0, 0)
+
+        # IP address
+        self.as5311_server_address = QLineEdit()
+        self.as5311_server_address.setText("127.0.0.1")
+        server_form_layout.addRow("IP:", self.as5311_server_address)
+
+        # Port
+        self.as5311_server_port = QSpinBox()
+        self.as5311_server_port.setMinimum(1024)
+        self.as5311_server_port.setMaximum(65535)
+        self.as5311_server_port.setValue(55534)
+        server_form_layout.addRow("Port:", self.as5311_server_port)
+
+        layout.addLayout(server_form_layout)
+
+        # Add to the FOC-Stim tab layout
+        self.verticalLayout_5.addWidget(self.as5311_groupbox)
+
+        # Connect signals for enabling/disabling controls
+        self.as5311_radio_from_box.toggled.connect(self.update_as5311_controls)
+        self.as5311_radio_from_server.toggled.connect(self.update_as5311_controls)
+
+        # Set default selection
+        self.as5311_radio_from_box.setChecked(True)
+
+    def update_as5311_controls(self):
+        """Update AS5311 control states based on radio button selection"""
+        from_box = self.as5311_radio_from_box.isChecked()
+        from_server = self.as5311_radio_from_server.isChecked()
+
+        # Enable/disable "From the box" sub-options
+        self.as5311_serve_checkbox.setEnabled(from_box)
+        self.as5311_serve_port.setEnabled(from_box)
+
+        # Enable/disable "From the server" sub-options
+        self.as5311_server_address.setEnabled(from_server)
+        self.as5311_server_port.setEnabled(from_server)
 
     def _cache_patterns_data(self):
         """Cache pattern data at startup to avoid late discovery issues"""
@@ -147,6 +226,18 @@ class PreferencesDialog(QDialog, Ui_PreferencesDialog):
         self.focstim_ssid.setText(qt_ui.settings.focstim_ssid.get())
         self.focstim_password.setText(qt_ui.settings.focstim_password.get())
         self.focstim_ip.setText(qt_ui.settings.focstim_ip.get())
+
+        # AS5311 sensor data settings
+        as5311_source = qt_ui.settings.focstim_as5311_source.get()
+        if as5311_source == 0:
+            self.as5311_radio_from_box.setChecked(True)
+        else:
+            self.as5311_radio_from_server.setChecked(True)
+        self.as5311_serve_checkbox.setChecked(qt_ui.settings.focstim_as5311_serve.get())
+        self.as5311_serve_port.setValue(qt_ui.settings.focstim_as5311_serve_port.get())
+        self.as5311_server_address.setText(qt_ui.settings.focstim_as5311_server_address.get())
+        self.as5311_server_port.setValue(qt_ui.settings.focstim_as5311_server_port.get())
+        self.update_as5311_controls()
 
         # neostim settings
         self.neostim_port.setCurrentIndex(self.neostim_port.findData(qt_ui.settings.neostim_serial_port.get()))
@@ -309,6 +400,16 @@ class PreferencesDialog(QDialog, Ui_PreferencesDialog):
         qt_ui.settings.focstim_ssid.set(self.focstim_ssid.text())
         qt_ui.settings.focstim_password.set(self.focstim_password.text())
         qt_ui.settings.focstim_ip.set(self.focstim_ip.text())
+
+        # AS5311 sensor data settings
+        if self.as5311_radio_from_box.isChecked():
+            qt_ui.settings.focstim_as5311_source.set(0)
+        else:
+            qt_ui.settings.focstim_as5311_source.set(1)
+        qt_ui.settings.focstim_as5311_serve.set(self.as5311_serve_checkbox.isChecked())
+        qt_ui.settings.focstim_as5311_serve_port.set(self.as5311_serve_port.value())
+        qt_ui.settings.focstim_as5311_server_address.set(self.as5311_server_address.text())
+        qt_ui.settings.focstim_as5311_server_port.set(self.as5311_server_port.value())
 
         # neoStim
         qt_ui.settings.neostim_serial_port.set(str(self.neostim_port.currentData()))

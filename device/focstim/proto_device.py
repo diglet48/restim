@@ -9,13 +9,15 @@ import google.protobuf.text_format
 from PySide6.QtSerialPort import QSerialPort
 from PySide6.QtCore import QIODevice, QTimer, QObject, Signal
 from PySide6.QtNetwork import QAbstractSocket
-from PySide6.QtNetwork import QTcpSocket
+from PySide6.QtNetwork import QTcpSocket, QTcpServer, QHostAddress
 
 import qt_ui.settings
 from device.focstim.proto_api import FOCStimProtoAPI
 from device.focstim.notifications_pb2 import NotificationBoot, NotificationPotentiometer, NotificationCurrents, \
     NotificationModelEstimation, NotificationSystemStats, NotificationSignalStats, NotificationBattery, \
     NotificationLSM6DSOX, NotificationDebugString, NotificationDebugAS5311, NotificationPressure
+from device.focstim.focstim_rpc_pb2 import RpcMessage, Notification
+from device.focstim.hdlc import HDLC
 from net.teleplot import Teleplot
 from device.output_device import OutputDevice
 from stim_math.audio_gen.base_classes import RemoteGenerationAlgorithm
@@ -43,6 +45,46 @@ LSM6DSOX_ACC_FULLSCALE = 4
 LSM6DSOX_GYR_FULLSCALE = 500
 
 
+class RemoteSensorClient(QObject):
+    """Client for receiving AS5311 sensor data from a remote Master instance"""
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.transport = None
+        self.api = None
+
+    def connect_to_server(self, host_address, port):
+        """Connect to remote AS5311 sensor data server"""
+        logger.info(f"Connecting to remote AS5311 sensor data server at {host_address}:{port}")
+        self.transport = QTcpSocket(self)
+        self.transport.setSocketOption(QAbstractSocket.SocketOption.LowDelayOption, 1)
+        self.transport.connected.connect(self._on_connected)
+        self.transport.errorOccurred.connect(self._on_error)
+        self.transport.connectToHost(host_address, port)
+
+    def _on_connected(self):
+        """Handle connection established"""
+        logger.info("Connected to remote AS5311 sensor data server")
+        # Initialize API for parsing incoming notifications only
+        self.api = FOCStimProtoAPI(self, self.transport, None)
+        self.api.on_notification_debug_as5311.connect(self._handle_as5311_notification)
+
+    def _on_error(self):
+        """Handle connection error"""
+        logger.error(f"Remote sensor connection error: {self.transport.errorString()}")
+
+    def _handle_as5311_notification(self, notif: NotificationDebugAS5311):
+        """Forward AS5311 notification"""
+        self.on_as5311_data.emit(notif)
+
+    def disconnect(self):
+        """Disconnect from server"""
+        if self.transport and self.transport.isOpen():
+            self.transport.close()
+
+    on_as5311_data = Signal(NotificationDebugAS5311)
+
+
 class FOCStimProtoDevice(QObject, OutputDevice):
     def __init__(self):
         super().__init__()
@@ -58,6 +100,13 @@ class FOCStimProtoDevice(QObject, OutputDevice):
 
         self.updates_sent = 0
         self.last_update = time.time()
+
+        # AS5311 Sensor Data Sharing
+        self.broadcast_server = None
+        self.broadcast_clients = []
+        self.broadcast_hdlc = HDLC()
+        self.is_remote_mode = False
+        self.remote_sensor_client = None
 
         self.update_timer = QTimer()
         self.update_timer.setInterval(int(1000 // 60))
@@ -100,6 +149,74 @@ class FOCStimProtoDevice(QObject, OutputDevice):
         if use_teleplot:
             prefix = qt_ui.settings.focstim_teleplot_prefix.get()
             self.teleplot = Teleplot(prefix)
+
+    def start_broadcasting(self, port):
+        """Start TCP server for broadcasting AS5311 sensor data"""
+        logger.info(f"Starting AS5311 broadcast server on port {port}")
+        self.broadcast_server = QTcpServer(self)
+        self.broadcast_server.newConnection.connect(self.on_new_broadcast_client)
+
+        if not self.broadcast_server.listen(QHostAddress.Any, port):
+            logger.error(f"Failed to start broadcast server: {self.broadcast_server.errorString()}")
+            return False
+
+        logger.info(f"Broadcast server listening on port {port}")
+        return True
+
+    def on_new_broadcast_client(self):
+        """Handle new client connection to broadcast server"""
+        client_socket = self.broadcast_server.nextPendingConnection()
+        if client_socket:
+            logger.info(f"New broadcast client connected: {client_socket.peerAddress().toString()}")
+            self.broadcast_clients.append(client_socket)
+            client_socket.disconnected.connect(lambda: self.on_broadcast_client_disconnected(client_socket))
+
+    def on_broadcast_client_disconnected(self, client_socket):
+        """Handle client disconnection from broadcast server"""
+        logger.info(f"Broadcast client disconnected: {client_socket.peerAddress().toString()}")
+        if client_socket in self.broadcast_clients:
+            self.broadcast_clients.remove(client_socket)
+        client_socket.deleteLater()
+
+    def broadcast_notification(self, notif: NotificationDebugAS5311):
+        """Broadcast AS5311 notification to all connected clients"""
+        if not self.broadcast_clients:
+            return
+
+        # Create notification wrapper
+        notification = Notification()
+        notification.notification_debug_as5311.CopyFrom(notif)
+        notification.timestamp = time.time_ns()
+
+        # Create RpcMessage
+        message = RpcMessage()
+        message.notification.CopyFrom(notification)
+
+        # Serialize and encode with HDLC
+        message_serialized = message.SerializeToString()
+        stream = self.broadcast_hdlc.encode(message_serialized)
+
+        # Send to all connected clients
+        disconnected_clients = []
+        for client in self.broadcast_clients:
+            if client.state() == QAbstractSocket.SocketState.ConnectedState:
+                bytes_written = client.write(stream)
+                if bytes_written != len(stream):
+                    logger.warning(f"Failed to send data to client {client.peerAddress().toString()}")
+                    disconnected_clients.append(client)
+            else:
+                disconnected_clients.append(client)
+
+        # Remove disconnected clients
+        for client in disconnected_clients:
+            if client in self.broadcast_clients:
+                self.broadcast_clients.remove(client)
+
+    def start_remote_sensor_client(self, host_address, port):
+        """Start remote sensor client to receive AS5311 data from another instance"""
+        self.remote_sensor_client = RemoteSensorClient(self)
+        self.remote_sensor_client.on_as5311_data.connect(self.handle_notification_debug_as5311)
+        self.remote_sensor_client.connect_to_server(host_address, port)
 
     def start_tcp(self, host_address, port, use_teleplot, dump_notifications, algorithm: RemoteGenerationAlgorithm):
         assert self.api is None
@@ -151,6 +268,21 @@ class FOCStimProtoDevice(QObject, OutputDevice):
         self.print_data_rate_timer.stop()
         self.delayed_start_timer.stop()
 
+        # Clean up broadcast server and clients
+        if self.broadcast_server:
+            logger.info("Closing broadcast server")
+            for client in self.broadcast_clients:
+                client.close()
+            self.broadcast_clients.clear()
+            self.broadcast_server.close()
+            self.broadcast_server = None
+
+        # Clean up remote sensor client
+        if self.remote_sensor_client:
+            logger.info("Disconnecting remote sensor client")
+            self.remote_sensor_client.disconnect()
+            self.remote_sensor_client = None
+
         if self.transport.isOpen():
             logger.info("closing connection to FOC-Stim")
             connected = True
@@ -160,7 +292,7 @@ class FOCStimProtoDevice(QObject, OutputDevice):
             except AttributeError:
                 pass
 
-            if self.api and connected:
+            if self.api and connected and not self.is_remote_mode:
                 self.api.request_stop_signal()
                 self.api.cancel_outstanding_requests()
                 self.transport.flush()
@@ -197,6 +329,10 @@ class FOCStimProtoDevice(QObject, OutputDevice):
         self.api.on_notification_pressure.connect(self.handle_notification_pressure)
         self.api.on_notification_debug_string.connect(self.handle_notification_debug_string)
         self.api.on_notification_debug_as5311.connect(self.handle_notification_debug_as5311)
+
+        # Connect broadcasting for AS5311 if enabled
+        if self.broadcast_server:
+            self.api.on_notification_debug_as5311.connect(self.broadcast_notification)
 
         # grab firmware version
         self.get_firmware_version()
