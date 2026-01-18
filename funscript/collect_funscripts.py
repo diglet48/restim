@@ -80,6 +80,12 @@ def collect_funscripts(
 
             logger.info(f'detecting funscripts from {current_dir}')
 
+            if current_dir[-2:]=="/*":
+                current_dir=current_dir[:-2]
+                search_subdirectories=True
+            else:
+                search_subdirectories = False
+
             try:
                 traversing_a_zip = True
                 traversable = zipfile.Path(current_dir)
@@ -92,6 +98,8 @@ def collect_funscripts(
                 if not traversing_a_zip and node.is_dir(): # do not support dir-in-zip
                     if case_insensitive_compare(node.name, media_prefix):
                         new_dirs.append(full_path)
+                    elif search_subdirectories:
+                        new_dirs.append(full_path+"/*")
                 else:
                     a, b, c = split_funscript_path(full_path)
                     if case_insensitive_compare(a, media_prefix):
@@ -99,6 +107,7 @@ def collect_funscripts(
                             new_dirs.append(full_path)
                         elif case_insensitive_compare(c, 'funscript'):
                             collected_files.append(Resource(node))
+
 
         except OSError as e:    # unreachable network?
             pass
