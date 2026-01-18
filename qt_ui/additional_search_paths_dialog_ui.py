@@ -3,7 +3,7 @@
 ################################################################################
 ## Form generated from reading UI file 'additionalsearchpathsdialog.ui'
 ##
-## Created by: Qt User Interface Compiler version 6.8.3
+## Created by: Qt User Interface Compiler version 6.10.1
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
@@ -17,8 +17,8 @@ from PySide6.QtGui import (QAction, QBrush, QColor, QConicalGradient,
     QPainter, QPalette, QPixmap, QRadialGradient,
     QTransform)
 from PySide6.QtWidgets import (QAbstractButton, QApplication, QDialog, QDialogButtonBox,
-    QHBoxLayout, QListView, QPushButton, QSizePolicy,
-    QSpacerItem, QVBoxLayout, QWidget)
+    QHBoxLayout, QLabel, QListView, QPushButton,
+    QSizePolicy, QSpacerItem, QVBoxLayout, QWidget)
 
 class Ui_AdditionalSearchPathsDialog(object):
     def setupUi(self, AdditionalSearchPathsDialog):
@@ -51,6 +51,11 @@ class Ui_AdditionalSearchPathsDialog(object):
 
         self.horizontalLayout.addWidget(self.button_remove)
 
+        self.label = QLabel(self.widget)
+        self.label.setObjectName(u"label")
+
+        self.horizontalLayout.addWidget(self.label)
+
         self.horizontalSpacer = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
 
         self.horizontalLayout.addItem(self.horizontalSpacer)
@@ -60,8 +65,8 @@ class Ui_AdditionalSearchPathsDialog(object):
 
         self.buttonBox = QDialogButtonBox(AdditionalSearchPathsDialog)
         self.buttonBox.setObjectName(u"buttonBox")
-        self.buttonBox.setOrientation(Qt.Horizontal)
-        self.buttonBox.setStandardButtons(QDialogButtonBox.Cancel|QDialogButtonBox.Ok)
+        self.buttonBox.setOrientation(Qt.Orientation.Horizontal)
+        self.buttonBox.setStandardButtons(QDialogButtonBox.StandardButton.Cancel|QDialogButtonBox.StandardButton.Ok)
 
         self.verticalLayout.addWidget(self.buttonBox)
 
@@ -81,5 +86,6 @@ class Ui_AdditionalSearchPathsDialog(object):
         self.actionRemove.setText(QCoreApplication.translate("AdditionalSearchPathsDialog", u"Remove", None))
         self.button_add.setText(QCoreApplication.translate("AdditionalSearchPathsDialog", u"Add", None))
         self.button_remove.setText(QCoreApplication.translate("AdditionalSearchPathsDialog", u"Remove selected", None))
+        self.label.setText(QCoreApplication.translate("AdditionalSearchPathsDialog", u"Check entries to search subdirectories", None))
     # retranslateUi
 
