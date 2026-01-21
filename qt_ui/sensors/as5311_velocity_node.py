@@ -119,6 +119,10 @@ class AS5311VelocitySensorNode(QWidget, SensorNodeInterface):
                 yp = [1 - self.spinbox_volume.value() / 100, 1]
             else:
                 yp = [1, 1 + self.spinbox_volume.value() / 100]
+            # check sorting
+            if xp[1] < xp[0]:
+                xp = xp[::-1]
+                yp = yp[::-1]
             adjustment = np.clip(np.interp(self.velocity, xp, yp), 0, 1)
             parameters['volume'] *= adjustment
 
