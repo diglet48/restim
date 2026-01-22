@@ -46,39 +46,93 @@ LSM6DSOX_GYR_FULLSCALE = 500
 
 
 class RemoteSensorClient(QObject):
-    """Client for receiving AS5311 sensor data from a remote Master instance"""
+    """Client for receiving AS5311 sensor data from a remote Master instance.
+
+    Automatically reconnects when connection is lost, polling every second.
+    """
 
     def __init__(self, parent=None):
         super().__init__(parent)
         self.transport = None
         self.api = None
+        self.host_address = None
+        self.port = None
+        self.is_stopping = False
+
+        # Reconnection timer - polls every second when disconnected
+        self.reconnect_timer = QTimer(self)
+        self.reconnect_timer.setInterval(1000)  # 1 second
+        self.reconnect_timer.timeout.connect(self._attempt_reconnect)
 
     def connect_to_server(self, host_address, port):
         """Connect to remote AS5311 sensor data server"""
-        logger.info(f"Connecting to remote AS5311 sensor data server at {host_address}:{port}")
+        self.host_address = host_address
+        self.port = port
+        self.is_stopping = False
+        self._create_connection()
+
+    def _create_connection(self):
+        """Create a new connection attempt"""
+        if self.is_stopping:
+            return
+
+        logger.info(f"Connecting to remote AS5311 sensor at {self.host_address}:{self.port}")
+
+        # Clean up old transport if exists
+        if self.transport:
+            self.transport.deleteLater()
+            self.transport = None
+            self.api = None
+
         self.transport = QTcpSocket(self)
         self.transport.setSocketOption(QAbstractSocket.SocketOption.LowDelayOption, 1)
         self.transport.connected.connect(self._on_connected)
         self.transport.errorOccurred.connect(self._on_error)
-        self.transport.connectToHost(host_address, port)
+        self.transport.disconnected.connect(self._on_disconnected)
+        self.transport.connectToHost(self.host_address, self.port)
 
     def _on_connected(self):
         """Handle connection established"""
         logger.info("Connected to remote AS5311 sensor data server")
+        self.reconnect_timer.stop()
         # Initialize API for parsing incoming notifications only
         self.api = FOCStimProtoAPI(self, self.transport, None)
         self.api.on_notification_debug_as5311.connect(self._handle_as5311_notification)
 
-    def _on_error(self):
+    def _on_error(self, error):
         """Handle connection error"""
-        logger.error(f"Remote sensor connection error: {self.transport.errorString()}")
+        if self.is_stopping:
+            return
+        logger.warning(f"Remote sensor connection error: {self.transport.errorString()}")
+        self._start_reconnect_timer()
+
+    def _on_disconnected(self):
+        """Handle disconnection - start reconnect polling"""
+        if self.is_stopping:
+            return
+        logger.info("Remote sensor server disconnected, will retry...")
+        self._start_reconnect_timer()
+
+    def _start_reconnect_timer(self):
+        """Start the reconnection polling timer"""
+        if not self.reconnect_timer.isActive() and not self.is_stopping:
+            self.reconnect_timer.start()
+
+    def _attempt_reconnect(self):
+        """Attempt to reconnect to the server"""
+        if self.is_stopping:
+            self.reconnect_timer.stop()
+            return
+        self._create_connection()
 
     def _handle_as5311_notification(self, notif: NotificationDebugAS5311):
         """Forward AS5311 notification"""
         self.on_as5311_data.emit(notif)
 
     def disconnect(self):
-        """Disconnect from server"""
+        """Disconnect from server and stop reconnection attempts"""
+        self.is_stopping = True
+        self.reconnect_timer.stop()
         if self.transport and self.transport.isOpen():
             self.transport.close()
 
