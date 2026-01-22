@@ -1,11 +1,12 @@
 from PySide6.QtCore import QItemSelectionModel
 from PySide6.QtCore import QModelIndex
-from PySide6.QtWidgets import QDialog, QAbstractItemView, QFileDialog
+from PySide6.QtWidgets import QDialog, QAbstractItemView, QFileDialog, QCheckBox
 
 
 from qt_ui.additional_search_paths_dialog_ui import Ui_AdditionalSearchPathsDialog
 from qt_ui.models.additional_search_paths import AdditionalSearchPathsModel
 from qt_ui.file_dialog import FileDialog
+from qt_ui import settings
 
 
 class AdditionalSearchPathsDialog(QDialog, Ui_AdditionalSearchPathsDialog):
@@ -19,6 +20,12 @@ class AdditionalSearchPathsDialog(QDialog, Ui_AdditionalSearchPathsDialog):
         self.listView.setDropIndicatorShown(True)
         self.listView.setDragDropMode(QAbstractItemView.InternalMove)
         self.listView.setSelectionMode(QAbstractItemView.ExtendedSelection)
+
+        # Add checkbox for search priority
+        self.search_first_checkbox = QCheckBox("Search here first")
+        self.search_first_checkbox.setToolTip("When checked, search these paths before the media file's directory")
+        self.search_first_checkbox.setChecked(settings.additional_search_paths_first.get())
+        self.verticalLayout.insertWidget(0, self.search_first_checkbox)
 
         self.actionAdd.triggered.connect(self.add_triggered)
         self.actionRemove.triggered.connect(self.remove_triggered)
@@ -55,6 +62,7 @@ class AdditionalSearchPathsDialog(QDialog, Ui_AdditionalSearchPathsDialog):
 
     def accept(self) -> None:
         self.model.save_to_settings()
+        settings.additional_search_paths_first.set(self.search_first_checkbox.isChecked())
         super(AdditionalSearchPathsDialog, self).accept()
 
     def reject(self) -> None:

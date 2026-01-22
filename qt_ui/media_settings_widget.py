@@ -189,7 +189,10 @@ class MediaSettingsWidget(QtWidgets.QWidget, Ui_MediaSettingsWidget, metaclass=_
             dirname = os.path.dirname(new_path)
             basename = os.path.basename(new_path)
             extra_paths = settings.additional_search_paths.get()
-            search_paths = [dirname] + extra_paths
+            if settings.additional_search_paths_first.get():
+                search_paths = extra_paths + [dirname]
+            else:
+                search_paths = [dirname] + extra_paths
 
             self.model.beginResetModel()
             dirty |= self.model.clear_auto_detected_funscripts()
