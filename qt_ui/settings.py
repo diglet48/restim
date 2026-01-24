@@ -124,6 +124,7 @@ audio_output_device = Setting("audio/device-name", "", str)
 audio_latency = Setting("audio/latency", 'high', str)
 
 additional_search_paths = Setting('additional_search_paths', [], list)
+additional_search_paths_first = Setting('additional_search_paths_first', False, bool)
 
 file_dialog_last_dir = Setting('file_dialog_last_dir', '', str)
 
