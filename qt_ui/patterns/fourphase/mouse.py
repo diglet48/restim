@@ -27,3 +27,6 @@ class MousePattern(FourphasePattern):
 
     def update(self, dt: float):
         return self.x, self.y, self.z
+
+    def last_position_is_mouse_position(self):
+        return (self.x, self.y, self.z) == (self.alpha.last_value(), self.beta.last_value(), self.gamma.last_value())
