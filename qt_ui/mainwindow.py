@@ -30,7 +30,8 @@ import net.serialproxy
 import net.buttplug_wsdm_client
 from qt_ui import resources
 from qt_ui.models.funscript_kit import FunscriptKitModel
-from device.focstim.proto_device import FOCStimProtoDevice, LSM6DSOX_SAMPLERATE_HZ
+from device.focstim.proto_device import FOCStimProtoDevice
+from device.focstim.broadcast import SensorBroadcaster, RemoteSensorClient
 from device.neostim.neostim_device import NeoStim
 from qt_ui.widgets.icon_with_connection_status import IconWithConnectionStatus
 from stim_math.axis import create_temporal_axis
@@ -147,6 +148,8 @@ class Window(QMainWindow, Ui_MainWindow):
         self.motion_3.set_velocity(self.doubleSpinBox.value())
 
         self.output_device = None
+        self.broadcaster = None
+        self.remote_sensor_client = None
 
         self.websocket_server = net.websocketserver.WebSocketServer(self)
         self.websocket_server.new_tcode_command.connect(self.tcode_command_router.route_command)
@@ -473,42 +476,53 @@ class Window(QMainWindow, Ui_MainWindow):
             use_teleplot = qt_ui.settings.focstim_use_teleplot.get()
             dump_notifications = qt_ui.settings.focstim_dump_notifications_to_file.get()
 
-            # Connect to physical device for output
+            # Always connect to physical device for output
             comms_wifi = qt_ui.settings.focstim_communication_wifi.get()
-            if not comms_wifi:
-                serial_port_name = qt_ui.settings.focstim_serial_port.get()
-                output_device.start_serial(serial_port_name, use_teleplot, dump_notifications, algorithm)
-            else:
+            if comms_wifi:
                 ip = qt_ui.settings.focstim_ip.get()
                 output_device.start_tcp(ip, 55533, use_teleplot, dump_notifications, algorithm)
+            else:
+                serial_port_name = qt_ui.settings.focstim_serial_port.get()
+                output_device.start_serial(serial_port_name, use_teleplot, dump_notifications, algorithm)
 
             if output_device.is_connected_and_running():
                 self.output_device = output_device
-                self.playstate = PlayState.PLAYING
-                self.tab_volume.set_play_state(self.playstate)
-                self.refresh_play_button_icon()
 
-                # Setup AS5311 sensor data connection
-                output_device.new_as5311_sensor_data.connect(self.page_sensors.new_as5311_sensor_data)
-
-                # Check AS5311 sensor data source setting
+                # Setup AS5311 sensor data source
                 as5311_source = qt_ui.settings.focstim_as5311_source.get()
 
                 if as5311_source == 1:
-                    # Remote mode - connect to Master instance for AS5311 sensor data
+                    # Remote mode - receive AS5311 sensor data from another instance
                     server_address = qt_ui.settings.focstim_as5311_server_address.get()
                     server_port = qt_ui.settings.focstim_as5311_server_port.get()
-                    output_device.start_remote_sensor_client(server_address, server_port)
-                    logger.info(f"Started remote AS5311 sensor data client (server: {server_address}:{server_port})")
+                    self.remote_sensor_client = RemoteSensorClient()
+                    self.remote_sensor_client.new_as5311_sensor_data.connect(
+                        self.page_sensors.new_as5311_sensor_data
+                    )
+                    self.remote_sensor_client.start(server_address, server_port)
+                    logger.info(f"Started remote AS5311 sensor client (server: {server_address}:{server_port})")
+                else:
+                    # Local mode - use AS5311 from the connected device
+                    output_device.new_as5311_sensor_data.connect(self.page_sensors.new_as5311_sensor_data)
 
-                # Check if we should broadcast AS5311 sensor data (from the connected device)
-                if as5311_source == 0 and qt_ui.settings.focstim_as5311_serve.get():
-                    serve_port = qt_ui.settings.focstim_as5311_serve_port.get()
-                    output_device.start_broadcasting(serve_port)
+                    # Optionally broadcast sensor data to other instances
+                    if qt_ui.settings.focstim_as5311_serve.get():
+                        serve_port = qt_ui.settings.focstim_as5311_serve_port.get()
+                        self.broadcaster = SensorBroadcaster()
+                        if self.broadcaster.start(serve_port):
+                            # Defer attachment until API is ready (connection is async)
+                            output_device.api_ready.connect(
+                                lambda: self.broadcaster.attach_source(output_device.api)
+                            )
 
+                # Always connect IMU and pressure sensors from the device
                 output_device.new_imu_sensor_data.connect(self.page_sensors.new_imu_sensor_data)
                 output_device.new_pressure_sensor_data.connect(self.page_sensors.new_pressure_sensor_data)
                 algorithm.sensor_node = self.page_sensors
+
+                self.playstate = PlayState.PLAYING
+                self.tab_volume.set_play_state(self.playstate)
+                self.refresh_play_button_icon()
 
 
         elif device.device_type == DeviceType.NEOSTIM_THREE_PHASE:
@@ -527,6 +541,12 @@ class Window(QMainWindow, Ui_MainWindow):
         if self.output_device is not None:
             self.output_device.stop()
             self.output_device = None
+        if self.broadcaster is not None:
+            self.broadcaster.stop()
+            self.broadcaster = None
+        if self.remote_sensor_client is not None:
+            self.remote_sensor_client.stop()
+            self.remote_sensor_client = None
         self.playstate = new_playstate
         self.tab_volume.set_play_state(self.playstate)
         self.refresh_play_button_icon()
