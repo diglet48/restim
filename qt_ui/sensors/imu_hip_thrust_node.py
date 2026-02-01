@@ -6,6 +6,7 @@ import pyqtgraph as pg
 from PySide6.QtWidgets import QVBoxLayout, QGroupBox, QFormLayout
 
 from device.focstim.proto_device import LSM6DSOX_SAMPLERATE_HZ
+from qt_ui.sensors import styles
 from qt_ui.sensors.sensor_node_interface import SensorNodeInterface
 
 from stim_math.sensors.imu import IMUData, IMUForwardPositionFilter
@@ -61,11 +62,11 @@ class IMUHipThrustNode(QtWidgets.QWidget, SensorNodeInterface):
         self.p2.addLegend(offset=(30, 5))
 
         self.position_plot_item = pg.PlotDataItem(name='position')
-        self.position_plot_item.setPen(pg.mkPen({'color': "blue", 'width': 1}))
+        self.position_plot_item.setPen(styles.blue_line)
         self.p1.addItem(self.position_plot_item)
 
         self.velocity_plot_item = pg.PlotDataItem(name='velocity')
-        self.velocity_plot_item.setPen(pg.mkPen({'color': "orange", 'width': 1}))
+        self.velocity_plot_item.setPen(styles.orange_line)
         self.p2.addItem(self.velocity_plot_item)
 
         self.p1.setXRange(-10, 0, padding=0.05)

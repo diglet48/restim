@@ -5,6 +5,7 @@ from PySide6.QtWidgets import QWidget,QFormLayout, QVBoxLayout, QGroupBox, QLabe
 import pyqtgraph as pg
 import numpy as np
 
+from qt_ui.sensors import styles
 from stim_math.sensors.pressure import PressureData
 from stim_math.sensors.eom import EOMController
 
@@ -53,11 +54,11 @@ class PressureDepletionSensorNode(QWidget, SensorNodeInterface):
         self.p2.addLegend(offset=(30, 5))
 
         self.pressure_plot_item = pg.PlotDataItem(name='pressure')
-        self.pressure_plot_item.setPen(pg.mkPen({'color': "blue", 'width': 1}))
+        self.pressure_plot_item.setPen(styles.blue_line)
         self.p1.addItem(self.pressure_plot_item)
 
         self.arousal_plot_item = pg.PlotDataItem(name='arousal')
-        self.arousal_plot_item.setPen(pg.mkPen({'color': "orange", 'width': 1}))
+        self.arousal_plot_item.setPen(styles.orange_line)
         self.p2.addItem(self.arousal_plot_item)
 
 
