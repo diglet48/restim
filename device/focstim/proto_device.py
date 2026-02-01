@@ -9,15 +9,13 @@ import google.protobuf.text_format
 from PySide6.QtSerialPort import QSerialPort
 from PySide6.QtCore import QIODevice, QTimer, QObject, Signal
 from PySide6.QtNetwork import QAbstractSocket
-from PySide6.QtNetwork import QTcpSocket, QHostAddress
+from PySide6.QtNetwork import QTcpSocket
 
 import qt_ui.settings
 from device.focstim.proto_api import FOCStimProtoAPI
 from device.focstim.notifications_pb2 import NotificationBoot, NotificationPotentiometer, NotificationCurrents, \
     NotificationModelEstimation, NotificationSystemStats, NotificationSignalStats, NotificationBattery, \
     NotificationLSM6DSOX, NotificationDebugString, NotificationDebugAS5311, NotificationPressure
-from device.focstim.focstim_rpc_pb2 import RpcMessage, Notification
-from device.focstim.hdlc import HDLC
 from net.teleplot import Teleplot
 from device.output_device import OutputDevice
 from stim_math.audio_gen.base_classes import RemoteGenerationAlgorithm
@@ -31,9 +29,6 @@ from stim_math.sensors.imu import IMUData
 from stim_math.sensors.pressure import PressureData
 
 logger = logging.getLogger('restim.focstim')
-
-teleplot_addr = "127.0.0.1"
-teleplot_port = 47269
 
 FOCSTIM_VERSION = "1.0"
 
