@@ -89,12 +89,16 @@ class Window(QMainWindow, Ui_MainWindow):
         # network stuff (intiface, tcode)
         self.alpha = create_temporal_axis(0.0)
         self.beta = create_temporal_axis(0.0)
-        self.gamma = create_temporal_axis(0.0)
+
+        self.intensity_a = create_temporal_axis(0.0)
+        self.intensity_b = create_temporal_axis(0.0)
+        self.intensity_c = create_temporal_axis(0.0)
+        self.intensity_d = create_temporal_axis(0.0)
 
         self.tcode_command_router = TCodeCommandRouter(
             self.alpha,
             self.beta,
-            self.gamma,
+
             self.tab_volume.axis_api_volume,
             self.tab_volume.axis_external_volume,
 
@@ -117,6 +121,11 @@ class Window(QMainWindow, Ui_MainWindow):
             self.tab_vibrate.vibration_2.high_low_bias,
             self.tab_vibrate.vibration_2.random,
 
+            self.intensity_a,
+            self.intensity_b,
+            self.intensity_c,
+            self.intensity_d,
+
             # TODO: neostim
         )
 
@@ -128,9 +137,10 @@ class Window(QMainWindow, Ui_MainWindow):
         self.graphicsView_threephase.set_sensor_widget(self.page_sensors)
 
         # fourphase view
-        self.motion_4 = qt_ui.patterns.fourphase_patterns.FourphaseMotionGenerator(self, self.alpha, self.beta, self.gamma)
+        self.motion_4 = qt_ui.patterns.fourphase_patterns.FourphaseMotionGenerator(
+            self, self.intensity_a, self.intensity_b, self.intensity_c, self.intensity_d)
         self.graphicsView_fourphase.mousePositionChanged.connect(self.motion_4.mouse_event)
-        self.motion_4.position_updated.connect(self.graphicsView_fourphase.set_cursor_position_abc)
+        self.motion_4.position_updated.connect(self.graphicsView_fourphase.set_electrode_intensities)
 
         # TODO: implement details for 4-phase
         self.tab_details.set_axis(
@@ -166,7 +176,10 @@ class Window(QMainWindow, Ui_MainWindow):
         self.tab_volume.set_monitor_axis([
             self.alpha,
             self.beta,
-            self.gamma,
+            self.intensity_a,
+            self.intensity_b,
+            self.intensity_c,
+            self.intensity_d,
         ])
 
         # stop audio when user modifies settings in media tab
@@ -305,9 +318,10 @@ class Window(QMainWindow, Ui_MainWindow):
 
         # 4-phase visualization
         self.motion_4.set_scripts(
-            algorithm_factory.get_axis_alpha(),
-            algorithm_factory.get_axis_beta(),
-            algorithm_factory.get_axis_gamma(),
+            algorithm_factory.get_axis_intensity_a(),
+            algorithm_factory.get_axis_intensity_b(),
+            algorithm_factory.get_axis_intensity_c(),
+            algorithm_factory.get_axis_intensity_d(),
         )
 
         # volume tab

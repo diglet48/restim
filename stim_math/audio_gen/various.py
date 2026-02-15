@@ -6,7 +6,7 @@ from stim_math.threephase_coordinate_transform import ThreePhaseCoordinateTransf
     ThreePhaseCoordinateTransformMapToEdge
 
 from stim_math.audio_gen.params import VibrationParams, ThreephasePositionParams, ThreephasePositionTransformParams, \
-    FourphasePositionParams
+    FourphaseIntensityParams
 
 
 class VibrationAlgorithm:
@@ -114,20 +114,14 @@ class ThreePhasePosition:
 
         return alpha, beta
 
-
-class FourPhasePosition:
-    def __init__(self, position: FourphasePositionParams):
+class FourPhaseIntensity:
+    def __init__(self, position: FourphaseIntensityParams):
         self.position_params = position
 
     def get_position(self, command_timeline):
-        alpha = self.position_params.alpha.interpolate(command_timeline)
-        beta = self.position_params.beta.interpolate(command_timeline)
-        gamma = self.position_params.gamma.interpolate(command_timeline)
+        a = np.clip(self.position_params.a.interpolate(command_timeline), 0, 1)
+        b = np.clip(self.position_params.b.interpolate(command_timeline), 0, 1)
+        c = np.clip(self.position_params.c.interpolate(command_timeline), 0, 1)
+        d = np.clip(self.position_params.d.interpolate(command_timeline), 0, 1)
 
-        # normalize (alpha, beta) to be within the unit circle.
-        norm = np.clip(np.linalg.norm((alpha, beta, gamma), axis=0), 1.0, None)
-        alpha /= norm
-        beta /= norm
-        gamma /= norm
-
-        return alpha, beta, gamma
+        return a, b, c, d

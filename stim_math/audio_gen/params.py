@@ -9,10 +9,11 @@ class ThreephasePositionParams:
     beta: AbstractAxis     # float [-1, 1]
 
 @dataclass
-class FourphasePositionParams:
-    alpha: AbstractAxis    # float [-1, 1]
-    beta: AbstractAxis     # float [-1, 1]
-    gamma: AbstractAxis     # float [-1, 1]
+class FourphaseIntensityParams:
+    a: AbstractAxis
+    b: AbstractAxis
+    c: AbstractAxis
+    d: AbstractAxis
 
 @dataclass
 class ThreephaseCalibrationParams:
@@ -129,7 +130,7 @@ class FOCStimParams:
 
 @dataclass
 class FourphaseFOCStimParams:
-    position: FourphasePositionParams
+    position: FourphaseIntensityParams
     # transform: ThreephasePositionTransformParams
     calibrate: FourphaseCalibrationParams
     volume: VolumeParams

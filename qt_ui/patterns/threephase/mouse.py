@@ -24,3 +24,7 @@ class MousePattern(ThreephasePattern):
         self.y = y
     def update(self, dt: float):
         return self.x * self.amplitude, self.y * self.amplitude
+    def last_position_is_mouse_position(self):
+        if self.alpha is not None and self.beta is not None:
+            return (self.x, self.y) == (self.alpha.last_value(), self.beta.last_value())
+        return False

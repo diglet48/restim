@@ -30,7 +30,12 @@ from stim_math.sensors.pressure import PressureData
 
 logger = logging.getLogger('restim.focstim')
 
-FOCSTIM_VERSION = "1.0"
+teleplot_addr = "127.0.0.1"
+teleplot_port = 47269
+
+FOCSTIM_VERSION_MAJOR = 1
+FOCSTIM_VERSION_MINIMUM_MINOR = 1
+FOCSTIM_VERSION_BRANCH = "main"
 
 TIMEOUT_SETUP = 2000    # ms
 TIMEOUT_UPDATE = 4000   # ms
@@ -164,6 +169,7 @@ class FOCStimProtoDevice(QObject, OutputDevice):
             self.transport.close()
         if self.notification_log:
             self.notification_log.close()
+            self.notification_log = None
 
     def is_connected_and_running(self) -> bool:
         return self.transport and self.transport.isOpen()
@@ -208,15 +214,21 @@ class FOCStimProtoDevice(QObject, OutputDevice):
             self.stop()
 
         def on_firmware_response(response: Response):
-            # TODO: check error
+            # TODO: check for error
             s = google.protobuf.text_format.MessageToString(response.response_firmware_version, as_one_line=True)
             logger.info(s)
 
-            version = response.response_firmware_version.stm32_firmware_version
-            if version == FOCSTIM_VERSION:
+            got_version = response.response_firmware_version.stm32_firmware_version_2
+
+            if got_version.branch != FOCSTIM_VERSION_BRANCH:
+                logger.error(f"incompatible FOC-Stim firmware branch. Got '{got_version.branch}' expected '{FOCSTIM_VERSION_BRANCH}'")
+                self.stop();
+            if got_version.major == FOCSTIM_VERSION_MAJOR and got_version.minor >= FOCSTIM_VERSION_MINIMUM_MINOR:
                 self.get_capabilities()
             else:
-                logger.error(f"incompatible FOC-Stim version. Found '{version}' Needs '{FOCSTIM_VERSION}'.")
+                logger.error(f"incompatible FOC-Stim version. "
+                             f"Found {got_version.major}.{got_version.minor}.{got_version.revision}. "
+                             f"Needs >= '{FOCSTIM_VERSION_MAJOR}.{FOCSTIM_VERSION_MINIMUM_MINOR}.0'.")
                 self.stop()
 
         fut = self.api.request_firmware_version()
@@ -285,7 +297,7 @@ class FOCStimProtoDevice(QObject, OutputDevice):
         if self.algorithm.outputs() == 3:
             mode = OutputMode.OUTPUT_THREEPHASE
         elif self.algorithm.outputs() == 4:
-            mode = OutputMode.OUTPUT_FOURPHASE
+            mode = OutputMode.OUTPUT_FOURPHASE_INDIVIDUAL_ELECTRODES
         else:
             assert False
         fut = self.api.request_start_signal(mode)
@@ -398,10 +410,11 @@ class FOCStimProtoDevice(QObject, OutputDevice):
                 R_b=f"{notif.resistance_b}",
                 R_c=f"{notif.resistance_c}",
                 R_d=f"{notif.resistance_d}",
-                Z_a=f"{notif.resistance_a}:{notif.reluctance_a}|xy",
-                Z_b=f"{notif.resistance_b}:{notif.reluctance_b}|xy",
-                Z_c=f"{notif.resistance_c}:{notif.reluctance_c}|xy",
-                Z_d=f"{notif.resistance_d}:{notif.reluctance_d}|xy"
+                # These really slow teleplot down...
+                # Z_a=f"{notif.resistance_a}:{notif.reluctance_a}|xy",
+                # Z_b=f"{notif.resistance_b}:{notif.reluctance_b}|xy",
+                # Z_c=f"{notif.resistance_c}:{notif.reluctance_c}|xy",
+                # Z_d=f"{notif.resistance_d}:{notif.reluctance_d}|xy"
             )
 
     def handle_notification_system_stats(self, notif: NotificationSystemStats):

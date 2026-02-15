@@ -87,3 +87,41 @@ def e1234_to_abc(e1, e2, e3, e4):
     q[:, 1:] *= invert
     a, b, c = q
     return a, b, c
+
+def constrain_4p_amplitudes(a, b, c, d):
+    a = np.clip(a, 0, 1)
+    b = np.clip(b, 0, 1)
+    c = np.clip(c, 0, 1)
+    d = np.clip(d, 0, 1)
+
+    s_a = min(-a + b + c + d, 0) / -3
+    s_b = min( a - b + c + d, 0) / -3
+    s_c = min( a + b - c + d, 0) / -3
+    s_d = min( a + b + c - d, 0) / -3
+
+    a += s_b + s_c + s_d
+    b += s_a + s_c + s_d
+    c += s_a + s_b + s_d
+    d += s_a + s_b + s_c
+
+    vec = [a, b, c, d]
+
+    maximum = max(vec)
+    if maximum < 1:
+        to_add = 1 - maximum
+        if vec[0] == maximum:
+            vec = vec + to_add
+            vec[0] = 1     # ensure floating point value is EXACTLY 1.0f
+        elif vec[1] == maximum:
+            vec = vec + to_add
+            vec[1] = 1
+        elif vec[2] == maximum:
+            vec = vec + to_add
+            vec[2] = 1
+        elif vec[3] == maximum:
+            vec = vec + to_add
+            vec[3] = 1
+        else:
+            pass # unreachable ????
+
+    return vec

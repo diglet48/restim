@@ -4,8 +4,10 @@ import numpy as np
 from PySide6 import QtWidgets
 import pyqtgraph as pg
 from PySide6.QtWidgets import QVBoxLayout, QGroupBox, QFormLayout, QCheckBox, QLabel
+from PySide6.QtCore import Qt
 
 from qt_ui.sensors.sensor_node_interface import SensorNodeInterface
+from qt_ui.sensors import styles
 
 from stim_math.sensors.imu import IMUData
 
@@ -27,22 +29,21 @@ class IMUVelocityNode(QtWidgets.QWidget, SensorNodeInterface):
         self.verticalLayout.addWidget(self.groupbox)
         self.formLayout = QFormLayout(self.groupbox)
 
-        self.spinbox_high = pg.SpinBox(None, 0.0, compactHeight=False, suffix='deg/s', int=True)
-        self.spinbox_low = pg.SpinBox(None, 0.0, compactHeight=False, suffix='deg/s', int=True)
+        self.spinbox_threshold = pg.SpinBox(None, 0.0, compactHeight=False, suffix='deg/s', int=True)
+        self.spinbox_range = pg.SpinBox(None, 0.0, compactHeight=False, suffix='deg/s', int=True, bounds=[0, None])
         self.spinbox_volume = pg.SpinBox(None, 0.0, compactHeight=False, suffix='%', step=0.1)
         self.checkbox = QCheckBox()
         self.spinbox_decay = pg.SpinBox(None, 50, compactHeight=False, suffix='samples', step=1, bounds=[1, 1000])
 
-        self.spinbox_low.valueChanged.connect(self.update_lines)
-        self.spinbox_high.valueChanged.connect(self.update_lines)
+        self.spinbox_threshold.valueChanged.connect(self.update_lines)
+        self.spinbox_range.valueChanged.connect(self.update_lines)
 
-        self.formLayout.addRow('high threshold', self.spinbox_high)
-        self.formLayout.addRow('low threshold', self.spinbox_low)
+        self.formLayout.addRow('threshold', self.spinbox_threshold)
+        self.formLayout.addRow('threshold range', self.spinbox_range)
         label = QLabel('volume change (?)')
         label.setToolTip(
-            "Increase volume when near 'high threshold'\r\n"
-            "Reduce volume when near 'low threshold'\r\n"
-            "Negative value to reverse")
+            "positive: increase volume when moving\r\n"
+            "negative: decrease volume when moving")
         self.formLayout.addRow(label, self.spinbox_volume)
         self.formLayout.addRow('decay', self.spinbox_decay)
 
@@ -58,13 +59,13 @@ class IMUVelocityNode(QtWidgets.QWidget, SensorNodeInterface):
         self.p1.addLegend(offset=(30, 5))
 
         self.position_plot_item = pg.PlotDataItem(name='movement')
-        self.position_plot_item.setPen(pg.mkPen({'color': "blue", 'width': 1}))
+        self.position_plot_item.setPen(styles.blue_line)
         self.p1.addItem(self.position_plot_item)
 
-        self.low_marker = pg.InfiniteLine(1, 0, movable=False)
+        self.low_marker = pg.InfiniteLine(1, 0, movable=False, pen=styles.yellow_line_solid)
         self.p1.addItem(self.low_marker)
 
-        self.high_marker = pg.InfiniteLine(10, 0, movable=False)
+        self.high_marker = pg.InfiniteLine(10, 0, movable=False, pen=styles.yellow_line_dash)
         self.p1.addItem(self.high_marker)
 
         self.p1.setXRange(-10, 0, padding=0.05)
@@ -97,7 +98,9 @@ class IMUVelocityNode(QtWidgets.QWidget, SensorNodeInterface):
 
     def process(self, parameters):
         if 'volume' in parameters:
-            xp = [self.spinbox_low.value(), self.spinbox_high.value()]
+            low = self.spinbox_threshold.value()
+            high = low + self.spinbox_range.value()
+            xp = [low, high]
             if self.spinbox_volume.value() >= 0:
                 yp = [1 - self.spinbox_volume.value() / 100, 1]
             else:
@@ -111,5 +114,7 @@ class IMUVelocityNode(QtWidgets.QWidget, SensorNodeInterface):
         self.position_plot_item.setData(x=x, y=y)
 
     def update_lines(self, *args, **kwargs):
-        self.low_marker.setValue(self.spinbox_low.value())
-        self.high_marker.setValue(self.spinbox_high.value())
+        low = self.spinbox_threshold.value()
+        high = low + self.spinbox_range.value()
+        self.low_marker.setValue(low)
+        self.high_marker.setValue(high)
