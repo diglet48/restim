@@ -8,25 +8,19 @@ class SequencePattern(FourphasePattern):
     def __init__(self, name, sequence: list):
         super().__init__()
         self._name = name
-        self.sequence = np.vstack((sequence, sequence, sequence[0]))
+        self.sequence = np.vstack((sequence, sequence[0]))
         self.index = 0
-
-        for i in range(1, len(self.sequence)):
-            dist_1 = np.linalg.norm(self.sequence[i] - self.sequence[i-1])
-            dist_2 = np.linalg.norm(self.sequence[i] + self.sequence[i-1])
-            if dist_2 < dist_1:
-                self.sequence[i] *= -1
 
     def name(self):
         return self._name
 
     def update(self, dt: float):
         self.index = (self.index + dt / 2) % (len(self.sequence) - 1)
+        xp = np.arange(len(self.sequence))
         index = self.index
-        x = np.interp(index, np.arange(len(self.sequence)), self.sequence[:, 0])
-        y = np.interp(index, np.arange(len(self.sequence)), self.sequence[:, 1])
-        z = np.interp(index, np.arange(len(self.sequence)), self.sequence[:, 2])
+        a = np.interp(index, xp, self.sequence[:, 0])
+        b = np.interp(index, xp, self.sequence[:, 1])
+        c = np.interp(index, xp, self.sequence[:, 2])
+        d = np.interp(index, xp, self.sequence[:, 3])
 
-        xyz = np.array([x, y, z])
-        xyz /= np.linalg.norm(xyz)
-        return xyz
+        return np.array([a, b, c, d])

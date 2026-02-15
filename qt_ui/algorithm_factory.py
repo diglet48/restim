@@ -187,10 +187,11 @@ class AlgorithmFactory:
         algorithm = FOCStimFourphaseAlgorithm(
             self.media_sync,
             FourphaseFOCStimParams(
-                position=FourphasePositionParams(
-                    self.get_axis_alpha(),
-                    self.get_axis_beta(),
-                    self.get_axis_gamma(),
+                position=FourphaseIntensityParams(
+                    self.get_axis_intensity_a(),
+                    self.get_axis_intensity_b(),
+                    self.get_axis_intensity_c(),
+                    self.get_axis_intensity_d(),
                 ),
                 # transform=self.mainwindow.tab_threephase.transform_params,
                 calibrate=self.mainwindow.tab_fourphase.calibrate_params,
@@ -250,6 +251,18 @@ class AlgorithmFactory:
 
     def get_axis_gamma(self):
         return self.get_axis_from_script_mapping(AxisEnum.POSITION_GAMMA) or self.mainwindow.gamma
+
+    def get_axis_intensity_a(self):
+        return self.get_axis_from_script_mapping(AxisEnum.INTENSITY_A) or self.mainwindow.intensity_a
+
+    def get_axis_intensity_b(self):
+        return self.get_axis_from_script_mapping(AxisEnum.INTENSITY_B) or self.mainwindow.intensity_b
+
+    def get_axis_intensity_c(self):
+        return self.get_axis_from_script_mapping(AxisEnum.INTENSITY_C) or self.mainwindow.intensity_c
+
+    def get_axis_intensity_d(self):
+        return self.get_axis_from_script_mapping(AxisEnum.INTENSITY_D) or self.mainwindow.intensity_d
 
     def get_axis_volume_api(self):
         return self.get_axis_from_script_mapping(AxisEnum.VOLUME_API) or self.mainwindow.tab_volume.axis_api_volume

@@ -119,7 +119,7 @@
               </widget>
              </widget>
              <widget class="QWidget" name="page_fourphase">
-              <widget class="FourphaseWidgetStereographic" name="graphicsView_fourphase">
+              <widget class="FourphaseWidgetIndividualElectrodes" name="graphicsView_fourphase">
                <property name="geometry">
                 <rect>
                  <x>0</x>
@@ -549,11 +549,6 @@
    <container>1</container>
   </customwidget>
   <customwidget>
-   <class>FourphaseWidgetStereographic</class>
-   <extends>QGraphicsView</extends>
-   <header>qt_ui/widgets/fourphase_widget_stereographic.h</header>
-  </customwidget>
-  <customwidget>
    <class>FourPhaseSettingsWidget</class>
    <extends>QWidget</extends>
    <header>qt_ui/four_phase_settings_widget.h</header>
@@ -564,6 +559,11 @@
    <extends>QWidget</extends>
    <header>qt_ui/sensors_widget.h</header>
    <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>FourphaseWidgetIndividualElectrodes</class>
+   <extends>QGraphicsView</extends>
+   <header>qt_ui/widgets/fourphase_widget_individual_electrodes.h</header>
   </customwidget>
  </customwidgets>
  <resources>

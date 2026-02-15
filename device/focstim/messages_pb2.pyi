@@ -1,8 +1,25 @@
 import constants_pb2 as _constants_pb2
 from google.protobuf import descriptor as _descriptor
 from google.protobuf import message as _message
+from collections.abc import Mapping as _Mapping
 from typing import ClassVar as _ClassVar, Optional as _Optional, Union as _Union
 DESCRIPTOR: _descriptor.FileDescriptor
+
+class FirmwareVersion(_message.Message):
+    __slots__ = ('major', 'minor', 'revision', 'branch', 'comment')
+    MAJOR_FIELD_NUMBER: _ClassVar[int]
+    MINOR_FIELD_NUMBER: _ClassVar[int]
+    REVISION_FIELD_NUMBER: _ClassVar[int]
+    BRANCH_FIELD_NUMBER: _ClassVar[int]
+    COMMENT_FIELD_NUMBER: _ClassVar[int]
+    major: int
+    minor: int
+    revision: int
+    branch: str
+    comment: str
+
+    def __init__(self, major: _Optional[int]=..., minor: _Optional[int]=..., revision: _Optional[int]=..., branch: _Optional[str]=..., comment: _Optional[str]=...) -> None:
+        ...
 
 class RequestFirmwareVersion(_message.Message):
     __slots__ = ()
@@ -11,13 +28,13 @@ class RequestFirmwareVersion(_message.Message):
         ...
 
 class ResponseFirmwareVersion(_message.Message):
-    __slots__ = ('board', 'stm32_firmware_version')
+    __slots__ = ('board', 'stm32_firmware_version_2')
     BOARD_FIELD_NUMBER: _ClassVar[int]
-    STM32_FIRMWARE_VERSION_FIELD_NUMBER: _ClassVar[int]
+    STM32_FIRMWARE_VERSION_2_FIELD_NUMBER: _ClassVar[int]
     board: _constants_pb2.BoardIdentifier
-    stm32_firmware_version: str
+    stm32_firmware_version_2: FirmwareVersion
 
-    def __init__(self, board: _Optional[_Union[_constants_pb2.BoardIdentifier, str]]=..., stm32_firmware_version: _Optional[str]=...) -> None:
+    def __init__(self, board: _Optional[_Union[_constants_pb2.BoardIdentifier, str]]=..., stm32_firmware_version_2: _Optional[_Union[FirmwareVersion, _Mapping]]=...) -> None:
         ...
 
 class RequestCapabilitiesGet(_message.Message):

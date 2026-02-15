@@ -31,6 +31,12 @@ class AxisEnum(Enum):
     VIBRATION_2_HIGH_LOW_BIAS = 53
     VIBRATION_2_RANDOM = 54
 
+    INTENSITY_A = 60
+    INTENSITY_B = 61
+    INTENSITY_C = 62
+    INTENSITY_D = 63
+
+
     def display_name(self) -> str:
         try:
             return {
@@ -58,6 +64,11 @@ class AxisEnum(Enum):
                 AxisEnum.VIBRATION_2_LEFT_RIGHT_BIAS: "vibration 2 left right bias",
                 AxisEnum.VIBRATION_2_HIGH_LOW_BIAS: "vibration 2 high low bias",
                 AxisEnum.VIBRATION_2_RANDOM: "vibration 2 random",
+
+                AxisEnum.INTENSITY_A: 'intensity A',
+                AxisEnum.INTENSITY_B: 'intensity B',
+                AxisEnum.INTENSITY_C: 'intensity C',
+                AxisEnum.INTENSITY_D: 'intensity D',
             }[self]
         except KeyError:
             return f'unknown {self.value}'
@@ -87,6 +98,11 @@ class AxisEnum(Enum):
             AxisEnum.VIBRATION_2_LEFT_RIGHT_BIAS: "VIBRATION_2_LEFT_RIGHT_BIAS",
             AxisEnum.VIBRATION_2_HIGH_LOW_BIAS: "VIBRATION_2_HIGH_LOW_BIAS",
             AxisEnum.VIBRATION_2_RANDOM: "VIBRATION_2_RANDOM",
+
+            AxisEnum.INTENSITY_A: 'INTENSITY_A',
+            AxisEnum.INTENSITY_B: 'INTENSITY_B',
+            AxisEnum.INTENSITY_C: 'INTENSITY_C',
+            AxisEnum.INTENSITY_D: 'INTENSITY_D',
         }[self]
 
 
@@ -115,5 +131,10 @@ all_axis = [
     AxisEnum.VIBRATION_2_LEFT_RIGHT_BIAS,
     AxisEnum.VIBRATION_2_HIGH_LOW_BIAS,
     AxisEnum.VIBRATION_2_RANDOM,
+
+    AxisEnum.INTENSITY_A,
+    AxisEnum.INTENSITY_B,
+    AxisEnum.INTENSITY_C,
+    AxisEnum.INTENSITY_D,
 ]
 

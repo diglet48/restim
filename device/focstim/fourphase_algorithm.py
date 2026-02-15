@@ -4,7 +4,7 @@ import numpy as np
 
 from stim_math.audio_gen.base_classes import RemoteGenerationAlgorithm
 from stim_math.audio_gen.params import SafetyParamsFOC, FOCStimParams, FourphaseFOCStimParams
-from stim_math.audio_gen.various import ThreePhasePosition, FourPhasePosition
+from stim_math.audio_gen.various import FourPhaseIntensity
 from stim_math.axis import AbstractMediaSync
 from device.focstim.constants_pb2 import AxisType
 from stim_math import limits
@@ -16,7 +16,7 @@ class FOCStimFourphaseAlgorithm(RemoteGenerationAlgorithm):
         self.media = media
         self.params = params
         self.safety_limits = safety_limits
-        self.position_params = FourPhasePosition(params.position)
+        self.intensity_params = FourPhaseIntensity(params.position)
 
         epsilon = 0.0001
         assert safety_limits.waveform_amplitude_amps >= (limits.WaveformAmpltiudeFOC.min - epsilon)
@@ -52,15 +52,16 @@ class FOCStimFourphaseAlgorithm(RemoteGenerationAlgorithm):
         derating = self.frequency_derating_factor(maximum_frequency, carrier_frequency, tau)
         volume *= np.clip(derating, 0, 1)
 
-        alpha, beta, gamma = self.position_params.get_position(t)
+        a, b, c, d = self.intensity_params.get_position(t)
 
         if not self.media.is_playing():
             volume *= 0
 
         return {
-            AxisType.AXIS_POSITION_ALPHA: alpha,
-            AxisType.AXIS_POSITION_BETA: beta,
-            AxisType.AXIS_POSITION_GAMMA: gamma,
+            AxisType.AXIS_ELECTRODE_1_POWER: a,
+            AxisType.AXIS_ELECTRODE_2_POWER: b,
+            AxisType.AXIS_ELECTRODE_3_POWER: c,
+            AxisType.AXIS_ELECTRODE_4_POWER: d,
             AxisType.AXIS_WAVEFORM_AMPLITUDE_AMPS: volume * volume * self.safety_limits.waveform_amplitude_amps,
             AxisType.AXIS_CARRIER_FREQUENCY_HZ: carrier_frequency,
             AxisType.AXIS_PULSE_FREQUENCY_HZ: self.params.pulse_frequency.interpolate(t),

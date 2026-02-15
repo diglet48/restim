@@ -3,7 +3,7 @@
 ################################################################################
 ## Form generated from reading UI file 'fourphasesettingswidget.ui'
 ##
-## Created by: Qt User Interface Compiler version 6.8.3
+## Created by: Qt User Interface Compiler version 6.9.0
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
@@ -33,7 +33,7 @@ class Ui_FourPhaseSettingsWidget(object):
         self.label = QLabel(self.groupBox)
         self.label.setObjectName(u"label")
 
-        self.formLayout.setWidget(0, QFormLayout.LabelRole, self.label)
+        self.formLayout.setWidget(0, QFormLayout.ItemRole.LabelRole, self.label)
 
         self.a_power = QDoubleSpinBox(self.groupBox)
         self.a_power.setObjectName(u"a_power")
@@ -42,22 +42,22 @@ class Ui_FourPhaseSettingsWidget(object):
         self.a_power.setMaximum(10.000000000000000)
         self.a_power.setSingleStep(0.100000000000000)
 
-        self.formLayout.setWidget(0, QFormLayout.FieldRole, self.a_power)
+        self.formLayout.setWidget(0, QFormLayout.ItemRole.FieldRole, self.a_power)
 
         self.label_2 = QLabel(self.groupBox)
         self.label_2.setObjectName(u"label_2")
 
-        self.formLayout.setWidget(1, QFormLayout.LabelRole, self.label_2)
+        self.formLayout.setWidget(1, QFormLayout.ItemRole.LabelRole, self.label_2)
 
         self.label_3 = QLabel(self.groupBox)
         self.label_3.setObjectName(u"label_3")
 
-        self.formLayout.setWidget(2, QFormLayout.LabelRole, self.label_3)
+        self.formLayout.setWidget(2, QFormLayout.ItemRole.LabelRole, self.label_3)
 
         self.label_4 = QLabel(self.groupBox)
         self.label_4.setObjectName(u"label_4")
 
-        self.formLayout.setWidget(3, QFormLayout.LabelRole, self.label_4)
+        self.formLayout.setWidget(3, QFormLayout.ItemRole.LabelRole, self.label_4)
 
         self.b_power = QDoubleSpinBox(self.groupBox)
         self.b_power.setObjectName(u"b_power")
@@ -66,7 +66,7 @@ class Ui_FourPhaseSettingsWidget(object):
         self.b_power.setMaximum(10.000000000000000)
         self.b_power.setSingleStep(0.100000000000000)
 
-        self.formLayout.setWidget(1, QFormLayout.FieldRole, self.b_power)
+        self.formLayout.setWidget(1, QFormLayout.ItemRole.FieldRole, self.b_power)
 
         self.c_power = QDoubleSpinBox(self.groupBox)
         self.c_power.setObjectName(u"c_power")
@@ -75,7 +75,7 @@ class Ui_FourPhaseSettingsWidget(object):
         self.c_power.setMaximum(10.000000000000000)
         self.c_power.setSingleStep(0.100000000000000)
 
-        self.formLayout.setWidget(2, QFormLayout.FieldRole, self.c_power)
+        self.formLayout.setWidget(2, QFormLayout.ItemRole.FieldRole, self.c_power)
 
         self.d_power = QDoubleSpinBox(self.groupBox)
         self.d_power.setObjectName(u"d_power")
@@ -84,21 +84,22 @@ class Ui_FourPhaseSettingsWidget(object):
         self.d_power.setMaximum(10.000000000000000)
         self.d_power.setSingleStep(0.100000000000000)
 
-        self.formLayout.setWidget(3, QFormLayout.FieldRole, self.d_power)
+        self.formLayout.setWidget(3, QFormLayout.ItemRole.FieldRole, self.d_power)
 
         self.label_5 = QLabel(self.groupBox)
         self.label_5.setObjectName(u"label_5")
 
-        self.formLayout.setWidget(4, QFormLayout.LabelRole, self.label_5)
+        self.formLayout.setWidget(4, QFormLayout.ItemRole.LabelRole, self.label_5)
 
         self.center_power = QDoubleSpinBox(self.groupBox)
         self.center_power.setObjectName(u"center_power")
+        self.center_power.setEnabled(False)
         self.center_power.setKeyboardTracking(False)
         self.center_power.setMinimum(-10.000000000000000)
         self.center_power.setMaximum(10.000000000000000)
         self.center_power.setSingleStep(0.100000000000000)
 
-        self.formLayout.setWidget(4, QFormLayout.FieldRole, self.center_power)
+        self.formLayout.setWidget(4, QFormLayout.ItemRole.FieldRole, self.center_power)
 
 
         self.verticalLayout.addWidget(self.groupBox)

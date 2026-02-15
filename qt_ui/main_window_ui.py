@@ -32,7 +32,7 @@ from qt_ui.three_phase_settings_widget import ThreePhaseSettingsWidget
 from qt_ui.vibration_settings_widget import VibrationSettingsWidget
 from qt_ui.volume_control_widget import VolumeControlWidget
 from qt_ui.waveform_details_widget import WaveformDetailsWidget
-from qt_ui.widgets.fourphase_widget_stereographic import FourphaseWidgetStereographic
+from qt_ui.widgets.fourphase_widget_individual_electrodes import FourphaseWidgetIndividualElectrodes
 from qt_ui.widgets.threephase_widget import ThreephaseWidgetAlphaBeta
 from qt_ui.widgets.volume_widget import VolumeWidget
 import restim_rc
@@ -142,7 +142,7 @@ class Ui_MainWindow(object):
         self.stackedWidget_visual.addWidget(self.page_threephase)
         self.page_fourphase = QWidget()
         self.page_fourphase.setObjectName(u"page_fourphase")
-        self.graphicsView_fourphase = FourphaseWidgetStereographic(self.page_fourphase)
+        self.graphicsView_fourphase = FourphaseWidgetIndividualElectrodes(self.page_fourphase)
         self.graphicsView_fourphase.setObjectName(u"graphicsView_fourphase")
         self.graphicsView_fourphase.setGeometry(QRect(0, 0, 200, 200))
         self.stackedWidget_visual.addWidget(self.page_fourphase)
