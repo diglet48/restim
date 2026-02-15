@@ -105,7 +105,10 @@ class FOCStimProtoAPI(QObject):
         elif message.HasField('notification'):
             message.notification.timestamp = time.time_ns()
             if self.notification_log_target:
-                self.notification_log_target.write(message.notification)
+                try:
+                    self.notification_log_target.write(message.notification)
+                except ValueError:
+                    pass
 
             if message.notification.HasField('notification_boot'):
                 self.on_notification_boot.emit(message.notification.notification_boot)
@@ -160,17 +163,17 @@ class FOCStimProtoAPI(QObject):
             )
         )
 
-    def request_axis_set(self, axis: AxisType, value, clear: bool) -> Future:
-        return self.send_request(Request(
-            id=self.next_request_id(),
-            request_axis_set=RequestAxisSet(
-                timestamp_ms=int(time.time_ns() // 1000 // 1000) & 0xFFFFFFFF,  # TODO
-                axis=axis,
-                value=value,
-                clear=clear
-                )
-            )
-        )
+    # def request_axis_set(self, axis: AxisType, value, clear: bool) -> Future:
+    #     return self.send_request(Request(
+    #         id=self.next_request_id(),
+    #         request_axis_set=RequestAxisSet(
+    #             timestamp_ms=int(time.time_ns() // 1000 // 1000) & 0xFFFFFFFF,  # TODO
+    #             axis=axis,
+    #             value=value,
+    #             clear=clear
+    #             )
+    #         )
+    #     )
 
     def request_axis_move_to(self, axis: AxisType, value, interval) -> Future:
         return self.send_request(Request(

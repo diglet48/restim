@@ -167,6 +167,7 @@ class FOCStimProtoDevice(QObject, OutputDevice):
         self.transport.close()
         if self.notification_log:
             self.notification_log.close()
+            self.notification_log = None
 
     def is_connected_and_running(self) -> bool:
         return self.transport and self.transport.isOpen()
@@ -398,10 +399,11 @@ class FOCStimProtoDevice(QObject, OutputDevice):
                 R_b=f"{notif.resistance_b}",
                 R_c=f"{notif.resistance_c}",
                 R_d=f"{notif.resistance_d}",
-                Z_a=f"{notif.resistance_a}:{notif.reluctance_a}|xy",
-                Z_b=f"{notif.resistance_b}:{notif.reluctance_b}|xy",
-                Z_c=f"{notif.resistance_c}:{notif.reluctance_c}|xy",
-                Z_d=f"{notif.resistance_d}:{notif.reluctance_d}|xy"
+                # These really slow teleplot down...
+                # Z_a=f"{notif.resistance_a}:{notif.reluctance_a}|xy",
+                # Z_b=f"{notif.resistance_b}:{notif.reluctance_b}|xy",
+                # Z_c=f"{notif.resistance_c}:{notif.reluctance_c}|xy",
+                # Z_d=f"{notif.resistance_d}:{notif.reluctance_d}|xy"
             )
 
     def handle_notification_system_stats(self, notif: NotificationSystemStats):
