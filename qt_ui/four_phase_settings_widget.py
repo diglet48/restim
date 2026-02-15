@@ -45,12 +45,12 @@ class FourPhaseSettingsWidget(QtWidgets.QWidget, Ui_FourPhaseSettingsWidget):
         self.d_controller = AxisController(self.d_power)
         self.d_controller.link_axis(self.calibrate_params.d)
 
-        self.center_controller = AxisController(self.center_power)
-        self.center_controller.link_axis(self.calibrate_params.center)
+        # self.center_controller = AxisController(self.center_power)
+        # self.center_controller.link_axis(self.calibrate_params.center)
 
     def save_settings(self):
         settings.fourphase_calibration_a.set(self.a_controller.last_user_entered_value)
         settings.fourphase_calibration_b.set(self.b_controller.last_user_entered_value)
         settings.fourphase_calibration_c.set(self.c_controller.last_user_entered_value)
         settings.fourphase_calibration_d.set(self.d_controller.last_user_entered_value)
-        settings.fourphase_calibration_center.set(self.center_controller.last_user_entered_value)
+        # settings.fourphase_calibration_center.set(self.center_controller.last_user_entered_value)
