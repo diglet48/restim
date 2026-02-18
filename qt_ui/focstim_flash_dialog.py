@@ -38,14 +38,14 @@ class FlashingThread(QThread):
         if len(firmware_binary) / 1024 > 128:  # flash is 128k + 128k, only single-page firmware supported at this time
             self.report_message.emit("ERROR: firmware too large")
 
-        com_port = self.com_port
-        self.report_message.emit(f'opening {com_port}')
+        com_port_path = QSerialPortInfo(self.com_port).systemLocation()
+        self.report_message.emit(f'opening {com_port_path}')
 
         # Note: due to windows driver shit, closing the serial connection
         # toggles reset line and reboots the ESP32
         try:
             serial_connection = serial.Serial(
-                port=com_port,
+                port=com_port_path,
                 baudrate=BAUD,
                 bytesize=8, parity='E', stopbits=1,
                 xonxoff=0,  # don't enable software flow control
@@ -53,7 +53,7 @@ class FlashingThread(QThread):
                 timeout=1,  # set a timeout value, None for waiting forever
             )
         except SerialException as e:
-            self.report_message.emit(e)
+            self.report_message.emit(str(e))
             return
 
         # prevent toggle RTS/DTR on port closing
