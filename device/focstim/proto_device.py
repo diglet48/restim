@@ -153,7 +153,7 @@ class FOCStimProtoDevice(QObject, OutputDevice):
         self.print_data_rate_timer.stop()
         self.delayed_start_timer.stop()
 
-        if self.transport.isOpen():
+        if self.transport and self.transport.isOpen():
             logger.info("closing connection to FOC-Stim")
             connected = True
             try:
@@ -166,7 +166,7 @@ class FOCStimProtoDevice(QObject, OutputDevice):
                 self.api.request_stop_signal()
                 self.api.cancel_outstanding_requests()
                 self.transport.flush()
-        self.transport.close()
+            self.transport.close()
         if self.notification_log:
             self.notification_log.close()
             self.notification_log = None
@@ -200,6 +200,9 @@ class FOCStimProtoDevice(QObject, OutputDevice):
         self.api.on_notification_pressure.connect(self.handle_notification_pressure)
         self.api.on_notification_debug_string.connect(self.handle_notification_debug_string)
         self.api.on_notification_debug_as5311.connect(self.handle_notification_debug_as5311)
+
+        # Notify that API is ready for external connections
+        self.api_ready.emit()
 
         # grab firmware version
         self.get_firmware_version()
@@ -484,3 +487,4 @@ class FOCStimProtoDevice(QObject, OutputDevice):
     new_imu_sensor_data = Signal(IMUData)
     new_as5311_sensor_data = Signal(AS5311Data)
     new_pressure_sensor_data = Signal(PressureData)
+    api_ready = Signal()
