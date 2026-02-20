@@ -30,7 +30,7 @@ class DeviceConfiguration:
 
     def save(self):
         settings.device_config_device_type.set(self.device_type.value)
-        if self.device_type in (DeviceType.AUDIO_THREE_PHASE, DeviceType.FOCSTIM_THREE_PHASE):
+        if self.device_type in (DeviceType.AUDIO_THREE_PHASE, DeviceType.FOCSTIM_THREE_PHASE, DeviceType.FOCSTIM_FOUR_PHASE):
             settings.device_config_waveform_type.set(self.waveform_type.value)
             settings.device_config_min_freq.set(self.min_frequency)
             settings.device_config_max_freq.set(self.max_frequency)
