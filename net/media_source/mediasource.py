@@ -36,6 +36,7 @@ class MediaSource(QObject, MediaSourceInterface, metaclass=A):
         super(MediaSource, self).__init__(parent)
 
         self.last_state = MediaState(MediaConnectionState.NOT_CONNECTED)
+        self.media_sync_offset = 0
 
     def state(self) -> MediaConnectionState:
         return self.last_state.connectionState
@@ -141,11 +142,18 @@ class MediaSource(QObject, MediaSourceInterface, metaclass=A):
 
     def map_timestamp(self, timestamp):
         if self.is_playing():
-            adj_timestamp = timestamp - self.last_state.media_play_timestamp + self.last_state.cursor
+            adj_timestamp = (timestamp
+                             - self.last_state.media_play_timestamp
+                             + self.last_state.cursor
+                             - self.media_sync_offset)
             return adj_timestamp
         else:
-            return timestamp - timestamp + self.last_state.cursor
+            return timestamp - timestamp + self.last_state.cursor - self.media_sync_offset
 
     def media_path(self) -> str:
         return self.last_state.filePath
+
+    def set_media_sync_offset(self, offset_in_seconds):
+        self.media_sync_offset = offset_in_seconds
+
 

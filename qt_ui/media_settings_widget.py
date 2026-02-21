@@ -98,6 +98,9 @@ class MediaSettingsWidget(QtWidgets.QWidget, Ui_MediaSettingsWidget, metaclass=_
         self.reload_scripts_button.clicked.connect(self.reload_scripts)
         self.media_index_changed()
 
+        self.media_offset_spinbox.valueChanged.connect(self.refresh_media_offset)
+        self.media_offset_spinbox.setValue(settings.media_sync_time_offset_ms.get() / 1000.0)
+
     def open_add_funscripts_dialog(self):
         self.dialogOpened.emit()  # trigger stop audio
 
@@ -142,6 +145,7 @@ class MediaSettingsWidget(QtWidgets.QWidget, Ui_MediaSettingsWidget, metaclass=_
         old_interface.disable()
         new_interface.enable()
         self.refresh_connection_status()
+        self.refresh_media_offset()
 
         # emit because there is a chance we switched to/from internal
         # media, which does not support funscripts
@@ -220,6 +224,14 @@ class MediaSettingsWidget(QtWidgets.QWidget, Ui_MediaSettingsWidget, metaclass=_
 
     def current_media_sync(self):
         return self.media_sync[self.current_index]
+
+    def refresh_media_offset(self):
+        offset = self.media_offset_spinbox.value()
+        media = self.media_sync[self.current_index]
+        media.set_media_sync_offset(offset)
+
+    def save_settings(self):
+        settings.media_sync_time_offset_ms.set(self.media_offset_spinbox.value() * 1000)
 
     dialogOpened = QtCore.Signal()  # emitted whenever a dialog is opened which promps audio stop.
     connectionStatusChanged = QtCore.Signal(MediaConnectionState)  # emitted whenever video player connection status changes.
