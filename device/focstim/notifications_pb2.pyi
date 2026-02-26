@@ -197,3 +197,13 @@ class NotificationDebugEdging(_message.Message):
 
     def __init__(self, full_power_threshold: _Optional[float]=..., reduced_power_threshold: _Optional[float]=..., reduction: _Optional[float]=...) -> None:
         ...
+
+class NotificationDebugTeleplot(_message.Message):
+    __slots__ = ('id', 'value')
+    ID_FIELD_NUMBER: _ClassVar[int]
+    VALUE_FIELD_NUMBER: _ClassVar[int]
+    id: str
+    value: float
+
+    def __init__(self, id: _Optional[str]=..., value: _Optional[float]=...) -> None:
+        ...

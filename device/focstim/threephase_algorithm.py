@@ -87,5 +87,4 @@ class FOCStimThreephaseAlgorithm(RemoteGenerationAlgorithm):
         :return:                volume of the pulse, such that it has equal subjective intensity as a pulse at max carrier frequency.
         """
         # this formula follows from Qt = Q0 * (1 + pw/tau)
-        # return 1
         return (frequency * tau + 0.5) / (max_frequency * tau + 0.5)

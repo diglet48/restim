@@ -14,7 +14,8 @@ from device.focstim.messages_pb2 import RequestFirmwareVersion, RequestAxisSet, 
     RequestLSM6DSOXStop
 from device.focstim.notifications_pb2 import NotificationBoot, NotificationPotentiometer, NotificationCurrents, \
     NotificationModelEstimation, NotificationSystemStats, NotificationSignalStats, NotificationBattery, \
-    NotificationLSM6DSOX, NotificationPressure, NotificationDebugString, NotificationDebugAS5311
+    NotificationLSM6DSOX, NotificationPressure, NotificationDebugString, NotificationDebugAS5311, \
+    NotificationDebugTeleplot
 
 logger = logging.getLogger('restim.focstim')
 
@@ -132,6 +133,8 @@ class FOCStimProtoAPI(QObject):
                 self.on_notification_debug_string.emit(message.notification.notification_debug_string)
             elif message.notification.HasField('notification_debug_as5311'):
                 self.on_notification_debug_as5311.emit(message.notification.notification_debug_as5311)
+            elif message.notification.HasField('notification_debug_teleplot'):
+                self.on_notification_debug_teleplot.emit(message.notification.notification_debug_teleplot)
             else:
                 logger.warning(f'unhandled notification: {message.notification}')
 
@@ -271,3 +274,4 @@ class FOCStimProtoAPI(QObject):
     on_notification_pressure = Signal(NotificationPressure)
     on_notification_debug_string = Signal(NotificationDebugString)
     on_notification_debug_as5311 = Signal(NotificationDebugAS5311)
+    on_notification_debug_teleplot = Signal(NotificationDebugTeleplot)

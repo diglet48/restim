@@ -15,7 +15,8 @@ import qt_ui.settings
 from device.focstim.proto_api import FOCStimProtoAPI
 from device.focstim.notifications_pb2 import NotificationBoot, NotificationPotentiometer, NotificationCurrents, \
     NotificationModelEstimation, NotificationSystemStats, NotificationSignalStats, NotificationBattery, \
-    NotificationLSM6DSOX, NotificationDebugString, NotificationDebugAS5311, NotificationPressure
+    NotificationLSM6DSOX, NotificationDebugString, NotificationDebugAS5311, NotificationPressure, \
+    NotificationDebugTeleplot
 from net.teleplot import Teleplot
 from device.output_device import OutputDevice
 from stim_math.audio_gen.base_classes import RemoteGenerationAlgorithm
@@ -200,6 +201,7 @@ class FOCStimProtoDevice(QObject, OutputDevice):
         self.api.on_notification_pressure.connect(self.handle_notification_pressure)
         self.api.on_notification_debug_string.connect(self.handle_notification_debug_string)
         self.api.on_notification_debug_as5311.connect(self.handle_notification_debug_as5311)
+        self.api.on_notification_debug_teleplot.connect(self.handle_notification_debug_teleplot)
 
         # grab firmware version
         self.get_firmware_version()
@@ -480,6 +482,12 @@ class FOCStimProtoDevice(QObject, OutputDevice):
             )
         m = notif.tracked * (2000.0 / 4096) * 1e-6
         self.new_as5311_sensor_data.emit(AS5311Data(m))
+
+    def handle_notification_debug_teleplot(self, notif: NotificationDebugTeleplot):
+        if self.teleplot:
+            self.teleplot.write_metrics(
+                **{notif.id: notif.value}
+            )
 
     new_imu_sensor_data = Signal(IMUData)
     new_as5311_sensor_data = Signal(AS5311Data)
