@@ -22,6 +22,8 @@ class FOCStimFourphaseAlgorithm(RemoteGenerationAlgorithm):
         assert safety_limits.waveform_amplitude_amps >= (limits.WaveformAmpltiudeFOC.min - epsilon)
         assert safety_limits.waveform_amplitude_amps <= (limits.WaveformAmpltiudeFOC.max + epsilon)
 
+        self.sensor_node = None
+
     # todo: more descriptive name
     def outputs(self):
         return 4
@@ -53,6 +55,16 @@ class FOCStimFourphaseAlgorithm(RemoteGenerationAlgorithm):
         volume *= np.clip(derating, 0, 1)
 
         a, b, c, d = self.intensity_params.get_position(t)
+
+        if self.sensor_node:
+            params = {'volume': volume, 'e1': a, 'e2': b, 'e3': c, 'e4': d}
+            self.sensor_node.process(params)
+            # safety: new volume must be less than original
+            volume = np.clip(params['volume'], 0, volume)
+            a = params['e1']
+            b = params['e2']
+            c = params['e3']
+            d = params['e4']
 
         if not self.media.is_playing():
             volume *= 0

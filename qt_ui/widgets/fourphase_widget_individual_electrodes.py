@@ -36,6 +36,7 @@ COLOR_D_ACCENT = COLOR_D.darker(115)
 class FourphaseWidgetIndividualElectrodes(QGraphicsView):
     def __init__(self, parent):
         super().__init__(parent)
+        self.sensor_widget = None
 
         self.setScene(QGraphicsScene())
 
@@ -50,7 +51,18 @@ class FourphaseWidgetIndividualElectrodes(QGraphicsView):
 
         self.set_electrode_intensities(1, 1, 1, 1)
 
+    def set_sensor_widget(self, sensor_widget):
+        self.sensor_widget = sensor_widget
+
     def set_electrode_intensities(self, a, b, c, d):
+        if self.sensor_widget:
+            params = {'e1': a, 'e2': b, 'e3': c, 'e4': d}
+            self.sensor_widget.process(params)
+            a = params['e1']
+            b = params['e2']
+            c = params['e3']
+            d = params['e4']
+
         a, b, c, d = constrain_4p_amplitudes(a, b, c, d)
         self.level_1_rect.setRect(0, 1 - a, 1, a)
         self.level_2_rect.setRect(1, 1 - b, 1, b)

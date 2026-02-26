@@ -112,6 +112,13 @@ class IMUHipThrustNode(QtWidgets.QWidget, SensorNodeInterface):
                 change = diff * self.spinbox_alpha.value()
                 parameters['alpha'] += change
 
+        if 'e4' in parameters:
+            if self.spinbox_alpha.value() and self.spinbox_position.value():
+                diff = self.filter.last_position() / self.spinbox_position.value()
+                diff = np.clip(diff, -1, 1)
+                change = diff * self.spinbox_alpha.value()
+                parameters['e4'] += change
+
     def update_graph_data(self):
         x = np.array(self.x) - self.x[-1]
         y = np.array(self.y_pos)
