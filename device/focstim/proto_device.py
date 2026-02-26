@@ -3,6 +3,7 @@ import time
 import datetime
 import os
 
+import numpy as np
 import stream # pystream-protobuf
 
 import google.protobuf.text_format
@@ -404,17 +405,21 @@ class FOCStimProtoDevice(QObject, OutputDevice):
 
     def handle_notification_model_estimation(self, notif: NotificationModelEstimation):
         if self.teleplot:
+            a = notif.resistance_a + 1j * notif.reluctance_a
+            b = notif.resistance_b + 1j * notif.reluctance_b
+            c = notif.resistance_c + 1j * notif.reluctance_c
+            d = notif.resistance_d + 1j * notif.reluctance_d
             self.teleplot.write_metrics(
-                R_a=f"{notif.resistance_a}",
-                R_b=f"{notif.resistance_b}",
-                R_c=f"{notif.resistance_c}",
-                R_d=f"{notif.resistance_d}",
-                # These really slow teleplot down...
-                # Z_a=f"{notif.resistance_a}:{notif.reluctance_a}|xy",
-                # Z_b=f"{notif.resistance_b}:{notif.reluctance_b}|xy",
-                # Z_c=f"{notif.resistance_c}:{notif.reluctance_c}|xy",
-                # Z_d=f"{notif.resistance_d}:{notif.reluctance_d}|xy"
+                R_a=np.abs(a),
+                R_b=np.abs(b),
+                R_c=np.abs(c),
+                R_d=np.abs(d),
+                angle_a=np.angle(a),
+                angle_b=np.angle(b),
+                angle_c=np.angle(c),
+                angle_d=np.angle(d),
             )
+
 
     def handle_notification_system_stats(self, notif: NotificationSystemStats):
         if notif.HasField('esc1'):
