@@ -14,10 +14,10 @@ from PySide6.QtNetwork import QTcpSocket
 
 import qt_ui.settings
 from device.focstim.proto_api import FOCStimProtoAPI
-from device.focstim.notifications_pb2 import NotificationBoot, NotificationPotentiometer, NotificationCurrents, \
+from device.focstim.notifications_pb2 import (NotificationBoot, NotificationDeviceVolume, NotificationCurrents, \
     NotificationModelEstimation, NotificationSystemStats, NotificationSignalStats, NotificationBattery, \
-    NotificationLSM6DSOX, NotificationDebugString, NotificationDebugAS5311, NotificationPressure, \
-    NotificationDebugTeleplot
+    NotificationLSM6DSOX, NotificationButtonPress, NotificationDebugString, NotificationDebugAS5311, \
+    NotificationPressure, NotificationDebugTeleplot)
 from net.teleplot import Teleplot
 from device.output_device import OutputDevice
 from stim_math.audio_gen.base_classes import RemoteGenerationAlgorithm
@@ -192,7 +192,7 @@ class FOCStimProtoDevice(QObject, OutputDevice):
 
         self.api = FOCStimProtoAPI(self, self.transport, self.notification_log)
         self.api.on_notification_boot.connect(self.handle_notification_boot)
-        self.api.on_notification_potentiometer.connect(self.handle_notification_potentiometer)
+        self.api.on_notification_device_volume.connect(self.handle_notification_device_volume)
         self.api.on_notification_currents.connect(self.handle_notification_currents)
         self.api.on_notification_model_estimation.connect(self.handle_notification_model_estimation)
         self.api.on_notification_system_stats.connect(self.handle_notification_system_stats)
@@ -200,6 +200,7 @@ class FOCStimProtoDevice(QObject, OutputDevice):
         self.api.on_notification_battery.connect(self.handle_notification_battery)
         self.api.on_notification_lsm6dsox.connect(self.handle_notification_lsm6dsox)
         self.api.on_notification_pressure.connect(self.handle_notification_pressure)
+        self.api.on_notification_button_press.connect(self.handle_notification_button_press)
         self.api.on_notification_debug_string.connect(self.handle_notification_debug_string)
         self.api.on_notification_debug_as5311.connect(self.handle_notification_debug_as5311)
         self.api.on_notification_debug_teleplot.connect(self.handle_notification_debug_teleplot)
@@ -380,10 +381,10 @@ class FOCStimProtoDevice(QObject, OutputDevice):
         logger.error('boot notification received')
         self.stop()
 
-    def handle_notification_potentiometer(self, notif: NotificationPotentiometer):
+    def handle_notification_device_volume(self, notif: NotificationDeviceVolume):
         if self.teleplot:
             self.teleplot.write_metrics(
-                pot=notif.value
+                pot=notif.volume
             )
 
     def handle_notification_currents(self, notif: NotificationCurrents):
@@ -474,6 +475,9 @@ class FOCStimProtoDevice(QObject, OutputDevice):
         self.new_pressure_sensor_data.emit(
             PressureData(notif.pressure)
         )
+
+    def handle_notification_button_press(self, notif: NotificationBoot):
+        pass
 
     def handle_notification_debug_string(self, notif: NotificationDebugString):
         logger.warning(notif.message)

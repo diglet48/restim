@@ -44,21 +44,21 @@ class RequestCapabilitiesGet(_message.Message):
         ...
 
 class ResponseCapabilitiesGet(_message.Message):
-    __slots__ = ('threephase', 'fourphase', 'battery', 'potentiometer', 'maximum_waveform_amplitude_amps', 'lsm6dsox')
+    __slots__ = ('threephase', 'fourphase', 'battery', 'device_volume', 'maximum_waveform_amplitude_amps', 'lsm6dsox')
     THREEPHASE_FIELD_NUMBER: _ClassVar[int]
     FOURPHASE_FIELD_NUMBER: _ClassVar[int]
     BATTERY_FIELD_NUMBER: _ClassVar[int]
-    POTENTIOMETER_FIELD_NUMBER: _ClassVar[int]
+    DEVICE_VOLUME_FIELD_NUMBER: _ClassVar[int]
     MAXIMUM_WAVEFORM_AMPLITUDE_AMPS_FIELD_NUMBER: _ClassVar[int]
     LSM6DSOX_FIELD_NUMBER: _ClassVar[int]
     threephase: bool
     fourphase: bool
     battery: bool
-    potentiometer: bool
+    device_volume: bool
     maximum_waveform_amplitude_amps: float
     lsm6dsox: bool
 
-    def __init__(self, threephase: bool=..., fourphase: bool=..., battery: bool=..., potentiometer: bool=..., maximum_waveform_amplitude_amps: _Optional[float]=..., lsm6dsox: bool=...) -> None:
+    def __init__(self, threephase: bool=..., fourphase: bool=..., battery: bool=..., device_volume: bool=..., maximum_waveform_amplitude_amps: _Optional[float]=..., lsm6dsox: bool=...) -> None:
         ...
 
 class RequestSignalStart(_message.Message):
@@ -201,6 +201,20 @@ class ResponseWifiIPGet(_message.Message):
     ip: int
 
     def __init__(self, ip: _Optional[int]=...) -> None:
+        ...
+
+class RequestLockDeviceVolume(_message.Message):
+    __slots__ = ('lock',)
+    LOCK_FIELD_NUMBER: _ClassVar[int]
+    lock: bool
+
+    def __init__(self, lock: bool=...) -> None:
+        ...
+
+class ResponseLockDeviceVolume(_message.Message):
+    __slots__ = ()
+
+    def __init__(self) -> None:
         ...
 
 class RequestLSM6DSOXStart(_message.Message):

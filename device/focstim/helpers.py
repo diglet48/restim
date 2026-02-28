@@ -1,22 +1,9 @@
 import logging
-import time
-import datetime
-import os
 
-import google.protobuf.text_format
 from PySide6.QtSerialPort import QSerialPort
-from PySide6.QtCore import QIODevice, QTimer, QObject
-from PySide6.QtNetwork import QAbstractSocket
-from PySide6.QtNetwork import QTcpSocket
-
+from PySide6.QtCore import QIODevice
 
 from device.focstim.proto_api import FOCStimProtoAPI
-from device.focstim.notifications_pb2 import NotificationBoot, NotificationPotentiometer, NotificationCurrents, \
-    NotificationModelEstimation, NotificationSystemStats, NotificationSignalStats, NotificationDebugString, \
-    NotificationBattery, NotificationDebugAS5311
-from net.teleplot import Teleplot
-from device.output_device import OutputDevice
-from stim_math.audio_gen.base_classes import RemoteGenerationAlgorithm
 
 
 logger = logging.getLogger('restim.focstim')

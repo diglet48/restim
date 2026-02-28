@@ -11,11 +11,11 @@ from device.focstim.hdlc import HDLC
 from device.focstim.messages_pb2 import RequestFirmwareVersion, RequestAxisSet, RequestAxisMoveTo, RequestTimestampSet, \
     RequestSignalStart, RequestSignalStop, RequestCapabilitiesGet, RequestDebugStm32DeepSleep, \
     RequestDebugEnterBootloader, RequestWifiParametersSet, RequestWifiIPGet, RequestLSM6DSOXStart, \
-    RequestLSM6DSOXStop
-from device.focstim.notifications_pb2 import NotificationBoot, NotificationPotentiometer, NotificationCurrents, \
+    RequestLSM6DSOXStop, RequestLockDeviceVolume
+from device.focstim.notifications_pb2 import (NotificationBoot, NotificationDeviceVolume, NotificationCurrents, \
     NotificationModelEstimation, NotificationSystemStats, NotificationSignalStats, NotificationBattery, \
-    NotificationLSM6DSOX, NotificationPressure, NotificationDebugString, NotificationDebugAS5311, \
-    NotificationDebugTeleplot
+    NotificationLSM6DSOX, NotificationPressure, NotificationButtonPress, NotificationDebugString, \
+    NotificationDebugAS5311, NotificationDebugTeleplot)
 
 logger = logging.getLogger('restim.focstim')
 
@@ -29,7 +29,8 @@ class Future(QObject):
 
     def complete(self, response: Response):
         if not self.completed:
-            self.timer.stop()
+            if self.timer is not None:
+                self.timer.stop()
             self.completed = True
             self.on_result.emit(response)
 
@@ -113,8 +114,8 @@ class FOCStimProtoAPI(QObject):
 
             if message.notification.HasField('notification_boot'):
                 self.on_notification_boot.emit(message.notification.notification_boot)
-            elif message.notification.HasField('notification_potentiometer'):
-                self.on_notification_potentiometer.emit(message.notification.notification_potentiometer)
+            elif message.notification.HasField('notification_device_volume'):
+                self.on_notification_device_volume.emit(message.notification.notification_device_volume)
             elif message.notification.HasField('notification_currents'):
                 self.on_notification_currents.emit(message.notification.notification_currents)
             elif message.notification.HasField('notification_model_estimation'):
@@ -129,6 +130,8 @@ class FOCStimProtoAPI(QObject):
                 self.on_notification_lsm6dsox.emit(message.notification.notification_lsm6dsox)
             elif message.notification.HasField('notification_pressure'):
                 self.on_notification_pressure.emit(message.notification.notification_pressure)
+            elif message.notification.HasField('notification_button_press'):
+                self.on_notification_button_press.emit(message.notification.notification_button_press)
             elif message.notification.HasField('notification_debug_string'):
                 self.on_notification_debug_string.emit(message.notification.notification_debug_string)
             elif message.notification.HasField('notification_debug_as5311'):
@@ -235,6 +238,14 @@ class FOCStimProtoAPI(QObject):
             request_wifi_ip_get=RequestWifiIPGet()
         ))
 
+    def request_lock_device_volume(self, locked) -> Future:
+        return self.send_request(Request(
+            id=self.next_request_id(),
+            request_lock_device_volume=RequestLockDeviceVolume(
+                lock=locked
+            )
+        ))
+
     def request_lsm6dsox_start(self, imu_samplerate, acc_fullscale, gyr_fullscale) -> Future:
         return self.send_request(Request(
             id=self.next_request_id(),
@@ -264,7 +275,7 @@ class FOCStimProtoAPI(QObject):
         ))
 
     on_notification_boot = Signal(NotificationBoot)
-    on_notification_potentiometer = Signal(NotificationPotentiometer)
+    on_notification_device_volume = Signal(NotificationDeviceVolume)
     on_notification_currents = Signal(NotificationCurrents)
     on_notification_model_estimation = Signal(NotificationModelEstimation)
     on_notification_system_stats = Signal(NotificationSystemStats)
@@ -272,6 +283,7 @@ class FOCStimProtoAPI(QObject):
     on_notification_battery = Signal(NotificationBattery)
     on_notification_lsm6dsox = Signal(NotificationLSM6DSOX)
     on_notification_pressure = Signal(NotificationPressure)
+    on_notification_button_press = Signal(NotificationButtonPress)
     on_notification_debug_string = Signal(NotificationDebugString)
     on_notification_debug_as5311 = Signal(NotificationDebugAS5311)
     on_notification_debug_teleplot = Signal(NotificationDebugTeleplot)

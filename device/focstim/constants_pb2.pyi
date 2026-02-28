@@ -54,6 +54,12 @@ class Errors(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
     ERROR_UNKNOWN_REQUEST: _ClassVar[Errors]
     ERROR_POWER_NOT_PRESENT: _ClassVar[Errors]
     ERROR_ALREADY_PLAYING: _ClassVar[Errors]
+
+class ButtonState(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
+    __slots__ = ()
+    BUTTON_UNKNOWN: _ClassVar[ButtonState]
+    BUTTON_DOWN: _ClassVar[ButtonState]
+    BUTTON_UP: _ClassVar[ButtonState]
 AXIS_UNKNOWN: AxisType
 AXIS_POSITION_ALPHA: AxisType
 AXIS_POSITION_BETA: AxisType
@@ -91,3 +97,6 @@ ERROR_OUTPUT_NOT_SUPPORTED: Errors
 ERROR_UNKNOWN_REQUEST: Errors
 ERROR_POWER_NOT_PRESENT: Errors
 ERROR_ALREADY_PLAYING: Errors
+BUTTON_UNKNOWN: ButtonState
+BUTTON_DOWN: ButtonState
+BUTTON_UP: ButtonState
