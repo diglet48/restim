@@ -62,17 +62,18 @@ class ButtplugWsdmClient(QtCore.QObject):
         pass
 
     def binaryMessageReceived(self, msg):
-        try:
-            tcode = TCodeCommand.parse_command(bytes(msg))
-            if self.do_auto_expand:
-                interval, alpha, beta = self.expander.expand(tcode)
-                for i, a, b in zip(interval, alpha, beta):
-                    self.new_tcode_command.emit(TCodeCommand('L0', a / 2 + 0.5, i))
-                    self.new_tcode_command.emit(TCodeCommand('L1', b / 2 + 0.5, i))
-            else:
-                self.new_tcode_command.emit(tcode)
-        except InvalidTCodeException:
-            pass
+        for line in bytes(msg).split(b'\n'):
+            try:
+                tcode = TCodeCommand.parse_command(line)
+                if self.do_auto_expand:
+                    interval, alpha, beta = self.expander.expand(tcode)
+                    for i, a, b in zip(interval, alpha, beta):
+                        self.new_tcode_command.emit(TCodeCommand('L0', a / 2 + 0.5, i))
+                        self.new_tcode_command.emit(TCodeCommand('L1', b / 2 + 0.5, i))
+                else:
+                    self.new_tcode_command.emit(tcode)
+            except InvalidTCodeException:
+                pass
 
     def refreshSettings(self):
         self.retry_count = 0
