@@ -5,10 +5,7 @@ from PySide6 import QtCore
 import qt_ui.settings
 from stim_math.axis import AbstractAxis, WriteProtectedAxis
 from qt_ui.patterns.fourphase.mouse import MousePattern
-from qt_ui.patterns.fourphase.orbit import OrbitPattern
 from qt_ui.patterns.fourphase.sequence import SequencePattern
-from qt_ui.patterns.fourphase.spiral import SpiralPattern
-from qt_ui.widgets.fourphase_widget_stereographic import v1, v2, v3, v4
 
 logger = logging.getLogger('restim.motion_generation')
 

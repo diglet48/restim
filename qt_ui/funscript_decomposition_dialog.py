@@ -18,6 +18,7 @@ class ConversionType(Enum):
     E123_TO_AB = 2
     ABC_TO_E1234 = 3
     E1234_TO_ABC = 4
+    AB_TO_E1234 = 5
 
 
 class FunscriptDecompositionDialog(QDialog, Ui_FunscriptDecompositionDialog):
@@ -33,6 +34,7 @@ class FunscriptDecompositionDialog(QDialog, Ui_FunscriptDecompositionDialog):
         self.comboBox_action.addItem("e1, e2, e3  -> alpha, beta", ConversionType.E123_TO_AB)
         self.comboBox_action.addItem("alpha, beta, gamma -> e1, e2, e3, e4", ConversionType.ABC_TO_E1234)
         self.comboBox_action.addItem("e1, e2, e3, e4  -> alpha, beta, gamma", ConversionType.E1234_TO_ABC)
+        self.comboBox_action.addItem("alpha, beta -> e1, e2, e3, e4 (3-phase to 4-phase)", ConversionType.AB_TO_E1234)
 
     def open_file_dialog(self):
         dialog = FileDialog(self)
@@ -57,6 +59,8 @@ class FunscriptDecompositionDialog(QDialog, Ui_FunscriptDecompositionDialog):
                 self.convert_abc_to_e1234()
             elif self.comboBox_action.currentData() == ConversionType.E1234_TO_ABC:
                 self.convert_e1234_to_abc()
+            elif self.comboBox_action.currentData() == ConversionType.AB_TO_E1234:
+                self.convert_ab_to_e1234()
 
             # original_funscript = Funscript.from_file(self.lineEdit_funscript.text())
             # random_direction_change_probability = self.random_direction_change_probability.value() / 100
@@ -140,4 +144,22 @@ class FunscriptDecompositionDialog(QDialog, Ui_FunscriptDecompositionDialog):
         Funscript(timestamps, a).save_to_path(self.funscript_path('alpha'))
         Funscript(timestamps, b).save_to_path(self.funscript_path('beta'))
         Funscript(timestamps, c).save_to_path(self.funscript_path('gamma'))
+
+    def convert_ab_to_e1234(self):
+        alpha_fs = Funscript.from_file(self.funscript_path('alpha'))
+        beta_fs = Funscript.from_file(self.funscript_path('beta'))
+
+        timestamps = np.union1d(alpha_fs.x, beta_fs.x)
+        a = np.interp(timestamps, alpha_fs.x, alpha_fs.y) * 2 - 1
+        b = np.interp(timestamps, beta_fs.x, beta_fs.y) * 2 - 1
+
+        # Apply 3-phase half-angle convention before mapping to 4-phase
+        a, b = stim_math.transforms.half_angle_to_full(a, b)
+
+        # Map to 4 electrode intensities using tetrahedral geometry (gamma=0)
+        e1, e2, e3, e4 = stim_math.transforms_4.abc_to_e1234(a, b, np.zeros_like(a))
+        Funscript(timestamps, e1).save_to_path(self.funscript_path('e1'))
+        Funscript(timestamps, e2).save_to_path(self.funscript_path('e2'))
+        Funscript(timestamps, e3).save_to_path(self.funscript_path('e3'))
+        Funscript(timestamps, e4).save_to_path(self.funscript_path('e4'))
 

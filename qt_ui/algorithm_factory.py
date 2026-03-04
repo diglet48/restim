@@ -1,4 +1,5 @@
 from __future__ import annotations  # multiple return values
+import logging
 import numpy as np
 
 from device.focstim.fourphase_algorithm import FOCStimFourphaseAlgorithm
@@ -14,6 +15,8 @@ from qt_ui.models.funscript_kit import FunscriptKitModel
 from qt_ui.models.script_mapping import ScriptMappingModel
 from qt_ui.device_wizard.axes import AxisEnum
 from stim_math.axis import create_precomputed_axis, AbstractTimestampMapper, create_constant_axis, AbstractMediaSync
+
+logger = logging.getLogger('restim.algorithm_factory')
 
 
 class AlgorithmFactory:
@@ -33,6 +36,7 @@ class AlgorithmFactory:
         self.media_sync = media_sync
         self.load_funscripts = load_funscripts
         self.create_for_bake = create_for_bake
+        self._fourphase_fallback_cache = None  # lazy-computed (e1, e2, e3, e4) axes
 
     def create_algorithm(self, device: DeviceConfiguration) -> AudioGenerationAlgorithm | NeoStimAlgorithm:
         if device.device_type == DeviceType.AUDIO_THREE_PHASE:
@@ -253,16 +257,89 @@ class AlgorithmFactory:
         return self.get_axis_from_script_mapping(AxisEnum.POSITION_GAMMA) or self.mainwindow.gamma
 
     def get_axis_intensity_a(self):
-        return self.get_axis_from_script_mapping(AxisEnum.INTENSITY_A) or self.mainwindow.intensity_a
+        return self.get_axis_from_script_mapping(AxisEnum.INTENSITY_A) or self._get_fourphase_fallback(0) or self.mainwindow.intensity_a
 
     def get_axis_intensity_b(self):
-        return self.get_axis_from_script_mapping(AxisEnum.INTENSITY_B) or self.mainwindow.intensity_b
+        return self.get_axis_from_script_mapping(AxisEnum.INTENSITY_B) or self._get_fourphase_fallback(1) or self.mainwindow.intensity_b
 
     def get_axis_intensity_c(self):
-        return self.get_axis_from_script_mapping(AxisEnum.INTENSITY_C) or self.mainwindow.intensity_c
+        return self.get_axis_from_script_mapping(AxisEnum.INTENSITY_C) or self._get_fourphase_fallback(2) or self.mainwindow.intensity_c
 
     def get_axis_intensity_d(self):
-        return self.get_axis_from_script_mapping(AxisEnum.INTENSITY_D) or self.mainwindow.intensity_d
+        return self.get_axis_from_script_mapping(AxisEnum.INTENSITY_D) or self._get_fourphase_fallback(3) or self.mainwindow.intensity_d
+
+    def _get_fourphase_fallback(self, index: int):
+        """Return a precomputed electrode axis by auto-converting from alpha/beta or 1D funscripts.
+
+        Conversion priority:
+        1. alpha + beta funscripts loaded → convert to 4 electrode intensities
+        2. bare 1D funscript (no suffix) loaded → convert 1D→2D→4 electrode intensities
+        3. None (no fallback available)
+        """
+        if self._fourphase_fallback_cache is None:
+            self._fourphase_fallback_cache = self._compute_fourphase_fallback()
+        if self._fourphase_fallback_cache:
+            return self._fourphase_fallback_cache[index]
+        return None
+
+    def _compute_fourphase_fallback(self):
+        """Try to auto-convert available funscripts to 4-phase electrode intensities."""
+        import stim_math.transforms
+        import stim_math.transforms_4
+
+        if not self.load_funscripts:
+            return None
+
+        # Priority 1: alpha + beta funscripts → 4-phase
+        alpha_item = self.script_mapping.get_config_for_axis(AxisEnum.POSITION_ALPHA)
+        beta_item = self.script_mapping.get_config_for_axis(AxisEnum.POSITION_BETA)
+        if alpha_item and beta_item and alpha_item.script is not None and beta_item.script is not None:
+            logger.info('Auto-converting alpha/beta funscripts to 4-phase electrode intensities')
+            timestamps = np.union1d(alpha_item.script.x, beta_item.script.x)
+            alpha_lim_min, alpha_lim_max = self.kit.limits_for_axis(AxisEnum.POSITION_ALPHA)
+            beta_lim_min, beta_lim_max = self.kit.limits_for_axis(AxisEnum.POSITION_BETA)
+            a = np.interp(timestamps, alpha_item.script.x,
+                          np.clip(alpha_item.script.y, 0, 1) * (alpha_lim_max - alpha_lim_min) + alpha_lim_min)
+            b = np.interp(timestamps, beta_item.script.x,
+                          np.clip(beta_item.script.y, 0, 1) * (beta_lim_max - beta_lim_min) + beta_lim_min)
+            a, b = stim_math.transforms.half_angle_to_full(a, b)
+            e1, e2, e3, e4 = stim_math.transforms_4.abc_to_e1234(a, b, np.zeros_like(a))
+            return self._make_fourphase_axes(timestamps, e1, e2, e3, e4)
+
+        # Priority 2: bare 1D funscript → 1D→2D→4-phase
+        bare_funscript = self._find_bare_funscript()
+        if bare_funscript and bare_funscript.script is not None:
+            from funscript.funscript_conversion import convert_1d_to_2d
+            from qt_ui import settings
+            prob = settings.funscript_conversion_random_direction_change_probability.get()
+            logger.info(f'Auto-converting 1D funscript to 4-phase electrode intensities '
+                        f'(random_direction_change_probability={prob:.2f})')
+            t, alpha, beta = convert_1d_to_2d(bare_funscript.script, prob)
+            timestamps = np.array(t)
+            a = np.array(alpha) * 2 - 1
+            b = np.array(beta) * 2 - 1
+            a, b = stim_math.transforms.half_angle_to_full(a, b)
+            e1, e2, e3, e4 = stim_math.transforms_4.abc_to_e1234(a, b, np.zeros_like(a))
+            return self._make_fourphase_axes(timestamps, e1, e2, e3, e4)
+
+        return None
+
+    def _find_bare_funscript(self):
+        """Find a funscript with no suffix (bare 1D stroke data) in the script mapping."""
+        from qt_ui.models.script_mapping import FunscriptTreeItem
+        for item in self.script_mapping.funscript_conifg():
+            if isinstance(item, FunscriptTreeItem) and item.funscript_type == '' and not item.has_broken_script():
+                return item
+        return None
+
+    def _make_fourphase_axes(self, timestamps, e1, e2, e3, e4):
+        """Create 4 precomputed axes from electrode intensity arrays."""
+        return (
+            create_precomputed_axis(timestamps, np.clip(e1, 0, 1), self.timestamp_mapper),
+            create_precomputed_axis(timestamps, np.clip(e2, 0, 1), self.timestamp_mapper),
+            create_precomputed_axis(timestamps, np.clip(e3, 0, 1), self.timestamp_mapper),
+            create_precomputed_axis(timestamps, np.clip(e4, 0, 1), self.timestamp_mapper),
+        )
 
     def get_axis_volume_api(self):
         return self.get_axis_from_script_mapping(AxisEnum.VOLUME_API) or self.mainwindow.tab_volume.axis_api_volume

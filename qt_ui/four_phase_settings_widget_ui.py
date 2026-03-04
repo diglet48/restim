@@ -93,7 +93,7 @@ class Ui_FourPhaseSettingsWidget(object):
 
         self.center_power = QDoubleSpinBox(self.groupBox)
         self.center_power.setObjectName(u"center_power")
-        self.center_power.setEnabled(False)
+        self.center_power.setEnabled(True)
         self.center_power.setKeyboardTracking(False)
         self.center_power.setMinimum(-10.000000000000000)
         self.center_power.setMaximum(10.000000000000000)

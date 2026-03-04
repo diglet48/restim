@@ -122,7 +122,7 @@
       <item row="4" column="1">
        <widget class="QDoubleSpinBox" name="center_power">
         <property name="enabled">
-         <bool>false</bool>
+         <bool>true</bool>
         </property>
         <property name="keyboardTracking">
          <bool>false</bool>

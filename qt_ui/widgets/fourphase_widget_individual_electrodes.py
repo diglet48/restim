@@ -49,6 +49,10 @@ class FourphaseWidgetIndividualElectrodes(QGraphicsView):
 
         self.setup_intensities()
 
+        self._last_a = 1.0
+        self._last_b = 1.0
+        self._last_c = 1.0
+        self._last_d = 1.0
         self.set_electrode_intensities(1, 1, 1, 1)
 
     def set_sensor_widget(self, sensor_widget):
@@ -64,6 +68,10 @@ class FourphaseWidgetIndividualElectrodes(QGraphicsView):
             d = params['e4']
 
         a, b, c, d = constrain_4p_amplitudes(a, b, c, d)
+        self._last_a = a
+        self._last_b = b
+        self._last_c = c
+        self._last_d = d
         self.level_1_rect.setRect(0, 1 - a, 1, a)
         self.level_2_rect.setRect(1, 1 - b, 1, b)
         self.level_3_rect.setRect(2, 1 - c, 1, c)
@@ -136,11 +144,17 @@ class FourphaseWidgetIndividualElectrodes(QGraphicsView):
         if not (event.buttons() & Qt.MouseButton.LeftButton):
             return
 
-        # point = self.mapToScene(event.position().toPoint())
-        # xy = point.x(), point.y()
-        # a, b, c = projection.xy_to_abc(xy)
-        # self.mousePositionChanged.emit(a, b, c)
+        point = self.mapToScene(event.position().toPoint())
+        x, y = point.x(), point.y()
 
+        # Scene is 4 wide (columns 0-3), 1 tall.
+        # X selects which electrode, Y sets its intensity.
+        col = int(np.clip(x, 0, 3.999))  # 0=A, 1=B, 2=C, 3=D
+        intensity = float(np.clip(1.0 - y, 0, 1))  # y=0 is top (1.0), y=1 is bottom (0.0)
 
+        values = [self._last_a, self._last_b, self._last_c, self._last_d]
+        values[col] = intensity
 
-    mousePositionChanged = QtCore.Signal(float, float, float, float)  # a, b, c
+        self.mousePositionChanged.emit(*values)
+
+    mousePositionChanged = QtCore.Signal(float, float, float, float)  # a, b, c, d
