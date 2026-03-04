@@ -60,59 +60,66 @@ class FlashingThread(QThread):
         serial_connection.setRTS(False)
         serial_connection.setDTR(False)
 
-        with serial_connection:
-            stm32 = stm32loader.bootloader.Stm32Bootloader(
-                serial_connection,
-                verbosity=10,
-                show_progress=False,
-                device_family=None,
-            )
+        try:
+            with serial_connection:
+                stm32 = stm32loader.bootloader.Stm32Bootloader(
+                    serial_connection,
+                    verbosity=10,
+                    show_progress=False,
+                    device_family=None,
+                )
 
-            bootloader_active = self.poke_bootloader(serial_connection, stm32)
-
-            if not bootloader_active:
-                self.report_message.emit('Sending command to enter bootloader')
-                self.enter_bootloader(serial_connection)
-                time.sleep(0.05)
                 bootloader_active = self.poke_bootloader(serial_connection, stm32)
 
-            if not bootloader_active:
-                self.report_message.emit('ERROR: Bootloader not active, giving up.')
-                return
+                if not bootloader_active:
+                    self.report_message.emit('Sending command to enter bootloader')
+                    self.enter_bootloader(serial_connection)
+                    time.sleep(0.05)
+                    bootloader_active = self.poke_bootloader(serial_connection, stm32)
 
-            self.report_message.emit('Bootloader activated!')
+                if not bootloader_active:
+                    self.report_message.emit('ERROR: Bootloader not active, giving up.')
+                    return
 
-            stm32.detect_device()
-            flash_size = stm32.get_flash_size()
-            self.report_message.emit(f'device: {stm32.device}')
-            self.report_message.emit(f'flash size: {flash_size}Kb')
+                self.report_message.emit('Bootloader activated!')
 
-            if stm32.device.product_id != 0x469:
-                self.report_message.emit(f'ERROR: Unsupported CPU. Not a FOC-Stim v4 board?')
-                return
+                #############################################
+                # return
 
-            if flash_size != 256:
-                self.report_message.emit(f'ERROR: Unsupported memory amount. Not a FOC-Stim v4 board?')
-                return
+                stm32.detect_device()
+                flash_size = stm32.get_flash_size()
+                self.report_message.emit(f'device: {stm32.device}')
+                self.report_message.emit(f'flash size: {flash_size}Kb')
 
-            self.report_message.emit('Erasing flash...')
-            stm32.extended_erase_memory()
-            page1 = firmware_binary[:0x20000]  # 128k
-            self.report_message.emit('writing firmware...')
-            stm32.write_memory_data(0x0800_0000, page1)
-            self.report_message.emit('verifying...')
-            page1_readback = stm32.read_memory_data(0x0800_0000, len(page1))
-            try:
-                stm32.verify_data(page1_readback, page1)
-            except stm32loader.bootloader.DataMismatchError as e:
-                self.report_message.emit("Verify failed, please retry")
-                self.report_message.emit(e)
-                return
+                if stm32.device.product_id != 0x469:
+                    self.report_message.emit(f'ERROR: Unsupported CPU. Not a FOC-Stim v4 board?')
+                    return
 
-            self.report_message.emit('verified!')
-            self.report_message.emit('starting program')
-            stm32.go(0x08000000)
+                if flash_size != 256:
+                    self.report_message.emit(f'ERROR: Unsupported memory amount. Not a FOC-Stim v4 board?')
+                    return
 
+                self.report_message.emit('Erasing flash...')
+                stm32.extended_erase_memory()
+
+                page1 = firmware_binary[:0x20000]  # 128k
+                self.report_message.emit('writing firmware...')
+                stm32.write_memory_data(0x0800_0000, page1)
+                self.report_message.emit('verifying...')
+                page1_readback = stm32.read_memory_data(0x0800_0000, len(page1))
+                try:
+                    stm32.verify_data(page1_readback, page1)
+                except stm32loader.bootloader.DataMismatchError as e:
+                    self.report_message.emit("Verify failed, please retry")
+                    self.report_message.emit(e)
+                    return
+
+                self.report_message.emit('verified!')
+                self.report_message.emit('starting program')
+                stm32.go(0x08000000)
+        except stm32loader.bootloader.CommandError as e:
+            self.report_message.emit(str(e))
+            return
 
     def poke_bootloader(self, transport, stm32):
         self.report_message.emit("trying to talk with bootloader...")
