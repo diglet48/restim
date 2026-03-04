@@ -258,6 +258,37 @@ class Window(QMainWindow, Ui_MainWindow):
         self.menuSetup.addSeparator()
         self.menuSetup.addAction(self.actionDarkMode)
 
+        # 4-phase 3D axis mode submenu in Setup menu
+        from PySide6.QtWidgets import QMenu
+        from PySide6.QtGui import QActionGroup
+        self.menu3DAxis = QMenu("3D axis (4-phase gamma)", self)
+        self.actionGroup3DAxis = QActionGroup(self)
+        self.actionGroup3DAxis.setExclusive(True)
+
+        gamma_mode = qt_ui.settings.fourphase_gamma_mode.get()
+
+        self.action3DAxisSpeed = QAction("Speed-derived (experimental)", self)
+        self.action3DAxisSpeed.setCheckable(True)
+        self.action3DAxisSpeed.setChecked(gamma_mode == 'speed')
+        self.actionGroup3DAxis.addAction(self.action3DAxisSpeed)
+        self.menu3DAxis.addAction(self.action3DAxisSpeed)
+
+        self.action3DAxisCycle = QAction("Cycle A→B→C→D (experimental)", self)
+        self.action3DAxisCycle.setCheckable(True)
+        self.action3DAxisCycle.setChecked(gamma_mode == 'cycle')
+        self.actionGroup3DAxis.addAction(self.action3DAxisCycle)
+        self.menu3DAxis.addAction(self.action3DAxisCycle)
+
+        self.menu3DAxis.addSeparator()
+        info_action = QAction("(overridden by gamma/pitch/roll/sway/surge funscript)", self)
+        info_action.setEnabled(False)
+        self.menu3DAxis.addAction(info_action)
+
+        self.action3DAxisSpeed.triggered.connect(lambda: self._set_gamma_mode('speed'))
+        self.action3DAxisCycle.triggered.connect(lambda: self._set_gamma_mode('cycle'))
+
+        self.menuSetup.addAction(self.menu3DAxis.menuAction())
+
         self.about_dialog = qt_ui.about_dialog.AboutDialog(self)
         self.actionAbout.triggered.connect(self.open_about_dialog)
 
@@ -664,6 +695,10 @@ class Window(QMainWindow, Ui_MainWindow):
         from PySide6.QtWidgets import QMessageBox
         QMessageBox.information(self, "Dark Mode",
                                 "Dark mode setting saved. Please restart restim for the change to take full effect.")
+
+    def _set_gamma_mode(self, mode):
+        qt_ui.settings.fourphase_gamma_mode.set(mode)
+        logger.info(f'4-phase gamma mode set to: {mode}')
 
     def open_write_audio_dialog(self):
         device = DeviceConfiguration.from_settings()

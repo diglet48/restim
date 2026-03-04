@@ -256,7 +256,7 @@ class AlgorithmFactory:
         return self.get_axis_from_script_mapping(AxisEnum.POSITION_BETA) or self._get_threephase_fallback('beta') or self.mainwindow.beta
 
     def get_axis_gamma(self):
-        return self.get_axis_from_script_mapping(AxisEnum.POSITION_GAMMA) or self.mainwindow.gamma
+        return self.get_axis_from_script_mapping(AxisEnum.POSITION_GAMMA) or create_constant_axis(0.0)
 
     def get_axis_intensity_a(self):
         return self.get_axis_from_script_mapping(AxisEnum.INTENSITY_A) or self._get_fourphase_fallback(0) or self.mainwindow.intensity_a
@@ -338,7 +338,12 @@ class AlgorithmFactory:
         return None
 
     def _compute_fourphase_fallback(self):
-        """Try to auto-convert available funscripts to 4-phase electrode intensities."""
+        """Try to auto-convert available funscripts to 4-phase electrode intensities.
+
+        Gamma axis priority:
+        1. Explicit gamma funscript (gamma, pitch, roll, sway, surge suffix)
+        2. Setting-based: 'speed' → derive from motion speed, 'cycle' → cycle A→B→C→D
+        """
         import stim_math.transforms
         import stim_math.transforms_4
 
@@ -358,7 +363,8 @@ class AlgorithmFactory:
             b = np.interp(timestamps, beta_item.script.x,
                           np.clip(beta_item.script.y, 0, 1) * (beta_lim_max - beta_lim_min) + beta_lim_min)
             a, b = stim_math.transforms.half_angle_to_full(a, b)
-            e1, e2, e3, e4 = stim_math.transforms_4.abc_to_e1234(a, b, np.zeros_like(a))
+            c = self._get_gamma_values(timestamps, a, b)
+            e1, e2, e3, e4 = stim_math.transforms_4.abc_to_e1234(a, b, c)
             return self._make_fourphase_axes(timestamps, e1, e2, e3, e4)
 
         # Priority 2: bare 1D funscript → 1D→2D→4-phase
@@ -374,10 +380,77 @@ class AlgorithmFactory:
             a = np.array(alpha) * 2 - 1
             b = np.array(beta) * 2 - 1
             a, b = stim_math.transforms.half_angle_to_full(a, b)
-            e1, e2, e3, e4 = stim_math.transforms_4.abc_to_e1234(a, b, np.zeros_like(a))
+            c = self._get_gamma_values(timestamps, a, b)
+            e1, e2, e3, e4 = stim_math.transforms_4.abc_to_e1234(a, b, c)
             return self._make_fourphase_axes(timestamps, e1, e2, e3, e4)
 
         return None
+
+    def _get_gamma_values(self, timestamps, a, b):
+        """Compute gamma axis values for 4-phase conversion.
+
+        Priority:
+        1. Explicit gamma funscript loaded → use it
+        2. Setting 'cycle' → cycle through tetrahedron vertices via time-based oscillation
+        3. Setting 'speed' (default) → derive from motion speed (max speed = 1.0)
+        """
+        from qt_ui import settings
+
+        # Priority 1: explicit gamma funscript
+        gamma_item = self.script_mapping.get_config_for_axis(AxisEnum.POSITION_GAMMA)
+        if gamma_item and gamma_item.script is not None:
+            gamma_lim_min, gamma_lim_max = self.kit.limits_for_axis(AxisEnum.POSITION_GAMMA)
+            c = np.interp(timestamps, gamma_item.script.x,
+                          np.clip(gamma_item.script.y, 0, 1) * (gamma_lim_max - gamma_lim_min) + gamma_lim_min)
+            logger.info('Using gamma funscript for 4-phase 3rd axis')
+            return c
+
+        mode = settings.fourphase_gamma_mode.get()
+
+        if mode == 'cycle':
+            # Cycle through all 4 tetrahedron vertices by oscillating gamma
+            # This creates a sine wave in the gamma dimension so C and D alternate dominance
+            # Use the velocity setting to control cycle speed (default ~0.25 Hz)
+            logger.info('4-phase gamma: cycling through vertices (sinusoidal gamma)')
+            cycle_freq = 0.25  # Hz - one full cycle every 4 seconds
+            c = np.sin(2 * np.pi * cycle_freq * timestamps)
+            # Scale to match alpha/beta range
+            r = np.linalg.norm(np.vstack([a, b]), axis=0)
+            r_mean = np.mean(r) if len(r) > 0 else 1.0
+            c = c * max(r_mean, 0.1)
+            return c
+
+        # Default: 'speed' mode - derive from motion speed
+        logger.info('4-phase gamma: deriving from motion speed')
+        if len(timestamps) < 2:
+            return np.zeros_like(timestamps)
+
+        # Compute speed as magnitude of (da/dt, db/dt)
+        dt = np.diff(timestamps)
+        dt = np.where(dt > 0, dt, 1e-6)  # avoid division by zero
+        da = np.diff(a)
+        db = np.diff(b)
+        speed = np.sqrt(da**2 + db**2) / dt
+
+        # Pad to same length as timestamps (prepend first value)
+        speed = np.concatenate([[speed[0]], speed])
+
+        # Smooth with a small window
+        kernel_size = min(5, len(speed))
+        if kernel_size > 1:
+            kernel = np.ones(kernel_size) / kernel_size
+            speed = np.convolve(speed, kernel, mode='same')
+
+        # Normalize so absolute maximum = 1.0
+        max_speed = np.max(np.abs(speed))
+        if max_speed > 0:
+            speed = speed / max_speed
+
+        # Scale gamma proportionally to the alpha/beta range
+        r = np.linalg.norm(np.vstack([a, b]), axis=0)
+        r_mean = np.mean(r) if len(r) > 0 else 1.0
+        c = speed * max(r_mean, 0.1)
+        return c
 
     def _find_bare_funscript(self):
         """Find a funscript with no suffix (bare 1D stroke data) in the script mapping."""
