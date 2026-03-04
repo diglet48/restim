@@ -144,7 +144,6 @@ class Ui_MainWindow(object):
         self.page_fourphase.setObjectName(u"page_fourphase")
         self.graphicsView_fourphase = FourphaseWidgetIndividualElectrodes(self.page_fourphase)
         self.graphicsView_fourphase.setObjectName(u"graphicsView_fourphase")
-        self.graphicsView_fourphase.setGeometry(QRect(0, 0, 200, 200))
         self.stackedWidget_visual.addWidget(self.page_fourphase)
 
         self.verticalLayout.addWidget(self.stackedWidget_visual)

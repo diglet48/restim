@@ -7,7 +7,7 @@ from PySide6.QtCore import QTimer
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QSizePolicy, QFrame, QStyleFactory,
-    QGroupBox, QFormLayout, QDoubleSpinBox, QLabel
+    QGroupBox, QFormLayout, QDoubleSpinBox, QLabel, QVBoxLayout
 )
 import logging
 
@@ -150,11 +150,24 @@ class Window(QMainWindow, Ui_MainWindow):
         self.motion_3.position_updated.connect(self.graphicsView_threephase.set_cursor_position_ab)
         self.graphicsView_threephase.set_sensor_widget(self.page_sensors)
 
-        # fourphase view
+        # fourphase view: stereographic projection (display-only) + bar chart (interactive)
+        from qt_ui.widgets.fourphase_widget_stereographic import FourphaseWidgetStereographic
+        self.graphicsView_fourphase_stereo = FourphaseWidgetStereographic(self.page_fourphase)
+
+        # lay out both widgets in page_fourphase: stereographic on top, bars below
+        fourphase_layout = QVBoxLayout(self.page_fourphase)
+        fourphase_layout.setContentsMargins(0, 0, 0, 0)
+        fourphase_layout.setSpacing(0)
+        self.graphicsView_fourphase_stereo.setMinimumSize(150, 150)
+        self.graphicsView_fourphase.setFixedHeight(50)
+        fourphase_layout.addWidget(self.graphicsView_fourphase_stereo, stretch=1)
+        fourphase_layout.addWidget(self.graphicsView_fourphase, stretch=0)
+
         self.motion_4 = qt_ui.patterns.fourphase_patterns.FourphaseMotionGenerator(
             self, self.intensity_a, self.intensity_b, self.intensity_c, self.intensity_d)
         self.graphicsView_fourphase.mousePositionChanged.connect(self.motion_4.mouse_event)
         self.motion_4.position_updated.connect(self.graphicsView_fourphase.set_electrode_intensities)
+        self.motion_4.position_updated.connect(self.graphicsView_fourphase_stereo.set_electrode_intensities)
         self.graphicsView_fourphase.set_sensor_widget(self.page_sensors)
 
         # TODO: implement details for 4-phase

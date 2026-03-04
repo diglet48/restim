@@ -125,7 +125,7 @@ class FourphaseWidgetIndividualElectrodes(QGraphicsView):
         add_text(3, "D", COLOR_D_ACCENT)
 
     def resizeEvent(self, event, /):
-        width_in_pixels = 200
+        width_in_pixels = self.viewport().width()
         width_of_scene = 4
         scale = width_in_pixels / width_of_scene
         self.resetTransform()

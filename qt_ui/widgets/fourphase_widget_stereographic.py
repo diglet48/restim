@@ -7,6 +7,8 @@ from PySide6.QtGui import QColor, QTransform, QPen, Qt, QPainter, QFont, QMouseE
 
 import numpy as np
 
+from stim_math.transforms_4 import e1234_to_abc
+
 COEF_1 = 1
 COEF_2 = np.sqrt(8) / 3           # sqrt(1 - coef_1**2/3)
 COEF_3 = np.sqrt(2) / np.sqrt(3)  # sqrt(1 - coef_1**2/3 - coef_2**2/2)
@@ -213,16 +215,16 @@ class FourphaseWidgetStereographic(QGraphicsView):
         pass
 
     def mousePressEvent(self, event: QMouseEvent):
-        self.mouse_event_any(event)
+        pass  # display-only: bar chart handles mouse input
 
     # def mouseDoubleClickEvent(self, event: QMouseEvent) -> None:
     #     self.mouse_event_any(event)
 
     def mouseReleaseEvent(self, event: QMouseEvent):
-        self.mouse_event_any(event)
+        pass
 
     def mouseMoveEvent(self, event: QMouseEvent):
-        self.mouse_event_any(event)
+        pass
 
     def mouse_event_any(self, event: QMouseEvent):
         if not (event.buttons() & Qt.MouseButton.LeftButton):
@@ -240,19 +242,27 @@ class FourphaseWidgetStereographic(QGraphicsView):
         self.set_cursor_position_xy(xy)
         self.set_cursor_visibility(norm)
 
+    def set_electrode_intensities(self, a, b, c, d):
+        """Convert electrode intensities (a,b,c,d) to abc and update the cursor."""
+        abc_arr = e1234_to_abc(
+            np.array([a]), np.array([b]), np.array([c]), np.array([d])
+        )
+        a3, b3, c3 = float(abc_arr[0][0]), float(abc_arr[1][0]), float(abc_arr[2][0])
+        self.set_cursor_position_abc(a3, b3, c3)
+
     def set_cursor_position_xy(self, xy):
         xyz = projection.xy_to_xyz(xy)
-        size = projection.scale(xy) * 2
+        size = float(projection.scale(xy) * 2)
         self.cursor_1.setVisible(size < 10)
         self.cursor_1.setScale(size)
-        self.cursor_1.setX(xy[0] - DOT_WIDTH/2 * size)
-        self.cursor_1.setY(xy[1] - DOT_WIDTH/2 * size)
+        self.cursor_1.setX(float(xy[0]) - DOT_WIDTH/2 * size)
+        self.cursor_1.setY(float(xy[1]) - DOT_WIDTH/2 * size)
         xy = projection.xyz_to_xy(-np.array(xyz))
-        size = projection.scale(xy) * 2
+        size = float(projection.scale(xy) * 2)
         self.cursor_2.setVisible(size < 10)
         self.cursor_2.setScale(size)
-        self.cursor_2.setX(xy[0] - DOT_WIDTH/2 * size)
-        self.cursor_2.setY(xy[1] - DOT_WIDTH/2 * size)
+        self.cursor_2.setX(float(xy[0]) - DOT_WIDTH/2 * size)
+        self.cursor_2.setY(float(xy[1]) - DOT_WIDTH/2 * size)
         self.update()
 
     def set_cursor_visibility(self, alpha=1.0):
