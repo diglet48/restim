@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 import logging
 
+from PySide6.QtCore import QObject, Signal
+
 from net.tcode import TCodeCommand
 from stim_math.axis import AbstractAxis
 
@@ -20,7 +22,10 @@ class Route:
         return min(max(value, 0.0), 1.0) * (self.high - self.low) + self.low
 
 
-class TCodeCommandRouter:
+class TCodeCommandRouter(QObject):
+    # Emitted when a TCode command writes to an axis. Passes the axis object.
+    axis_updated = Signal(object)
+
     def __init__(self,
                  alpha: AbstractAxis,
                  beta: AbstractAxis,
@@ -52,6 +57,7 @@ class TCodeCommandRouter:
                  intensity_c: AbstractAxis,
                  intensity_d: AbstractAxis,
                  ):
+        super().__init__()
         self.alpha = alpha
         self.beta = beta
         self.volume_api = volume_api
@@ -134,5 +140,6 @@ class TCodeCommandRouter:
         try:
             route = self.mapping[cmd.axis_identifier]
             route.axis.add(route.remap(cmd.value), cmd.interval / 1000.0)
+            self.axis_updated.emit(route.axis)
         except KeyError:
             pass

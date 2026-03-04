@@ -199,6 +199,10 @@ class Window(QMainWindow, Ui_MainWindow):
         self.buttplug_wsdm_client = net.buttplug_wsdm_client.ButtplugWsdmClient(self)
         self.buttplug_wsdm_client.new_tcode_command.connect(self.tcode_command_router.route_command)
 
+        # Wire TCode axis updates to all AxisControllers so spinboxes update during TCode control
+        # and revert to user values when TCode disconnects
+        self._connect_tcode_to_axis_controllers()
+
         self.tab_volume.set_monitor_axis([
             self.alpha,
             self.beta,
@@ -699,6 +703,35 @@ class Window(QMainWindow, Ui_MainWindow):
     def _set_gamma_mode(self, mode):
         qt_ui.settings.fourphase_gamma_mode.set(mode)
         logger.info(f'4-phase gamma mode set to: {mode}')
+
+    def _connect_tcode_to_axis_controllers(self):
+        """Connect TCode axis_updated signal to all AxisControllers across all settings widgets.
+        This makes spinboxes update in real-time during TCode control and revert on disconnect."""
+        signal = self.tcode_command_router.axis_updated
+
+        # Pulse settings controllers
+        signal.connect(self.tab_pulse_settings.carrier_controller.on_tcode_axis_updated)
+        signal.connect(self.tab_pulse_settings.pulse_frequency_controller.on_tcode_axis_updated)
+        signal.connect(self.tab_pulse_settings.pulse_width_controller.on_tcode_axis_updated)
+        signal.connect(self.tab_pulse_settings.pulse_interval_random_controller.on_tcode_axis_updated)
+        signal.connect(self.tab_pulse_settings.pulse_rise_time_controller.on_tcode_axis_updated)
+
+        # Carrier settings controller (continuous waveform mode)
+        signal.connect(self.tab_carrier.carrier_controller.on_tcode_axis_updated)
+
+        # Vibration settings controllers
+        signal.connect(self.tab_vibrate.vib1_enabled_controller.on_tcode_axis_updated)
+        signal.connect(self.tab_vibrate.vib1_freq_controller.on_tcode_axis_updated)
+        signal.connect(self.tab_vibrate.vib1_strength_controller.on_tcode_axis_updated)
+        signal.connect(self.tab_vibrate.vib1_left_right_bias_controller.on_tcode_axis_updated)
+        signal.connect(self.tab_vibrate.vib1_high_low_bias_controller.on_tcode_axis_updated)
+        signal.connect(self.tab_vibrate.vib1_random_controller.on_tcode_axis_updated)
+        signal.connect(self.tab_vibrate.vib2_enabled_controller.on_tcode_axis_updated)
+        signal.connect(self.tab_vibrate.vib2_freq_controller.on_tcode_axis_updated)
+        signal.connect(self.tab_vibrate.vib2_strength_controller.on_tcode_axis_updated)
+        signal.connect(self.tab_vibrate.vib2_left_right_bias_controller.on_tcode_axis_updated)
+        signal.connect(self.tab_vibrate.vib2_high_low_bias_controller.on_tcode_axis_updated)
+        signal.connect(self.tab_vibrate.vib2_random_controller.on_tcode_axis_updated)
 
     def open_write_audio_dialog(self):
         device = DeviceConfiguration.from_settings()
