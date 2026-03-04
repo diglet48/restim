@@ -76,9 +76,6 @@ class MediaSourceInterface(ABC):
     def media_path(self) -> str:
         pass
 
-    def set_media_sync_offset(self, offset_in_seconds):
-        pass
-
     """
     Signal to emit whenever:
     - the connection status changes

@@ -94,8 +94,8 @@ QToolButton       { color: #d2d2d2; }
 QToolButton:hover { background: #404040; border-radius: 4px; }
 QToolButton:checked { background: #2a82da; border-radius: 4px; }
 
-/* spinboxes, line edits, comboboxes */
-QSpinBox, QDoubleSpinBox, QLineEdit, QComboBox, QTextEdit, QPlainTextEdit {
+/* line edits, text edits */
+QLineEdit, QTextEdit, QPlainTextEdit {
     background: #1e1e1e; color: #d2d2d2;
     border: 1px solid #555; border-radius: 3px; padding: 2px;
 }

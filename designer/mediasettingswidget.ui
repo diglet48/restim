@@ -111,30 +111,6 @@
            </property>
           </widget>
          </item>
-         <item row="1" column="0">
-          <widget class="QLabel" name="label_3">
-           <property name="toolTip">
-            <string>Reduce offset to play signal earlier
-Increase offset to delay signal</string>
-           </property>
-           <property name="text">
-            <string>offset [s] (?)</string>
-           </property>
-          </widget>
-         </item>
-         <item row="1" column="1">
-          <widget class="QDoubleSpinBox" name="media_offset_spinbox">
-           <property name="minimum">
-            <double>-999999.000000000000000</double>
-           </property>
-           <property name="maximum">
-            <double>999999.000000000000000</double>
-           </property>
-           <property name="singleStep">
-            <double>0.100000000000000</double>
-           </property>
-          </widget>
-         </item>
         </layout>
        </widget>
       </item>

@@ -98,6 +98,10 @@ class FourphaseWidgetStereographic(QGraphicsView):
         self.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
 
+        from qt_ui.dark_mode import is_dark_mode
+        if is_dark_mode():
+            self.setBackgroundBrush(QColor(30, 30, 30))
+
         self.setup_background()
         self.setup_cursor()
 

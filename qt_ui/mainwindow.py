@@ -6,7 +6,8 @@ from PySide6 import QtGui
 from PySide6.QtCore import QTimer
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import (
-    QApplication, QMainWindow, QWidget, QSizePolicy, QFrame, QStyleFactory
+    QApplication, QMainWindow, QWidget, QSizePolicy, QFrame, QStyleFactory,
+    QGroupBox, QFormLayout, QDoubleSpinBox, QLabel
 )
 import logging
 
@@ -82,6 +83,19 @@ class Window(QMainWindow, Ui_MainWindow):
 
         self.doubleSpinBox_volume.setValue(qt_ui.settings.volume_default_level.get())
         self.tab_volume.link_volume_controls(self.doubleSpinBox_volume, self.progressBar_volume)
+
+        self.groupBox_media_offset = QGroupBox('Media sync', self.left_frame)
+        self.formLayout_media_offset = QFormLayout(self.groupBox_media_offset)
+        self.spinBox_media_offset_ms = QDoubleSpinBox(self.groupBox_media_offset)
+        self.spinBox_media_offset_ms.setKeyboardTracking(False)
+        self.spinBox_media_offset_ms.setDecimals(0)
+        self.spinBox_media_offset_ms.setRange(-999, 999)
+        self.spinBox_media_offset_ms.setSingleStep(5)
+        self.spinBox_media_offset_ms.setValue(qt_ui.settings.media_sync_time_offset_ms.get())
+        self.formLayout_media_offset.addRow(QLabel('time offset [ms]'), self.spinBox_media_offset_ms)
+        self.verticalLayout.insertWidget(self.verticalLayout.indexOf(self.groupBox_volume) + 1, self.groupBox_media_offset)
+        self.spinBox_media_offset_ms.valueChanged.connect(self.media_offset_changed)
+        self.refresh_media_offset_visibility()
 
         # default alpha/beta axis. Used by:
         # pattern generator
@@ -288,12 +302,19 @@ class Window(QMainWindow, Ui_MainWindow):
         """
         Called whenever the media connection status changes.
         """
+        self.refresh_media_offset_visibility()
         if status.is_playing():
             self.iconMedia.set_playing()
         elif status.is_connected():
             self.iconMedia.set_connected()
         else:
             self.iconMedia.set_not_connected()
+
+    def media_offset_changed(self, value):
+        qt_ui.settings.media_sync_time_offset_ms.set(int(value))
+
+    def refresh_media_offset_visibility(self):
+        self.groupBox_media_offset.setVisible(not self.page_media.is_internal())
 
     def funscript_mapping_changed(self):
         """

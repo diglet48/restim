@@ -82,19 +82,6 @@ class Ui_MediaSettingsWidget(object):
 
         self.formLayout_2.setWidget(0, QFormLayout.ItemRole.FieldRole, self.lineEdit)
 
-        self.label_3 = QLabel(self.widget_2)
-        self.label_3.setObjectName(u"label_3")
-
-        self.formLayout_2.setWidget(1, QFormLayout.ItemRole.LabelRole, self.label_3)
-
-        self.media_offset_spinbox = QDoubleSpinBox(self.widget_2)
-        self.media_offset_spinbox.setObjectName(u"media_offset_spinbox")
-        self.media_offset_spinbox.setMinimum(-999999.000000000000000)
-        self.media_offset_spinbox.setMaximum(999999.000000000000000)
-        self.media_offset_spinbox.setSingleStep(0.100000000000000)
-
-        self.formLayout_2.setWidget(1, QFormLayout.ItemRole.FieldRole, self.media_offset_spinbox)
-
 
         self.formLayout.setWidget(1, QFormLayout.ItemRole.SpanningRole, self.widget_2)
 
@@ -154,11 +141,6 @@ class Ui_MediaSettingsWidget(object):
         self.label.setText(QCoreApplication.translate("MediaSettingsWidget", u"Media player", None))
         self.connection_status.setText(QCoreApplication.translate("MediaSettingsWidget", u"TextLabel", None))
         self.label_2.setText(QCoreApplication.translate("MediaSettingsWidget", u"File:", None))
-#if QT_CONFIG(tooltip)
-        self.label_3.setToolTip(QCoreApplication.translate("MediaSettingsWidget", u"Reduce offset to play signal earlier\n"
-"Increase offset to delay signal", None))
-#endif // QT_CONFIG(tooltip)
-        self.label_3.setText(QCoreApplication.translate("MediaSettingsWidget", u"offset [s] (?)", None))
         self.stop_audio_automatically_checkbox.setText(QCoreApplication.translate("MediaSettingsWidget", u"Stop audio when file changes", None))
         self.add_funscript_button.setText(QCoreApplication.translate("MediaSettingsWidget", u"Add funscript", None))
         self.bake_audio_button.setText(QCoreApplication.translate("MediaSettingsWidget", u"Bake audio", None))
