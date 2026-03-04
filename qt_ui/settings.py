@@ -136,6 +136,8 @@ simfile_conversion_output_debug_scripts = Setting('simfile/output_debug_scripts'
 display_fps = Setting('display/fps', 60, float)
 display_latency = Setting('display/latency', 200, float)
 
+dark_mode = Setting('display/dark_mode', True, bool)
+
 buttplug_wsdm_enabled = Setting("network/buttplug-wsdm-enabled", False, bool)
 buttplug_wsdm_address = Setting("network/buttplug-wsdm-address", "ws://127.0.0.1:54817", str)
 buttplug_wsdm_auto_expand = Setting("network/buttplug-wsdm-auto-expand", True, bool)

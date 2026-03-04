@@ -11,8 +11,8 @@ from stim_math.threephase_coordinate_transform import ThreePhaseCoordinateTransf
     ThreePhaseCoordinateTransformMapToEdge
 
 from PySide6.QtGui import QColor, QMouseEvent
-from PySide6 import QtCore, QtWidgets, QtGui, QtSvgWidgets
-from PySide6.QtCore import Qt
+from PySide6 import QtCore, QtWidgets, QtGui, QtSvgWidgets, QtSvg
+from PySide6.QtCore import Qt, QByteArray, QFile, QIODevice
 
 from stim_math.axis import create_temporal_axis, AbstractAxis
 from stim_math.audio_gen.params import ThreephasePositionTransformParams
@@ -42,7 +42,8 @@ class ThreephaseWidgetBase(QtWidgets.QGraphicsView):
         self.scene = scene
         self.background_svg = None
         self.set_background(stereo=True)
-        self.setBackgroundBrush(Qt.white)
+        from qt_ui.dark_mode import is_dark_mode
+        self.setBackgroundBrush(QColor(0x2b, 0x2b, 0x2b) if is_dark_mode() else Qt.white)
 
         self.setMouseTracking(True)
 
@@ -83,9 +84,34 @@ class ThreephaseWidgetBase(QtWidgets.QGraphicsView):
             self.scene.removeItem(self.background_svg)
 
         if stereo:
-            self.background_svg = QtSvgWidgets.QGraphicsSvgItem(":/restim/phase diagram stereostim.svg")
+            resource_path = ":/restim/phase diagram stereostim.svg"
         else:
-            self.background_svg = QtSvgWidgets.QGraphicsSvgItem(":/restim/phase diagram foc.svg")
+            resource_path = ":/restim/phase diagram foc.svg"
+
+        from qt_ui.dark_mode import is_dark_mode
+        if is_dark_mode():
+            # Load SVG bytes from resource, recolor for dark mode, render from memory
+            f = QFile(resource_path)
+            f.open(QIODevice.ReadOnly)
+            svg_data = bytes(f.readAll())
+            f.close()
+            # white circle fill -> match window background
+            svg_data = svg_data.replace(b'fill:#ffffff', b'fill:#2b2b2b')
+            # black text -> light gray
+            svg_data = svg_data.replace(b'fill:#000000', b'fill:#d2d2d2')
+            # light gray grid lines -> subtler gray
+            svg_data = svg_data.replace(b'stroke:#dadada', b'stroke:#555555')
+            # light gray center dot -> subtler
+            svg_data = svg_data.replace(b'fill:#dadada', b'fill:#555555')
+            # circle border
+            svg_data = svg_data.replace(b'stroke:#494949', b'stroke:#888888')
+
+            renderer = QtSvg.QSvgRenderer(QByteArray(svg_data))
+            self.background_svg = QtSvgWidgets.QGraphicsSvgItem()
+            self.background_svg.setSharedRenderer(renderer)
+            self._svg_renderer = renderer  # prevent GC
+        else:
+            self.background_svg = QtSvgWidgets.QGraphicsSvgItem(resource_path)
 
         self.scene.addItem(self.background_svg)
         self.background_svg.setPos(

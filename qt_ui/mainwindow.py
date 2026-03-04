@@ -211,6 +211,15 @@ class Window(QMainWindow, Ui_MainWindow):
         self.settings_dialog = qt_ui.preferences_dialog.PreferencesDialog()
         self.actionPreferences.triggered.connect(self.open_preferences_dialog)
 
+        # Dark mode toggle in Setup menu
+        from PySide6.QtGui import QAction
+        self.actionDarkMode = QAction("Dark Mode", self)
+        self.actionDarkMode.setCheckable(True)
+        self.actionDarkMode.setChecked(qt_ui.settings.dark_mode.get())
+        self.actionDarkMode.triggered.connect(self._toggle_dark_mode)
+        self.menuSetup.addSeparator()
+        self.menuSetup.addAction(self.actionDarkMode)
+
         self.about_dialog = qt_ui.about_dialog.AboutDialog(self)
         self.actionAbout.triggered.connect(self.open_about_dialog)
 
@@ -572,6 +581,12 @@ class Window(QMainWindow, Ui_MainWindow):
         self.signal_stop(PlayState.STOPPED)
         self.about_dialog.exec()
 
+    def _toggle_dark_mode(self, checked):
+        qt_ui.settings.dark_mode.set(checked)
+        from PySide6.QtWidgets import QMessageBox
+        QMessageBox.information(self, "Dark Mode",
+                                "Dark mode setting saved. Please restart restim for the change to take full effect.")
+
     def open_write_audio_dialog(self):
         device = DeviceConfiguration.from_settings()
         kit = FunscriptKitModel.load_from_settings()
@@ -650,6 +665,11 @@ def run():
     sys.excepthook = excepthook
 
     app = QApplication(sys.argv)
+
+    if qt_ui.settings.dark_mode.get():
+        from qt_ui.dark_mode import apply_dark_mode
+        apply_dark_mode(app)
+
     win = Window()
     win.show()
     sys.exit(app.exec())
