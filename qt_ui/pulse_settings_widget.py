@@ -93,6 +93,14 @@ class PulseSettingsWidget(QtWidgets.QWidget):
         self.mpl_canvas = MyStaticMplCanvas(self, width=7, height=3, dpi=100)
         l.addWidget(self.mpl_canvas)
 
+        # Auto-derive button
+        self.btn_auto_derive = QtWidgets.QPushButton("Auto-Derive Settings...")
+        self.btn_auto_derive.setToolTip(
+            "Open the auto-derive window to automatically generate pulse parameters\n"
+            "from funscript motion data (speed + position)."
+        )
+        l.addWidget(self.btn_auto_derive)
+
         gbc = QtWidgets.QGroupBox("Carrier", self)
         gbc_l = QtWidgets.QFormLayout(gbc)
         gbc_l.setObjectName("FormLayout carrier groupbox")

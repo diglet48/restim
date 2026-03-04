@@ -196,3 +196,25 @@ class DictSetting(Setting):
             get_settings_instance().sync()
 
 pattern_enabled = DictSetting("patterns/enabled", {})
+
+# Auto-derive pulse parameters from motion data (inspired by edger477's funscript-tools)
+pulse_auto_derive_enabled = Setting('pulse_auto_derive/enabled', False, bool)
+pulse_auto_derive_speed_window = Setting('pulse_auto_derive/speed_window', 5.0, float)
+
+# Pulse frequency: combine(speed, alpha, ratio) → map to [min, max] Hz
+pulse_auto_derive_pulse_freq_combine_ratio = Setting('pulse_auto_derive/pulse_freq_combine_ratio', 3.0, float)
+pulse_auto_derive_pulse_freq_min = Setting('pulse_auto_derive/pulse_freq_min', 20.0, float)
+pulse_auto_derive_pulse_freq_max = Setting('pulse_auto_derive/pulse_freq_max', 95.0, float)
+
+# Carrier frequency: map(speed, min, max) Hz
+pulse_auto_derive_carrier_freq_min = Setting('pulse_auto_derive/carrier_freq_min', 600.0, float)
+pulse_auto_derive_carrier_freq_max = Setting('pulse_auto_derive/carrier_freq_max', 900.0, float)
+
+# Pulse width: combine(speed, clamp(invert(main)), ratio) → map to [min, max] carrier cycles
+pulse_auto_derive_pulse_width_combine_ratio = Setting('pulse_auto_derive/pulse_width_combine_ratio', 3.0, float)
+pulse_auto_derive_pulse_width_min = Setting('pulse_auto_derive/pulse_width_min', 4.0, float)
+pulse_auto_derive_pulse_width_max = Setting('pulse_auto_derive/pulse_width_max', 20.0, float)
+
+# Pulse rise time: map(invert(speed), min, max) carrier cycles
+pulse_auto_derive_pulse_rise_min = Setting('pulse_auto_derive/pulse_rise_min', 2.0, float)
+pulse_auto_derive_pulse_rise_max = Setting('pulse_auto_derive/pulse_rise_max', 20.0, float)

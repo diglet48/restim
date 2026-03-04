@@ -37,6 +37,8 @@ class AlgorithmFactory:
         self.load_funscripts = load_funscripts
         self.create_for_bake = create_for_bake
         self._fourphase_fallback_cache = None  # lazy-computed (e1, e2, e3, e4) axes
+        self._threephase_fallback_cache = None  # lazy-computed (alpha, beta) axes from 1D funscript
+        self._pulse_auto_derive_cache = None  # lazy-computed pulse param axes
 
     def create_algorithm(self, device: DeviceConfiguration) -> AudioGenerationAlgorithm | NeoStimAlgorithm:
         if device.device_type == DeviceType.AUDIO_THREE_PHASE:
@@ -248,10 +250,10 @@ class AlgorithmFactory:
         return algorithm
 
     def get_axis_alpha(self):
-        return self.get_axis_from_script_mapping(AxisEnum.POSITION_ALPHA) or self.mainwindow.alpha
+        return self.get_axis_from_script_mapping(AxisEnum.POSITION_ALPHA) or self._get_threephase_fallback('alpha') or self.mainwindow.alpha
 
     def get_axis_beta(self):
-        return self.get_axis_from_script_mapping(AxisEnum.POSITION_BETA) or self.mainwindow.beta
+        return self.get_axis_from_script_mapping(AxisEnum.POSITION_BETA) or self._get_threephase_fallback('beta') or self.mainwindow.beta
 
     def get_axis_gamma(self):
         return self.get_axis_from_script_mapping(AxisEnum.POSITION_GAMMA) or self.mainwindow.gamma
@@ -267,6 +269,59 @@ class AlgorithmFactory:
 
     def get_axis_intensity_d(self):
         return self.get_axis_from_script_mapping(AxisEnum.INTENSITY_D) or self._get_fourphase_fallback(3) or self.mainwindow.intensity_d
+
+    def _get_threephase_fallback(self, component: str):
+        """Return a precomputed alpha or beta axis by auto-converting a bare 1D funscript.
+
+        Only activates when no explicit alpha/beta funscripts are loaded but a bare 1D
+        funscript is available.
+
+        component: 'alpha' or 'beta'
+        """
+        if self._threephase_fallback_cache is None:
+            self._threephase_fallback_cache = self._compute_threephase_fallback()
+        if self._threephase_fallback_cache:
+            return self._threephase_fallback_cache.get(component)
+        return None
+
+    def _compute_threephase_fallback(self):
+        """Try to auto-convert a bare 1D funscript to alpha/beta for 3-phase devices.
+
+        Only fires when:
+        - No explicit alpha funscript is loaded
+        - No explicit beta funscript is loaded
+        - A bare 1D funscript IS loaded
+        """
+        if not self.load_funscripts:
+            return None
+
+        # Don't activate if alpha or beta are already explicitly mapped
+        alpha_item = self.script_mapping.get_config_for_axis(AxisEnum.POSITION_ALPHA)
+        beta_item = self.script_mapping.get_config_for_axis(AxisEnum.POSITION_BETA)
+        if (alpha_item and alpha_item.script is not None) or (beta_item and beta_item.script is not None):
+            return None
+
+        bare_funscript = self._find_bare_funscript()
+        if bare_funscript is None or bare_funscript.script is None:
+            return None
+
+        from funscript.funscript_conversion import convert_1d_to_2d
+        from qt_ui import settings
+        prob = settings.funscript_conversion_random_direction_change_probability.get()
+        logger.info(f'Auto-converting 1D funscript to 3-phase alpha/beta '
+                    f'(random_direction_change_probability={prob:.2f})')
+        t, alpha, beta = convert_1d_to_2d(bare_funscript.script, prob)
+        timestamps = np.array(t)
+
+        alpha_lim_min, alpha_lim_max = self.kit.limits_for_axis(AxisEnum.POSITION_ALPHA)
+        beta_lim_min, beta_lim_max = self.kit.limits_for_axis(AxisEnum.POSITION_BETA)
+        alpha_values = np.clip(alpha, 0, 1) * (alpha_lim_max - alpha_lim_min) + alpha_lim_min
+        beta_values = np.clip(beta, 0, 1) * (beta_lim_max - beta_lim_min) + beta_lim_min
+
+        return {
+            'alpha': create_precomputed_axis(timestamps, alpha_values, self.timestamp_mapper),
+            'beta': create_precomputed_axis(timestamps, beta_values, self.timestamp_mapper),
+        }
 
     def _get_fourphase_fallback(self, index: int):
         """Return a precomputed electrode axis by auto-converting from alpha/beta or 1D funscripts.
@@ -341,6 +396,81 @@ class AlgorithmFactory:
             create_precomputed_axis(timestamps, np.clip(e4, 0, 1), self.timestamp_mapper),
         )
 
+    def _get_pulse_auto_derive(self, param_name: str):
+        """Return a precomputed axis for a pulse parameter auto-derived from motion data.
+
+        Only active when pulse_auto_derive is enabled in settings and no explicit
+        funscript is loaded for the requested parameter.
+
+        param_name: one of 'pulse_frequency', 'carrier_frequency', 'pulse_width', 'pulse_rise_time'
+        """
+        from qt_ui import settings as s
+        if not s.pulse_auto_derive_enabled.get():
+            return None
+
+        if self._pulse_auto_derive_cache is None:
+            self._pulse_auto_derive_cache = self._compute_pulse_auto_derive()
+        if self._pulse_auto_derive_cache and param_name in self._pulse_auto_derive_cache:
+            return self._pulse_auto_derive_cache[param_name]
+        return None
+
+    def _compute_pulse_auto_derive(self):
+        """Compute auto-derived pulse parameters from the loaded motion funscripts.
+
+        Uses the same motion data as the fourphase fallback:
+        1. alpha + beta → use alpha as the modulation source, main = alpha
+        2. bare 1D → use raw stroke data as main, 2D-converted alpha as alpha
+        3. None → no auto-derivation possible
+        """
+        from qt_ui.pulse_auto_derive import PulseAutoDeriver
+
+        if not self.load_funscripts:
+            return None
+
+        deriver = PulseAutoDeriver()
+        main_t = main_p = alpha_t = alpha_p = None
+
+        # Priority 1: bare 1D funscript → best source for speed
+        bare_funscript = self._find_bare_funscript()
+        if bare_funscript and bare_funscript.script is not None:
+            main_t = bare_funscript.script.x
+            main_p = bare_funscript.script.y
+            # Also look for alpha
+            alpha_item = self.script_mapping.get_config_for_axis(AxisEnum.POSITION_ALPHA)
+            if alpha_item and alpha_item.script is not None:
+                alpha_t = alpha_item.script.x
+                alpha_p = alpha_item.script.y
+            logger.info('Auto-deriving pulse parameters from 1D funscript')
+
+        # Priority 2: alpha funscript → use alpha as both main and alpha
+        if main_t is None:
+            alpha_item = self.script_mapping.get_config_for_axis(AxisEnum.POSITION_ALPHA)
+            if alpha_item and alpha_item.script is not None:
+                main_t = alpha_item.script.x
+                main_p = alpha_item.script.y
+                alpha_t = alpha_item.script.x
+                alpha_p = alpha_item.script.y
+                logger.info('Auto-deriving pulse parameters from alpha funscript')
+
+        if main_t is None:
+            logger.debug('No funscript available for pulse auto-derivation')
+            return None
+
+        try:
+            results = deriver.derive_all(main_t, main_p, alpha_t, alpha_p)
+        except Exception as e:
+            logger.warning(f'Failed to auto-derive pulse parameters: {e}')
+            return None
+
+        # Convert results to precomputed axes
+        axes = {}
+        for param_name, (timestamps, values) in results.items():
+            axes[param_name] = create_precomputed_axis(
+                timestamps, values, self.timestamp_mapper
+            )
+
+        return axes
+
     def get_axis_volume_api(self):
         return self.get_axis_from_script_mapping(AxisEnum.VOLUME_API) or self.mainwindow.tab_volume.axis_api_volume
 
@@ -368,14 +498,17 @@ class AlgorithmFactory:
 
     def get_axis_pulse_carrier_frequency(self):
         default = self.mainwindow.tab_pulse_settings.axis_carrier_frequency
-        return self.get_axis_from_script_mapping(AxisEnum.CARRIER_FREQUENCY) or default
+        return self.get_axis_from_script_mapping(AxisEnum.CARRIER_FREQUENCY) or \
+               self._get_pulse_auto_derive('carrier_frequency') or default
 
     def get_axis_pulse_frequency(self):
         return self.get_axis_from_script_mapping(AxisEnum.PULSE_FREQUENCY) or \
+               self._get_pulse_auto_derive('pulse_frequency') or \
                self.mainwindow.tab_pulse_settings.axis_pulse_frequency
 
     def get_axis_pulse_width(self):
         return self.get_axis_from_script_mapping(AxisEnum.PULSE_WIDTH) or \
+               self._get_pulse_auto_derive('pulse_width') or \
                self.mainwindow.tab_pulse_settings.axis_pulse_width
 
     def get_axis_pulse_interval_random(self):
@@ -384,6 +517,7 @@ class AlgorithmFactory:
 
     def get_axis_pulse_rise_time(self):
         return self.get_axis_from_script_mapping(AxisEnum.PULSE_RISE_TIME) or \
+            self._get_pulse_auto_derive('pulse_rise_time') or \
             self.mainwindow.tab_pulse_settings.axis_pulse_rise_time
 
     def get_axis_vib1_all(self):

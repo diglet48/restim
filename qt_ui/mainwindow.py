@@ -26,6 +26,7 @@ import qt_ui.focstim_flash_dialog
 import qt_ui.funscript_decomposition_dialog
 import qt_ui.preferences_dialog
 import qt_ui.about_dialog
+import qt_ui.pulse_auto_derive_dialog
 import qt_ui.settings
 import net.serialproxy
 import net.buttplug_wsdm_client
@@ -221,6 +222,16 @@ class Window(QMainWindow, Ui_MainWindow):
 
         self.funscript_decomposition_dialog = qt_ui.funscript_decomposition_dialog.FunscriptDecompositionDialog()
         self.actionFunscript_decomposition.triggered.connect(self.open_funscript_decomposition_dialog)
+
+        self.pulse_auto_derive_dialog = qt_ui.pulse_auto_derive_dialog.PulseAutoSettingsDialog(self)
+        self.pulse_auto_derive_dialog.settings_applied.connect(self.funscript_mapping_changed)
+        # Add menu action for pulse auto-derive settings
+        from PySide6.QtGui import QAction
+        self.actionPulseAutoDerive = QAction("Pulse auto-derive settings...", self)
+        self.menuTools.addAction(self.actionPulseAutoDerive)
+        self.actionPulseAutoDerive.triggered.connect(self.open_pulse_auto_derive_dialog)
+        # Wire the button on the Pulse Settings tab
+        self.tab_pulse_settings.btn_auto_derive.clicked.connect(self.open_pulse_auto_derive_dialog)
 
         self.settings_dialog = qt_ui.preferences_dialog.PreferencesDialog()
         self.actionPreferences.triggered.connect(self.open_preferences_dialog)
@@ -592,6 +603,39 @@ class Window(QMainWindow, Ui_MainWindow):
     def open_funscript_decomposition_dialog(self):
         self.signal_stop(PlayState.STOPPED)
         self.funscript_decomposition_dialog.exec()
+
+    def open_pulse_auto_derive_dialog(self):
+        """Open the pulse auto-derive settings window and feed it the currently loaded funscript."""
+        from qt_ui.device_wizard.axes import AxisEnum
+        from qt_ui.models.script_mapping import FunscriptTreeItem
+
+        # Try to find the currently loaded funscript for preview
+        main_t = main_p = alpha_t = alpha_p = None
+
+        # Look for bare 1D funscript
+        for item in self.page_media.model.funscript_conifg():
+            if isinstance(item, FunscriptTreeItem) and item.funscript_type == '' and not item.has_broken_script():
+                if item.script is not None:
+                    main_t = item.script.x
+                    main_p = item.script.y
+                    break
+
+        # Look for alpha
+        alpha_item = self.page_media.model.get_config_for_axis(AxisEnum.POSITION_ALPHA)
+        if alpha_item and alpha_item.script is not None:
+            alpha_t = alpha_item.script.x
+            alpha_p = alpha_item.script.y
+            # If no bare 1D, use alpha as main too
+            if main_t is None:
+                main_t = alpha_t
+                main_p = alpha_p
+
+        if main_t is not None:
+            self.pulse_auto_derive_dialog.set_demo_funscript(main_t, main_p, alpha_t, alpha_p)
+
+        self.pulse_auto_derive_dialog.show()
+        self.pulse_auto_derive_dialog.raise_()
+        self.pulse_auto_derive_dialog.activateWindow()
 
     def open_preferences_dialog(self):
         self.signal_stop(PlayState.STOPPED)
