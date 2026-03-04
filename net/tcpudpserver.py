@@ -84,6 +84,6 @@ class TcpUdpServer(QtCore.QObject):
                     pass
 
     def clientDisconnected(self):
-        self.tcp_connections = [con for con in self.tcp_connections if con.state() == QtNetwork.QAbstractSocket.UnconnectedState]
+        self.tcp_connections = [con for con in self.tcp_connections if con.state() != QtNetwork.QAbstractSocket.UnconnectedState]
 
     new_tcode_command = QtCore.Signal(TCodeCommand)
