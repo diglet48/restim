@@ -1,10 +1,15 @@
 from dataclasses import dataclass
 import logging
+import math
+import time
 
+import numpy as np
 from PySide6.QtCore import QObject, Signal
 
 from net.tcode import TCodeCommand
 from stim_math.axis import AbstractAxis
+from stim_math.transforms import half_angle_to_full
+from stim_math.transforms_4 import abc_to_e1234
 
 from qt_ui.models.funscript_kit import FunscriptKitModel, FunscriptKitItem
 from qt_ui.device_wizard.axes import AxisEnum
@@ -83,6 +88,13 @@ class TCodeCommandRouter(QObject):
         self.intensity_c = intensity_c
         self.intensity_d = intensity_d
 
+        # State for real-time gamma derivation (speed mode)
+        self._prev_alpha = 0.0
+        self._prev_beta = 0.0
+        self._prev_time = time.monotonic()
+        self._running_max_speed = 1.0  # running max for normalization, avoids needing global lookahead
+        self._speed_decay = 0.995      # slow decay per update so running max adapts over time
+
         self.mapping = {}
         self.reload_kit()
 
@@ -141,5 +153,101 @@ class TCodeCommandRouter(QObject):
             route = self.mapping[cmd.axis_identifier]
             route.axis.add(route.remap(cmd.value), cmd.interval / 1000.0)
             self.axis_updated.emit(route.axis)
+            # Bridge: when alpha or beta is updated via TCode, also compute
+            # and write 4-phase electrode intensities (e1-e4).
+            # This is pointwise math with zero latency.
+            if route.axis is self.alpha or route.axis is self.beta:
+                self._bridge_alpha_beta_to_fourphase(cmd.interval / 1000.0)
         except KeyError:
             pass
+
+    def _bridge_alpha_beta_to_fourphase(self, interval: float):
+        """Convert current alpha/beta values to 4-phase electrode intensities.
+
+        Uses the same transform chain as algorithm_factory's fourphase fallback:
+        half_angle_to_full(a, b) → abc_to_e1234(a, b, c)
+
+        Gamma (c) is derived in real-time based on the fourphase_gamma_mode setting:
+        - 'speed': causal speed estimate from alpha/beta changes (running max normalization)
+        - 'cycle': time-based sinusoidal oscillation (0.25 Hz)
+        - otherwise: gamma = 0 (planar)
+
+        All operations are purely pointwise — no lookahead needed.
+        """
+        a = self.alpha.last_value()
+        b = self.beta.last_value()
+
+        # Compute gamma
+        c = self._compute_realtime_gamma(a, b)
+
+        # Wrap in 1-element arrays for the numpy transforms
+        a_arr = np.array([a])
+        b_arr = np.array([b])
+        a_full, b_full = half_angle_to_full(a_arr, b_arr)
+        c_arr = np.array([c])
+        e = abc_to_e1234(a_full, b_full, c_arr)  # shape (4, 1)
+
+        e1, e2, e3, e4 = float(e[0, 0]), float(e[1, 0]), float(e[2, 0]), float(e[3, 0])
+
+        self.intensity_a.add(e1, interval)
+        self.intensity_b.add(e2, interval)
+        self.intensity_c.add(e3, interval)
+        self.intensity_d.add(e4, interval)
+
+        # Emit updates so UI (bar chart, tetrahedron) refreshes
+        self.axis_updated.emit(self.intensity_a)
+        self.axis_updated.emit(self.intensity_b)
+        self.axis_updated.emit(self.intensity_c)
+        self.axis_updated.emit(self.intensity_d)
+
+    def _compute_realtime_gamma(self, a: float, b: float) -> float:
+        """Compute gamma value for the current alpha/beta in real-time.
+
+        Reads fourphase_gamma_mode setting each call (cheap string comparison).
+        """
+        from qt_ui import settings
+        mode = settings.fourphase_gamma_mode.get()
+
+        now = time.monotonic()
+
+        if mode == 'cycle':
+            # Sinusoidal oscillation at 0.25 Hz, scaled by current alpha/beta radius
+            # Matches algorithm_factory._get_gamma_values cycle mode
+            r = math.sqrt(a * a + b * b)
+            c = math.sin(2 * math.pi * 0.25 * now) * max(r, 0.1)
+            self._prev_alpha = a
+            self._prev_beta = b
+            self._prev_time = now
+            return c
+
+        if mode == 'speed':
+            # Causal speed: |delta(a,b)| / dt, normalized by running max
+            dt = now - self._prev_time
+            if dt < 1e-6:
+                dt = 1e-6
+            da = a - self._prev_alpha
+            db = b - self._prev_beta
+            speed = math.sqrt(da * da + db * db) / dt
+
+            # Update running max with slow decay so it adapts over time
+            self._running_max_speed *= self._speed_decay
+            if speed > self._running_max_speed:
+                self._running_max_speed = speed
+            # Ensure minimum to avoid division by zero
+            max_spd = max(self._running_max_speed, 1e-6)
+            normalized_speed = min(speed / max_spd, 1.0)
+
+            # Scale by alpha/beta radius (matches precomputed version)
+            r = math.sqrt(a * a + b * b)
+            c = normalized_speed * max(r, 0.1)
+
+            self._prev_alpha = a
+            self._prev_beta = b
+            self._prev_time = now
+            return c
+
+        # Default: planar (gamma = 0)
+        self._prev_alpha = a
+        self._prev_beta = b
+        self._prev_time = now
+        return 0.0
