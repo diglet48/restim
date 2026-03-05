@@ -1,9 +1,12 @@
+import math
 import time
 import logging
 import numpy as np
 from PySide6 import QtCore
 import qt_ui.settings
 from stim_math.axis import AbstractAxis, WriteProtectedAxis
+from stim_math.transforms import half_angle_to_full
+from stim_math.transforms_4 import abc_to_e1234
 from qt_ui.patterns.threephase.base import get_registered_patterns, get_patterns_by_category
 from qt_ui.patterns.threephase.mouse import MousePattern
 from qt_ui.services.pattern_service import PatternControlService
@@ -50,6 +53,16 @@ class ThreephaseMotionGenerator(QtCore.QObject):
 
         # Default to mouse pattern
         self.pattern = self.mouse_pattern
+
+        # 4-phase bridge: electrode intensity axes written from alpha/beta
+        self._fourphase_axes = {}     # 'a','b','c','d' → AbstractAxis
+        self._fourphase_enabled = True
+        # gamma derivation state (mirrors TCodeCommandRouter)
+        self._prev_alpha = 0.0
+        self._prev_beta = 0.0
+        self._prev_time = time.monotonic()
+        self._running_max_speed = 1.0
+        self._speed_decay = 0.995
 
         self.velocity = 1
         self.loop_speed = 1.0   # extra multiplier for YAML event loop speed
@@ -181,6 +194,7 @@ class ThreephaseMotionGenerator(QtCore.QObject):
                 a, b = active_pattern.update(edt)
                 self.alpha.add(a)
                 self.beta.add(b)
+                self._bridge_alpha_beta_to_fourphase()
 
                 # Handle extended axes (YAML event patterns)
                 extended = active_pattern.update_extended(edt)
@@ -212,6 +226,7 @@ class ThreephaseMotionGenerator(QtCore.QObject):
             b = fs_b * (1.0 - finish_blend) + pb * finish_blend
             self.alpha.add(a)
             self.beta.add(b)
+            self._bridge_alpha_beta_to_fourphase()
 
             # Scale extended axes by blend factor
             if extended:
@@ -237,6 +252,7 @@ class ThreephaseMotionGenerator(QtCore.QObject):
             self.mouse_pattern.mouse_event(a, b)
             self.alpha.add(a)
             self.beta.add(b)
+            self._bridge_alpha_beta_to_fourphase()
             self.position_updated.emit(a, b)
 
     def refreshSettings(self):
@@ -325,6 +341,97 @@ class ThreephaseMotionGenerator(QtCore.QObject):
 
     def is_finish_active(self) -> bool:
         return self._finish_active
+
+    # ------------------------------------------------------------------
+    # 3-phase → 4-phase bridge
+    # ------------------------------------------------------------------
+
+    def set_fourphase_axes(self, a: AbstractAxis, b: AbstractAxis,
+                           c: AbstractAxis, d: AbstractAxis):
+        """Register the four electrode intensity axes for the bridge."""
+        self._fourphase_axes = {'a': a, 'b': b, 'c': c, 'd': d}
+
+    def set_fourphase_bridge_enabled(self, enabled: bool):
+        self._fourphase_enabled = enabled
+
+    def _bridge_alpha_beta_to_fourphase(self):
+        """Convert current alpha/beta to 4-phase electrode intensities.
+
+        Uses the same transform chain as TCodeCommandRouter:
+        half_angle_to_full(a, b) → abc_to_e1234(a, b, c)
+
+        Gamma (c) is derived in real-time based on fourphase_gamma_mode:
+        - 'speed': causal speed estimate from alpha/beta delta
+        - 'cycle': sinusoidal oscillation at 0.25 Hz
+        - otherwise: gamma = 0 (planar)
+        """
+        if not self._fourphase_enabled or not self._fourphase_axes:
+            return
+
+        a = self.alpha.last_value()
+        b = self.beta.last_value()
+        c = self._compute_realtime_gamma(a, b)
+
+        a_arr = np.array([a])
+        b_arr = np.array([b])
+        a_full, b_full = half_angle_to_full(a_arr, b_arr)
+        c_arr = np.array([c])
+        e = abc_to_e1234(a_full, b_full, c_arr)  # shape (4, 1)
+
+        e1 = float(e[0, 0])
+        e2 = float(e[1, 0])
+        e3 = float(e[2, 0])
+        e4 = float(e[3, 0])
+
+        self._fourphase_axes['a'].add(e1)
+        self._fourphase_axes['b'].add(e2)
+        self._fourphase_axes['c'].add(e3)
+        self._fourphase_axes['d'].add(e4)
+
+    def _compute_realtime_gamma(self, a: float, b: float) -> float:
+        """Compute gamma for the current alpha/beta position.
+
+        Reads fourphase_gamma_mode setting each call.
+        Identical logic to TCodeCommandRouter._compute_realtime_gamma.
+        """
+        mode = qt_ui.settings.fourphase_gamma_mode.get()
+        now = time.monotonic()
+
+        if mode == 'cycle':
+            r = math.sqrt(a * a + b * b)
+            c = math.sin(2 * math.pi * 0.25 * now) * max(r, 0.1)
+            self._prev_alpha = a
+            self._prev_beta = b
+            self._prev_time = now
+            return c
+
+        if mode == 'speed':
+            dt = now - self._prev_time
+            if dt < 1e-6:
+                dt = 1e-6
+            da = a - self._prev_alpha
+            db = b - self._prev_beta
+            speed = math.sqrt(da * da + db * db) / dt
+
+            self._running_max_speed *= self._speed_decay
+            if speed > self._running_max_speed:
+                self._running_max_speed = speed
+            max_spd = max(self._running_max_speed, 1e-6)
+            normalized_speed = min(speed / max_spd, 1.0)
+
+            r = math.sqrt(a * a + b * b)
+            c = normalized_speed * max(r, 0.1)
+
+            self._prev_alpha = a
+            self._prev_beta = b
+            self._prev_time = now
+            return c
+
+        # Default: planar (gamma = 0)
+        self._prev_alpha = a
+        self._prev_beta = b
+        self._prev_time = now
+        return 0.0
 
     position_updated = QtCore.Signal(float, float)  # a, b
     finish_state_changed = QtCore.Signal(bool)  # active/inactive

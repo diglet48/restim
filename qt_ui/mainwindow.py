@@ -152,6 +152,11 @@ class Window(QMainWindow, Ui_MainWindow):
         self.motion_3.set_extra_axis('pulse_width', self.tab_pulse_settings.axis_pulse_width)
         self.motion_3.set_extra_axis('carrier_frequency', self.tab_pulse_settings.axis_carrier_frequency)
 
+        # Wire 3-phase → 4-phase bridge (uses same gamma modes as TCode input)
+        self.motion_3.set_fourphase_axes(
+            self.intensity_a, self.intensity_b,
+            self.intensity_c, self.intensity_d)
+
         self.graphicsView_threephase.set_transform_params(self.tab_threephase.transform_params)
         self.graphicsView_threephase.mousePositionChanged.connect(self.motion_3.mouse_event)
         self.motion_3.position_updated.connect(self.graphicsView_threephase.set_cursor_position_ab)

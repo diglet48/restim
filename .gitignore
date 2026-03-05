@@ -131,3 +131,11 @@ dmypy.json
 # sound files
 .wav
 .mp3
+
+# Ignore new scripts, results, and SuperCollider assets
+scripts/blend_unconverted.py
+scripts/extract_motion.py
+scripts/find_events.py
+scripts/mistress_and_box.scd
+scripts/motion_results.txt
+scripts/supercollider.zip
