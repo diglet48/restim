@@ -296,14 +296,24 @@ class ThreephaseMotionGenerator(QtCore.QObject):
         return self._extra_axes_enabled.get(name, False)
 
     def _write_extended_axes(self, extended: dict):
-        """Write extended axis values from a YAML pattern tick."""
+        """Write extended axis values from a YAML pattern tick.
+
+        Volume is treated additively: the event's small delta (e.g. 0.02) is
+        added on top of the user's base volume level that was snapshotted when
+        the pattern started.  Other axes (pulse_frequency, pulse_width, …) are
+        written as absolute values — they fully override.
+        """
         for axis_name, value in extended.items():
             if axis_name not in self.extra_axes:
                 continue
             if not self._extra_axes_enabled.get(axis_name, False):
                 continue
             axis = self.extra_axes[axis_name]
-            axis.add(value)
+            if axis_name == 'volume':
+                base = self._extra_axes_user_values.get('volume', 0.0)
+                axis.add(max(0.0, min(1.0, base + value)))
+            else:
+                axis.add(value)
             self.extra_axis_updated.emit(axis)
 
     def _snapshot_extra_axes(self):
