@@ -143,7 +143,9 @@ def _eval_modulation(t_sec: float, duration_sec: float, params: Dict[str, Any],
     n_amp = norm.normalize(axis, amplitude)
     n_offset = norm.normalize(axis, max_level_offset)
 
-    centre = n_offset - n_amp
+    # n_offset is the DC centre of oscillation (not the peak).
+    # The waveform swings ±n_amp around this centre.
+    centre = n_offset
     phase_rad = math.radians(phase_deg)
     w = _waveform_value(waveform, 2 * math.pi * frequency * t_sec + phase_rad, duty_cycle)
     env = _ramp_envelope(t_sec, duration_sec, ramp_in, ramp_out)
