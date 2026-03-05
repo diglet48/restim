@@ -1175,7 +1175,13 @@ class Window(QMainWindow, Ui_MainWindow):
 
         if config.device_type in (DeviceType.AUDIO_THREE_PHASE, DeviceType.NEOSTIM_THREE_PHASE, DeviceType.FOCSTIM_THREE_PHASE):
             self.comboBox_patternSelect.clear()
+            # Always add mouse pattern first so it's always available
+            self.comboBox_patternSelect.addItem(
+                self.motion_3.mouse_pattern.name(), self.motion_3.mouse_pattern)
             for pattern in self.motion_3.patterns:
+                from qt_ui.patterns.threephase.mouse import MousePattern as ThreephaseMousePattern
+                if isinstance(pattern, ThreephaseMousePattern):
+                    continue  # already added above
                 # Filter by selected category if set
                 pat_cat = getattr(pattern, 'category', 'manual')
                 if category and pat_cat.lower() != category.lower():
@@ -1185,30 +1191,40 @@ class Window(QMainWindow, Ui_MainWindow):
             # Show both native 4-phase patterns AND threephase/YAML patterns
             # (motion_3 is still ticking for YAML extended-axis writes & alpha/beta bridge)
             self.comboBox_patternSelect.clear()
+            # Always add 4-phase mouse pattern first
+            self.comboBox_patternSelect.addItem(
+                self.motion_4.mouse_pattern.name(), self.motion_4.mouse_pattern)
             for pattern in self.motion_4.patterns:
+                from qt_ui.patterns.fourphase.mouse import MousePattern as FourphaseMousePattern
+                if isinstance(pattern, FourphaseMousePattern):
+                    continue  # already added above
                 # Filter 4-phase patterns by category (they default to 'manual')
                 pat_cat = getattr(pattern, 'category', 'manual')
                 if category and pat_cat.lower() != category.lower():
                     continue
                 self.comboBox_patternSelect.addItem(pattern.name(), pattern)
             for pattern in self.motion_3.patterns:
-                pat_cat = getattr(pattern, 'category', 'manual')
-                if category and pat_cat.lower() != category.lower():
-                    continue
-                # Skip mouse pattern — motion_4 already has its own
                 from qt_ui.patterns.threephase.mouse import MousePattern as ThreephaseMousePattern
                 if isinstance(pattern, ThreephaseMousePattern):
+                    continue  # already have 4-phase mouse
+                pat_cat = getattr(pattern, 'category', 'manual')
+                if category and pat_cat.lower() != category.lower():
                     continue
                 self.comboBox_patternSelect.addItem(pattern.name(), pattern)
         else:
             self.comboBox_patternSelect.clear()
+            self.comboBox_patternSelect.addItem(
+                self.motion_4.mouse_pattern.name(), self.motion_4.mouse_pattern)
             for pattern in self.motion_4.patterns:
+                from qt_ui.patterns.fourphase.mouse import MousePattern as FourphaseMousePattern
+                if isinstance(pattern, FourphaseMousePattern):
+                    continue  # already added above
                 self.comboBox_patternSelect.addItem(pattern.name(), pattern)
 
-        # try to select pattern with similar name as was previously selected
+        # Try to restore previously selected pattern, default to mouse (index 0)
         index = self.comboBox_patternSelect.findText(currently_selected_text)
         if index == -1:
-            index = 0
+            index = 0  # mouse is always index 0
         self.comboBox_patternSelect.setCurrentIndex(index)
 
 
