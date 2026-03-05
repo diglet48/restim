@@ -488,13 +488,19 @@ class AlgorithmFactory:
     def _get_pulse_auto_derive(self, param_name: str):
         """Return a precomputed axis for a pulse parameter auto-derived from motion data.
 
-        Only active when pulse_auto_derive is enabled in settings and no explicit
-        funscript is loaded for the requested parameter.
+        Only active when ALL of:
+        1. pulse_auto_derive is enabled in settings
+        2. load_funscripts is True (external media source)
+        3. Actual motion funscript data exists (bare 1D or alpha)
 
         param_name: one of 'pulse_frequency', 'carrier_frequency', 'pulse_width', 'pulse_rise_time'
         """
         from qt_ui import settings as s
         if not s.pulse_auto_derive_enabled.get():
+            return None
+
+        # Auto-derive requires actual funscripts to derive from
+        if not self.load_funscripts:
             return None
 
         if self._pulse_auto_derive_cache is None:

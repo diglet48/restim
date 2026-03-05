@@ -1,62 +1,55 @@
 # -*- mode: python ; coding: utf-8 -*-
 
-block_cipher = None
-
-added_files = [
-    ('resources/phase diagram bg.svg', 'resources/'),
-    ('resources/favicon.png', 'resources/')
-]
 
 a = Analysis(
     ['restim.py'],
-    pathex=[],
+    pathex=['.'],
     binaries=[],
-    datas=added_files,
+    datas=[
+        ('resources/phase diagram bg.svg', 'resources/'),
+        ('resources/favicon.png', 'resources/'),
+        ('event_definitions', 'qt_ui/event_definitions'),
+    ],
     hiddenimports=[],
-    hookspath=[],
+    hookspath=['pyinstaller-hooks'],
     hooksconfig={},
     runtime_hooks=[],
-    excludes=[],
-    win_no_prefer_redirects=False,
-    win_private_assemblies=False,
-    cipher=block_cipher,
-    noarchive=False
+    excludes=['PIL._avif'],
+    noarchive=False,
+    optimize=0,
 )
 
-pyz = PYZ(
-    a.pure,
-    a.zipped_data,
-    cipher=block_cipher
-)
+pyz = PYZ(a.pure)
 
 exe = EXE(
     pyz,
     a.scripts,
     [],
     exclude_binaries=True,
-    name='restim_app',
+    name='restim',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
-    upx=True,
+    upx=False,
     upx_exclude=[],
     runtime_tmpdir=None,
     console=False,
     disable_windowed_traceback=False,
+    argv_emulation=False,
+    target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon='resources/favicon.png'
+    icon='resources/favicon.png',
 )
 
 coll = COLLECT(
     exe,
     a.binaries,
-    a.zipfiles,
     a.datas,
     strip=False,
-    upx=True,
+    upx=False,
     upx_exclude=[],
-    name='restim'
+    name='restim',
 )
 
 app = BUNDLE(
@@ -65,7 +58,7 @@ app = BUNDLE(
     icon='resources/favicon.png',
     bundle_identifier=None,
     info_plist={
-        'NSHighResolutionCapable': 'True'
+        'NSHighResolutionCapable': 'True',
     },
 )
 
