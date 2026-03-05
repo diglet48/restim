@@ -1,44 +1,59 @@
 # open GUI editor
 
-./venv/Scripts/pyside6-designer.exe
+./.venv/Scripts/pyside6-designer.exe
 
 # regenerate UI files
 
-./venv/Scripts/pyside6-uic.exe  -o ./qt_ui/main_window_ui.py ./designer/mainwindow.ui
-./venv/Scripts/pyside6-uic.exe  -o ./qt_ui/waveform_details_widget_ui.py ./designer/waveformdetailswidget.ui
-./venv/Scripts/pyside6-uic.exe  -o ./qt_ui/funscript_conversion_ui.py ./designer/funscriptconversiondialog.ui
-./venv/Scripts/pyside6-uic.exe  -o ./qt_ui/funscript_decomposition_ui.py ./designer/funscriptdecompositiondialog.ui
-./venv/Scripts/pyside6-uic.exe  -o ./qt_ui/volume_control_widget_ui.py ./designer/volumecontrolwidget.ui
-./venv/Scripts/pyside6-uic.exe  -o ./qt_ui/preferences_dialog_ui.py ./designer/preferencesdialog.ui
-./venv/Scripts/pyside6-uic.exe  -o ./qt_ui/additional_search_paths_dialog_ui.py ./designer/additionalsearchpathsdialog.ui
-./venv/Scripts/pyside6-uic.exe  -o ./qt_ui/three_phase_settings_widget_ui.py ./designer/threephasesettingswidget.ui
-./venv/Scripts/pyside6-uic.exe  -o ./qt_ui/four_phase_settings_widget_ui.py ./designer/fourphasesettingswidget.ui
-./venv/Scripts/pyside6-uic.exe  -o ./qt_ui/media_settings_widget_ui.py ./designer/mediasettingswidget.ui
-./venv/Scripts/pyside6-uic.exe  -o ./qt_ui/sensors_widget_ui.py ./designer/sensorswidget.ui
-./venv/Scripts/pyside6-uic.exe  -o ./qt_ui/audio_write_dialog_ui.py ./designer/audiowritedialog.ui
-./venv/Scripts/pyside6-uic.exe  -o ./qt_ui/ab_test_widget_ui.py ./designer/abtestwidget.ui
-./venv/Scripts/pyside6-uic.exe  -o ./qt_ui/neostim_settings_widget_ui.py ./designer/neostimsettingswidget.ui
-./venv/Scripts/pyside6-uic.exe  -o ./qt_ui/simfile_conversion_dialog_ui.py ./designer/simfileconversiondialog.ui
-./venv/Scripts/pyside6-uic.exe  -o ./qt_ui/focstim_flash_dialog_ui.py ./designer/focstimflashdialog.ui
-./venv/Scripts/pyside6-uic.exe  -o ./qt_ui/about_dialog_ui.py ./designer/aboutdialog.ui
+./.venv/Scripts/pyside6-uic.exe  -o ./qt_ui/main_window_ui.py ./designer/mainwindow.ui
+./.venv/Scripts/pyside6-uic.exe  -o ./qt_ui/waveform_details_widget_ui.py ./designer/waveformdetailswidget.ui
+./.venv/Scripts/pyside6-uic.exe  -o ./qt_ui/funscript_conversion_ui.py ./designer/funscriptconversiondialog.ui
+./.venv/Scripts/pyside6-uic.exe  -o ./qt_ui/funscript_decomposition_ui.py ./designer/funscriptdecompositiondialog.ui
+./.venv/Scripts/pyside6-uic.exe  -o ./qt_ui/volume_control_widget_ui.py ./designer/volumecontrolwidget.ui
+./.venv/Scripts/pyside6-uic.exe  -o ./qt_ui/preferences_dialog_ui.py ./designer/preferencesdialog.ui
+./.venv/Scripts/pyside6-uic.exe  -o ./qt_ui/additional_search_paths_dialog_ui.py ./designer/additionalsearchpathsdialog.ui
+./.venv/Scripts/pyside6-uic.exe  -o ./qt_ui/three_phase_settings_widget_ui.py ./designer/threephasesettingswidget.ui
+./.venv/Scripts/pyside6-uic.exe  -o ./qt_ui/four_phase_settings_widget_ui.py ./designer/fourphasesettingswidget.ui
+./.venv/Scripts/pyside6-uic.exe  -o ./qt_ui/media_settings_widget_ui.py ./designer/mediasettingswidget.ui
+./.venv/Scripts/pyside6-uic.exe  -o ./qt_ui/sensors_widget_ui.py ./designer/sensorswidget.ui
+./.venv/Scripts/pyside6-uic.exe  -o ./qt_ui/audio_write_dialog_ui.py ./designer/audiowritedialog.ui
+./.venv/Scripts/pyside6-uic.exe  -o ./qt_ui/ab_test_widget_ui.py ./designer/abtestwidget.ui
+./.venv/Scripts/pyside6-uic.exe  -o ./qt_ui/neostim_settings_widget_ui.py ./designer/neostimsettingswidget.ui
+./.venv/Scripts/pyside6-uic.exe  -o ./qt_ui/simfile_conversion_dialog_ui.py ./designer/simfileconversiondialog.ui
+./.venv/Scripts/pyside6-uic.exe  -o ./qt_ui/focstim_flash_dialog_ui.py ./designer/focstimflashdialog.ui
+./.venv/Scripts/pyside6-uic.exe  -o ./qt_ui/about_dialog_ui.py ./designer/aboutdialog.ui
 
-./venv/Scripts/pyside6-uic.exe  -o ./qt_ui/device_wizard/type_select_ui.py ./designer/device_wizard/type_select.ui
-./venv/Scripts/pyside6-uic.exe  -o ./qt_ui/device_wizard/waveform_select_ui.py ./designer/device_wizard/waveform_select.ui
-./venv/Scripts/pyside6-uic.exe  -o ./qt_ui/device_wizard/safety_limits_ui.py ./designer/device_wizard/safety_limits.ui
-./venv/Scripts/pyside6-uic.exe  -o ./qt_ui/device_wizard/safety_limits_foc_ui.py ./designer/device_wizard/safety_limits_foc.ui
-./venv/Scripts/pyside6-uic.exe  -o ./qt_ui/device_wizard/neostim_waveform_select_ui.py ./designer/device_wizard/neostim_waveform_select.ui
-./venv/Scripts/pyside6-uic.exe  -o ./qt_ui/device_wizard/focstim_waveform_select_ui.py ./designer/device_wizard/focstim_waveform_select.ui
+./.venv/Scripts/pyside6-uic.exe  -o ./qt_ui/device_wizard/type_select_ui.py ./designer/device_wizard/type_select.ui
+./.venv/Scripts/pyside6-uic.exe  -o ./qt_ui/device_wizard/waveform_select_ui.py ./designer/device_wizard/waveform_select.ui
+./.venv/Scripts/pyside6-uic.exe  -o ./qt_ui/device_wizard/safety_limits_ui.py ./designer/device_wizard/safety_limits.ui
+./.venv/Scripts/pyside6-uic.exe  -o ./qt_ui/device_wizard/safety_limits_foc_ui.py ./designer/device_wizard/safety_limits_foc.ui
+./.venv/Scripts/pyside6-uic.exe  -o ./qt_ui/device_wizard/neostim_waveform_select_ui.py ./designer/device_wizard/neostim_waveform_select.ui
+./.venv/Scripts/pyside6-uic.exe  -o ./qt_ui/device_wizard/focstim_waveform_select_ui.py ./designer/device_wizard/focstim_waveform_select.ui
 
-./venv/Scripts/pyside6-rcc.exe ./resources/restim.qrc -o restim_rc.py
+./.venv/Scripts/pyside6-rcc.exe ./resources/restim.qrc -o restim_rc.py
 
 # generate proto files
 
-./venv/Scripts/protol.exe --in-place --python-out=device/focstim/ protoc --proto-path=../FOC-Stim/proto/focstim/ --python_out=device/focstim/ --pyi_out=device/focstim focstim_rpc.proto constants.proto messages.proto notifications.proto
+./.venv/Scripts/protol.exe --in-place --python-out=device/focstim/ protoc --proto-path=../FOC-Stim/proto/focstim/ --python_out=device/focstim/ --pyi_out=device/focstim focstim_rpc.proto constants.proto messages.proto notifications.proto
 
-# build release package
+# build release package (Windows)
 
 git clone
-setup venv with pycharm
-Modify the version number in version.py
-./venv/Scripts/pip.exe install pyinstaller
-./venv/Scripts/pyinstaller.exe --clean --onefile --paths "." --add-data "resources/favicon.png;resources/" --icon resources/favicon.ico --additional-hooks-dir 'pyinstaller-hooks' --distpath dist-onefile restim.py
+setup .venv with your IDE
+modify the version number in version.py
+./.venv/Scripts/pip.exe install -r requirements.txt
+./.venv/Scripts/pip.exe install pyinstaller
+
+# optional: regenerate multi-size .ico from source png
+./.venv/Scripts/python.exe -c "from PIL import Image; src=Image.open('resources/favicon.png').convert('RGBA'); src.save('resources/favicon.ico', format='ICO', sizes=[(16,16),(24,24),(32,32),(48,48),(64,64),(128,128),(256,256)])"
+
+# IMPORTANT: build from spec (do not run pyinstaller on restim.py directly)
+./.venv/Scripts/pyinstaller.exe --clean --noconfirm restim.spec --distpath dist
+
+# output
+./dist/restim.exe
+
+# smoke test
+./dist/restim.exe
+
+# macOS package (run on macOS)
+pyinstaller --clean --noconfirm restim-macos.spec
