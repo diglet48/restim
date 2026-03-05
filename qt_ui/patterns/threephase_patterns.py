@@ -36,6 +36,11 @@ class ThreephaseMotionGenerator(QtCore.QObject):
         self._extra_axes_user_values = {}   # snapshot for restore on pattern switch
         self._pattern_controls_extra = False  # true when current pattern is YAML
 
+        # When False, skip alpha/beta writes, 4-phase bridge, and position_updated.
+        # YAML extended-axis writes still happen.  Used in 4-phase mode where
+        # motion_4 owns electrode positions but motion_3 still ticks YAML patterns.
+        self._write_position = True
+
         # Finish mode: overlay a pattern over funscript
         self._finish_armed = False
         self._finish_active = False
@@ -80,6 +85,15 @@ class ThreephaseMotionGenerator(QtCore.QObject):
             self.timer.start()
         else:
             self.timer.stop()
+
+    def set_write_position(self, enabled: bool):
+        """Enable/disable position writes (alpha/beta, 4-phase bridge, position_updated).
+
+        When disabled, the timer still runs and YAML patterns still tick so that
+        extended-axis writes (pulse_frequency, pulse_width, carrier_frequency, volume)
+        reach the audio engine.  Used in 4-phase mode where motion_4 owns electrode
+        positions."""
+        self._write_position = enabled
 
     def refresh_patterns(self):
         """Refresh the patterns list based on current user preferences"""
@@ -182,28 +196,31 @@ class ThreephaseMotionGenerator(QtCore.QObject):
             active_pattern = self._finish_pattern if self._finish_active else self.pattern
 
             if isinstance(active_pattern, MousePattern):
-                if active_pattern.last_position_is_mouse_position():
-                    a = self.alpha.last_value()
-                    b = self.beta.last_value()
-                else:
-                    a = self.alpha.interpolate(time.time() - self.latency)
-                    b = self.beta.interpolate(time.time() - self.latency)
-                self.position_updated.emit(a, b)
+                if self._write_position:
+                    if active_pattern.last_position_is_mouse_position():
+                        a = self.alpha.last_value()
+                        b = self.beta.last_value()
+                    else:
+                        a = self.alpha.interpolate(time.time() - self.latency)
+                        b = self.beta.interpolate(time.time() - self.latency)
+                    self.position_updated.emit(a, b)
             else:
                 edt = _effective_dt(active_pattern)
                 a, b = active_pattern.update(edt)
-                self.alpha.add(a)
-                self.beta.add(b)
-                self._bridge_alpha_beta_to_fourphase()
+                if self._write_position:
+                    self.alpha.add(a)
+                    self.beta.add(b)
+                    self._bridge_alpha_beta_to_fourphase()
 
                 # Handle extended axes (YAML event patterns)
                 extended = active_pattern.update_extended(edt)
                 if extended:
                     self._write_extended_axes(extended)
 
-                a = self.alpha.interpolate(time.time() - self.latency)
-                b = self.beta.interpolate(time.time() - self.latency)
-                self.position_updated.emit(a, b)
+                if self._write_position:
+                    a = self.alpha.interpolate(time.time() - self.latency)
+                    b = self.beta.interpolate(time.time() - self.latency)
+                    self.position_updated.emit(a, b)
         elif is_blending and self._finish_pattern is not None:
             # Crossfade between funscript and finish pattern
             pat = self._finish_pattern
@@ -224,28 +241,31 @@ class ThreephaseMotionGenerator(QtCore.QObject):
             # Blend
             a = fs_a * (1.0 - finish_blend) + pa * finish_blend
             b = fs_b * (1.0 - finish_blend) + pb * finish_blend
-            self.alpha.add(a)
-            self.beta.add(b)
-            self._bridge_alpha_beta_to_fourphase()
+            if self._write_position:
+                self.alpha.add(a)
+                self.beta.add(b)
+                self._bridge_alpha_beta_to_fourphase()
 
             # Scale extended axes by blend factor
             if extended:
                 scaled = {k: v * finish_blend for k, v in extended.items()}
                 self._write_extended_axes(scaled)
 
-            a = self.alpha.interpolate(time.time() - self.latency)
-            b = self.beta.interpolate(time.time() - self.latency)
-            self.position_updated.emit(a, b)
-        else:
-            if self.script_alpha:
-                a = self.script_alpha.interpolate(time.time() - self.latency)
-            else:
+            if self._write_position:
                 a = self.alpha.interpolate(time.time() - self.latency)
-            if self.script_beta:
-                b = self.script_beta.interpolate(time.time() - self.latency)
-            else:
                 b = self.beta.interpolate(time.time() - self.latency)
-            self.position_updated.emit(a, b)
+                self.position_updated.emit(a, b)
+        else:
+            if self._write_position:
+                if self.script_alpha:
+                    a = self.script_alpha.interpolate(time.time() - self.latency)
+                else:
+                    a = self.alpha.interpolate(time.time() - self.latency)
+                if self.script_beta:
+                    b = self.script_beta.interpolate(time.time() - self.latency)
+                else:
+                    b = self.beta.interpolate(time.time() - self.latency)
+                self.position_updated.emit(a, b)
 
     def mouse_event(self, a, b):
         if self.pattern == self.mouse_pattern and not self.any_scripts_loaded():
@@ -282,7 +302,9 @@ class ThreephaseMotionGenerator(QtCore.QObject):
                 continue
             if not self._extra_axes_enabled.get(axis_name, False):
                 continue
-            self.extra_axes[axis_name].add(value)
+            axis = self.extra_axes[axis_name]
+            axis.add(value)
+            self.extra_axis_updated.emit(axis)
 
     def _snapshot_extra_axes(self):
         """Capture current extra axis values so we can restore them later."""
@@ -446,3 +468,4 @@ class ThreephaseMotionGenerator(QtCore.QObject):
 
     position_updated = QtCore.Signal(float, float)  # a, b
     finish_state_changed = QtCore.Signal(bool)  # active/inactive
+    extra_axis_updated = QtCore.Signal(object)  # emitted when YAML pattern writes to an extra axis

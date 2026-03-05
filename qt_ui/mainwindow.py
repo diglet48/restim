@@ -574,13 +574,17 @@ class Window(QMainWindow, Ui_MainWindow):
         # populate motion generator and patterns combobox
         if config.device_type in (DeviceType.AUDIO_THREE_PHASE, DeviceType.NEOSTIM_THREE_PHASE, DeviceType.FOCSTIM_THREE_PHASE):
             self.motion_3.set_enable(True)
+            self.motion_3.set_write_position(True)
             self.motion_4.set_enable(False)
             self.stackedWidget_visual.setCurrentIndex(
                 self.stackedWidget_visual.indexOf(self.page_threephase)
             )
 
         if config.device_type == DeviceType.FOCSTIM_FOUR_PHASE:
-            self.motion_3.set_enable(False)
+            # motion_3 stays enabled for YAML extended-axis writes (pulse params)
+            # but position output is suppressed — motion_4 owns electrode intensities
+            self.motion_3.set_enable(True)
+            self.motion_3.set_write_position(False)
             self.motion_4.set_enable(True)
             self.stackedWidget_visual.setCurrentIndex(
                 self.stackedWidget_visual.indexOf(self.page_fourphase)
@@ -1110,6 +1114,12 @@ class Window(QMainWindow, Ui_MainWindow):
         signal.connect(self.tab_pulse_settings.pulse_width_controller.on_tcode_axis_updated)
         signal.connect(self.tab_pulse_settings.pulse_interval_random_controller.on_tcode_axis_updated)
         signal.connect(self.tab_pulse_settings.pulse_rise_time_controller.on_tcode_axis_updated)
+
+        # YAML pattern axis writes → same spinbox update mechanism
+        pat_signal = self.motion_3.extra_axis_updated
+        pat_signal.connect(self.tab_pulse_settings.carrier_controller.on_tcode_axis_updated)
+        pat_signal.connect(self.tab_pulse_settings.pulse_frequency_controller.on_tcode_axis_updated)
+        pat_signal.connect(self.tab_pulse_settings.pulse_width_controller.on_tcode_axis_updated)
 
         # Carrier settings controller (continuous waveform mode)
         signal.connect(self.tab_carrier.carrier_controller.on_tcode_axis_updated)

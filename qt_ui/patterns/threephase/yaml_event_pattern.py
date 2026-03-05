@@ -54,6 +54,10 @@ class NormalizationConfig:
             return self.frequency_max
         return self.volume_max  # volume and anything else
 
+    def denormalize(self, axis: str, normalized_value: float) -> float:
+        """Convert a normalised value back to raw units for axis consumption."""
+        return normalized_value * self._max_for_axis(axis)
+
 
 @dataclass
 class EventStep:
@@ -308,7 +312,12 @@ class YamlEventPattern(ThreephasePattern):
                 val = self._eval_step(step.operation, local_t, step_duration, params, ax)
                 accum[mapped] = accum.get(mapped, 0.0) + val
 
-        return accum if accum else None
+        if not accum:
+            return None
+
+        # Denormalize from 0-1 back to raw units so axes receive real values
+        # (e.g. pulse_frequency in Hz, pulse_width in carrier cycles)
+        return {k: self.norm.denormalize(k, v) for k, v in accum.items()}
 
     # -- helpers -----------------------------------------------------------
 
