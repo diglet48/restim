@@ -5,6 +5,7 @@ Shows the regular tetrahedron whose 4 vertices correspond to the 4 electrodes
 (A, B, C, D). A cursor dot indicates the current position in abc space.
 
 Auto-rotates slowly; drag with the mouse to rotate manually.
+Double-click toggles auto-rotation on/off.
 """
 
 import numpy as np
@@ -89,14 +90,12 @@ class FourphaseWidgetTetrahedron(QWidget):
         self._dragging       = False
         self._last_mouse_pos = None
 
-        self._idle_timer = QTimer()
-        self._idle_timer.setSingleShot(True)
-        self._idle_timer.timeout.connect(self._resume_auto_rotate)
-
         # repaint timer (~30 fps)
         self._timer = QTimer()
         self._timer.timeout.connect(self._tick)
-        self._timer.start(33)
+        self._frame_interval_ms = 33
+        if self.isVisible():
+            self._timer.start(self._frame_interval_ms)
 
         # cursor
         self._cursor_abc   = None
@@ -106,6 +105,7 @@ class FourphaseWidgetTetrahedron(QWidget):
         self._dark = is_dark_mode()
 
         self.setMinimumSize(100, 100)
+        self.setToolTip("Double click to toggle rotation.")
 
     # ------------------------------------------------------------------
     #  public API
@@ -136,12 +136,24 @@ class FourphaseWidgetTetrahedron(QWidget):
     # ------------------------------------------------------------------
 
     def _tick(self):
-        if self._auto_rotate:
+        if self._auto_rotate and not self._dragging:
             self._yaw += self._auto_rotate_speed
         self.update()
 
-    def _resume_auto_rotate(self):
-        self._auto_rotate = True
+    def _set_animation_active(self, active: bool):
+        if active:
+            if not self._timer.isActive():
+                self._timer.start(self._frame_interval_ms)
+        else:
+            self._timer.stop()
+
+    def showEvent(self, event):
+        super().showEvent(event)
+        self._set_animation_active(True)
+
+    def hideEvent(self, event):
+        self._set_animation_active(False)
+        super().hideEvent(event)
 
     # ------------------------------------------------------------------
     #  mouse interaction  (rotate the view)
@@ -151,14 +163,21 @@ class FourphaseWidgetTetrahedron(QWidget):
         if event.button() == Qt.MouseButton.LeftButton:
             self._dragging       = True
             self._last_mouse_pos = event.position()
-            self._auto_rotate    = False
-            self._idle_timer.stop()
 
     def mouseReleaseEvent(self, event: QMouseEvent):
         if event.button() == Qt.MouseButton.LeftButton:
             self._dragging       = False
             self._last_mouse_pos = None
-            self._idle_timer.start(5000)          # resume after 5 s idle
+
+    def mouseDoubleClickEvent(self, event: QMouseEvent):
+        if event.button() == Qt.MouseButton.LeftButton:
+            self._auto_rotate = not self._auto_rotate
+            self._dragging = False
+            self._last_mouse_pos = None
+            self.update()
+            event.accept()
+            return
+        super().mouseDoubleClickEvent(event)
 
     def mouseMoveEvent(self, event: QMouseEvent):
         if self._dragging and self._last_mouse_pos is not None:
