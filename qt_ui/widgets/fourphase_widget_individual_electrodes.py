@@ -43,6 +43,7 @@ class FourphaseWidgetIndividualElectrodes(QGraphicsView):
         self.setRenderHint(QPainter.Antialiasing)
         self.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.setMouseTracking(True)
 
         # prevent auto-scrolling the view by Qt
         self.setSceneRect(0, 0, 4, 4)
@@ -138,6 +139,15 @@ class FourphaseWidgetIndividualElectrodes(QGraphicsView):
         self.mouse_event_any(event)
 
     def mouseMoveEvent(self, event: QMouseEvent):
+        # Show vertical drag cursor when over a bar
+        point = self.mapToScene(event.position().toPoint())
+        over_bar = 0 <= point.x() <= 4 and 0 <= point.y() <= 1
+        if over_bar:
+            if self.cursor().shape() != Qt.CursorShape.SplitVCursor:
+                self.setCursor(Qt.CursorShape.SplitVCursor)
+        else:
+            if self.cursor().shape() != Qt.CursorShape.ArrowCursor:
+                self.setCursor(Qt.CursorShape.ArrowCursor)
         self.mouse_event_any(event)
 
     def mouse_event_any(self, event: QMouseEvent):
