@@ -7,7 +7,8 @@ from PySide6.QtGui import QColor, QTransform, QPen, Qt, QPainter, QFont, QMouseE
 
 import numpy as np
 
-from stim_math.transforms_4 import e1234_to_abc
+# e1234_to_abc has sign ambiguity with single samples; we use barycentric
+# interpolation on the tetrahedron vertices instead.
 
 COEF_1 = 1
 COEF_2 = np.sqrt(8) / 3           # sqrt(1 - coef_1**2/3)
@@ -243,12 +244,16 @@ class FourphaseWidgetStereographic(QGraphicsView):
         self.set_cursor_visibility(norm)
 
     def set_electrode_intensities(self, a, b, c, d):
-        """Convert electrode intensities (a,b,c,d) to abc and update the cursor."""
-        abc_arr = e1234_to_abc(
-            np.array([a]), np.array([b]), np.array([c]), np.array([d])
-        )
-        a3, b3, c3 = float(abc_arr[0][0]), float(abc_arr[1][0]), float(abc_arr[2][0])
-        self.set_cursor_position_abc(a3, b3, c3)
+        """Convert electrode intensities (a,b,c,d) to abc and update the cursor.
+
+        Uses barycentric interpolation on the tetrahedron vertices.
+        """
+        total = a + b + c + d
+        if total > 0:
+            abc = (a * v1 + b * v2 + c * v3 + d * v4) / total
+        else:
+            abc = np.zeros(3)
+        self.set_cursor_position_abc(float(abc[0]), float(abc[1]), float(abc[2]))
 
     def set_cursor_position_xy(self, xy):
         xyz = projection.xy_to_xyz(xy)

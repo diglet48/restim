@@ -12,7 +12,8 @@ from PySide6.QtWidgets import QWidget
 from PySide6.QtCore import QTimer, Qt, QPointF, Signal
 from PySide6.QtGui import QPainter, QPen, QColor, QFont, QPolygonF, QMouseEvent
 
-from stim_math.transforms_4 import e1234_to_abc
+# e1234_to_abc is designed for sequences and has sign ambiguity with single
+# samples, so we use barycentric interpolation on the tetrahedron vertices.
 
 # ---------- tetrahedron geometry (same coefficients as transforms_4) ----------
 
@@ -111,13 +112,17 @@ class FourphaseWidgetTetrahedron(QWidget):
     # ------------------------------------------------------------------
 
     def set_electrode_intensities(self, a, b, c, d):
-        """Convert electrode intensities (a,b,c,d) → abc and update cursor."""
-        abc = e1234_to_abc(
-            np.array([a]), np.array([b]), np.array([c]), np.array([d])
-        )
-        self._cursor_abc   = np.array([float(abc[0][0]),
-                                        float(abc[1][0]),
-                                        float(abc[2][0])])
+        """Convert electrode intensities (a,b,c,d) → abc and update cursor.
+
+        Uses barycentric interpolation: the position is the weighted average
+        of the tetrahedron vertices, which always lands inside the shape.
+        """
+        total = a + b + c + d
+        if total > 0:
+            self._cursor_abc = (a * VERTICES[0] + b * VERTICES[1]
+                                + c * VERTICES[2] + d * VERTICES[3]) / total
+        else:
+            self._cursor_abc = np.zeros(3)
         self._cursor_alpha = float(np.clip(np.linalg.norm(self._cursor_abc),
                                            0, 1))
 
@@ -181,7 +186,7 @@ class FourphaseWidgetTetrahedron(QWidget):
 
         w, h   = self.width(), self.height()
         cx, cy = w / 2, h / 2
-        scale  = min(w, h) * 0.32
+        scale  = min(w, h) * 0.42
 
         rot     = _rotation_matrix(self._yaw, self._pitch)
         rotated = (rot @ VERTICES.T).T          # (4, 3)
@@ -266,34 +271,5 @@ class FourphaseWidgetTetrahedron(QWidget):
             p.setPen(pen)
             p.setBrush(vc)
             p.drawEllipse(QPointF(sx, sy), r, r)
-
-        # ---- labels (pushed outward from centre) ------------------------
-        font = QFont()
-        font.setPointSize(11)
-        font.setBold(True)
-        p.setFont(font)
-
-        for vi in sorted_vi:
-            sx = cx + proj[vi, 0] * scale
-            sy = cy - proj[vi, 1] * scale
-            af = float(np.interp(depth[vi], [-1.2, 1.2], [0.4, 1.0]))
-
-            dx = proj[vi, 0]
-            dy = -proj[vi, 1]
-            nrm = np.sqrt(dx * dx + dy * dy)
-            if nrm > 0.01:
-                dx, dy = dx / nrm * 20, dy / nrm * 20
-            else:
-                dx, dy = 0, -20
-
-            lc = QColor(VERTEX_COLORS[vi]);  lc.setAlpha(int(255 * af))
-            p.setPen(lc)
-
-            fm = p.fontMetrics()
-            tw = fm.horizontalAdvance(LABELS[vi])
-            th = fm.height()
-            p.drawText(QPointF(sx + dx - tw / 2,
-                                sy + dy + th / 4),
-                        LABELS[vi])
 
         p.end()
