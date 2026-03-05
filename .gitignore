@@ -139,3 +139,9 @@ scripts/find_events.py
 scripts/mistress_and_box.scd
 scripts/motion_results.txt
 scripts/supercollider.zip
+scripts/TEMPOCLOCK_AND_POLAR_FOR_BREADBEATS.md
+scripts/analyze_clutch.py
+scripts/analyze_clutch_deep.py
+scripts/analyze_clutch_mp3.py
+scripts/analyze_mcb_funscripts.py
+dist-onefile/
