@@ -16,7 +16,7 @@ from __future__ import annotations
 import math
 import logging
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Optional, Any, Type
 
 from qt_ui.patterns.threephase.base import ThreephasePattern, register_pattern
 
@@ -173,7 +173,7 @@ def _eval_linear_change(t_sec: float, duration_sec: float, params: Dict[str, Any
 # ---------------------------------------------------------------------------
 
 # The motion generator understands these keys:
-AXIS_MAP = {
+AXIS_MAP: Dict[str, str] = {
     'volume':           'volume',
     'volume-prostate':  'volume',       # treated as same volume axis in restim
     'pulse_frequency':  'pulse_frequency',
@@ -202,28 +202,44 @@ class YamlEventPattern(ThreephasePattern):
     display_name = "YAML Event"
     description = ""
     category = "yaml"
+    event_definition: Optional[EventDefinition] = None
 
-    def __init__(self, event_def: EventDefinition,
-                 amplitude: float = 1.0, velocity: float = 1.0):
+    def __init__(self, amplitude: float = 1.0, velocity: float = 1.0,
+                 event_def: Optional[EventDefinition] = None):
         super().__init__(amplitude=amplitude, velocity=velocity)
-        self.event_def = event_def
-        self.display_name = event_def.display_name
-        self.description = event_def.name
-        self.category = event_def.category
-        self.norm = event_def.normalization or NormalizationConfig()
+        resolved_event_def = event_def or self.event_definition
+        if resolved_event_def is None:
+            raise ValueError("YamlEventPattern requires an EventDefinition")
+
+        self.event_def = resolved_event_def
+        self.display_name = resolved_event_def.display_name
+        self.description = resolved_event_def.name
+        self.category = resolved_event_def.category
+        self.norm = resolved_event_def.normalization or NormalizationConfig()
         self.elapsed = 0.0
-        self.loop_duration = event_def.duration_ms / 1000.0  # seconds
+        self.loop_duration = resolved_event_def.duration_ms / 1000.0  # seconds
 
         # Pre-resolve $-params in every step
-        self._resolved_steps: List[tuple] = []  # (step, resolved_params)
-        for step in event_def.steps:
+        self._resolved_steps: List[tuple[EventStep, Dict[str, Any]]] = []  # (step, resolved_params)
+        for step in resolved_event_def.steps:
             resolved = {}
             for k, v in step.params.items():
-                resolved[k] = _resolve_param(v, event_def.default_params)
+                resolved[k] = _resolve_param(v, resolved_event_def.default_params)
             # duration_ms inside params
             if 'duration_ms' not in resolved:
-                resolved['duration_ms'] = event_def.duration_ms
+                resolved['duration_ms'] = resolved_event_def.duration_ms
             self._resolved_steps.append((step, resolved))
+
+        # Detect whether this event has any alpha/beta steps
+        self._has_motion = False
+        for step in resolved_event_def.steps:
+            for ax in step.axes:
+                mapped = AXIS_MAP.get(ax, ax)
+                if mapped in ('alpha', 'beta'):
+                    self._has_motion = True
+                    break
+            if self._has_motion:
+                break
 
     def name(self) -> str:
         return self.display_name
@@ -233,10 +249,21 @@ class YamlEventPattern(ThreephasePattern):
     def update(self, dt: float) -> tuple:
         """Advance time and return (alpha, beta).
         If the event modulates alpha/beta, those values are returned;
-        otherwise (0, 0)."""
+        otherwise generate a default circular motion so the pattern
+        produces visible movement while extended axes modulate the signal."""
         self.elapsed += dt
         # velocity is applied by the motion generator to dt already
         t_sec = self.elapsed % self.loop_duration if self.loop_duration > 0 else 0.0
+
+        if not self._has_motion:
+            # Auto-generate circular motion driven by event envelope
+            # Use the volume envelope (if any) to modulate radius
+            radius = 0.6
+            # One full circle per loop period
+            phase = 2 * math.pi * t_sec / self.loop_duration if self.loop_duration > 0 else 0.0
+            alpha_val = radius * math.cos(phase)
+            beta_val = radius * math.sin(phase)
+            return (alpha_val, beta_val)
 
         alpha_val = 0.0
         beta_val = 0.0
@@ -307,23 +334,13 @@ def register_yaml_events(definitions: List[EventDefinition]):
     from qt_ui.patterns.threephase.base import _pattern_registry, _pattern_categories
 
     for event_def in definitions:
-        # Create a unique subclass name
         cls_name = f"YamlEvent_{event_def.name}"
-        # Freeze event_def in closure
-        def _make_cls(_ed):
-            cls = type(cls_name, (YamlEventPattern,), {
-                'display_name': _ed.display_name,
-                'description': _ed.name,
-                'category': _ed.category,
-            })
-            # Override __init__ to inject the event_def
-            original_init = YamlEventPattern.__init__
-            def _init(self, amplitude=1.0, velocity=1.0, ed=_ed):
-                original_init(self, ed, amplitude, velocity)
-            cls.__init__ = _init
-            return cls
-
-        pattern_cls = _make_cls(event_def)
+        pattern_cls: Type[ThreephasePattern] = type(cls_name, (YamlEventPattern,), {
+            'display_name': event_def.display_name,
+            'description': event_def.name,
+            'category': event_def.category,
+            'event_definition': event_def,
+        })
 
         # Register in the global registry
         _pattern_registry[event_def.display_name] = pattern_cls

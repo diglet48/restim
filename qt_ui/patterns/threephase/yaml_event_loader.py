@@ -51,11 +51,21 @@ def _pretty_name(raw_name: str) -> str:
 
 def _pick_category(event_name: str, groups: List[Dict]) -> str:
     """Determine category by matching event name prefix against group
-    definitions."""
+    definitions.  Longer (more-specific) prefixes win."""
+    best_match = None
+    best_len = -1
     for group in groups:
         prefix = group.get('prefix', '')
-        if prefix and event_name.startswith(prefix):
-            return group.get('name', prefix)
+        if not prefix:
+            continue
+        # Support comma-separated prefixes
+        for pfx in prefix.split(','):
+            pfx = pfx.strip()
+            if pfx and event_name.startswith(pfx) and len(pfx) > best_len:
+                best_match = group.get('name', pfx)
+                best_len = len(pfx)
+    if best_match is not None:
+        return best_match
     # check for test_ prefix
     if event_name.startswith('test_'):
         for group in groups:

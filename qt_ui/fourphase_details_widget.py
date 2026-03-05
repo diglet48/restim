@@ -40,7 +40,7 @@ class _BarLabel(QWidget):
         )
         self.value_label = QLabel("—")
         self.value_label.setFixedWidth(70)
-        self.value_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        self.value_label.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
 
         layout.addWidget(self.bar, stretch=1)
         layout.addWidget(self.value_label)
@@ -126,7 +126,7 @@ class FourPhaseDetailsWidget(QWidget):
             self._lbl_impedance.append(l)
         root.addWidget(grp_imp)
 
-        root.addItem(QSpacerItem(20, 20, QSizePolicy.Minimum, QSizePolicy.Expanding))
+        root.addItem(QSpacerItem(20, 20, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding))
 
         # Timer for commanded-intensity refresh (same approach as 3-phase details)
         self._timer = QtCore.QTimer(self)

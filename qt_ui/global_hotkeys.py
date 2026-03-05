@@ -166,7 +166,7 @@ class GlobalHotkeyListener(QtCore.QObject):
                 self._press_time = None
                 # Emit on Qt main thread
                 QtCore.QMetaObject.invokeMethod(
-                    self, '_emit_short_press', QtCore.Qt.QueuedConnection)
+                    self, b'_emit_short_press', QtCore.Qt.ConnectionType.QueuedConnection)
             else:
                 # Was already held — nothing to do on release
                 self._press_time = None
@@ -179,7 +179,7 @@ class GlobalHotkeyListener(QtCore.QObject):
             self._held = True
         # Emit on Qt main thread
         QtCore.QMetaObject.invokeMethod(
-            self, '_emit_long_press', QtCore.Qt.QueuedConnection)
+            self, b'_emit_long_press', QtCore.Qt.ConnectionType.QueuedConnection)
 
     # ------------------------------------------------------------------
     # Qt-thread signal emitters (invoked via QMetaObject)
