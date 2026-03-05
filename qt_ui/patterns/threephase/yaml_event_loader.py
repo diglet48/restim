@@ -28,7 +28,7 @@ except ImportError:
 
 
 from qt_ui.patterns.threephase.yaml_event_pattern import (
-    EventDefinition, EventStep, NormalizationConfig, register_yaml_events
+    EventDefinition, EventStep, register_yaml_events
 )
 
 # ---------------------------------------------------------------------------
@@ -103,15 +103,6 @@ def parse_yaml_file(filepath: str) -> List[EventDefinition]:
         logger.warning(f"YAML file {filepath} does not contain a mapping at top level")
         return []
 
-    # --- normalisation config ---
-    norm_data = data.get('normalization', {})
-    norm = NormalizationConfig(
-        pulse_frequency_max=float(norm_data.get('pulse_frequency', {}).get('max', 120.0)),
-        pulse_width_max=float(norm_data.get('pulse_width', {}).get('max', 100.0)),
-        frequency_max=float(norm_data.get('frequency', {}).get('max', 1200.0)),
-        volume_max=float(norm_data.get('volume', {}).get('max', 1.0)),
-    )
-
     # --- groups ---
     groups = data.get('groups', [{'name': 'General', 'prefix': ''}])
 
@@ -160,7 +151,7 @@ def parse_yaml_file(filepath: str) -> List[EventDefinition]:
             category=category,
             default_params=default_params,
             steps=steps,
-            normalization=norm,
+
         ))
 
     logger.info(f"Parsed {len(result)} event definitions from {filepath}")

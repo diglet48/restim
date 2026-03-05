@@ -27,39 +27,6 @@ logger = logging.getLogger('restim.patterns.yaml_event')
 # ---------------------------------------------------------------------------
 
 @dataclass
-class NormalizationConfig:
-    """Per-axis max values used to normalise raw YAML parameters to 0–1."""
-    pulse_frequency_max: float = 120.0
-    pulse_width_max: float = 100.0
-    frequency_max: float = 1200.0
-    volume_max: float = 1.0
-
-    def normalize(self, axis: str, value: float) -> float:
-        """Normalise *value* for *axis*.  Values already <= 1.0 when max > 1
-        are treated as pre-normalised."""
-        max_val = self._max_for_axis(axis)
-        if max_val <= 1.0:
-            return value
-        if abs(value) <= 1.0:
-            return value  # pre-normalised
-        return value / max_val
-
-    def _max_for_axis(self, axis: str) -> float:
-        axis_lower = axis.lower().replace('-', '_')
-        if 'pulse_frequency' in axis_lower or 'pulse_freq' in axis_lower:
-            return self.pulse_frequency_max
-        if 'pulse_width' in axis_lower:
-            return self.pulse_width_max
-        if axis_lower in ('frequency', 'carrier_frequency'):
-            return self.frequency_max
-        return self.volume_max  # volume and anything else
-
-    def denormalize(self, axis: str, normalized_value: float) -> float:
-        """Convert a normalised value back to raw units for axis consumption."""
-        return normalized_value * self._max_for_axis(axis)
-
-
-@dataclass
 class EventStep:
     """One operation inside an event definition."""
     operation: str                          # 'apply_modulation' or 'apply_linear_change'
@@ -76,7 +43,6 @@ class EventDefinition:
     category: str
     default_params: Dict[str, Any] = field(default_factory=dict)
     steps: List[EventStep] = field(default_factory=list)
-    normalization: Optional[NormalizationConfig] = None
 
     @property
     def duration_ms(self) -> int:
@@ -130,7 +96,7 @@ def _resolve_param(value, defaults: Dict[str, Any]):
 
 
 def _eval_modulation(t_sec: float, duration_sec: float, params: Dict[str, Any],
-                     norm: NormalizationConfig, axis: str) -> float:
+                     axis: str) -> float:
     waveform = params.get('waveform', 'sin')
     frequency = float(params.get('frequency', 1.0))
     amplitude = float(params.get('amplitude', 0.0))
@@ -140,38 +106,71 @@ def _eval_modulation(t_sec: float, duration_sec: float, params: Dict[str, Any],
     ramp_in = float(params.get('ramp_in_ms', 0)) / 1000.0
     ramp_out = float(params.get('ramp_out_ms', params.get('ramp_in_ms', 0))) / 1000.0
 
-    n_amp = norm.normalize(axis, amplitude)
-    n_offset = norm.normalize(axis, max_level_offset)
-
-    # n_offset is the DC centre of oscillation (not the peak).
-    # The waveform swings ±n_amp around this centre.
-    centre = n_offset
+    # Values are already in final units (TCode 0-1 or alpha/beta -1..+1).
+    centre = max_level_offset
     phase_rad = math.radians(phase_deg)
     w = _waveform_value(waveform, 2 * math.pi * frequency * t_sec + phase_rad, duty_cycle)
     env = _ramp_envelope(t_sec, duration_sec, ramp_in, ramp_out)
-    return (centre + n_amp * w) * env
+    return (centre + amplitude * w) * env
 
 
 def _eval_linear_change(t_sec: float, duration_sec: float, params: Dict[str, Any],
-                        norm: NormalizationConfig, axis: str) -> float:
+                        axis: str) -> float:
     start_value = float(params.get('start_value', 0.0))
     end_value = float(params.get('end_value', start_value))
     ramp_in = float(params.get('ramp_in_ms', 0)) / 1000.0
     ramp_out = float(params.get('ramp_out_ms', params.get('ramp_in_ms', 0))) / 1000.0
 
-    n_start = norm.normalize(axis, start_value)
-    n_end = norm.normalize(axis, end_value)
-
+    # Values are already in final units (TCode 0-1 or alpha/beta -1..+1).
     # linear interpolation
     if duration_sec > 0:
         frac = t_sec / duration_sec
     else:
         frac = 1.0
     frac = max(0.0, min(1.0, frac))
-    interp = n_start + (n_end - n_start) * frac
+    interp = start_value + (end_value - start_value) * frac
 
     env = _ramp_envelope(t_sec, duration_sec, ramp_in, ramp_out)
     return interp * env
+
+
+def _eval_keyframes(t_sec: float, duration_sec: float, params: Dict[str, Any]) -> float:
+    """Evaluate a keyframe sequence at the given time.
+
+    Keyframes are a list of [time_ms, value] pairs.  Values are linearly
+    interpolated between adjacent keyframes.  Outside the keyframe range
+    the nearest endpoint value is held.
+    """
+    keyframes = params.get('keyframes', [])
+    if not keyframes:
+        return 0.0
+
+    ramp_in = float(params.get('ramp_in_ms', 0)) / 1000.0
+    ramp_out = float(params.get('ramp_out_ms', params.get('ramp_in_ms', 0))) / 1000.0
+
+    t_ms = t_sec * 1000.0
+
+    # Binary search or linear scan for the right segment
+    if t_ms <= keyframes[0][0]:
+        val = float(keyframes[0][1])
+    elif t_ms >= keyframes[-1][0]:
+        val = float(keyframes[-1][1])
+    else:
+        # Linear scan (keyframes are typically < 300 entries)
+        val = float(keyframes[-1][1])
+        for i in range(len(keyframes) - 1):
+            t0, v0 = keyframes[i]
+            t1, v1 = keyframes[i + 1]
+            if t0 <= t_ms <= t1:
+                if t1 == t0:
+                    val = float(v0)
+                else:
+                    frac = (t_ms - t0) / (t1 - t0)
+                    val = v0 + (v1 - v0) * frac
+                break
+
+    env = _ramp_envelope(t_sec, duration_sec, ramp_in, ramp_out)
+    return val * env
 
 
 # ---------------------------------------------------------------------------
@@ -221,7 +220,6 @@ class YamlEventPattern(ThreephasePattern):
         self.display_name = resolved_event_def.display_name
         self.description = resolved_event_def.name
         self.category = resolved_event_def.category
-        self.norm = resolved_event_def.normalization or NormalizationConfig()
         self.elapsed = 0.0
         self.loop_duration = resolved_event_def.duration_ms / 1000.0  # seconds
 
@@ -317,18 +315,19 @@ class YamlEventPattern(ThreephasePattern):
         if not accum:
             return None
 
-        # Denormalize from 0-1 back to raw units so axes receive real values
-        # (e.g. pulse_frequency in Hz, pulse_width in carrier cycles)
-        return {k: self.norm.denormalize(k, v) for k, v in accum.items()}
+        # Values are already in final units (TCode 0-1) — pass through directly.
+        return accum
 
     # -- helpers -----------------------------------------------------------
 
     def _eval_step(self, operation: str, t_sec: float, duration_sec: float,
                    params: Dict[str, Any], axis: str) -> float:
         if operation == 'apply_modulation':
-            return _eval_modulation(t_sec, duration_sec, params, self.norm, axis)
+            return _eval_modulation(t_sec, duration_sec, params, axis)
         elif operation == 'apply_linear_change':
-            return _eval_linear_change(t_sec, duration_sec, params, self.norm, axis)
+            return _eval_linear_change(t_sec, duration_sec, params, axis)
+        elif operation == 'apply_keyframes':
+            return _eval_keyframes(t_sec, duration_sec, params)
         return 0.0
 
 
