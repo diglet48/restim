@@ -37,6 +37,10 @@ class ThreephaseMotionGenerator(QtCore.QObject):
         self._finish_armed = False
         self._finish_active = False
         self._finish_pattern = None
+        self._finish_ramp_duration = 0.3   # seconds for crossfade
+        self._finish_ramp_start = None     # time.time() when ramp began
+        self._finish_ramping_in = False    # True=ramping to pattern, False=ramping out
+        self._finish_ramp_out = False      # True while fading back to funscript
 
         # Initialize pattern service for preferences
         self.pattern_service = PatternControlService()
@@ -48,6 +52,7 @@ class ThreephaseMotionGenerator(QtCore.QObject):
         self.pattern = self.mouse_pattern
 
         self.velocity = 1
+        self.loop_speed = 1.0   # extra multiplier for YAML event loop speed
         self.last_update_time = time.time()
         self.latency = 0
 
@@ -122,11 +127,45 @@ class ThreephaseMotionGenerator(QtCore.QObject):
     def set_velocity(self, velocity):
         self.velocity = velocity
 
+    def set_loop_speed(self, speed: float):
+        """Set extra loop speed multiplier for YAML event patterns."""
+        self.loop_speed = max(0.1, min(10.0, speed))
+
     def timeout(self):
         dt = time.time() - self.last_update_time
         self.last_update_time = time.time()
 
-        if not self.any_scripts_loaded() or self._finish_active:
+        def _effective_dt(pattern):
+            """Apply loop_speed multiplier for YAML event patterns."""
+            from qt_ui.patterns.threephase.yaml_event_pattern import YamlEventPattern
+            v = dt * self.velocity
+            if isinstance(pattern, YamlEventPattern):
+                v *= self.loop_speed
+            return v
+
+        # Compute finish crossfade factor (0.0 = funscript, 1.0 = pattern)
+        finish_blend = 0.0
+        if self._finish_ramp_start is not None:
+            elapsed_ramp = time.time() - self._finish_ramp_start
+            t = min(1.0, elapsed_ramp / self._finish_ramp_duration) if self._finish_ramp_duration > 0 else 1.0
+            if self._finish_ramping_in:
+                finish_blend = t
+                if t >= 1.0:
+                    self._finish_ramp_start = None  # ramp complete
+            else:
+                finish_blend = 1.0 - t
+                if t >= 1.0:
+                    self._finish_ramp_start = None
+                    self._finish_ramp_out = False
+                    self._finish_pattern = None
+                    self._release_extra_axes()
+        elif self._finish_active:
+            finish_blend = 1.0
+
+        is_blending = self._finish_ramp_start is not None
+
+        if not self.any_scripts_loaded() or (self._finish_active and finish_blend >= 1.0 and not is_blending):
+            # Pure pattern mode (no scripts, or finish fully ramped in)
             active_pattern = self._finish_pattern if self._finish_active else self.pattern
 
             if isinstance(active_pattern, MousePattern):
@@ -138,18 +177,50 @@ class ThreephaseMotionGenerator(QtCore.QObject):
                     b = self.beta.interpolate(time.time() - self.latency)
                 self.position_updated.emit(a, b)
             else:
-                a, b = active_pattern.update(dt * self.velocity)
+                edt = _effective_dt(active_pattern)
+                a, b = active_pattern.update(edt)
                 self.alpha.add(a)
                 self.beta.add(b)
 
                 # Handle extended axes (YAML event patterns)
-                extended = active_pattern.update_extended(dt * self.velocity)
+                extended = active_pattern.update_extended(edt)
                 if extended:
                     self._write_extended_axes(extended)
 
                 a = self.alpha.interpolate(time.time() - self.latency)
                 b = self.beta.interpolate(time.time() - self.latency)
                 self.position_updated.emit(a, b)
+        elif is_blending and self._finish_pattern is not None:
+            # Crossfade between funscript and finish pattern
+            pat = self._finish_pattern
+
+            # Get funscript values
+            fs_a = self.script_alpha.interpolate(time.time() - self.latency) if self.script_alpha else self.alpha.interpolate(time.time() - self.latency)
+            fs_b = self.script_beta.interpolate(time.time() - self.latency) if self.script_beta else self.beta.interpolate(time.time() - self.latency)
+
+            # Get pattern values
+            if not isinstance(pat, MousePattern):
+                edt = _effective_dt(pat)
+                pa, pb = pat.update(edt)
+                extended = pat.update_extended(edt)
+            else:
+                pa, pb = 0.0, 0.0
+                extended = None
+
+            # Blend
+            a = fs_a * (1.0 - finish_blend) + pa * finish_blend
+            b = fs_b * (1.0 - finish_blend) + pb * finish_blend
+            self.alpha.add(a)
+            self.beta.add(b)
+
+            # Scale extended axes by blend factor
+            if extended:
+                scaled = {k: v * finish_blend for k, v in extended.items()}
+                self._write_extended_axes(scaled)
+
+            a = self.alpha.interpolate(time.time() - self.latency)
+            b = self.beta.interpolate(time.time() - self.latency)
+            self.position_updated.emit(a, b)
         else:
             if self.script_alpha:
                 a = self.script_alpha.interpolate(time.time() - self.latency)
@@ -228,11 +299,14 @@ class ThreephaseMotionGenerator(QtCore.QObject):
         return self._finish_armed
 
     def activate_finish(self):
-        """Activate finish mode — play current pattern over funscript."""
+        """Activate finish mode — crossfade from funscript to pattern."""
         if not self._finish_armed:
             return
         self._finish_pattern = self.pattern
         self._finish_active = True
+        self._finish_ramping_in = True
+        self._finish_ramp_start = time.time()
+        self._finish_ramp_out = False
         # Snapshot extra axes before overlay
         self._snapshot_extra_axes()
         self._pattern_controls_extra = True
@@ -240,13 +314,14 @@ class ThreephaseMotionGenerator(QtCore.QObject):
         logger.info(f"Finish activated: {self._finish_pattern.name()}")
 
     def deactivate_finish(self):
-        """Deactivate finish mode — return to funscript."""
+        """Deactivate finish mode — crossfade back to funscript."""
         if self._finish_active:
-            self._release_extra_axes()
             self._finish_active = False
-            self._finish_pattern = None
+            self._finish_ramping_in = False
+            self._finish_ramp_start = time.time()
+            self._finish_ramp_out = True
             self.finish_state_changed.emit(False)
-            logger.info("Finish deactivated")
+            logger.info("Finish deactivating (ramping out)")
 
     def is_finish_active(self) -> bool:
         return self._finish_active

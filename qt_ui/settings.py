@@ -200,6 +200,16 @@ class DictSetting(Setting):
 
 pattern_enabled = DictSetting("patterns/enabled", {})
 
+# Patterns menu persistent settings
+patterns_global_hotkeys = Setting('patterns/global_hotkeys', False, bool)
+patterns_category = Setting('patterns/category', 'manual', str)
+patterns_axis_volume = Setting('patterns/axis_volume', True, bool)
+patterns_axis_pulse_frequency = Setting('patterns/axis_pulse_frequency', True, bool)
+patterns_axis_pulse_width = Setting('patterns/axis_pulse_width', True, bool)
+patterns_axis_carrier_frequency = Setting('patterns/axis_carrier_frequency', False, bool)
+patterns_finish_armed = Setting('patterns/finish_armed', False, bool)
+patterns_loop_speed = Setting('patterns/loop_speed', 1.0, float)
+
 # Auto-derive pulse parameters from motion data (inspired by edger477's funscript-tools)
 pulse_auto_derive_enabled = Setting('pulse_auto_derive/enabled', False, bool)
 pulse_auto_derive_speed_window = Setting('pulse_auto_derive/speed_window', 5.0, float)

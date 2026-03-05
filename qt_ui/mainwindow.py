@@ -310,6 +310,7 @@ class Window(QMainWindow, Ui_MainWindow):
 
         # ----- Patterns menu -----
         self._setup_patterns_menu()
+        self._restore_pattern_settings()
 
         # ----- Arm Finish button (above Start/Stop in toolbar) -----
         self._setup_finish_button()
@@ -755,7 +756,7 @@ class Window(QMainWindow, Ui_MainWindow):
         self._pattern_category_group.setExclusive(True)
 
         # Built-in categories (always present)
-        builtin_cats = ['manual', 'mathematical', 'oscillation']
+        builtin_cats = ['manual', 'mathematical', 'basic', 'complex', 'experimental', 'oscillation']
         yaml_cats = []
 
         all_cats = get_all_categories()
@@ -809,6 +810,30 @@ class Window(QMainWindow, Ui_MainWindow):
                 lambda checked, an=axis_name: self._toggle_axis_control(an, checked))
             self._axis_toggle_actions[axis_name] = action
 
+        # Separator before loop speed
+        self._loop_speed_separator = self.menuPatterns.addSeparator()
+        self._loop_speed_separator.setVisible(False)
+
+        # Loop Speed spinbox (visible when YAML category active)
+        from PySide6.QtWidgets import QWidgetAction, QWidget, QHBoxLayout, QLabel, QDoubleSpinBox as QDSpinBox
+        loop_speed_widget = QWidget()
+        loop_speed_layout = QHBoxLayout(loop_speed_widget)
+        loop_speed_layout.setContentsMargins(20, 2, 10, 2)
+        loop_speed_label = QLabel("Loop Speed:")
+        self._loop_speed_spinbox = QDSpinBox()
+        self._loop_speed_spinbox.setRange(0.1, 10.0)
+        self._loop_speed_spinbox.setSingleStep(0.1)
+        self._loop_speed_spinbox.setDecimals(1)
+        self._loop_speed_spinbox.setValue(qt_ui.settings.patterns_loop_speed.get())
+        self._loop_speed_spinbox.setSuffix("x")
+        loop_speed_layout.addWidget(loop_speed_label)
+        loop_speed_layout.addWidget(self._loop_speed_spinbox)
+        self._loop_speed_action = QWidgetAction(self)
+        self._loop_speed_action.setDefaultWidget(loop_speed_widget)
+        self._loop_speed_action.setVisible(False)
+        self.menuPatterns.addAction(self._loop_speed_action)
+        self._loop_speed_spinbox.valueChanged.connect(self._on_loop_speed_changed)
+
         # Separator before global hotkeys toggle
         self.menuPatterns.addSeparator()
 
@@ -823,16 +848,58 @@ class Window(QMainWindow, Ui_MainWindow):
         self._global_hotkey_action.triggered.connect(self._toggle_global_hotkeys)
         self.menuPatterns.addAction(self._global_hotkey_action)
 
+    def _restore_pattern_settings(self):
+        """Restore persisted Patterns menu settings from restim.ini."""
+        # Restore category selection
+        saved_cat = qt_ui.settings.patterns_category.get()
+        if saved_cat:
+            for action in self._pattern_category_group.actions():
+                if action.text().lower() == saved_cat.lower() or action.text() == saved_cat:
+                    action.setChecked(True)
+                    self._select_pattern_category(saved_cat)
+                    break
+
+        # Restore axis toggles
+        axis_settings = {
+            'volume': qt_ui.settings.patterns_axis_volume,
+            'pulse_frequency': qt_ui.settings.patterns_axis_pulse_frequency,
+            'pulse_width': qt_ui.settings.patterns_axis_pulse_width,
+            'carrier_frequency': qt_ui.settings.patterns_axis_carrier_frequency,
+        }
+        for axis_name, setting in axis_settings.items():
+            enabled = setting.get()
+            self.motion_3.set_extra_axis_enabled(axis_name, enabled)
+            if axis_name in self._axis_toggle_actions:
+                self._axis_toggle_actions[axis_name].setChecked(enabled)
+
+        # Restore finish armed state
+        if qt_ui.settings.patterns_finish_armed.get():
+            self.actionArmFinish.setChecked(True)
+            self._on_arm_finish_toggled(True)
+
+        # Restore global hotkeys
+        if qt_ui.settings.patterns_global_hotkeys.get() and self._global_hotkey_action.isEnabled():
+            self._global_hotkey_action.setChecked(True)
+            self._global_hotkeys.start()
+
+        # Restore loop speed
+        speed = qt_ui.settings.patterns_loop_speed.get()
+        self.motion_3.set_loop_speed(speed)
+        self._loop_speed_spinbox.setValue(speed)
+
     def _select_pattern_category(self, category: str):
         """Called when user selects a pattern category from the Patterns menu."""
         self._current_pattern_category = category
+        qt_ui.settings.patterns_category.set(category)
         self.refresh_pattern_combobox()
 
         # Show/hide axis toggles based on whether this is a YAML category
-        is_yaml = category.lower() not in ('manual', 'mathematical', 'oscillation')
+        is_yaml = self._is_yaml_category(category)
         self._axis_toggle_separator.setVisible(is_yaml)
         for action in self._axis_toggle_actions.values():
             action.setVisible(is_yaml)
+        self._loop_speed_separator.setVisible(is_yaml)
+        self._loop_speed_action.setVisible(is_yaml)
 
         # Disable pattern dropdown when funscripts are loaded (unless finish mode)
         self._update_pattern_interaction_state()
@@ -840,11 +907,29 @@ class Window(QMainWindow, Ui_MainWindow):
     def _toggle_axis_control(self, axis_name: str, enabled: bool):
         """Toggle whether a pattern is allowed to control this axis."""
         self.motion_3.set_extra_axis_enabled(axis_name, enabled)
+        # Persist
+        axis_settings = {
+            'volume': qt_ui.settings.patterns_axis_volume,
+            'pulse_frequency': qt_ui.settings.patterns_axis_pulse_frequency,
+            'pulse_width': qt_ui.settings.patterns_axis_pulse_width,
+            'carrier_frequency': qt_ui.settings.patterns_axis_carrier_frequency,
+        }
+        if axis_name in axis_settings:
+            axis_settings[axis_name].set(enabled)
+
+    def _on_loop_speed_changed(self, value: float):
+        """Update motion generator loop speed and persist."""
+        self.motion_3.set_loop_speed(value)
+        qt_ui.settings.patterns_loop_speed.set(value)
+
+    def _is_yaml_category(self, category: str) -> bool:
+        builtin = {'manual', 'mathematical', 'basic', 'complex', 'experimental', 'oscillation'}
+        return category.lower() not in builtin
 
     def _is_yaml_category_active(self) -> bool:
         """Check if the currently selected pattern category is YAML-based."""
         cat = getattr(self, '_current_pattern_category', 'manual')
-        return cat.lower() not in ('manual', 'mathematical', 'oscillation')
+        return self._is_yaml_category(cat)
 
     # ------------------------------------------------------------------
     # Arm Finish button
@@ -865,6 +950,7 @@ class Window(QMainWindow, Ui_MainWindow):
 
     def _on_arm_finish_toggled(self, checked):
         self.motion_3.arm_finish(checked)
+        qt_ui.settings.patterns_finish_armed.set(checked)
         if checked:
             self.actionArmFinish.setText("Finish\nArmed")
         else:
@@ -874,10 +960,15 @@ class Window(QMainWindow, Ui_MainWindow):
         """Update UI when finish mode activates/deactivates."""
         if active:
             self.actionArmFinish.setText("Finish\nACTIVE")
+            pattern_name = getattr(self.motion_3, '_finish_pattern', None)
+            pattern_name = pattern_name.name() if pattern_name else 'pattern'
+            self.statusBar().showMessage(f"Finish ACTIVE — {pattern_name}")
         elif self.motion_3.is_finish_armed():
             self.actionArmFinish.setText("Finish\nArmed")
+            self.statusBar().showMessage("Finish deactivated — returning to funscript", 3000)
         else:
             self.actionArmFinish.setText("Arm\nFinish")
+            self.statusBar().clearMessage()
 
     # ------------------------------------------------------------------
     # Spacebar / middle-click long-press for Finish
@@ -933,6 +1024,7 @@ class Window(QMainWindow, Ui_MainWindow):
 
     def _toggle_global_hotkeys(self, checked: bool):
         """Toggle global hotkey listener on/off from Patterns menu."""
+        qt_ui.settings.patterns_global_hotkeys.set(checked)
         if checked:
             self._global_hotkeys.start()
         else:
