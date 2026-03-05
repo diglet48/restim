@@ -288,6 +288,12 @@ class Window(QMainWindow, Ui_MainWindow):
 
         gamma_mode = qt_ui.settings.fourphase_gamma_mode.get()
 
+        self.action3DAxisStatic = QAction("Static (planar, gamma=0)", self)
+        self.action3DAxisStatic.setCheckable(True)
+        self.action3DAxisStatic.setChecked(gamma_mode not in ('speed', 'position', 'cycle'))
+        self.actionGroup3DAxis.addAction(self.action3DAxisStatic)
+        self.menu3DAxis.addAction(self.action3DAxisStatic)
+
         self.action3DAxisSpeed = QAction("Speed-derived", self)
         self.action3DAxisSpeed.setCheckable(True)
         self.action3DAxisSpeed.setChecked(gamma_mode == 'speed')
@@ -311,6 +317,7 @@ class Window(QMainWindow, Ui_MainWindow):
         info_action.setEnabled(False)
         self.menu3DAxis.addAction(info_action)
 
+        self.action3DAxisStatic.triggered.connect(lambda: self._set_gamma_mode('static'))
         self.action3DAxisSpeed.triggered.connect(lambda: self._set_gamma_mode('speed'))
         self.action3DAxisPosition.triggered.connect(lambda: self._set_gamma_mode('position'))
         self.action3DAxisCycle.triggered.connect(lambda: self._set_gamma_mode('cycle'))
