@@ -170,12 +170,17 @@ class Window(QMainWindow, Ui_MainWindow):
         self.motion_4.position_updated.connect(self.graphicsView_fourphase_3d.set_electrode_intensities)
         self.graphicsView_fourphase.set_sensor_widget(self.page_sensors)
 
-        # TODO: implement details for 4-phase
+        # 3-phase details tab
         self.tab_details.set_axis(
             self.alpha,
             self.beta,
             self.tab_threephase.calibrate_params,
             self.tab_threephase.transform_params,
+        )
+        # 4-phase details tab
+        self.tab_details_fourphase.set_intensity_axes(
+            self.intensity_a, self.intensity_b,
+            self.intensity_c, self.intensity_d,
         )
         # self.tab_details.set_config_manager(self.threephase_parameters)
 
@@ -464,6 +469,7 @@ class Window(QMainWindow, Ui_MainWindow):
                     self.tab_volume,
                     self.tab_vibrate,
                     self.tab_details,
+                    self.tab_details_fourphase,
                     self.tab_a_b_testing,
                     self.tab_neostim}
 
@@ -483,7 +489,7 @@ class Window(QMainWindow, Ui_MainWindow):
             visible |= {self.tab_pulse_settings}
             visible -= {self.tab_vibrate}
         if config.device_type == DeviceType.FOCSTIM_FOUR_PHASE:
-            visible |= {self.tab_pulse_settings, self.tab_fourphase}
+            visible |= {self.tab_pulse_settings, self.tab_fourphase, self.tab_details_fourphase}
             visible -= {self.tab_vibrate, self.tab_threephase, self.tab_details}
         if config.device_type == DeviceType.NEOSTIM_THREE_PHASE:
             visible |= {self.tab_neostim}
@@ -593,6 +599,8 @@ class Window(QMainWindow, Ui_MainWindow):
                 output_device.new_as5311_sensor_data.connect(self.page_sensors.new_as5311_sensor_data)
                 output_device.new_imu_sensor_data.connect(self.page_sensors.new_imu_sensor_data)
                 output_device.new_pressure_sensor_data.connect(self.page_sensors.new_pressure_sensor_data)
+                output_device.new_currents_data.connect(self.tab_details_fourphase.update_currents)
+                output_device.new_model_estimation_data.connect(self.tab_details_fourphase.update_impedance)
                 algorithm.sensor_node = self.page_sensors
 
 

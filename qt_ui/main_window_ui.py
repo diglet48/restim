@@ -32,6 +32,7 @@ from qt_ui.three_phase_settings_widget import ThreePhaseSettingsWidget
 from qt_ui.vibration_settings_widget import VibrationSettingsWidget
 from qt_ui.volume_control_widget import VolumeControlWidget
 from qt_ui.waveform_details_widget import WaveformDetailsWidget
+from qt_ui.fourphase_details_widget import FourPhaseDetailsWidget
 from qt_ui.widgets.fourphase_widget_individual_electrodes import FourphaseWidgetIndividualElectrodes
 from qt_ui.widgets.threephase_widget import ThreephaseWidgetAlphaBeta
 from qt_ui.widgets.volume_widget import VolumeWidget
@@ -232,6 +233,9 @@ class Ui_MainWindow(object):
         self.tab_details = WaveformDetailsWidget()
         self.tab_details.setObjectName(u"tab_details")
         self.tabWidget.addTab(self.tab_details, "")
+        self.tab_details_fourphase = FourPhaseDetailsWidget()
+        self.tab_details_fourphase.setObjectName(u"tab_details_fourphase")
+        self.tabWidget.addTab(self.tab_details_fourphase, "")
 
         self.horizontalLayout_2.addWidget(self.tabWidget)
 
@@ -336,6 +340,7 @@ class Ui_MainWindow(object):
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_volume), QCoreApplication.translate("MainWindow", u"Volume", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_vibrate), QCoreApplication.translate("MainWindow", u"Vibration", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_details), QCoreApplication.translate("MainWindow", u"Details", None))
+        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_details_fourphase), QCoreApplication.translate("MainWindow", u"Details", None))
         self.menuSetup.setTitle(QCoreApplication.translate("MainWindow", u"Setup", None))
         self.menuTools.setTitle(QCoreApplication.translate("MainWindow", u"Tools", None))
         self.menuHelp.setTitle(QCoreApplication.translate("MainWindow", u"Help", None))

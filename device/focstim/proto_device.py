@@ -403,6 +403,11 @@ class FOCStimProtoDevice(QObject, OutputDevice):
                 power_total=notif.output_power,
                 power_skin=notif.output_power_skin,
             )
+        self.new_currents_data.emit(
+            notif.rms_a, notif.rms_b, notif.rms_c, notif.rms_d,
+            notif.peak_a, notif.peak_b, notif.peak_c, notif.peak_d,
+            notif.output_power, notif.output_power_skin, notif.peak_cmd,
+        )
 
     def handle_notification_model_estimation(self, notif: NotificationModelEstimation):
         if self.teleplot:
@@ -420,6 +425,12 @@ class FOCStimProtoDevice(QObject, OutputDevice):
                 angle_c=np.angle(c),
                 angle_d=np.angle(d),
             )
+        self.new_model_estimation_data.emit(
+            notif.resistance_a, notif.reluctance_a,
+            notif.resistance_b, notif.reluctance_b,
+            notif.resistance_c, notif.reluctance_c,
+            notif.resistance_d, notif.reluctance_d,
+        )
 
 
     def handle_notification_system_stats(self, notif: NotificationSystemStats):
@@ -501,3 +512,8 @@ class FOCStimProtoDevice(QObject, OutputDevice):
     new_imu_sensor_data = Signal(IMUData)
     new_as5311_sensor_data = Signal(AS5311Data)
     new_pressure_sensor_data = Signal(PressureData)
+    new_currents_data = Signal(float, float, float, float,
+                              float, float, float, float,
+                              float, float, float)
+    new_model_estimation_data = Signal(float, float, float, float,
+                                      float, float, float, float)
