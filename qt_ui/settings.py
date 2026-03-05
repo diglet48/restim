@@ -98,8 +98,11 @@ threephase_map_to_edge_length = Setting('threephase_transform/map_to_edge_length
 threephase_map_to_edge_invert = Setting('threephase_transform/map_to_edge_invert', False, bool)
 threephase_exponent = NonPersistentSetting(0.0)
 
-# 4-phase gamma/3D axis mode: 'speed' (derive from motion speed), 'cycle' (cycle A→B→C→D)
+# 4-phase gamma/3D axis mode: 'speed' (derive from motion speed), 'cycle' (cycle A→B→C→D), 'position' (bell-curve on radius)
 fourphase_gamma_mode = Setting('fourphase/gamma_mode', 'speed', str)
+
+# Per-electrode response curve pack: 'off', 'edger_default', 'crossover', 'emphasis_cd'
+fourphase_electrode_curves = Setting('fourphase/electrode_curves', 'off', str)
 
 fourphase_calibration_a = Setting('calibration_four/a', 0.0, float)
 fourphase_calibration_b = Setting('calibration_four/b', 0.0, float)

@@ -125,3 +125,75 @@ def constrain_4p_amplitudes(a, b, c, d):
             pass # unreachable ????
 
     return vec
+
+# ---------------------------------------------------------------------------
+# Per-electrode response curves (inspired by edger477/funscript-tools)
+# ---------------------------------------------------------------------------
+
+# Preset curve libraries.  Each curve is a list of (input, output) control
+# points in [0, 1].  Linear interpolation between points.
+CURVE_PRESETS = {
+    'linear':   [(0.0, 0.0), (1.0, 1.0)],
+    'ease_in':  [(0.0, 0.0), (0.5, 0.2), (1.0, 1.0)],
+    'ease_out': [(0.0, 0.0), (0.5, 0.8), (1.0, 1.0)],
+    'bell':     [(0.0, 0.0), (0.25, 0.3), (0.5, 1.0), (0.75, 0.3), (1.0, 0.0)],
+    's_curve':  [(0.0, 0.0), (0.2, 0.05), (0.5, 0.5), (0.8, 0.95), (1.0, 1.0)],
+    'inverted': [(0.0, 1.0), (1.0, 0.0)],
+}
+
+# Named preset packs that assign a curve to each electrode.
+ELECTRODE_CURVE_PACKS = {
+    'off':           ('linear', 'linear', 'linear', 'linear'),
+    'edger_default': ('linear', 'ease_in', 'ease_out', 'bell'),
+    'crossover':     ('ease_out', 'ease_in', 'ease_in', 'ease_out'),
+    'emphasis_cd':   ('linear', 'linear', 's_curve', 's_curve'),
+}
+
+
+def apply_response_curve(value, control_points):
+    """Map *value* (0-1) through piecewise-linear *control_points*.
+
+    Works on scalars and numpy arrays alike.
+    """
+    value = np.clip(value, 0.0, 1.0)
+    pts = sorted(control_points, key=lambda p: p[0])
+    xs = np.array([p[0] for p in pts])
+    ys = np.array([p[1] for p in pts])
+    return np.clip(np.interp(value, xs, ys), 0.0, 1.0)
+
+
+def apply_electrode_curves(e1, e2, e3, e4, curve_pack_name='off'):
+    """Apply per-electrode response curves from a named preset pack.
+
+    Returns shaped (e1, e2, e3, e4).  If *curve_pack_name* is 'off' or
+    unknown the values pass through unchanged.
+    """
+    pack = ELECTRODE_CURVE_PACKS.get(curve_pack_name)
+    if pack is None or curve_pack_name == 'off':
+        return e1, e2, e3, e4
+
+    curves = [CURVE_PRESETS.get(name, CURVE_PRESETS['linear']) for name in pack]
+    e1 = apply_response_curve(e1, curves[0])
+    e2 = apply_response_curve(e2, curves[1])
+    e3 = apply_response_curve(e3, curves[2])
+    e4 = apply_response_curve(e4, curves[3])
+    return e1, e2, e3, e4
+
+
+def position_based_gamma(a, b):
+    """Derive gamma from alpha/beta radius using a bell curve.
+
+    Gamma peaks when the position is at ~50% of maximum radius
+    (mid-stroke for circular motion), and drops to zero at the extremes
+    (resting at centre or at full extension).
+
+    Works on both scalars and arrays.
+    """
+    r = np.sqrt(np.asarray(a, dtype=float)**2 + np.asarray(b, dtype=float)**2)
+    # Normalize radius so 1.0 = sqrt(2) (the farthest corner of the unit square)
+    r_norm = np.clip(r / np.sqrt(2.0), 0.0, 1.0)
+    # Bell curve peaking at ~0.5 radius
+    gamma = apply_response_curve(r_norm, CURVE_PRESETS['bell'])
+    # Scale so peak gamma ≈ mean alpha/beta radius to keep proportions similar
+    r_mean = float(np.mean(r)) if np.size(r) > 0 else 0.1
+    return gamma * max(r_mean, 0.1)

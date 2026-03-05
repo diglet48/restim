@@ -6,7 +6,7 @@ from PySide6 import QtCore
 import qt_ui.settings
 from stim_math.axis import AbstractAxis, WriteProtectedAxis
 from stim_math.transforms import half_angle_to_full
-from stim_math.transforms_4 import abc_to_e1234
+from stim_math.transforms_4 import abc_to_e1234, apply_electrode_curves, position_based_gamma
 from qt_ui.patterns.threephase.base import get_registered_patterns, get_patterns_by_category
 from qt_ui.patterns.threephase.mouse import MousePattern
 from qt_ui.services.pattern_service import PatternControlService
@@ -363,7 +363,10 @@ class ThreephaseMotionGenerator(QtCore.QObject):
         Gamma (c) is derived in real-time based on fourphase_gamma_mode:
         - 'speed': causal speed estimate from alpha/beta delta
         - 'cycle': sinusoidal oscillation at 0.25 Hz
+        - 'position': bell-curve on alpha/beta radius (midrange = peak gamma)
         - otherwise: gamma = 0 (planar)
+
+        After the tetrahedral transform, per-electrode response curves are applied.
         """
         if not self._fourphase_enabled or not self._fourphase_axes:
             return
@@ -378,15 +381,16 @@ class ThreephaseMotionGenerator(QtCore.QObject):
         c_arr = np.array([c])
         e = abc_to_e1234(a_full, b_full, c_arr)  # shape (4, 1)
 
-        e1 = float(e[0, 0])
-        e2 = float(e[1, 0])
-        e3 = float(e[2, 0])
-        e4 = float(e[3, 0])
+        e1, e2, e3, e4 = e[0], e[1], e[2], e[3]
 
-        self._fourphase_axes['a'].add(e1)
-        self._fourphase_axes['b'].add(e2)
-        self._fourphase_axes['c'].add(e3)
-        self._fourphase_axes['d'].add(e4)
+        # Apply per-electrode response curves
+        curve_pack = qt_ui.settings.fourphase_electrode_curves.get()
+        e1, e2, e3, e4 = apply_electrode_curves(e1, e2, e3, e4, curve_pack)
+
+        self._fourphase_axes['a'].add(float(e1[0]))
+        self._fourphase_axes['b'].add(float(e2[0]))
+        self._fourphase_axes['c'].add(float(e3[0]))
+        self._fourphase_axes['d'].add(float(e4[0]))
 
     def _compute_realtime_gamma(self, a: float, b: float) -> float:
         """Compute gamma for the current alpha/beta position.
@@ -396,6 +400,13 @@ class ThreephaseMotionGenerator(QtCore.QObject):
         """
         mode = qt_ui.settings.fourphase_gamma_mode.get()
         now = time.monotonic()
+
+        if mode == 'position':
+            c = float(position_based_gamma(np.array([a]), np.array([b]))[0])
+            self._prev_alpha = a
+            self._prev_beta = b
+            self._prev_time = now
+            return c
 
         if mode == 'cycle':
             r = math.sqrt(a * a + b * b)

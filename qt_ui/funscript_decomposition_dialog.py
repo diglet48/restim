@@ -156,8 +156,23 @@ class FunscriptDecompositionDialog(QDialog, Ui_FunscriptDecompositionDialog):
         # Apply 3-phase half-angle convention before mapping to 4-phase
         a, b = stim_math.transforms.half_angle_to_full(a, b)
 
-        # Map to 4 electrode intensities using tetrahedral geometry (gamma=0)
-        e1, e2, e3, e4 = stim_math.transforms_4.abc_to_e1234(a, b, np.zeros_like(a))
+        # Derive gamma from current setting (position bell-curve / speed / cycle / planar)
+        from qt_ui import settings
+        mode = settings.fourphase_gamma_mode.get()
+        if mode == 'position':
+            from stim_math.transforms_4 import position_based_gamma
+            c = position_based_gamma(a, b)
+        else:
+            c = np.zeros_like(a)
+
+        # Map to 4 electrode intensities using tetrahedral geometry
+        e1, e2, e3, e4 = stim_math.transforms_4.abc_to_e1234(a, b, c)
+
+        # Apply per-electrode response curves
+        from stim_math.transforms_4 import apply_electrode_curves
+        curve_pack = settings.fourphase_electrode_curves.get()
+        e1, e2, e3, e4 = apply_electrode_curves(e1, e2, e3, e4, curve_pack)
+
         Funscript(timestamps, e1).save_to_path(self.funscript_path('e1'))
         Funscript(timestamps, e2).save_to_path(self.funscript_path('e2'))
         Funscript(timestamps, e3).save_to_path(self.funscript_path('e3'))

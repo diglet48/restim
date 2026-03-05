@@ -365,6 +365,7 @@ class AlgorithmFactory:
             a, b = stim_math.transforms.half_angle_to_full(a, b)
             c = self._get_gamma_values(timestamps, a, b)
             e1, e2, e3, e4 = stim_math.transforms_4.abc_to_e1234(a, b, c)
+            e1, e2, e3, e4 = self._apply_electrode_curves(e1, e2, e3, e4)
             return self._make_fourphase_axes(timestamps, e1, e2, e3, e4)
 
         # Priority 2: bare 1D funscript → 1D→2D→4-phase
@@ -382,17 +383,27 @@ class AlgorithmFactory:
             a, b = stim_math.transforms.half_angle_to_full(a, b)
             c = self._get_gamma_values(timestamps, a, b)
             e1, e2, e3, e4 = stim_math.transforms_4.abc_to_e1234(a, b, c)
+            e1, e2, e3, e4 = self._apply_electrode_curves(e1, e2, e3, e4)
             return self._make_fourphase_axes(timestamps, e1, e2, e3, e4)
 
         return None
+
+    @staticmethod
+    def _apply_electrode_curves(e1, e2, e3, e4):
+        """Apply per-electrode response curves from settings."""
+        from qt_ui import settings
+        from stim_math.transforms_4 import apply_electrode_curves
+        curve_pack = settings.fourphase_electrode_curves.get()
+        return apply_electrode_curves(e1, e2, e3, e4, curve_pack)
 
     def _get_gamma_values(self, timestamps, a, b):
         """Compute gamma axis values for 4-phase conversion.
 
         Priority:
         1. Explicit gamma funscript loaded → use it
-        2. Setting 'cycle' → cycle through tetrahedron vertices via time-based oscillation
-        3. Setting 'speed' (default) → derive from motion speed (max speed = 1.0)
+        2. Setting 'position' → bell-curve on alpha/beta radius (midrange = peak)
+        3. Setting 'cycle' → cycle through tetrahedron vertices via time-based oscillation
+        4. Setting 'speed' (default) → derive from motion speed (max speed = 1.0)
         """
         from qt_ui import settings
 
@@ -407,10 +418,15 @@ class AlgorithmFactory:
 
         mode = settings.fourphase_gamma_mode.get()
 
+        if mode == 'position':
+            # Bell-curve on radius: gamma peaks at midrange, zero at rest/extremes
+            from stim_math.transforms_4 import position_based_gamma
+            logger.info('4-phase gamma: position-based bell curve')
+            return position_based_gamma(a, b)
+
         if mode == 'cycle':
             # Cycle through all 4 tetrahedron vertices by oscillating gamma
             # This creates a sine wave in the gamma dimension so C and D alternate dominance
-            # Use the velocity setting to control cycle speed (default ~0.25 Hz)
             logger.info('4-phase gamma: cycling through vertices (sinusoidal gamma)')
             cycle_freq = 0.25  # Hz - one full cycle every 4 seconds
             c = np.sin(2 * np.pi * cycle_freq * timestamps)

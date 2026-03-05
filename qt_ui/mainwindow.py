@@ -288,13 +288,19 @@ class Window(QMainWindow, Ui_MainWindow):
 
         gamma_mode = qt_ui.settings.fourphase_gamma_mode.get()
 
-        self.action3DAxisSpeed = QAction("Speed-derived (experimental)", self)
+        self.action3DAxisSpeed = QAction("Speed-derived", self)
         self.action3DAxisSpeed.setCheckable(True)
         self.action3DAxisSpeed.setChecked(gamma_mode == 'speed')
         self.actionGroup3DAxis.addAction(self.action3DAxisSpeed)
         self.menu3DAxis.addAction(self.action3DAxisSpeed)
 
-        self.action3DAxisCycle = QAction("Cycle A→B→C→D (experimental)", self)
+        self.action3DAxisPosition = QAction("Position bell-curve", self)
+        self.action3DAxisPosition.setCheckable(True)
+        self.action3DAxisPosition.setChecked(gamma_mode == 'position')
+        self.actionGroup3DAxis.addAction(self.action3DAxisPosition)
+        self.menu3DAxis.addAction(self.action3DAxisPosition)
+
+        self.action3DAxisCycle = QAction("Cycle A→B→C→D", self)
         self.action3DAxisCycle.setCheckable(True)
         self.action3DAxisCycle.setChecked(gamma_mode == 'cycle')
         self.actionGroup3DAxis.addAction(self.action3DAxisCycle)
@@ -306,9 +312,35 @@ class Window(QMainWindow, Ui_MainWindow):
         self.menu3DAxis.addAction(info_action)
 
         self.action3DAxisSpeed.triggered.connect(lambda: self._set_gamma_mode('speed'))
+        self.action3DAxisPosition.triggered.connect(lambda: self._set_gamma_mode('position'))
         self.action3DAxisCycle.triggered.connect(lambda: self._set_gamma_mode('cycle'))
 
         self.menuSetup.addAction(self.menu3DAxis.menuAction())
+
+        # Electrode response curves submenu
+        self.menuElectrodeCurves = QMenu("Electrode curves (4-phase)", self)
+        self.actionGroupElectrodeCurves = QActionGroup(self)
+        self.actionGroupElectrodeCurves.setExclusive(True)
+
+        from stim_math.transforms_4 import ELECTRODE_CURVE_PACKS
+        current_pack = qt_ui.settings.fourphase_electrode_curves.get()
+
+        curve_labels = {
+            'off':           'Off (linear passthrough)',
+            'edger_default': 'Edger-style (linear, ease-in, ease-out, bell)',
+            'crossover':     'Crossover (ease-out, ease-in, ease-in, ease-out)',
+            'emphasis_cd':   'Emphasis C/D (linear, linear, s-curve, s-curve)',
+        }
+        for pack_name in ELECTRODE_CURVE_PACKS:
+            label = curve_labels.get(pack_name, pack_name)
+            action = QAction(label, self)
+            action.setCheckable(True)
+            action.setChecked(pack_name == current_pack)
+            self.actionGroupElectrodeCurves.addAction(action)
+            self.menuElectrodeCurves.addAction(action)
+            action.triggered.connect(lambda checked, n=pack_name: self._set_electrode_curve_pack(n))
+
+        self.menuSetup.addAction(self.menuElectrodeCurves.menuAction())
 
         self.about_dialog = qt_ui.about_dialog.AboutDialog(self)
         self.actionAbout.triggered.connect(self.open_about_dialog)
@@ -741,6 +773,10 @@ class Window(QMainWindow, Ui_MainWindow):
     def _set_gamma_mode(self, mode):
         qt_ui.settings.fourphase_gamma_mode.set(mode)
         logger.info(f'4-phase gamma mode set to: {mode}')
+
+    def _set_electrode_curve_pack(self, pack_name):
+        qt_ui.settings.fourphase_electrode_curves.set(pack_name)
+        logger.info(f'4-phase electrode curve pack set to: {pack_name}')
 
     # ------------------------------------------------------------------
     # Patterns menu

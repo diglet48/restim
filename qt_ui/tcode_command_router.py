@@ -9,7 +9,7 @@ from PySide6.QtCore import QObject, Signal
 from net.tcode import TCodeCommand
 from stim_math.axis import AbstractAxis
 from stim_math.transforms import half_angle_to_full
-from stim_math.transforms_4 import abc_to_e1234
+from stim_math.transforms_4 import abc_to_e1234, apply_electrode_curves, position_based_gamma
 
 from qt_ui.models.funscript_kit import FunscriptKitModel, FunscriptKitItem
 from qt_ui.device_wizard.axes import AxisEnum
@@ -170,10 +170,14 @@ class TCodeCommandRouter(QObject):
         Gamma (c) is derived in real-time based on the fourphase_gamma_mode setting:
         - 'speed': causal speed estimate from alpha/beta changes (running max normalization)
         - 'cycle': time-based sinusoidal oscillation (0.25 Hz)
+        - 'position': bell-curve on alpha/beta radius (midrange = peak gamma)
         - otherwise: gamma = 0 (planar)
 
-        All operations are purely pointwise — no lookahead needed.
+        After the tetrahedral transform, per-electrode response curves are applied
+        based on the fourphase_electrode_curves setting.
         """
+        from qt_ui import settings
+
         a = self.alpha.last_value()
         b = self.beta.last_value()
 
@@ -187,7 +191,13 @@ class TCodeCommandRouter(QObject):
         c_arr = np.array([c])
         e = abc_to_e1234(a_full, b_full, c_arr)  # shape (4, 1)
 
-        e1, e2, e3, e4 = float(e[0, 0]), float(e[1, 0]), float(e[2, 0]), float(e[3, 0])
+        e1, e2, e3, e4 = e[0], e[1], e[2], e[3]
+
+        # Apply per-electrode response curves
+        curve_pack = settings.fourphase_electrode_curves.get()
+        e1, e2, e3, e4 = apply_electrode_curves(e1, e2, e3, e4, curve_pack)
+
+        e1, e2, e3, e4 = float(e1[0]), float(e2[0]), float(e3[0]), float(e4[0])
 
         self.intensity_a.add(e1, interval)
         self.intensity_b.add(e2, interval)
@@ -209,6 +219,14 @@ class TCodeCommandRouter(QObject):
         mode = settings.fourphase_gamma_mode.get()
 
         now = time.monotonic()
+
+        if mode == 'position':
+            # Bell-curve on radius: gamma peaks at midrange, zero at rest/extremes
+            c = float(position_based_gamma(np.array([a]), np.array([b]))[0])
+            self._prev_alpha = a
+            self._prev_beta = b
+            self._prev_time = now
+            return c
 
         if mode == 'cycle':
             # Sinusoidal oscillation at 0.25 Hz, scaled by current alpha/beta radius
