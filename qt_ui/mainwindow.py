@@ -604,6 +604,15 @@ class Window(QMainWindow, Ui_MainWindow):
         self.motion_3.set_pattern(pattern)
         self.motion_4.set_pattern(pattern)
 
+        # In 4-phase mode, enable motion_3 position writes (including the
+        # alpha/beta → 4-phase bridge) when a 3-phase pattern is active,
+        # so that 3-phase / YAML patterns actually drive the electrodes.
+        config = DeviceConfiguration.from_settings()
+        if config.device_type == DeviceType.FOCSTIM_FOUR_PHASE:
+            is_threephase = pattern in self.motion_3.patterns
+            is_fourphase = pattern in self.motion_4.patterns
+            self.motion_3.set_write_position(is_threephase and not is_fourphase)
+
     def signal_start_stop(self):
         if self.playstate == PlayState.STOPPED:
             self.signal_start()
@@ -1177,6 +1186,10 @@ class Window(QMainWindow, Ui_MainWindow):
             # (motion_3 is still ticking for YAML extended-axis writes & alpha/beta bridge)
             self.comboBox_patternSelect.clear()
             for pattern in self.motion_4.patterns:
+                # Filter 4-phase patterns by category (they default to 'manual')
+                pat_cat = getattr(pattern, 'category', 'manual')
+                if category and pat_cat.lower() != category.lower():
+                    continue
                 self.comboBox_patternSelect.addItem(pattern.name(), pattern)
             for pattern in self.motion_3.patterns:
                 pat_cat = getattr(pattern, 'category', 'manual')

@@ -137,6 +137,9 @@ class ThreephaseMotionGenerator(QtCore.QObject):
             self.pattern = self.mouse_pattern
         elif pattern in self.patterns:
             self.pattern = pattern
+        else:
+            # Unknown pattern (e.g. 4-phase native) — fall back to mouse
+            self.pattern = self.mouse_pattern
 
         # Check if new pattern is YAML-based (has update_extended returning values)
         from qt_ui.patterns.threephase.yaml_event_pattern import YamlEventPattern
