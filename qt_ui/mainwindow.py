@@ -145,6 +145,13 @@ class Window(QMainWindow, Ui_MainWindow):
 
         # threephase view
         self.motion_3 = qt_ui.patterns.threephase_patterns.ThreephaseMotionGenerator(self, self.alpha, self.beta)
+
+        # Wire extra axes for YAML event patterns
+        self.motion_3.set_extra_axis('volume', self.tab_volume.axis_api_volume)
+        self.motion_3.set_extra_axis('pulse_frequency', self.tab_pulse_settings.axis_pulse_frequency)
+        self.motion_3.set_extra_axis('pulse_width', self.tab_pulse_settings.axis_pulse_width)
+        self.motion_3.set_extra_axis('carrier_frequency', self.tab_pulse_settings.axis_carrier_frequency)
+
         self.graphicsView_threephase.set_transform_params(self.tab_threephase.transform_params)
         self.graphicsView_threephase.mousePositionChanged.connect(self.motion_3.mouse_event)
         self.motion_3.position_updated.connect(self.graphicsView_threephase.set_cursor_position_ab)
@@ -300,6 +307,23 @@ class Window(QMainWindow, Ui_MainWindow):
 
         self.about_dialog = qt_ui.about_dialog.AboutDialog(self)
         self.actionAbout.triggered.connect(self.open_about_dialog)
+
+        # ----- Patterns menu -----
+        self._setup_patterns_menu()
+
+        # ----- Arm Finish button (above Start/Stop in toolbar) -----
+        self._setup_finish_button()
+
+        # ----- Hotkey state (foreground fallback + global) -----
+        self._space_press_time = None
+        self._space_held = False
+        self._SPACE_HOLD_MS = 800  # ms to hold for long-press
+
+        # Global hotkey listener (starts disabled)
+        from qt_ui.global_hotkeys import GlobalHotkeyListener
+        self._global_hotkeys = GlobalHotkeyListener(hold_ms=self._SPACE_HOLD_MS, parent=self)
+        self._global_hotkeys.long_press_triggered.connect(self._on_global_long_press)
+        self._global_hotkeys.short_press_triggered.connect(self._on_global_short_press)
 
         self.iconMedia = IconWithConnectionStatus(self.actionMedia.icon(), self.toolBar.widgetForAction(self.actionMedia))
         self.actionMedia.setIcon(QIcon(self.iconMedia))
@@ -712,6 +736,236 @@ class Window(QMainWindow, Ui_MainWindow):
         qt_ui.settings.fourphase_gamma_mode.set(mode)
         logger.info(f'4-phase gamma mode set to: {mode}')
 
+    # ------------------------------------------------------------------
+    # Patterns menu
+    # ------------------------------------------------------------------
+
+    def _setup_patterns_menu(self):
+        """Create the Patterns menu in the menu bar with category submenus
+        and axis-control toggles for YAML event categories."""
+        from PySide6.QtWidgets import QMenu
+        from PySide6.QtGui import QAction, QActionGroup
+        from qt_ui.patterns.threephase.base import get_all_categories, get_patterns_by_category
+
+        self.menuPatterns = QMenu("Patterns", self)
+        self.menuBar.insertMenu(self.menuHelp.menuAction(), self.menuPatterns)
+
+        # Category action group — exclusive, selecting one filters the dropdown
+        self._pattern_category_group = QActionGroup(self)
+        self._pattern_category_group.setExclusive(True)
+
+        # Built-in categories (always present)
+        builtin_cats = ['manual', 'mathematical', 'oscillation']
+        yaml_cats = []
+
+        all_cats = get_all_categories()
+        for cat in sorted(all_cats):
+            if cat.lower() in builtin_cats:
+                continue
+            yaml_cats.append(cat)
+
+        # Add built-in categories first
+        for cat in builtin_cats:
+            if cat in all_cats:
+                action = QAction(cat.capitalize(), self)
+                action.setCheckable(True)
+                if cat == 'manual':
+                    action.setChecked(True)
+                    self._current_pattern_category = cat
+                self._pattern_category_group.addAction(action)
+                self.menuPatterns.addAction(action)
+                action.triggered.connect(lambda checked, c=cat: self._select_pattern_category(c))
+
+        if yaml_cats:
+            self.menuPatterns.addSeparator()
+
+        # Add YAML categories
+        for cat in yaml_cats:
+            action = QAction(cat, self)
+            action.setCheckable(True)
+            self._pattern_category_group.addAction(action)
+            self.menuPatterns.addAction(action)
+            action.triggered.connect(lambda checked, c=cat: self._select_pattern_category(c))
+
+        # Separator before axis toggles
+        self._axis_toggle_separator = self.menuPatterns.addSeparator()
+        self._axis_toggle_separator.setVisible(False)
+
+        # Axis control toggles (only visible when YAML category selected)
+        self._axis_toggle_actions = {}
+        axis_labels = {
+            'volume': 'Volume',
+            'pulse_frequency': 'Pulse Frequency',
+            'pulse_width': 'Pulse Width',
+            'carrier_frequency': 'Carrier Frequency',
+        }
+        for axis_name, label in axis_labels.items():
+            action = QAction(f"Control: {label}", self)
+            action.setCheckable(True)
+            action.setChecked(self.motion_3.is_extra_axis_enabled(axis_name))
+            action.setVisible(False)
+            self.menuPatterns.addAction(action)
+            action.triggered.connect(
+                lambda checked, an=axis_name: self._toggle_axis_control(an, checked))
+            self._axis_toggle_actions[axis_name] = action
+
+        # Separator before global hotkeys toggle
+        self.menuPatterns.addSeparator()
+
+        # Global Hotkeys toggle
+        from qt_ui.global_hotkeys import GlobalHotkeyListener
+        self._global_hotkey_action = QAction("Global Hotkeys (space / middle-click)", self)
+        self._global_hotkey_action.setCheckable(True)
+        self._global_hotkey_action.setChecked(False)
+        self._global_hotkey_action.setEnabled(GlobalHotkeyListener.is_available())
+        if not GlobalHotkeyListener.is_available():
+            self._global_hotkey_action.setText("Global Hotkeys (pynput not installed)")
+        self._global_hotkey_action.triggered.connect(self._toggle_global_hotkeys)
+        self.menuPatterns.addAction(self._global_hotkey_action)
+
+    def _select_pattern_category(self, category: str):
+        """Called when user selects a pattern category from the Patterns menu."""
+        self._current_pattern_category = category
+        self.refresh_pattern_combobox()
+
+        # Show/hide axis toggles based on whether this is a YAML category
+        is_yaml = category.lower() not in ('manual', 'mathematical', 'oscillation')
+        self._axis_toggle_separator.setVisible(is_yaml)
+        for action in self._axis_toggle_actions.values():
+            action.setVisible(is_yaml)
+
+        # Disable pattern dropdown when funscripts are loaded (unless finish mode)
+        self._update_pattern_interaction_state()
+
+    def _toggle_axis_control(self, axis_name: str, enabled: bool):
+        """Toggle whether a pattern is allowed to control this axis."""
+        self.motion_3.set_extra_axis_enabled(axis_name, enabled)
+
+    def _is_yaml_category_active(self) -> bool:
+        """Check if the currently selected pattern category is YAML-based."""
+        cat = getattr(self, '_current_pattern_category', 'manual')
+        return cat.lower() not in ('manual', 'mathematical', 'oscillation')
+
+    # ------------------------------------------------------------------
+    # Arm Finish button
+    # ------------------------------------------------------------------
+
+    def _setup_finish_button(self):
+        """Add the 'Arm Finish' toggle button above Start/Stop in the toolbar."""
+        from PySide6.QtGui import QAction
+        self.actionArmFinish = QAction("Arm\nFinish", self)
+        self.actionArmFinish.setCheckable(True)
+        self.actionArmFinish.setChecked(False)
+        self.actionArmFinish.triggered.connect(self._on_arm_finish_toggled)
+        # Insert before the Start action in the toolbar
+        self.toolBar.insertAction(self.actionStart, self.actionArmFinish)
+
+        # Connect finish state changes to update button appearance
+        self.motion_3.finish_state_changed.connect(self._on_finish_state_changed)
+
+    def _on_arm_finish_toggled(self, checked):
+        self.motion_3.arm_finish(checked)
+        if checked:
+            self.actionArmFinish.setText("Finish\nArmed")
+        else:
+            self.actionArmFinish.setText("Arm\nFinish")
+
+    def _on_finish_state_changed(self, active):
+        """Update UI when finish mode activates/deactivates."""
+        if active:
+            self.actionArmFinish.setText("Finish\nACTIVE")
+        elif self.motion_3.is_finish_armed():
+            self.actionArmFinish.setText("Finish\nArmed")
+        else:
+            self.actionArmFinish.setText("Arm\nFinish")
+
+    # ------------------------------------------------------------------
+    # Spacebar / middle-click long-press for Finish
+    # ------------------------------------------------------------------
+
+    def keyPressEvent(self, event):
+        """Detect spacebar long-press to activate Finish mode (foreground fallback)."""
+        if self._global_hotkeys.is_running():
+            # Global listener handles it — don't double-fire
+            super().keyPressEvent(event)
+            return
+        from PySide6.QtCore import Qt
+        if event.key() == Qt.Key_Space and not event.isAutoRepeat():
+            if self.motion_3.is_finish_active():
+                self.motion_3.deactivate_finish()
+                self._space_press_time = None
+                return
+            if self.motion_3.is_finish_armed() and self.motion_3.any_scripts_loaded():
+                import time as _time
+                self._space_press_time = _time.time()
+                self._space_held = False
+                if not hasattr(self, '_space_timer'):
+                    self._space_timer = QTimer(self)
+                    self._space_timer.setSingleShot(True)
+                    self._space_timer.timeout.connect(self._space_hold_timeout)
+                self._space_timer.start(self._SPACE_HOLD_MS)
+                return
+        super().keyPressEvent(event)
+
+    def keyReleaseEvent(self, event):
+        """Cancel long-press if spacebar released too early (foreground fallback)."""
+        if self._global_hotkeys.is_running():
+            super().keyReleaseEvent(event)
+            return
+        from PySide6.QtCore import Qt
+        if event.key() == Qt.Key_Space and not event.isAutoRepeat():
+            if self._space_press_time is not None and not self._space_held:
+                self._space_press_time = None
+                if hasattr(self, '_space_timer'):
+                    self._space_timer.stop()
+        super().keyReleaseEvent(event)
+
+    def _space_hold_timeout(self):
+        """Called when spacebar has been held long enough → activate Finish."""
+        if self._space_press_time is not None:
+            self._space_held = True
+            self._space_press_time = None
+            self.motion_3.activate_finish()
+
+    # ------------------------------------------------------------------
+    # Global hotkeys (pynput)
+    # ------------------------------------------------------------------
+
+    def _toggle_global_hotkeys(self, checked: bool):
+        """Toggle global hotkey listener on/off from Patterns menu."""
+        if checked:
+            self._global_hotkeys.start()
+        else:
+            self._global_hotkeys.stop()
+
+    def _on_global_long_press(self):
+        """Global spacebar or middle-click held long enough → activate Finish."""
+        if self.motion_3.is_finish_armed() and self.motion_3.any_scripts_loaded():
+            self.motion_3.activate_finish()
+
+    def _on_global_short_press(self):
+        """Global spacebar or middle-click short tap → deactivate Finish."""
+        if self.motion_3.is_finish_active():
+            self.motion_3.deactivate_finish()
+
+    # ------------------------------------------------------------------
+    # Pattern / funscript interaction
+    # ------------------------------------------------------------------
+
+    def _update_pattern_interaction_state(self):
+        """Disable/enable pattern controls based on funscript state."""
+        has_scripts = self.motion_3.any_scripts_loaded()
+        is_yaml = self._is_yaml_category_active()
+
+        # Pattern combobox: disabled when funscripts loaded AND not in finish mode
+        # (user can still arm finish via button)
+        if has_scripts and not self.motion_3.is_finish_active():
+            self.comboBox_patternSelect.setEnabled(False)
+            self.doubleSpinBox.setEnabled(False)
+        else:
+            self.comboBox_patternSelect.setEnabled(True)
+            self.doubleSpinBox.setEnabled(True)
+
     def _connect_tcode_to_axis_controllers(self):
         """Connect TCode axis_updated signal to all AxisControllers across all settings widgets.
         This makes spinboxes update in real-time during TCode control and revert on disconnect."""
@@ -765,10 +1019,15 @@ class Window(QMainWindow, Ui_MainWindow):
     def refresh_pattern_combobox(self):
         config = DeviceConfiguration.from_settings()
         currently_selected_text = self.comboBox_patternSelect.currentText()
+        category = getattr(self, '_current_pattern_category', None)
 
         if config.device_type in (DeviceType.AUDIO_THREE_PHASE, DeviceType.NEOSTIM_THREE_PHASE, DeviceType.FOCSTIM_THREE_PHASE):
             self.comboBox_patternSelect.clear()
             for pattern in self.motion_3.patterns:
+                # Filter by selected category if set
+                pat_cat = getattr(pattern, 'category', 'manual')
+                if category and pat_cat.lower() != category.lower():
+                    continue
                 self.comboBox_patternSelect.addItem(pattern.name(), pattern)
         else:
             self.comboBox_patternSelect.clear()

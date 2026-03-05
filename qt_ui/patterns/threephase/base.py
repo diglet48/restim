@@ -62,3 +62,9 @@ class ThreephasePattern(ABC):
     @abstractmethod
     def update(self, dt: float) -> tuple[float, float]:
         pass
+
+    def update_extended(self, dt: float):
+        """Override to return a dict of extra axis values (e.g. volume,
+        pulse_frequency, pulse_width, carrier_frequency).  Default: None
+        (no extra axes).  Called by the motion generator after update()."""
+        return None

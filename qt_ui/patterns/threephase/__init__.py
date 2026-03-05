@@ -20,6 +20,10 @@ from .w_shape import WShapePattern
 from .panning1 import PanningPattern1
 from .panning2 import PanningPattern2
 
+# Load YAML event patterns (must come after built-in pattern imports)
+from .yaml_event_loader import load_all_yaml_events as _load_yaml
+_load_yaml()
+
 # Make patterns available at package level
 __all__ = [
     'MousePattern', 'CirclePattern',  # Priority patterns first
