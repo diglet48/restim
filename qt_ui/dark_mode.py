@@ -32,24 +32,24 @@ def _make_dark_palette() -> QPalette:
     for group in (QPalette.ColorGroup.Active,
                   QPalette.ColorGroup.Inactive,
                   QPalette.ColorGroup.Disabled):
-        p.setColor(group, QPalette.Window, WINDOW)
-        p.setColor(group, QPalette.WindowText, TEXT)
-        p.setColor(group, QPalette.Base, BASE)
-        p.setColor(group, QPalette.AlternateBase, ALT_BASE)
-        p.setColor(group, QPalette.ToolTipBase, TOOLTIP_BG)
-        p.setColor(group, QPalette.ToolTipText, TOOLTIP_FG)
-        p.setColor(group, QPalette.Text, TEXT)
-        p.setColor(group, QPalette.Button, BUTTON)
-        p.setColor(group, QPalette.ButtonText, TEXT)
-        p.setColor(group, QPalette.BrightText, BRIGHT)
-        p.setColor(group, QPalette.Link, LINK)
-        p.setColor(group, QPalette.Highlight, HIGHLIGHT)
-        p.setColor(group, QPalette.HighlightedText, HL_TEXT)
+        p.setColor(group, QPalette.ColorRole.Window, WINDOW)
+        p.setColor(group, QPalette.ColorRole.WindowText, TEXT)
+        p.setColor(group, QPalette.ColorRole.Base, BASE)
+        p.setColor(group, QPalette.ColorRole.AlternateBase, ALT_BASE)
+        p.setColor(group, QPalette.ColorRole.ToolTipBase, TOOLTIP_BG)
+        p.setColor(group, QPalette.ColorRole.ToolTipText, TOOLTIP_FG)
+        p.setColor(group, QPalette.ColorRole.Text, TEXT)
+        p.setColor(group, QPalette.ColorRole.Button, BUTTON)
+        p.setColor(group, QPalette.ColorRole.ButtonText, TEXT)
+        p.setColor(group, QPalette.ColorRole.BrightText, BRIGHT)
+        p.setColor(group, QPalette.ColorRole.Link, LINK)
+        p.setColor(group, QPalette.ColorRole.Highlight, HIGHLIGHT)
+        p.setColor(group, QPalette.ColorRole.HighlightedText, HL_TEXT)
 
     # disabled-specific overrides
-    p.setColor(QPalette.ColorGroup.Disabled, QPalette.WindowText, DIS_TEXT)
-    p.setColor(QPalette.ColorGroup.Disabled, QPalette.Text, DIS_TEXT)
-    p.setColor(QPalette.ColorGroup.Disabled, QPalette.ButtonText, DIS_TEXT)
+    p.setColor(QPalette.ColorGroup.Disabled, QPalette.ColorRole.WindowText, DIS_TEXT)
+    p.setColor(QPalette.ColorGroup.Disabled, QPalette.ColorRole.Text, DIS_TEXT)
+    p.setColor(QPalette.ColorGroup.Disabled, QPalette.ColorRole.ButtonText, DIS_TEXT)
 
     return p
 
