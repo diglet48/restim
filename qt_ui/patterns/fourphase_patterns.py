@@ -106,6 +106,10 @@ class FourphaseMotionGenerator(QtCore.QObject):
             self.pattern = self.mouse_pattern
         elif pattern in self.patterns:
             self.pattern = pattern
+        else:
+            # Unknown pattern (e.g. threephase/YAML) — fall back to mouse
+            # so motion_3's alpha/beta→4phase bridge drives the electrodes
+            self.pattern = self.mouse_pattern
 
     def set_scripts(self, intensity_a, intensity_b, intensity_c, intensity_d):
         self.script_a = intensity_a if isinstance(intensity_a, WriteProtectedAxis) else None

@@ -1172,6 +1172,21 @@ class Window(QMainWindow, Ui_MainWindow):
                 if category and pat_cat.lower() != category.lower():
                     continue
                 self.comboBox_patternSelect.addItem(pattern.name(), pattern)
+        elif config.device_type == DeviceType.FOCSTIM_FOUR_PHASE:
+            # Show both native 4-phase patterns AND threephase/YAML patterns
+            # (motion_3 is still ticking for YAML extended-axis writes & alpha/beta bridge)
+            self.comboBox_patternSelect.clear()
+            for pattern in self.motion_4.patterns:
+                self.comboBox_patternSelect.addItem(pattern.name(), pattern)
+            for pattern in self.motion_3.patterns:
+                pat_cat = getattr(pattern, 'category', 'manual')
+                if category and pat_cat.lower() != category.lower():
+                    continue
+                # Skip mouse pattern — motion_4 already has its own
+                from qt_ui.patterns.threephase.mouse import MousePattern as ThreephaseMousePattern
+                if isinstance(pattern, ThreephaseMousePattern):
+                    continue
+                self.comboBox_patternSelect.addItem(pattern.name(), pattern)
         else:
             self.comboBox_patternSelect.clear()
             for pattern in self.motion_4.patterns:

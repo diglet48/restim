@@ -85,7 +85,7 @@ def make_event(name, comment, pulse_rate, pulse_width,
             }
         })
 
-    # Pulse frequency
+    # Pulse frequency (from SC pulse_change/pulse_set per scene)
     steps.append({
         'operation': 'apply_linear_change',
         'axis': 'pulse_frequency',
@@ -99,7 +99,7 @@ def make_event(name, comment, pulse_rate, pulse_width,
         }
     })
 
-    # Pulse width
+    # Pulse width (from SC pulse_change/pulse_set per scene)
     steps.append({
         'operation': 'apply_linear_change',
         'axis': 'pulse_width',
@@ -577,7 +577,7 @@ def main():
     lines = content.split('\n')
     clutch_start = None
     for i, line in enumerate(lines):
-        if 'Clutch events (credit' in line and line.strip().startswith('#'):
+        if 'Clutch scene events (credit' in line and line.strip().startswith('#'):
             # Go back to the separator line
             clutch_start = i - 1
             break
