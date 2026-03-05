@@ -21,23 +21,12 @@ normalization:
 
 # Event groups
 groups:
-  - name: "General"
-    prefix: ""
-    description: "General-purpose events"
-
   - name: "MCB (credit: AquariumParrot)"
     prefix: "mcb_"
     description: "Events reverse-engineered from the Mistress and Control Box"
     match_prefixes:
-      - "mcb_submit"
       - "mcb_edge"
       - "mcb_obey"
-      - "mcb_denial"
-      - "mcb_tease"
-      - "mcb_intensity"
-      - "mcb_release"
-      - "mcb_throb"
-      - "mcb_calm"
 
   - name: "MCB Scenes (credit: AquariumParrot)"
     prefix: "mcb_goodboy_,mcb_submit_,mcb_obey_"
@@ -47,197 +36,14 @@ groups:
       - "mcb_submit_"
       - "mcb_obey_2"
 
-  - name: "Clutch (credit: AquariumParrot)"
+  - name: "Clutch Scenes (credit: AquariumParrot)"
     prefix: "clutch_"
-    description: "Events reverse-engineered from the Clutch hypno-estim project"
-
-  - name: "Test events - use with care"
-    prefix: "test_"
-    description: "Events for testing features"
+    description: "Events from the Clutch project with motion from original SC script"
 
 definitions:
-
-  # =========================================================================
-  #  General events
-  # =========================================================================
-
-  edge:
-    default_params:
-      duration_ms: 15000
-      buzz_freq: 60
-      buzz_intensity: 0.1
-      volume_boost: 0.03
-      ramp_up_ms: 250
-
-    steps:
-      - operation: apply_linear_change
-        axis: pulse_frequency
-        params:
-          start_value: 10
-          end_value: 20
-          duration_ms: $duration_ms
-          ramp_in_ms: $ramp_up_ms
-          mode: additive
-
-      - operation: apply_modulation
-        axis: volume,volume-prostate
-        params:
-          waveform: sin
-          frequency: $buzz_freq
-          amplitude: $buzz_intensity
-          duration_ms: $duration_ms
-          ramp_in_ms: $ramp_up_ms
-          max_level_offset: $volume_boost
-          mode: additive
-
-      - operation: apply_modulation
-        axis: pulse_width
-        params:
-          waveform: sin
-          frequency: 3
-          amplitude: 0.5
-          duration_ms: $duration_ms
-          ramp_in_ms: $ramp_up_ms
-          mode: additive
-
-  ruin:
-    default_params:
-      duration_ms: 30000
-      buzz_freq: 5
-      buzz_intensity: 0.1
-      volume_boost: 0.03
-      ramp_in_ms: 10000
-
-    steps:
-      - operation: apply_linear_change
-        axis: volume
-        params:
-          start_value: 0
-          end_value: 0
-          duration_ms: $duration_ms
-          ramp_in_ms: $ramp_in_ms
-          ramp_out_ms: 500
-          mode: overwrite
-
-      - operation: apply_modulation
-        axis: volume-prostate
-        params:
-          waveform: sin
-          frequency: $buzz_freq
-          amplitude: $buzz_intensity
-          duration_ms: $duration_ms
-          ramp_in_ms: $ramp_in_ms
-          max_level_offset: $volume_boost
-          mode: additive
-
-      - operation: apply_modulation
-        axis: pulse_width
-        params:
-          waveform: sin
-          frequency: 3
-          amplitude: 0.5
-          duration_ms: $duration_ms
-          ramp_in_ms: $ramp_in_ms
-          mode: additive
-
-  tranquil:
-    default_params:
-      duration_ms: 20000
-      osc_freq: 15
-      osc_amplitude: 0.5
-      max_volume: -0.01
-
-    steps:
-      - operation: apply_modulation
-        axis: volume,volume-prostate
-        params:
-          waveform: sin
-          frequency: $osc_freq
-          amplitude: $osc_amplitude
-          max_level_offset: $max_volume
-          duration_ms: $duration_ms
-          ramp_in_ms: 1000
-          ramp_out_ms: 1000
-          mode: additive
-
-  # =========================================================================
-  #  Test events
-  # =========================================================================
-
-  test_slaps:
-    default_params:
-      duration_ms: 3000
-      max_volume_increase: 0.2
-      prostate_volume_increase: 0.1
-      amplitude: 0.6
-      frequency: 1
-      ramp_ms: 500
-
-    steps:
-      - operation: apply_modulation
-        axis: volume
-        params:
-          waveform: square
-          duty_cycle: 0.05
-          frequency: $frequency
-          amplitude: $amplitude
-          max_level_offset: $max_volume_increase
-          duration_ms: $duration_ms
-          ramp_in_ms: 0
-          ramp_out_ms: 0
-          mode: additive
-
-      - operation: apply_linear_change
-        axis: volume-prostate
-        params:
-          start_value: $prostate_volume_increase
-          end_value: $prostate_volume_increase
-          duration_ms: $duration_ms
-          ramp_in_ms: $ramp_ms
-          ramp_out_ms: $ramp_ms
-          mode: additive
-
   # =========================================================================
   #  MCB events (credit: AquariumParrot)
   # =========================================================================
-
-  mcb_submit:
-    default_params:
-      duration_ms: 5000
-      pulse_rate: 21
-      pulse_width: 75
-      ramp_ms: 250
-      volume_boost: 0.01
-
-    steps:
-      - operation: apply_linear_change
-        axis: pulse_frequency
-        params:
-          start_value: $pulse_rate
-          end_value: $pulse_rate
-          duration_ms: $duration_ms
-          ramp_in_ms: $ramp_ms
-          ramp_out_ms: $ramp_ms
-          mode: overwrite
-
-      - operation: apply_linear_change
-        axis: pulse_width
-        params:
-          start_value: $pulse_width
-          end_value: $pulse_width
-          duration_ms: $duration_ms
-          ramp_in_ms: $ramp_ms
-          ramp_out_ms: $ramp_ms
-          mode: overwrite
-
-      - operation: apply_linear_change
-        axis: volume,volume-prostate
-        params:
-          start_value: $volume_boost
-          end_value: $volume_boost
-          duration_ms: $duration_ms
-          ramp_in_ms: $ramp_ms
-          mode: additive
 
   mcb_edge:
     default_params:
@@ -401,174 +207,6 @@ definitions:
           amplitude: $beta_amplitude
           max_level_offset: 0
           phase: $beta_phase
-          duration_ms: $duration_ms
-          ramp_in_ms: $ramp_ms
-          ramp_out_ms: $ramp_ms
-          mode: additive
-
-  mcb_denial:
-    default_params:
-      duration_ms: 8000
-      volume_reduction: -0.3
-      pulse_rate: 60
-      ramp_ms: 1000
-
-    steps:
-      - operation: apply_linear_change
-        axis: volume,volume-prostate
-        params:
-          start_value: $volume_reduction
-          end_value: $volume_reduction
-          duration_ms: $duration_ms
-          ramp_in_ms: $ramp_ms
-          ramp_out_ms: $ramp_ms
-          mode: additive
-
-      - operation: apply_linear_change
-        axis: pulse_frequency
-        params:
-          start_value: $pulse_rate
-          end_value: $pulse_rate
-          duration_ms: $duration_ms
-          ramp_in_ms: $ramp_ms
-          ramp_out_ms: $ramp_ms
-          mode: overwrite
-
-  mcb_tease:
-    default_params:
-      duration_ms: 12000
-      tease_freq: 5
-      tease_amplitude: 0.25
-      pulse_rate: 45
-      ramp_ms: 1000
-
-    steps:
-      - operation: apply_linear_change
-        axis: pulse_frequency
-        params:
-          start_value: $pulse_rate
-          end_value: $pulse_rate
-          duration_ms: $duration_ms
-          ramp_in_ms: $ramp_ms
-          ramp_out_ms: $ramp_ms
-          mode: overwrite
-
-      - operation: apply_modulation
-        axis: volume,volume-prostate
-        params:
-          waveform: sin
-          frequency: $tease_freq
-          amplitude: $tease_amplitude
-          max_level_offset: 0
-          duration_ms: $duration_ms
-          ramp_in_ms: $ramp_ms
-          ramp_out_ms: $ramp_ms
-          mode: additive
-
-  mcb_intensity_build:
-    default_params:
-      duration_ms: 10000
-      start_boost: 0.0
-      end_boost: 0.15
-      ramp_ms: 2000
-
-    steps:
-      - operation: apply_linear_change
-        axis: volume,volume-prostate
-        params:
-          start_value: $start_boost
-          end_value: $end_boost
-          duration_ms: $duration_ms
-          ramp_in_ms: $ramp_ms
-          ramp_out_ms: $ramp_ms
-          mode: additive
-
-  mcb_release:
-    default_params:
-      duration_ms: 8000
-      volume_drop: -0.2
-      pulse_rate: 40
-      ramp_ms: 2000
-
-    steps:
-      - operation: apply_linear_change
-        axis: volume
-        params:
-          start_value: $volume_drop
-          end_value: $volume_drop
-          duration_ms: $duration_ms
-          ramp_in_ms: $ramp_ms
-          ramp_out_ms: $ramp_ms
-          mode: additive
-
-      - operation: apply_linear_change
-        axis: pulse_frequency
-        params:
-          start_value: $pulse_rate
-          end_value: $pulse_rate
-          duration_ms: $duration_ms
-          ramp_in_ms: $ramp_ms
-          ramp_out_ms: $ramp_ms
-          mode: overwrite
-
-  mcb_throb:
-    default_params:
-      duration_ms: 10000
-      throb_freq: 3
-      throb_amplitude: 0.4
-      pulse_rate: 55
-      ramp_ms: 500
-
-    steps:
-      - operation: apply_linear_change
-        axis: pulse_frequency
-        params:
-          start_value: $pulse_rate
-          end_value: $pulse_rate
-          duration_ms: $duration_ms
-          ramp_in_ms: $ramp_ms
-          ramp_out_ms: $ramp_ms
-          mode: overwrite
-
-      - operation: apply_modulation
-        axis: volume,volume-prostate
-        params:
-          waveform: sin
-          frequency: $throb_freq
-          amplitude: $throb_amplitude
-          max_level_offset: 0
-          duration_ms: $duration_ms
-          ramp_in_ms: $ramp_ms
-          ramp_out_ms: $ramp_ms
-          mode: additive
-
-  mcb_calm:
-    default_params:
-      duration_ms: 15000
-      calm_freq: 2
-      calm_amplitude: 0.15
-      pulse_rate: 35
-      offset: -0.02
-      ramp_ms: 1000
-
-    steps:
-      - operation: apply_linear_change
-        axis: pulse_frequency
-        params:
-          start_value: $pulse_rate
-          end_value: $pulse_rate
-          duration_ms: $duration_ms
-          ramp_in_ms: $ramp_ms
-          ramp_out_ms: $ramp_ms
-          mode: overwrite
-
-      - operation: apply_modulation
-        axis: volume
-        params:
-          waveform: sin
-          frequency: $calm_freq
-          amplitude: $calm_amplitude
-          max_level_offset: $offset
           duration_ms: $duration_ms
           ramp_in_ms: $ramp_ms
           ramp_out_ms: $ramp_ms
@@ -1505,17 +1143,28 @@ definitions:
           ramp_out_ms: $ramp_ms
           mode: additive
 
+
   # =========================================================================
-  #  Clutch events (credit: AquariumParrot)
+  #  Clutch scene events (credit: AquariumParrot)
+  #  Each captures motion context from the original SuperCollider script.
+  #  3 variants per event with distinct motion patterns.
   # =========================================================================
 
-  clutch_good_slave:
+  # --- good_slave (pulse_rate->27Hz for 5s, pulse_width->45%) ---
+
+  # Intro: gentle stroke pX3/pY3, dur=4s — constant alpha bias, slow beta swing
+  clutch_good_slave_1:
     default_params:
-      duration_ms: 5000
+      duration_ms: 8000
       pulse_rate: 27
       pulse_width: 45
+      alpha_freq: 3
+      alpha_amplitude: 0.08
+      alpha_offset: 0.42
+      beta_freq: 0.125
+      beta_amplitude: 0.73
+      ramp_ms: 500
       volume_boost: 0.01
-      ramp_ms: 250
 
     steps:
       - operation: apply_linear_change
@@ -1525,6 +1174,7 @@ definitions:
           end_value: $volume_boost
           duration_ms: $duration_ms
           ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
           mode: additive
 
       - operation: apply_linear_change
@@ -1534,6 +1184,7 @@ definitions:
           end_value: $pulse_rate
           duration_ms: $duration_ms
           ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
           mode: overwrite
 
       - operation: apply_linear_change
@@ -1543,15 +1194,188 @@ definitions:
           end_value: $pulse_width
           duration_ms: $duration_ms
           ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
           mode: overwrite
 
-  clutch_reward:
+      - operation: apply_modulation
+        axis: alpha
+        params:
+          waveform: sin
+          frequency: $alpha_freq
+          amplitude: $alpha_amplitude
+          max_level_offset: $alpha_offset
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: additive
+
+      - operation: apply_modulation
+        axis: beta
+        params:
+          waveform: sin
+          frequency: $beta_freq
+          amplitude: $beta_amplitude
+          max_level_offset: 0
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: additive
+
+  # Act1: fast stroke pX3/pX3/pY3/0, dur=2s — alpha wanders, fast beta
+  clutch_good_slave_2:
     default_params:
-      duration_ms: 5000
+      duration_ms: 8000
+      pulse_rate: 27
+      pulse_width: 45
+      alpha_freq: 0.125
+      alpha_amplitude: 0.2
+      alpha_offset: 0.5
+      beta_freq: 0.25
+      beta_amplitude: 0.73
+      ramp_ms: 500
+      volume_boost: 0.01
+
+    steps:
+      - operation: apply_linear_change
+        axis: volume,volume-prostate
+        params:
+          start_value: $volume_boost
+          end_value: $volume_boost
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: additive
+
+      - operation: apply_linear_change
+        axis: pulse_frequency
+        params:
+          start_value: $pulse_rate
+          end_value: $pulse_rate
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: overwrite
+
+      - operation: apply_linear_change
+        axis: pulse_width
+        params:
+          start_value: $pulse_width
+          end_value: $pulse_width
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: overwrite
+
+      - operation: apply_modulation
+        axis: alpha
+        params:
+          waveform: sin
+          frequency: $alpha_freq
+          amplitude: $alpha_amplitude
+          max_level_offset: $alpha_offset
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: additive
+
+      - operation: apply_modulation
+        axis: beta
+        params:
+          waveform: sin
+          frequency: $beta_freq
+          amplitude: $beta_amplitude
+          max_level_offset: 0
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: additive
+
+  # Act31: sweep pY->pX3, dur=4s — diagonal motion across field
+  clutch_good_slave_3:
+    default_params:
+      duration_ms: 8000
+      pulse_rate: 27
+      pulse_width: 45
+      alpha_freq: 0.25
+      alpha_amplitude: 0.22
+      alpha_offset: 0.22
+      beta_freq: 0.125
+      beta_amplitude: 0.84
+      ramp_ms: 500
+      beta_phase: 90
+      volume_boost: 0.01
+
+    steps:
+      - operation: apply_linear_change
+        axis: volume,volume-prostate
+        params:
+          start_value: $volume_boost
+          end_value: $volume_boost
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: additive
+
+      - operation: apply_linear_change
+        axis: pulse_frequency
+        params:
+          start_value: $pulse_rate
+          end_value: $pulse_rate
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: overwrite
+
+      - operation: apply_linear_change
+        axis: pulse_width
+        params:
+          start_value: $pulse_width
+          end_value: $pulse_width
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: overwrite
+
+      - operation: apply_modulation
+        axis: alpha
+        params:
+          waveform: sin
+          frequency: $alpha_freq
+          amplitude: $alpha_amplitude
+          max_level_offset: $alpha_offset
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: additive
+
+      - operation: apply_modulation
+        axis: beta
+        params:
+          waveform: sin
+          frequency: $beta_freq
+          amplitude: $beta_amplitude
+          max_level_offset: 0
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: additive
+          phase: $beta_phase
+
+  # --- reward (pulse_rate->35Hz, pulse_width->45%) ---
+
+  # Intro: fast stroke pX3/pY3, dur=2s — quick beta swing
+  clutch_reward_1:
+    default_params:
+      duration_ms: 6000
       pulse_rate: 35
       pulse_width: 45
+      alpha_freq: 3
+      alpha_amplitude: 0.06
+      alpha_offset: 0.42
+      beta_freq: 0.25
+      beta_amplitude: 0.73
+      ramp_ms: 400
       volume_boost: 0.01
-      ramp_ms: 250
 
     steps:
       - operation: apply_linear_change
@@ -1561,6 +1385,7 @@ definitions:
           end_value: $volume_boost
           duration_ms: $duration_ms
           ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
           mode: additive
 
       - operation: apply_linear_change
@@ -1570,6 +1395,7 @@ definitions:
           end_value: $pulse_rate
           duration_ms: $duration_ms
           ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
           mode: overwrite
 
       - operation: apply_linear_change
@@ -1579,15 +1405,188 @@ definitions:
           end_value: $pulse_width
           duration_ms: $duration_ms
           ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
           mode: overwrite
 
-  clutch_higher_rate:
+      - operation: apply_modulation
+        axis: alpha
+        params:
+          waveform: sin
+          frequency: $alpha_freq
+          amplitude: $alpha_amplitude
+          max_level_offset: $alpha_offset
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: additive
+
+      - operation: apply_modulation
+        axis: beta
+        params:
+          waveform: sin
+          frequency: $beta_freq
+          amplitude: $beta_amplitude
+          max_level_offset: 0
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: additive
+
+  # Act2: slow sweep pX<->pY, dur=6s — pure beta, gentle
+  clutch_reward_2:
+    default_params:
+      duration_ms: 12000
+      pulse_rate: 35
+      pulse_width: 45
+      alpha_freq: 1
+      alpha_amplitude: 0.08
+      alpha_offset: 0
+      beta_freq: 0.083
+      beta_amplitude: 0.65
+      ramp_ms: 500
+      volume_boost: 0.01
+
+    steps:
+      - operation: apply_linear_change
+        axis: volume,volume-prostate
+        params:
+          start_value: $volume_boost
+          end_value: $volume_boost
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: additive
+
+      - operation: apply_linear_change
+        axis: pulse_frequency
+        params:
+          start_value: $pulse_rate
+          end_value: $pulse_rate
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: overwrite
+
+      - operation: apply_linear_change
+        axis: pulse_width
+        params:
+          start_value: $pulse_width
+          end_value: $pulse_width
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: overwrite
+
+      - operation: apply_modulation
+        axis: alpha
+        params:
+          waveform: sin
+          frequency: $alpha_freq
+          amplitude: $alpha_amplitude
+          max_level_offset: $alpha_offset
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: additive
+
+      - operation: apply_modulation
+        axis: beta
+        params:
+          waveform: sin
+          frequency: $beta_freq
+          amplitude: $beta_amplitude
+          max_level_offset: 0
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: additive
+
+  # Act31: slow pingpong pB->pA->pX3->pA, dur=8s — wide 4-angle traverse
+  clutch_reward_3:
+    default_params:
+      duration_ms: 16000
+      pulse_rate: 35
+      pulse_width: 45
+      alpha_freq: 0.0625
+      alpha_amplitude: 0.45
+      alpha_offset: 0
+      beta_freq: 0.125
+      beta_amplitude: 0.78
+      ramp_ms: 800
+      beta_phase: 90
+      volume_boost: 0.01
+
+    steps:
+      - operation: apply_linear_change
+        axis: volume,volume-prostate
+        params:
+          start_value: $volume_boost
+          end_value: $volume_boost
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: additive
+
+      - operation: apply_linear_change
+        axis: pulse_frequency
+        params:
+          start_value: $pulse_rate
+          end_value: $pulse_rate
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: overwrite
+
+      - operation: apply_linear_change
+        axis: pulse_width
+        params:
+          start_value: $pulse_width
+          end_value: $pulse_width
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: overwrite
+
+      - operation: apply_modulation
+        axis: alpha
+        params:
+          waveform: sin
+          frequency: $alpha_freq
+          amplitude: $alpha_amplitude
+          max_level_offset: $alpha_offset
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: additive
+
+      - operation: apply_modulation
+        axis: beta
+        params:
+          waveform: sin
+          frequency: $beta_freq
+          amplitude: $beta_amplitude
+          max_level_offset: 0
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: additive
+          phase: $beta_phase
+
+  # --- higher_rate (pulse_rate->120Hz, pulse_width->35%) ---
+
+  # Act2: stroke pX3/pY3, dur=4s — standard beta swing with high pulse rate
+  clutch_higher_rate_1:
     default_params:
       duration_ms: 8000
       pulse_rate: 120
-      pulse_width: 40
-      volume_boost: 0.01
-      ramp_ms: 500
+      pulse_width: 35
+      alpha_freq: 2
+      alpha_amplitude: 0.06
+      alpha_offset: 0.4
+      beta_freq: 0.125
+      beta_amplitude: 0.69
+      ramp_ms: 300
+      volume_boost: 0.02
 
     steps:
       - operation: apply_linear_change
@@ -1597,6 +1596,7 @@ definitions:
           end_value: $volume_boost
           duration_ms: $duration_ms
           ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
           mode: additive
 
       - operation: apply_linear_change
@@ -1606,6 +1606,7 @@ definitions:
           end_value: $pulse_rate
           duration_ms: $duration_ms
           ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
           mode: overwrite
 
       - operation: apply_linear_change
@@ -1615,15 +1616,46 @@ definitions:
           end_value: $pulse_width
           duration_ms: $duration_ms
           ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
           mode: overwrite
 
-  clutch_edge:
+      - operation: apply_modulation
+        axis: alpha
+        params:
+          waveform: sin
+          frequency: $alpha_freq
+          amplitude: $alpha_amplitude
+          max_level_offset: $alpha_offset
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: additive
+
+      - operation: apply_modulation
+        axis: beta
+        params:
+          waveform: sin
+          frequency: $beta_freq
+          amplitude: $beta_amplitude
+          max_level_offset: 0
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: additive
+
+  # Act2: stroke 0/0/pX3/pY3, dur=2s — mixed alpha reach + beta swing
+  clutch_higher_rate_2:
     default_params:
-      duration_ms: 15000
-      volume_boost: 0.01
-      buzz_freq: 65
-      buzz_intensity: 0.08
-      ramp_ms: 500
+      duration_ms: 8000
+      pulse_rate: 120
+      pulse_width: 35
+      alpha_freq: 0.125
+      alpha_amplitude: 0.25
+      alpha_offset: 0.55
+      beta_freq: 0.25
+      beta_amplitude: 0.55
+      ramp_ms: 300
+      volume_boost: 0.02
 
     steps:
       - operation: apply_linear_change
@@ -1633,143 +1665,1574 @@ definitions:
           end_value: $volume_boost
           duration_ms: $duration_ms
           ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: additive
+
+      - operation: apply_linear_change
+        axis: pulse_frequency
+        params:
+          start_value: $pulse_rate
+          end_value: $pulse_rate
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: overwrite
+
+      - operation: apply_linear_change
+        axis: pulse_width
+        params:
+          start_value: $pulse_width
+          end_value: $pulse_width
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: overwrite
+
+      - operation: apply_modulation
+        axis: alpha
+        params:
+          waveform: sin
+          frequency: $alpha_freq
+          amplitude: $alpha_amplitude
+          max_level_offset: $alpha_offset
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
           mode: additive
 
       - operation: apply_modulation
-        axis: volume,volume-prostate
+        axis: beta
         params:
           waveform: sin
-          frequency: $buzz_freq
-          amplitude: $buzz_intensity
+          frequency: $beta_freq
+          amplitude: $beta_amplitude
           max_level_offset: 0
           duration_ms: $duration_ms
           ramp_in_ms: $ramp_ms
           ramp_out_ms: $ramp_ms
           mode: additive
 
-  clutch_spike:
+  # Act31: sweep pY->pX3, dur=4s — diagonal sweep with high pulse rate
+  clutch_higher_rate_3:
     default_params:
       duration_ms: 8000
-      spike_freq: 65
-      spike_amplitude: 0.15
-      volume_level: 0.05
-      ramp_ms: 250
+      pulse_rate: 120
+      pulse_width: 35
+      alpha_freq: 0.25
+      alpha_amplitude: 0.22
+      alpha_offset: 0.22
+      beta_freq: 0.125
+      beta_amplitude: 0.84
+      ramp_ms: 300
+      beta_phase: 90
+      volume_boost: 0.02
 
     steps:
       - operation: apply_linear_change
         axis: volume,volume-prostate
         params:
-          start_value: $volume_level
-          end_value: $volume_level
+          start_value: $volume_boost
+          end_value: $volume_boost
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: additive
+
+      - operation: apply_linear_change
+        axis: pulse_frequency
+        params:
+          start_value: $pulse_rate
+          end_value: $pulse_rate
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: overwrite
+
+      - operation: apply_linear_change
+        axis: pulse_width
+        params:
+          start_value: $pulse_width
+          end_value: $pulse_width
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: overwrite
+
+      - operation: apply_modulation
+        axis: alpha
+        params:
+          waveform: sin
+          frequency: $alpha_freq
+          amplitude: $alpha_amplitude
+          max_level_offset: $alpha_offset
           duration_ms: $duration_ms
           ramp_in_ms: $ramp_ms
           ramp_out_ms: $ramp_ms
           mode: additive
 
       - operation: apply_modulation
-        axis: volume
+        axis: beta
         params:
           waveform: sin
-          frequency: $spike_freq
-          amplitude: $spike_amplitude
+          frequency: $beta_freq
+          amplitude: $beta_amplitude
+          max_level_offset: 0
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: additive
+          phase: $beta_phase
+
+  # --- edge (power boost for duration) ---
+
+  # Act1: edge over stroke pX3*3/pY3, dur=2s — rapid uneven beta
+  clutch_edge_1:
+    default_params:
+      duration_ms: 20000
+      pulse_rate: 60
+      pulse_width: 40
+      alpha_freq: 2
+      alpha_amplitude: 0.15
+      alpha_offset: 0.42
+      beta_freq: 0.125
+      beta_amplitude: 0.73
+      ramp_ms: 2000
+      beta_offset: -0.2
+      volume_boost: 0.03
+
+    steps:
+      - operation: apply_linear_change
+        axis: volume,volume-prostate
+        params:
+          start_value: $volume_boost
+          end_value: $volume_boost
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: additive
+
+      - operation: apply_linear_change
+        axis: pulse_frequency
+        params:
+          start_value: $pulse_rate
+          end_value: $pulse_rate
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: overwrite
+
+      - operation: apply_linear_change
+        axis: pulse_width
+        params:
+          start_value: $pulse_width
+          end_value: $pulse_width
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: overwrite
+
+      - operation: apply_modulation
+        axis: alpha
+        params:
+          waveform: sin
+          frequency: $alpha_freq
+          amplitude: $alpha_amplitude
+          max_level_offset: $alpha_offset
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: additive
+
+      - operation: apply_modulation
+        axis: beta
+        params:
+          waveform: sin
+          frequency: $beta_freq
+          amplitude: $beta_amplitude
+          max_level_offset: $beta_offset
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: additive
+
+  # Act2: edge over sweep pX3<->pY3, dur=2s — fast arc sweep
+  clutch_edge_2:
+    default_params:
+      duration_ms: 20000
+      pulse_rate: 60
+      pulse_width: 40
+      alpha_freq: 0.5
+      alpha_amplitude: 0.15
+      alpha_offset: 0.35
+      beta_freq: 0.25
+      beta_amplitude: 0.8
+      ramp_ms: 2000
+      volume_boost: 0.03
+
+    steps:
+      - operation: apply_linear_change
+        axis: volume,volume-prostate
+        params:
+          start_value: $volume_boost
+          end_value: $volume_boost
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: additive
+
+      - operation: apply_linear_change
+        axis: pulse_frequency
+        params:
+          start_value: $pulse_rate
+          end_value: $pulse_rate
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: overwrite
+
+      - operation: apply_linear_change
+        axis: pulse_width
+        params:
+          start_value: $pulse_width
+          end_value: $pulse_width
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: overwrite
+
+      - operation: apply_modulation
+        axis: alpha
+        params:
+          waveform: sin
+          frequency: $alpha_freq
+          amplitude: $alpha_amplitude
+          max_level_offset: $alpha_offset
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: additive
+
+      - operation: apply_modulation
+        axis: beta
+        params:
+          waveform: sin
+          frequency: $beta_freq
+          amplitude: $beta_amplitude
           max_level_offset: 0
           duration_ms: $duration_ms
           ramp_in_ms: $ramp_ms
           ramp_out_ms: $ramp_ms
           mode: additive
 
-  clutch_tantalize:
+  # Act32: edge over pingpong pB/pX/pY3/0, dur=4s — wide 4-angle sweep
+  clutch_edge_3:
     default_params:
-      duration_ms: 10000
-      tease_freq: 23
-      tease_amplitude: 0.05
-      volume_level: 0.01
-      ramp_ms: 500
+      duration_ms: 20000
+      pulse_rate: 60
+      pulse_width: 40
+      alpha_freq: 0.125
+      alpha_amplitude: 0.45
+      alpha_offset: 0.22
+      beta_freq: 0.25
+      beta_amplitude: 0.84
+      ramp_ms: 2000
+      beta_phase: 90
+      volume_boost: 0.03
 
     steps:
-      - operation: apply_modulation
+      - operation: apply_linear_change
         axis: volume,volume-prostate
         params:
-          waveform: sin
-          frequency: $tease_freq
-          amplitude: $tease_amplitude
-          max_level_offset: $volume_level
+          start_value: $volume_boost
+          end_value: $volume_boost
           duration_ms: $duration_ms
           ramp_in_ms: $ramp_ms
           ramp_out_ms: $ramp_ms
           mode: additive
 
-  clutch_tranquil:
+      - operation: apply_linear_change
+        axis: pulse_frequency
+        params:
+          start_value: $pulse_rate
+          end_value: $pulse_rate
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: overwrite
+
+      - operation: apply_linear_change
+        axis: pulse_width
+        params:
+          start_value: $pulse_width
+          end_value: $pulse_width
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: overwrite
+
+      - operation: apply_modulation
+        axis: alpha
+        params:
+          waveform: sin
+          frequency: $alpha_freq
+          amplitude: $alpha_amplitude
+          max_level_offset: $alpha_offset
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: additive
+
+      - operation: apply_modulation
+        axis: beta
+        params:
+          waveform: sin
+          frequency: $beta_freq
+          amplitude: $beta_amplitude
+          max_level_offset: 0
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: additive
+          phase: $beta_phase
+
+  # --- spike (pulsar signal overlay) ---
+
+  # Act31: spike over sweep pY->pX3 — diagonal motion with pulsar hit
+  clutch_spike_1:
     default_params:
-      duration_ms: 20000
-      calm_freq: 17
-      calm_amplitude: 0.3
-      level: -0.01
+      duration_ms: 6000
+      pulse_rate: 50
+      pulse_width: 40
+      alpha_freq: 0.25
+      alpha_amplitude: 0.22
+      alpha_offset: 0.22
+      beta_freq: 0.125
+      beta_amplitude: 0.84
+      ramp_ms: 300
+      beta_phase: 90
+      volume_boost: 0.02
+
+    steps:
+      - operation: apply_linear_change
+        axis: volume,volume-prostate
+        params:
+          start_value: $volume_boost
+          end_value: $volume_boost
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: additive
+
+      - operation: apply_linear_change
+        axis: pulse_frequency
+        params:
+          start_value: $pulse_rate
+          end_value: $pulse_rate
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: overwrite
+
+      - operation: apply_linear_change
+        axis: pulse_width
+        params:
+          start_value: $pulse_width
+          end_value: $pulse_width
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: overwrite
+
+      - operation: apply_modulation
+        axis: alpha
+        params:
+          waveform: sin
+          frequency: $alpha_freq
+          amplitude: $alpha_amplitude
+          max_level_offset: $alpha_offset
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: additive
+
+      - operation: apply_modulation
+        axis: beta
+        params:
+          waveform: sin
+          frequency: $beta_freq
+          amplitude: $beta_amplitude
+          max_level_offset: 0
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: additive
+          phase: $beta_phase
+
+  # Act31: spike over sweep pB<->pA, dur=4s — beta oscillation, alpha bias negative
+  clutch_spike_2:
+    default_params:
+      duration_ms: 6000
+      pulse_rate: 60
+      pulse_width: 40
+      alpha_freq: 1
+      alpha_amplitude: 0.05
+      alpha_offset: -0.42
+      beta_freq: 0.125
+      beta_amplitude: 0.72
+      ramp_ms: 300
+      volume_boost: 0.02
+
+    steps:
+      - operation: apply_linear_change
+        axis: volume,volume-prostate
+        params:
+          start_value: $volume_boost
+          end_value: $volume_boost
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: additive
+
+      - operation: apply_linear_change
+        axis: pulse_frequency
+        params:
+          start_value: $pulse_rate
+          end_value: $pulse_rate
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: overwrite
+
+      - operation: apply_linear_change
+        axis: pulse_width
+        params:
+          start_value: $pulse_width
+          end_value: $pulse_width
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: overwrite
+
+      - operation: apply_modulation
+        axis: alpha
+        params:
+          waveform: sin
+          frequency: $alpha_freq
+          amplitude: $alpha_amplitude
+          max_level_offset: $alpha_offset
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: additive
+
+      - operation: apply_modulation
+        axis: beta
+        params:
+          waveform: sin
+          frequency: $beta_freq
+          amplitude: $beta_amplitude
+          max_level_offset: 0
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: additive
+
+  # Act32: spike over pingpong pB/pX/pY3/0 — wide 4-angle with pulsar hit
+  clutch_spike_3:
+    default_params:
+      duration_ms: 6000
+      pulse_rate: 60
+      pulse_width: 40
+      alpha_freq: 0.125
+      alpha_amplitude: 0.45
+      alpha_offset: 0.22
+      beta_freq: 0.25
+      beta_amplitude: 0.84
+      ramp_ms: 300
+      beta_phase: 90
+      volume_boost: 0.02
+
+    steps:
+      - operation: apply_linear_change
+        axis: volume,volume-prostate
+        params:
+          start_value: $volume_boost
+          end_value: $volume_boost
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: additive
+
+      - operation: apply_linear_change
+        axis: pulse_frequency
+        params:
+          start_value: $pulse_rate
+          end_value: $pulse_rate
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: overwrite
+
+      - operation: apply_linear_change
+        axis: pulse_width
+        params:
+          start_value: $pulse_width
+          end_value: $pulse_width
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: overwrite
+
+      - operation: apply_modulation
+        axis: alpha
+        params:
+          waveform: sin
+          frequency: $alpha_freq
+          amplitude: $alpha_amplitude
+          max_level_offset: $alpha_offset
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: additive
+
+      - operation: apply_modulation
+        axis: beta
+        params:
+          waveform: sin
+          frequency: $beta_freq
+          amplitude: $beta_amplitude
+          max_level_offset: 0
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: additive
+          phase: $beta_phase
+
+  # --- tantalize (gentle edge with light spike) ---
+
+  # Act31: tantalize over slow pingpong pB/pA/pX3/pA, 60Hz — wide slow traverse
+  clutch_tantalize_1:
+    default_params:
+      duration_ms: 14000
+      pulse_rate: 60
+      pulse_width: 40
+      alpha_freq: 0.0625
+      alpha_amplitude: 0.45
+      alpha_offset: 0
+      beta_freq: 0.125
+      beta_amplitude: 0.78
+      ramp_ms: 1000
+      beta_phase: 90
+      volume_boost: 0.03
+
+    steps:
+      - operation: apply_linear_change
+        axis: volume,volume-prostate
+        params:
+          start_value: $volume_boost
+          end_value: $volume_boost
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: additive
+
+      - operation: apply_linear_change
+        axis: pulse_frequency
+        params:
+          start_value: $pulse_rate
+          end_value: $pulse_rate
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: overwrite
+
+      - operation: apply_linear_change
+        axis: pulse_width
+        params:
+          start_value: $pulse_width
+          end_value: $pulse_width
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: overwrite
+
+      - operation: apply_modulation
+        axis: alpha
+        params:
+          waveform: sin
+          frequency: $alpha_freq
+          amplitude: $alpha_amplitude
+          max_level_offset: $alpha_offset
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: additive
+
+      - operation: apply_modulation
+        axis: beta
+        params:
+          waveform: sin
+          frequency: $beta_freq
+          amplitude: $beta_amplitude
+          max_level_offset: 0
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: additive
+          phase: $beta_phase
+
+  # Act31: tantalize over slow pingpong, 35Hz — gentler pulse, same wide motion
+  clutch_tantalize_2:
+    default_params:
+      duration_ms: 14000
+      pulse_rate: 35
+      pulse_width: 40
+      alpha_freq: 0.0625
+      alpha_amplitude: 0.45
+      alpha_offset: 0
+      beta_freq: 0.125
+      beta_amplitude: 0.78
+      ramp_ms: 1000
+      beta_phase: 90
+      volume_boost: 0.03
+
+    steps:
+      - operation: apply_linear_change
+        axis: volume,volume-prostate
+        params:
+          start_value: $volume_boost
+          end_value: $volume_boost
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: additive
+
+      - operation: apply_linear_change
+        axis: pulse_frequency
+        params:
+          start_value: $pulse_rate
+          end_value: $pulse_rate
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: overwrite
+
+      - operation: apply_linear_change
+        axis: pulse_width
+        params:
+          start_value: $pulse_width
+          end_value: $pulse_width
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: overwrite
+
+      - operation: apply_modulation
+        axis: alpha
+        params:
+          waveform: sin
+          frequency: $alpha_freq
+          amplitude: $alpha_amplitude
+          max_level_offset: $alpha_offset
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: additive
+
+      - operation: apply_modulation
+        axis: beta
+        params:
+          waveform: sin
+          frequency: $beta_freq
+          amplitude: $beta_amplitude
+          max_level_offset: 0
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: additive
+          phase: $beta_phase
+
+  # Act31: tantalize over fast pingpong pB/pX/pY3/0 — rapid 4-angle
+  clutch_tantalize_3:
+    default_params:
+      duration_ms: 14000
+      pulse_rate: 60
+      pulse_width: 40
+      alpha_freq: 0.125
+      alpha_amplitude: 0.45
+      alpha_offset: 0.22
+      beta_freq: 0.25
+      beta_amplitude: 0.84
+      ramp_ms: 1000
+      beta_phase: 90
+      volume_boost: 0.03
+
+    steps:
+      - operation: apply_linear_change
+        axis: volume,volume-prostate
+        params:
+          start_value: $volume_boost
+          end_value: $volume_boost
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: additive
+
+      - operation: apply_linear_change
+        axis: pulse_frequency
+        params:
+          start_value: $pulse_rate
+          end_value: $pulse_rate
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: overwrite
+
+      - operation: apply_linear_change
+        axis: pulse_width
+        params:
+          start_value: $pulse_width
+          end_value: $pulse_width
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: overwrite
+
+      - operation: apply_modulation
+        axis: alpha
+        params:
+          waveform: sin
+          frequency: $alpha_freq
+          amplitude: $alpha_amplitude
+          max_level_offset: $alpha_offset
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: additive
+
+      - operation: apply_modulation
+        axis: beta
+        params:
+          waveform: sin
+          frequency: $beta_freq
+          amplitude: $beta_amplitude
+          max_level_offset: 0
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: additive
+          phase: $beta_phase
+
+  # --- tranquil (restful moment, low pulse rate) ---
+
+  # Gentle sweep pX<->pY — slow pure beta oscillation, restful
+  clutch_tranquil_1:
+    default_params:
+      duration_ms: 16000
+      pulse_rate: 15
+      pulse_width: 45
+      alpha_freq: 0.5
+      alpha_amplitude: 0.05
+      alpha_offset: 0
+      beta_freq: 0.083
+      beta_amplitude: 0.55
       ramp_ms: 1000
 
     steps:
-      - operation: apply_modulation
-        axis: volume,volume-prostate
-        params:
-          waveform: sin
-          frequency: $calm_freq
-          amplitude: $calm_amplitude
-          max_level_offset: $level
-          duration_ms: $duration_ms
-          ramp_in_ms: $ramp_ms
-          ramp_out_ms: $ramp_ms
-          mode: additive
-
-  clutch_freq_shift_up:
-    default_params:
-      duration_ms: 5000
-      freq_shift: 50
-      ramp_ms: 250
-
-    steps:
       - operation: apply_linear_change
-        axis: frequency
+        axis: pulse_frequency
         params:
-          start_value: $freq_shift
-          end_value: $freq_shift
+          start_value: $pulse_rate
+          end_value: $pulse_rate
           duration_ms: $duration_ms
           ramp_in_ms: $ramp_ms
           ramp_out_ms: $ramp_ms
-          mode: additive
+          mode: overwrite
 
-  clutch_freq_shift_down:
-    default_params:
-      duration_ms: 5000
-      freq_shift: -50
-      ramp_ms: 250
-
-    steps:
       - operation: apply_linear_change
-        axis: frequency
-        params:
-          start_value: $freq_shift
-          end_value: $freq_shift
-          duration_ms: $duration_ms
-          ramp_in_ms: $ramp_ms
-          ramp_out_ms: $ramp_ms
-          mode: additive
-
-  clutch_pulse_wobble:
-    default_params:
-      duration_ms: 10000
-      wobble_freq: 3
-      wobble_amplitude: 5
-      ramp_ms: 500
-
-    steps:
-      - operation: apply_modulation
         axis: pulse_width
         params:
+          start_value: $pulse_width
+          end_value: $pulse_width
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: overwrite
+
+      - operation: apply_modulation
+        axis: alpha
+        params:
           waveform: sin
-          frequency: $wobble_freq
-          amplitude: $wobble_amplitude
+          frequency: $alpha_freq
+          amplitude: $alpha_amplitude
+          max_level_offset: $alpha_offset
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: additive
+
+      - operation: apply_modulation
+        axis: beta
+        params:
+          waveform: sin
+          frequency: $beta_freq
+          amplitude: $beta_amplitude
           max_level_offset: 0
           duration_ms: $duration_ms
           ramp_in_ms: $ramp_ms
           ramp_out_ms: $ramp_ms
           mode: additive
+
+  # Gentle stroke pX3/pY3 — barely moving, subtle alpha bias
+  clutch_tranquil_2:
+    default_params:
+      duration_ms: 16000
+      pulse_rate: 15
+      pulse_width: 45
+      alpha_freq: 1
+      alpha_amplitude: 0.04
+      alpha_offset: 0.3
+      beta_freq: 0.0625
+      beta_amplitude: 0.5
+      ramp_ms: 1000
+
+    steps:
+      - operation: apply_linear_change
+        axis: pulse_frequency
+        params:
+          start_value: $pulse_rate
+          end_value: $pulse_rate
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: overwrite
+
+      - operation: apply_linear_change
+        axis: pulse_width
+        params:
+          start_value: $pulse_width
+          end_value: $pulse_width
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: overwrite
+
+      - operation: apply_modulation
+        axis: alpha
+        params:
+          waveform: sin
+          frequency: $alpha_freq
+          amplitude: $alpha_amplitude
+          max_level_offset: $alpha_offset
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: additive
+
+      - operation: apply_modulation
+        axis: beta
+        params:
+          waveform: sin
+          frequency: $beta_freq
+          amplitude: $beta_amplitude
+          max_level_offset: 0
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: additive
+
+  # Gentle sweep pY->pX3 — slow diagonal drift, peaceful
+  clutch_tranquil_3:
+    default_params:
+      duration_ms: 16000
+      pulse_rate: 15
+      pulse_width: 45
+      alpha_freq: 0.1
+      alpha_amplitude: 0.15
+      alpha_offset: 0.15
+      beta_freq: 0.083
+      beta_amplitude: 0.6
+      ramp_ms: 1000
+      beta_phase: 90
+
+    steps:
+      - operation: apply_linear_change
+        axis: pulse_frequency
+        params:
+          start_value: $pulse_rate
+          end_value: $pulse_rate
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: overwrite
+
+      - operation: apply_linear_change
+        axis: pulse_width
+        params:
+          start_value: $pulse_width
+          end_value: $pulse_width
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: overwrite
+
+      - operation: apply_modulation
+        axis: alpha
+        params:
+          waveform: sin
+          frequency: $alpha_freq
+          amplitude: $alpha_amplitude
+          max_level_offset: $alpha_offset
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: additive
+
+      - operation: apply_modulation
+        axis: beta
+        params:
+          waveform: sin
+          frequency: $beta_freq
+          amplitude: $beta_amplitude
+          max_level_offset: 0
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: additive
+          phase: $beta_phase
+
+  # --- freq_shift_up (carrier frequency shift) ---
+
+  # Freq shift up + stroke pX3/pY3 — standard beta swing
+  clutch_freq_shift_up_1:
+    default_params:
+      duration_ms: 8000
+      pulse_rate: 60
+      pulse_width: 40
+      alpha_freq: 2
+      alpha_amplitude: 0.06
+      alpha_offset: 0.42
+      beta_freq: 0.25
+      beta_amplitude: 0.73
+      ramp_ms: 400
+      volume_boost: 0.01
+
+    steps:
+      - operation: apply_linear_change
+        axis: volume,volume-prostate
+        params:
+          start_value: $volume_boost
+          end_value: $volume_boost
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: additive
+
+      - operation: apply_linear_change
+        axis: pulse_frequency
+        params:
+          start_value: $pulse_rate
+          end_value: $pulse_rate
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: overwrite
+
+      - operation: apply_linear_change
+        axis: pulse_width
+        params:
+          start_value: $pulse_width
+          end_value: $pulse_width
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: overwrite
+
+      - operation: apply_modulation
+        axis: alpha
+        params:
+          waveform: sin
+          frequency: $alpha_freq
+          amplitude: $alpha_amplitude
+          max_level_offset: $alpha_offset
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: additive
+
+      - operation: apply_modulation
+        axis: beta
+        params:
+          waveform: sin
+          frequency: $beta_freq
+          amplitude: $beta_amplitude
+          max_level_offset: 0
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: additive
+
+  # Freq shift up + sweep pB<->pA — negative alpha bias, beta swing
+  clutch_freq_shift_up_2:
+    default_params:
+      duration_ms: 8000
+      pulse_rate: 60
+      pulse_width: 40
+      alpha_freq: 1
+      alpha_amplitude: 0.05
+      alpha_offset: -0.42
+      beta_freq: 0.125
+      beta_amplitude: 0.72
+      ramp_ms: 400
+      volume_boost: 0.01
+
+    steps:
+      - operation: apply_linear_change
+        axis: volume,volume-prostate
+        params:
+          start_value: $volume_boost
+          end_value: $volume_boost
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: additive
+
+      - operation: apply_linear_change
+        axis: pulse_frequency
+        params:
+          start_value: $pulse_rate
+          end_value: $pulse_rate
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: overwrite
+
+      - operation: apply_linear_change
+        axis: pulse_width
+        params:
+          start_value: $pulse_width
+          end_value: $pulse_width
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: overwrite
+
+      - operation: apply_modulation
+        axis: alpha
+        params:
+          waveform: sin
+          frequency: $alpha_freq
+          amplitude: $alpha_amplitude
+          max_level_offset: $alpha_offset
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: additive
+
+      - operation: apply_modulation
+        axis: beta
+        params:
+          waveform: sin
+          frequency: $beta_freq
+          amplitude: $beta_amplitude
+          max_level_offset: 0
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: additive
+
+  # Freq shift up + sweep pY->pX3 — diagonal motion
+  clutch_freq_shift_up_3:
+    default_params:
+      duration_ms: 8000
+      pulse_rate: 60
+      pulse_width: 40
+      alpha_freq: 0.25
+      alpha_amplitude: 0.22
+      alpha_offset: 0.22
+      beta_freq: 0.125
+      beta_amplitude: 0.84
+      ramp_ms: 400
+      beta_phase: 90
+      volume_boost: 0.01
+
+    steps:
+      - operation: apply_linear_change
+        axis: volume,volume-prostate
+        params:
+          start_value: $volume_boost
+          end_value: $volume_boost
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: additive
+
+      - operation: apply_linear_change
+        axis: pulse_frequency
+        params:
+          start_value: $pulse_rate
+          end_value: $pulse_rate
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: overwrite
+
+      - operation: apply_linear_change
+        axis: pulse_width
+        params:
+          start_value: $pulse_width
+          end_value: $pulse_width
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: overwrite
+
+      - operation: apply_modulation
+        axis: alpha
+        params:
+          waveform: sin
+          frequency: $alpha_freq
+          amplitude: $alpha_amplitude
+          max_level_offset: $alpha_offset
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: additive
+
+      - operation: apply_modulation
+        axis: beta
+        params:
+          waveform: sin
+          frequency: $beta_freq
+          amplitude: $beta_amplitude
+          max_level_offset: 0
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: additive
+          phase: $beta_phase
+
+  # --- freq_shift_down (carrier frequency shift) ---
+
+  # Freq shift down + slow stroke pX3/pY3 — gentle beta swing
+  clutch_freq_shift_down_1:
+    default_params:
+      duration_ms: 8000
+      pulse_rate: 45
+      pulse_width: 40
+      alpha_freq: 2
+      alpha_amplitude: 0.06
+      alpha_offset: 0.42
+      beta_freq: 0.125
+      beta_amplitude: 0.73
+      ramp_ms: 400
+      volume_boost: 0.01
+
+    steps:
+      - operation: apply_linear_change
+        axis: volume,volume-prostate
+        params:
+          start_value: $volume_boost
+          end_value: $volume_boost
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: additive
+
+      - operation: apply_linear_change
+        axis: pulse_frequency
+        params:
+          start_value: $pulse_rate
+          end_value: $pulse_rate
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: overwrite
+
+      - operation: apply_linear_change
+        axis: pulse_width
+        params:
+          start_value: $pulse_width
+          end_value: $pulse_width
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: overwrite
+
+      - operation: apply_modulation
+        axis: alpha
+        params:
+          waveform: sin
+          frequency: $alpha_freq
+          amplitude: $alpha_amplitude
+          max_level_offset: $alpha_offset
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: additive
+
+      - operation: apply_modulation
+        axis: beta
+        params:
+          waveform: sin
+          frequency: $beta_freq
+          amplitude: $beta_amplitude
+          max_level_offset: 0
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: additive
+
+  # Freq shift down + pingpong pA/pB/pX3/pA — slow multi-angle
+  clutch_freq_shift_down_2:
+    default_params:
+      duration_ms: 12000
+      pulse_rate: 45
+      pulse_width: 40
+      alpha_freq: 0.0625
+      alpha_amplitude: 0.45
+      alpha_offset: 0
+      beta_freq: 0.125
+      beta_amplitude: 0.78
+      ramp_ms: 500
+      beta_phase: 90
+      volume_boost: 0.01
+
+    steps:
+      - operation: apply_linear_change
+        axis: volume,volume-prostate
+        params:
+          start_value: $volume_boost
+          end_value: $volume_boost
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: additive
+
+      - operation: apply_linear_change
+        axis: pulse_frequency
+        params:
+          start_value: $pulse_rate
+          end_value: $pulse_rate
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: overwrite
+
+      - operation: apply_linear_change
+        axis: pulse_width
+        params:
+          start_value: $pulse_width
+          end_value: $pulse_width
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: overwrite
+
+      - operation: apply_modulation
+        axis: alpha
+        params:
+          waveform: sin
+          frequency: $alpha_freq
+          amplitude: $alpha_amplitude
+          max_level_offset: $alpha_offset
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: additive
+
+      - operation: apply_modulation
+        axis: beta
+        params:
+          waveform: sin
+          frequency: $beta_freq
+          amplitude: $beta_amplitude
+          max_level_offset: 0
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: additive
+          phase: $beta_phase
+
+  # Freq shift down + sweep pX<->pY — pure beta oscillation
+  clutch_freq_shift_down_3:
+    default_params:
+      duration_ms: 12000
+      pulse_rate: 45
+      pulse_width: 40
+      alpha_freq: 1
+      alpha_amplitude: 0.08
+      alpha_offset: 0
+      beta_freq: 0.083
+      beta_amplitude: 0.65
+      ramp_ms: 500
+      volume_boost: 0.01
+
+    steps:
+      - operation: apply_linear_change
+        axis: volume,volume-prostate
+        params:
+          start_value: $volume_boost
+          end_value: $volume_boost
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: additive
+
+      - operation: apply_linear_change
+        axis: pulse_frequency
+        params:
+          start_value: $pulse_rate
+          end_value: $pulse_rate
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: overwrite
+
+      - operation: apply_linear_change
+        axis: pulse_width
+        params:
+          start_value: $pulse_width
+          end_value: $pulse_width
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: overwrite
+
+      - operation: apply_modulation
+        axis: alpha
+        params:
+          waveform: sin
+          frequency: $alpha_freq
+          amplitude: $alpha_amplitude
+          max_level_offset: $alpha_offset
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: additive
+
+      - operation: apply_modulation
+        axis: beta
+        params:
+          waveform: sin
+          frequency: $beta_freq
+          amplitude: $beta_amplitude
+          max_level_offset: 0
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: additive
+
+  # --- pulse_wobble (pulse rate modulation) ---
+
+  # Pulse wobble + stroke pX3/pY3 — medium beta swing
+  clutch_pulse_wobble_1:
+    default_params:
+      duration_ms: 8000
+      pulse_rate: 50
+      pulse_width: 40
+      alpha_freq: 2
+      alpha_amplitude: 0.08
+      alpha_offset: 0.42
+      beta_freq: 0.2
+      beta_amplitude: 0.73
+      ramp_ms: 400
+      volume_boost: 0.01
+
+    steps:
+      - operation: apply_linear_change
+        axis: volume,volume-prostate
+        params:
+          start_value: $volume_boost
+          end_value: $volume_boost
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: additive
+
+      - operation: apply_linear_change
+        axis: pulse_frequency
+        params:
+          start_value: $pulse_rate
+          end_value: $pulse_rate
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: overwrite
+
+      - operation: apply_linear_change
+        axis: pulse_width
+        params:
+          start_value: $pulse_width
+          end_value: $pulse_width
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: overwrite
+
+      - operation: apply_modulation
+        axis: alpha
+        params:
+          waveform: sin
+          frequency: $alpha_freq
+          amplitude: $alpha_amplitude
+          max_level_offset: $alpha_offset
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: additive
+
+      - operation: apply_modulation
+        axis: beta
+        params:
+          waveform: sin
+          frequency: $beta_freq
+          amplitude: $beta_amplitude
+          max_level_offset: 0
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: additive
+
+  # Pulse wobble + sweep pY->pX3 — diagonal drift
+  clutch_pulse_wobble_2:
+    default_params:
+      duration_ms: 8000
+      pulse_rate: 50
+      pulse_width: 40
+      alpha_freq: 0.25
+      alpha_amplitude: 0.22
+      alpha_offset: 0.22
+      beta_freq: 0.125
+      beta_amplitude: 0.84
+      ramp_ms: 400
+      beta_phase: 90
+      volume_boost: 0.01
+
+    steps:
+      - operation: apply_linear_change
+        axis: volume,volume-prostate
+        params:
+          start_value: $volume_boost
+          end_value: $volume_boost
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: additive
+
+      - operation: apply_linear_change
+        axis: pulse_frequency
+        params:
+          start_value: $pulse_rate
+          end_value: $pulse_rate
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: overwrite
+
+      - operation: apply_linear_change
+        axis: pulse_width
+        params:
+          start_value: $pulse_width
+          end_value: $pulse_width
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: overwrite
+
+      - operation: apply_modulation
+        axis: alpha
+        params:
+          waveform: sin
+          frequency: $alpha_freq
+          amplitude: $alpha_amplitude
+          max_level_offset: $alpha_offset
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: additive
+
+      - operation: apply_modulation
+        axis: beta
+        params:
+          waveform: sin
+          frequency: $beta_freq
+          amplitude: $beta_amplitude
+          max_level_offset: 0
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: additive
+          phase: $beta_phase
+
+  # Pulse wobble + pingpong pB/pX/pY3/0 — fast 4-angle
+  clutch_pulse_wobble_3:
+    default_params:
+      duration_ms: 8000
+      pulse_rate: 50
+      pulse_width: 40
+      alpha_freq: 0.125
+      alpha_amplitude: 0.45
+      alpha_offset: 0.22
+      beta_freq: 0.25
+      beta_amplitude: 0.84
+      ramp_ms: 400
+      beta_phase: 90
+      volume_boost: 0.01
+
+    steps:
+      - operation: apply_linear_change
+        axis: volume,volume-prostate
+        params:
+          start_value: $volume_boost
+          end_value: $volume_boost
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: additive
+
+      - operation: apply_linear_change
+        axis: pulse_frequency
+        params:
+          start_value: $pulse_rate
+          end_value: $pulse_rate
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: overwrite
+
+      - operation: apply_linear_change
+        axis: pulse_width
+        params:
+          start_value: $pulse_width
+          end_value: $pulse_width
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: overwrite
+
+      - operation: apply_modulation
+        axis: alpha
+        params:
+          waveform: sin
+          frequency: $alpha_freq
+          amplitude: $alpha_amplitude
+          max_level_offset: $alpha_offset
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: additive
+
+      - operation: apply_modulation
+        axis: beta
+        params:
+          waveform: sin
+          frequency: $beta_freq
+          amplitude: $beta_amplitude
+          max_level_offset: 0
+          duration_ms: $duration_ms
+          ramp_in_ms: $ramp_ms
+          ramp_out_ms: $ramp_ms
+          mode: additive
+          phase: $beta_phase
+
