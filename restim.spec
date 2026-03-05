@@ -1,21 +1,18 @@
 # -*- mode: python ; coding: utf-8 -*-
 
-added_files = [
-    ('resources/phase diagram bg.svg', 'resources/'),
-    ('resources/favicon.png', 'resources/')
-]
 
 a = Analysis(
     ['restim.py'],
-    pathex=[],
+    pathex=['.'],
     binaries=[],
-    datas=added_files,
+    datas=[('resources/favicon.png', 'resources/'), ('resources/phase diagram bg.svg', 'resources/'), ('event_definitions', 'qt_ui/event_definitions')],
     hiddenimports=[],
-    hookspath=[],
+    hookspath=['pyinstaller-hooks'],
     hooksconfig={},
     runtime_hooks=[],
     excludes=[],
     noarchive=False,
+    optimize=0,
 )
 pyz = PYZ(a.pure)
 
