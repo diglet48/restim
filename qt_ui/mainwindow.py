@@ -146,11 +146,16 @@ class Window(QMainWindow, Ui_MainWindow):
         # threephase view
         self.motion_3 = qt_ui.patterns.threephase_patterns.ThreephaseMotionGenerator(self, self.alpha, self.beta)
 
-        # Wire extra axes for YAML event patterns
+        # Wire extra axes for YAML event patterns (with kit limits for TCode remap)
+        kit = FunscriptKitModel.load_from_settings()
+        from qt_ui.device_wizard.axes import AxisEnum
         self.motion_3.set_extra_axis('volume', self.tab_volume.axis_api_volume)
-        self.motion_3.set_extra_axis('pulse_frequency', self.tab_pulse_settings.axis_pulse_frequency)
-        self.motion_3.set_extra_axis('pulse_width', self.tab_pulse_settings.axis_pulse_width)
-        self.motion_3.set_extra_axis('carrier_frequency', self.tab_pulse_settings.axis_carrier_frequency)
+        self.motion_3.set_extra_axis('pulse_frequency', self.tab_pulse_settings.axis_pulse_frequency,
+                                     kit.limits_for_axis(AxisEnum.PULSE_FREQUENCY))
+        self.motion_3.set_extra_axis('pulse_width', self.tab_pulse_settings.axis_pulse_width,
+                                     kit.limits_for_axis(AxisEnum.PULSE_WIDTH))
+        self.motion_3.set_extra_axis('carrier_frequency', self.tab_pulse_settings.axis_carrier_frequency,
+                                     kit.limits_for_axis(AxisEnum.CARRIER_FREQUENCY))
 
         # Wire 3-phase → 4-phase bridge (uses same gamma modes as TCode input)
         self.motion_3.set_fourphase_axes(
@@ -196,6 +201,8 @@ class Window(QMainWindow, Ui_MainWindow):
         )
         # self.tab_details.set_config_manager(self.threephase_parameters)
 
+        self.comboBox_patternSelect.setMaxVisibleItems(20)
+        self.comboBox_patternSelect.setStyleSheet("QComboBox { combobox-popup: 0; }")
         self.comboBox_patternSelect.currentIndexChanged.connect(self.pattern_selection_changed)
         self.motion_3.set_pattern(self.comboBox_patternSelect.currentText())
         self.doubleSpinBox.valueChanged.connect(self.motion_3.set_velocity)

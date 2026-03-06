@@ -27,6 +27,7 @@ class ThreephaseMotionGenerator(QtCore.QObject):
         # Extended axes that YAML event patterns can control
         # Wired from mainwindow after construction
         self.extra_axes = {}          # name → AbstractAxis
+        self._extra_axes_limits = {}  # name → (low, high) for TCode → real-unit remap
         self._extra_axes_enabled = {  # user-toggled enabled state per axis
             'volume': True,
             'pulse_frequency': True,
@@ -287,9 +288,15 @@ class ThreephaseMotionGenerator(QtCore.QObject):
     # Extended axis helpers (YAML event patterns)
     # ------------------------------------------------------------------
 
-    def set_extra_axis(self, name: str, axis: AbstractAxis):
-        """Register an axis that YAML patterns can write to."""
+    def set_extra_axis(self, name: str, axis: AbstractAxis, limits: tuple = None):
+        """Register an axis that YAML patterns can write to.
+
+        *limits* is an optional (low, high) tuple for TCode 0-1 → real-unit
+        remapping.  If not provided, values pass through as-is.
+        """
         self.extra_axes[name] = axis
+        if limits is not None:
+            self._extra_axes_limits[name] = limits
 
     def set_extra_axis_enabled(self, name: str, enabled: bool):
         """Toggle whether a specific extra axis is controlled by patterns."""
@@ -301,10 +308,13 @@ class ThreephaseMotionGenerator(QtCore.QObject):
     def _write_extended_axes(self, extended: dict):
         """Write extended axis values from a YAML pattern tick.
 
+        All values from YAML events are TCode 0-1.  They are remapped through
+        kit limits (set via set_extra_axis) before writing to axes:
+            output = clamp(tcode, 0, 1) * (high - low) + low
+
         Volume is treated additively: the event's small delta (e.g. 0.02) is
         added on top of the user's base volume level that was snapshotted when
-        the pattern started.  Other axes (pulse_frequency, pulse_width, …) are
-        written as absolute values — they fully override.
+        the pattern started.
         """
         for axis_name, value in extended.items():
             if axis_name not in self.extra_axes:
@@ -316,7 +326,14 @@ class ThreephaseMotionGenerator(QtCore.QObject):
                 base = self._extra_axes_user_values.get('volume', 0.0)
                 axis.add(max(0.0, min(1.0, base + value)))
             else:
-                axis.add(value)
+                # Remap TCode 0-1 → real units via kit limits
+                limits = self._extra_axes_limits.get(axis_name)
+                if limits:
+                    lo, hi = limits
+                    clamped = max(0.0, min(1.0, value))
+                    axis.add(clamped * (hi - lo) + lo)
+                else:
+                    axis.add(value)
             self.extra_axis_updated.emit(axis)
 
     def _snapshot_extra_axes(self):
