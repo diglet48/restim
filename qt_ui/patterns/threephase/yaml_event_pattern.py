@@ -234,6 +234,20 @@ class YamlEventPattern(ThreephasePattern):
                 resolved['duration_ms'] = resolved_event_def.duration_ms
             self._resolved_steps.append((step, resolved))
 
+        # Extract ramp for pattern-level ping-pong envelope, then zero it
+        # in step params so evaluators don't double-apply.
+        if self._resolved_steps:
+            first_p = self._resolved_steps[0][1]
+            self._ramp_in_sec = float(first_p.get('ramp_in_ms', 500)) / 1000.0
+            self._ramp_out_sec = float(first_p.get('ramp_out_ms',
+                                       first_p.get('ramp_in_ms', 500))) / 1000.0
+        else:
+            self._ramp_in_sec = 0.5
+            self._ramp_out_sec = 0.5
+        for _, step_params in self._resolved_steps:
+            step_params['ramp_in_ms'] = 0
+            step_params['ramp_out_ms'] = 0
+
         # Detect whether this event has any alpha/beta steps
         self._has_motion = False
         for step in resolved_event_def.steps:
@@ -248,6 +262,31 @@ class YamlEventPattern(ThreephasePattern):
     def name(self) -> str:
         return self.display_name
 
+    def _ping_pong_time(self) -> tuple:
+        """Compute ping-pong time and cycle envelope.
+
+        Returns (t_sec, envelope) where t_sec bounces within
+        [0, loop_duration] and envelope fades only at the cycle
+        restart (t_sec near 0), not at the turnaround (t_sec near
+        duration).
+        """
+        if self.loop_duration <= 0:
+            return (0.0, 1.0)
+        pp_period = 2.0 * self.loop_duration
+        cycle_t = self.elapsed % pp_period
+        # Mirror: forward on first half, reverse on second half
+        if cycle_t <= self.loop_duration:
+            t_sec = cycle_t
+        else:
+            t_sec = pp_period - cycle_t
+        # Ramp envelope at the restart seam (cycle_t near 0 / pp_period)
+        env = 1.0
+        if self._ramp_in_sec > 0 and cycle_t < self._ramp_in_sec:
+            env = min(env, cycle_t / self._ramp_in_sec)
+        if self._ramp_out_sec > 0 and cycle_t > pp_period - self._ramp_out_sec:
+            env = min(env, (pp_period - cycle_t) / self._ramp_out_sec)
+        return (t_sec, max(0.0, min(1.0, env)))
+
     # -- core interface ----------------------------------------------------
 
     def update(self, dt: float) -> tuple:
@@ -257,7 +296,7 @@ class YamlEventPattern(ThreephasePattern):
         produces visible movement while extended axes modulate the signal."""
         self.elapsed += dt
         # velocity is applied by the motion generator to dt already
-        t_sec = self.elapsed % self.loop_duration if self.loop_duration > 0 else 0.0
+        t_sec, envelope = self._ping_pong_time()
 
         if not self._has_motion:
             # Auto-generate circular motion driven by event envelope
@@ -267,7 +306,7 @@ class YamlEventPattern(ThreephasePattern):
             phase = 2 * math.pi * t_sec / self.loop_duration if self.loop_duration > 0 else 0.0
             alpha_val = radius * math.cos(phase)
             beta_val = radius * math.sin(phase)
-            return (alpha_val, beta_val)
+            return (alpha_val * envelope, beta_val * envelope)
 
         alpha_val = 0.0
         beta_val = 0.0
@@ -286,7 +325,7 @@ class YamlEventPattern(ThreephasePattern):
                 elif mapped == 'beta':
                     beta_val += self._eval_step(step.operation, local_t, step_duration, params, ax)
 
-        return (alpha_val, beta_val)
+        return (alpha_val * envelope, beta_val * envelope)
 
     def update_extended(self, dt: float) -> Optional[Dict[str, float]]:
         """Return dict of extra axis values for the current tick.
@@ -294,7 +333,7 @@ class YamlEventPattern(ThreephasePattern):
         if self.loop_duration <= 0:
             return None
 
-        t_sec = self.elapsed % self.loop_duration
+        t_sec, envelope = self._ping_pong_time()
 
         # accumulate per-axis
         accum: Dict[str, float] = {}
@@ -314,6 +353,11 @@ class YamlEventPattern(ThreephasePattern):
 
         if not accum:
             return None
+
+        # Apply ping-pong envelope
+        if envelope != 1.0:
+            for k in accum:
+                accum[k] *= envelope
 
         # Values are already in final units (TCode 0-1) — pass through directly.
         return accum
