@@ -48,6 +48,6 @@ class WebSocketServer(QtCore.QObject):
                 pass
 
     def clientDisconnected(self):
-        self.connections = [con for con in self.connections if con.state() == QtNetwork.QAbstractSocket.UnconnectedState]
+        self.connections = [con for con in self.connections if con.state() != QtNetwork.QAbstractSocket.SocketState.UnconnectedState]
 
     new_tcode_command = QtCore.Signal(TCodeCommand)

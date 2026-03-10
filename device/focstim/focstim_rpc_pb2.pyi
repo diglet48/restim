@@ -8,11 +8,12 @@ from typing import ClassVar as _ClassVar, Optional as _Optional, Union as _Union
 DESCRIPTOR: _descriptor.FileDescriptor
 
 class Notification(_message.Message):
-    __slots__ = ('notification_boot', 'notification_device_volume', 'notification_currents', 'notification_model_estimation', 'notification_system_stats', 'notification_signal_stats', 'notification_battery', 'notification_lsm6dsox', 'notification_pressure', 'notification_button_press', 'notification_debug_string', 'notification_debug_as5311', 'notification_debug_edging', 'notification_debug_teleplot', 'timestamp')
+    __slots__ = ('notification_boot', 'notification_device_volume', 'notification_currents', 'notification_output_resistance', 'notification_skin_resistance', 'notification_system_stats', 'notification_signal_stats', 'notification_battery', 'notification_lsm6dsox', 'notification_pressure', 'notification_button_press', 'notification_debug_string', 'notification_debug_as5311', 'notification_debug_edging', 'notification_debug_teleplot', 'timestamp')
     NOTIFICATION_BOOT_FIELD_NUMBER: _ClassVar[int]
     NOTIFICATION_DEVICE_VOLUME_FIELD_NUMBER: _ClassVar[int]
     NOTIFICATION_CURRENTS_FIELD_NUMBER: _ClassVar[int]
-    NOTIFICATION_MODEL_ESTIMATION_FIELD_NUMBER: _ClassVar[int]
+    NOTIFICATION_OUTPUT_RESISTANCE_FIELD_NUMBER: _ClassVar[int]
+    NOTIFICATION_SKIN_RESISTANCE_FIELD_NUMBER: _ClassVar[int]
     NOTIFICATION_SYSTEM_STATS_FIELD_NUMBER: _ClassVar[int]
     NOTIFICATION_SIGNAL_STATS_FIELD_NUMBER: _ClassVar[int]
     NOTIFICATION_BATTERY_FIELD_NUMBER: _ClassVar[int]
@@ -27,7 +28,8 @@ class Notification(_message.Message):
     notification_boot: _notifications_pb2.NotificationBoot
     notification_device_volume: _notifications_pb2.NotificationDeviceVolume
     notification_currents: _notifications_pb2.NotificationCurrents
-    notification_model_estimation: _notifications_pb2.NotificationModelEstimation
+    notification_output_resistance: _notifications_pb2.NotificationOutputResistance
+    notification_skin_resistance: _notifications_pb2.NotificationSkinResistance
     notification_system_stats: _notifications_pb2.NotificationSystemStats
     notification_signal_stats: _notifications_pb2.NotificationSignalStats
     notification_battery: _notifications_pb2.NotificationBattery
@@ -40,7 +42,7 @@ class Notification(_message.Message):
     notification_debug_teleplot: _notifications_pb2.NotificationDebugTeleplot
     timestamp: int
 
-    def __init__(self, notification_boot: _Optional[_Union[_notifications_pb2.NotificationBoot, _Mapping]]=..., notification_device_volume: _Optional[_Union[_notifications_pb2.NotificationDeviceVolume, _Mapping]]=..., notification_currents: _Optional[_Union[_notifications_pb2.NotificationCurrents, _Mapping]]=..., notification_model_estimation: _Optional[_Union[_notifications_pb2.NotificationModelEstimation, _Mapping]]=..., notification_system_stats: _Optional[_Union[_notifications_pb2.NotificationSystemStats, _Mapping]]=..., notification_signal_stats: _Optional[_Union[_notifications_pb2.NotificationSignalStats, _Mapping]]=..., notification_battery: _Optional[_Union[_notifications_pb2.NotificationBattery, _Mapping]]=..., notification_lsm6dsox: _Optional[_Union[_notifications_pb2.NotificationLSM6DSOX, _Mapping]]=..., notification_pressure: _Optional[_Union[_notifications_pb2.NotificationPressure, _Mapping]]=..., notification_button_press: _Optional[_Union[_notifications_pb2.NotificationButtonPress, _Mapping]]=..., notification_debug_string: _Optional[_Union[_notifications_pb2.NotificationDebugString, _Mapping]]=..., notification_debug_as5311: _Optional[_Union[_notifications_pb2.NotificationDebugAS5311, _Mapping]]=..., notification_debug_edging: _Optional[_Union[_notifications_pb2.NotificationDebugEdging, _Mapping]]=..., notification_debug_teleplot: _Optional[_Union[_notifications_pb2.NotificationDebugTeleplot, _Mapping]]=..., timestamp: _Optional[int]=...) -> None:
+    def __init__(self, notification_boot: _Optional[_Union[_notifications_pb2.NotificationBoot, _Mapping]]=..., notification_device_volume: _Optional[_Union[_notifications_pb2.NotificationDeviceVolume, _Mapping]]=..., notification_currents: _Optional[_Union[_notifications_pb2.NotificationCurrents, _Mapping]]=..., notification_output_resistance: _Optional[_Union[_notifications_pb2.NotificationOutputResistance, _Mapping]]=..., notification_skin_resistance: _Optional[_Union[_notifications_pb2.NotificationSkinResistance, _Mapping]]=..., notification_system_stats: _Optional[_Union[_notifications_pb2.NotificationSystemStats, _Mapping]]=..., notification_signal_stats: _Optional[_Union[_notifications_pb2.NotificationSignalStats, _Mapping]]=..., notification_battery: _Optional[_Union[_notifications_pb2.NotificationBattery, _Mapping]]=..., notification_lsm6dsox: _Optional[_Union[_notifications_pb2.NotificationLSM6DSOX, _Mapping]]=..., notification_pressure: _Optional[_Union[_notifications_pb2.NotificationPressure, _Mapping]]=..., notification_button_press: _Optional[_Union[_notifications_pb2.NotificationButtonPress, _Mapping]]=..., notification_debug_string: _Optional[_Union[_notifications_pb2.NotificationDebugString, _Mapping]]=..., notification_debug_as5311: _Optional[_Union[_notifications_pb2.NotificationDebugAS5311, _Mapping]]=..., notification_debug_edging: _Optional[_Union[_notifications_pb2.NotificationDebugEdging, _Mapping]]=..., notification_debug_teleplot: _Optional[_Union[_notifications_pb2.NotificationDebugTeleplot, _Mapping]]=..., timestamp: _Optional[int]=...) -> None:
         ...
 
 class Request(_message.Message):

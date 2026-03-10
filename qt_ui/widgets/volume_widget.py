@@ -48,7 +48,6 @@ class VolumeWidget(QtWidgets.QProgressBar):
             self.update()  # Trigger repaint
 
     def mousePressEvent(self, event):
-        print(event)
         if event.button() == Qt.MouseButton.LeftButton and self._is_near_master_line(event.position()):
             self._dragging_master_volume = True
             self._set_master_from_pos(event.position())

@@ -15,7 +15,7 @@ from PySide6.QtNetwork import QTcpSocket
 import qt_ui.settings
 from device.focstim.proto_api import FOCStimProtoAPI
 from device.focstim.notifications_pb2 import (NotificationBoot, NotificationDeviceVolume, NotificationCurrents, \
-    NotificationModelEstimation, NotificationSystemStats, NotificationSignalStats, NotificationBattery, \
+    NotificationOutputResistance, NotificationSkinResistance, NotificationSystemStats, NotificationSignalStats, NotificationBattery, \
     NotificationLSM6DSOX, NotificationButtonPress, NotificationDebugString, NotificationDebugAS5311, \
     NotificationPressure, NotificationDebugTeleplot)
 from net.teleplot import Teleplot
@@ -194,7 +194,8 @@ class FOCStimProtoDevice(QObject, OutputDevice):
         self.api.on_notification_boot.connect(self.handle_notification_boot)
         self.api.on_notification_device_volume.connect(self.handle_notification_device_volume)
         self.api.on_notification_currents.connect(self.handle_notification_currents)
-        self.api.on_notification_model_estimation.connect(self.handle_notification_model_estimation)
+        self.api.on_notification_output_resistance.connect(self.handle_notification_output_resistance)
+        self.api.on_notification_skin_resistance.connect(self.handle_notification_skin_resistance)
         self.api.on_notification_system_stats.connect(self.handle_notification_system_stats)
         self.api.on_notification_signal_stats.connect(self.handle_notification_signal_stats)
         self.api.on_notification_battery.connect(self.handle_notification_battery)
@@ -386,6 +387,7 @@ class FOCStimProtoDevice(QObject, OutputDevice):
             self.teleplot.write_metrics(
                 pot=notif.volume
             )
+        self.new_device_volume_data.emit(int(np.round(notif.volume * 100)))
 
     def handle_notification_currents(self, notif: NotificationCurrents):
         # print(notif)
@@ -404,23 +406,44 @@ class FOCStimProtoDevice(QObject, OutputDevice):
                 power_skin=notif.output_power_skin,
             )
 
-    def handle_notification_model_estimation(self, notif: NotificationModelEstimation):
+    def handle_notification_output_resistance(self, notif: NotificationOutputResistance):
+        a = notif.resistance_a + 1j * notif.reluctance_a
+        b = notif.resistance_b + 1j * notif.reluctance_b
+        c = notif.resistance_c + 1j * notif.reluctance_c
+        d = notif.resistance_d + 1j * notif.reluctance_d
         if self.teleplot:
-            a = notif.resistance_a + 1j * notif.reluctance_a
-            b = notif.resistance_b + 1j * notif.reluctance_b
-            c = notif.resistance_c + 1j * notif.reluctance_c
-            d = notif.resistance_d + 1j * notif.reluctance_d
             self.teleplot.write_metrics(
-                R_a=np.abs(a),
-                R_b=np.abs(b),
-                R_c=np.abs(c),
-                R_d=np.abs(d),
-                angle_a=np.angle(a),
-                angle_b=np.angle(b),
-                angle_c=np.angle(c),
-                angle_d=np.angle(d),
+                R_a=np.real(a),
+                R_b=np.real(b),
+                R_c=np.real(c),
+                R_d=np.real(d),
+                R_a_imag=np.imag(a),
+                R_b_imag=np.imag(b),
+                R_c_imag=np.imag(c),
+                R_d_imag=np.imag(d),
+                # Z_a=np.abs(a),
+                # Z_b=np.abs(b),
+                # Z_c=np.abs(c),
+                # Z_d=np.abs(d),
             )
 
+    def handle_notification_skin_resistance(self, notif: NotificationOutputResistance):
+        a = notif.resistance_a + 1j * notif.reluctance_a
+        b = notif.resistance_b + 1j * notif.reluctance_b
+        c = notif.resistance_c + 1j * notif.reluctance_c
+        d = notif.resistance_d + 1j * notif.reluctance_d
+        if self.teleplot:
+            self.teleplot.write_metrics(
+                skin_a=np.real(a),
+                skin_b=np.real(b),
+                skin_c=np.real(c),
+                skin_d=np.real(d),
+                skin_a_imag=np.imag(a),
+                skin_b_imag=np.imag(b),
+                skin_c_imag=np.imag(c),
+                skin_d_imag=np.imag(d),
+            )
+        self.new_resistance_data.emit(a, b, c, d)
 
     def handle_notification_system_stats(self, notif: NotificationSystemStats):
         if notif.HasField('esc1'):
@@ -445,8 +468,11 @@ class FOCStimProtoDevice(QObject, OutputDevice):
         if self.teleplot:
             self.teleplot.write_metrics(
                 pulse_frequency=notif.actual_pulse_frequency,
-                v_drive=notif.v_drive
+                v_drive=notif.v_drive,
+                usage_transf=notif.transformer_utilization,
+                usage_voltage=notif.voltage_utilization,
             )
+        self.new_utilization_data.emit(notif.transformer_utilization, notif.voltage_utilization)
 
     def handle_notification_battery(self, notif: NotificationBattery):
         if self.teleplot:
@@ -456,6 +482,8 @@ class FOCStimProtoDevice(QObject, OutputDevice):
                 battery_soc=notif.battery_soc,
                 temp_bq27411=notif.chip_temperature,
             )
+
+        self.new_battery_data.emit(np.round(notif.battery_soc * 100))
 
     def handle_notification_lsm6dsox(self, notif: NotificationLSM6DSOX):
         if self.acc_sensitivity and self.gyr_sensitivity:
@@ -501,3 +529,7 @@ class FOCStimProtoDevice(QObject, OutputDevice):
     new_imu_sensor_data = Signal(IMUData)
     new_as5311_sensor_data = Signal(AS5311Data)
     new_pressure_sensor_data = Signal(PressureData)
+    new_battery_data = Signal(float)  # TODO: more battery stats
+    new_device_volume_data = Signal(int)
+    new_resistance_data = Signal(complex, complex, complex, complex)
+    new_utilization_data = Signal(float, float) # transformer, voltage

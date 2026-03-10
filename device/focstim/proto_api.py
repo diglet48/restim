@@ -13,8 +13,8 @@ from device.focstim.messages_pb2 import RequestFirmwareVersion, RequestAxisSet, 
     RequestDebugEnterBootloader, RequestWifiParametersSet, RequestWifiIPGet, RequestLSM6DSOXStart, \
     RequestLSM6DSOXStop, RequestLockDeviceVolume
 from device.focstim.notifications_pb2 import (NotificationBoot, NotificationDeviceVolume, NotificationCurrents, \
-    NotificationModelEstimation, NotificationSystemStats, NotificationSignalStats, NotificationBattery, \
-    NotificationLSM6DSOX, NotificationPressure, NotificationButtonPress, NotificationDebugString, \
+    NotificationOutputResistance, NotificationSkinResistance, NotificationSystemStats, NotificationSignalStats, \
+    NotificationBattery, NotificationLSM6DSOX, NotificationPressure, NotificationButtonPress, NotificationDebugString, \
     NotificationDebugAS5311, NotificationDebugTeleplot)
 
 logger = logging.getLogger('restim.focstim')
@@ -118,8 +118,10 @@ class FOCStimProtoAPI(QObject):
                 self.on_notification_device_volume.emit(message.notification.notification_device_volume)
             elif message.notification.HasField('notification_currents'):
                 self.on_notification_currents.emit(message.notification.notification_currents)
-            elif message.notification.HasField('notification_model_estimation'):
-                self.on_notification_model_estimation.emit(message.notification.notification_model_estimation)
+            elif message.notification.HasField('notification_output_resistance'):
+                self.on_notification_output_resistance.emit(message.notification.notification_output_resistance)
+            elif message.notification.HasField('notification_skin_resistance'):
+                self.on_notification_skin_resistance.emit(message.notification.notification_skin_resistance)
             elif message.notification.HasField('notification_system_stats'):
                 self.on_notification_system_stats.emit(message.notification.notification_system_stats)
             elif message.notification.HasField('notification_signal_stats'):
@@ -277,7 +279,8 @@ class FOCStimProtoAPI(QObject):
     on_notification_boot = Signal(NotificationBoot)
     on_notification_device_volume = Signal(NotificationDeviceVolume)
     on_notification_currents = Signal(NotificationCurrents)
-    on_notification_model_estimation = Signal(NotificationModelEstimation)
+    on_notification_output_resistance = Signal(NotificationOutputResistance)
+    on_notification_skin_resistance = Signal(NotificationSkinResistance)
     on_notification_system_stats = Signal(NotificationSystemStats)
     on_notification_signal_stats = Signal(NotificationSignalStats)
     on_notification_battery = Signal(NotificationBattery)

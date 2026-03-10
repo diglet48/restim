@@ -6,7 +6,7 @@ from PySide6 import QtGui
 from PySide6.QtCore import QTimer
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import (
-    QApplication, QMainWindow, QWidget, QSizePolicy, QFrame, QStyleFactory
+    QApplication, QMainWindow, QWidget, QSizePolicy, QFrame, QStyleFactory, QVBoxLayout, QHBoxLayout, QLCDNumber
 )
 import logging
 
@@ -32,6 +32,7 @@ from qt_ui import resources
 from qt_ui.models.funscript_kit import FunscriptKitModel
 from device.focstim.proto_device import FOCStimProtoDevice, LSM6DSOX_SAMPLERATE_HZ
 from device.neostim.neostim_device import NeoStim
+from qt_ui.widgets.battery_progress_bar import BatteryProgressBar
 from qt_ui.widgets.icon_with_connection_status import IconWithConnectionStatus
 from stim_math.axis import create_temporal_axis
 
@@ -64,21 +65,38 @@ class Window(QMainWindow, Ui_MainWindow):
         # set the first tab as active tab, in case we forgot to set it in designer
         self.tabWidget.setCurrentIndex(0)
 
+        # TODO: credit https://glyphs.fyi/ for icons
         icon = QtGui.QIcon()
         icon.addPixmap(QtGui.QPixmap(resources.favicon), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.setWindowIcon(icon)
 
-        # TODO: credit https://glyphs.fyi/ for icons
+        # setup left toolbar
         spacer = QWidget()
         spacer.sizePolicy()
-        spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        self.toolBar.insertWidget(self.actionStart, spacer)
+        spacer.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+
+        self.battery_bar = BatteryProgressBar(self)
+        self.battery_bar.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
+
+        self.device_volume_display = QLCDNumber(self, digitCount=3, segmentStyle=QLCDNumber.SegmentStyle.Filled)
+        self.device_volume_display.setToolTip("Device volume\r\nAdjust with knob on device")
+        self.device_volume_display.setFixedHeight(30)
+        self.device_volume_display.display(0)
+
+        self.frame = QWidget()
+        frame_layout = QVBoxLayout(self.toolBar)
+        frame_layout.addWidget(spacer)
+        frame_layout.addWidget(self.device_volume_display)
+        frame_layout.addWidget(self.battery_bar)
+        self.frame.setLayout(frame_layout)
+        self.toolBar.insertWidget(self.actionStart, self.frame)
+
         line = QFrame()
-        # line->setObjectName(QString::fromUtf8("line"));
-        # line->setGeometry(QRect(320, 150, 118, 3));
-        line.setFrameShape(QFrame.HLine)
-        line.setFrameShadow(QFrame.Sunken)
+        line.setFrameShape(QFrame.Shape.HLine)
+        line.setFrameShadow(QFrame.Shadow.Sunken)
         self.toolBar.insertWidget(self.actionStart, line)
+
+
 
         self.doubleSpinBox_volume.setValue(qt_ui.settings.volume_default_level.get())
         self.tab_volume.link_volume_controls(self.doubleSpinBox_volume, self.progressBar_volume)
@@ -380,6 +398,9 @@ class Window(QMainWindow, Ui_MainWindow):
 
         visible = {self.tab_threephase, self.tab_volume, self.tab_vibrate, self.tab_details}
 
+        all_widgets = {self.device_volume_display, self.battery_bar, self.foc_device_stats}
+        visible_widgets = set()
+
         config = DeviceConfiguration.from_settings()
 
         # determine tab visibility
@@ -393,15 +414,21 @@ class Window(QMainWindow, Ui_MainWindow):
         if config.device_type == DeviceType.FOCSTIM_THREE_PHASE:
             visible |= {self.tab_pulse_settings}
             visible -= {self.tab_vibrate}
+            visible_widgets |= {self.device_volume_display, self.battery_bar, self.foc_device_stats}
         if config.device_type == DeviceType.FOCSTIM_FOUR_PHASE:
             visible |= {self.tab_pulse_settings, self.tab_fourphase}
             visible -= {self.tab_vibrate, self.tab_threephase, self.tab_details}
+            visible_widgets |= {self.device_volume_display, self.battery_bar, self.foc_device_stats}
         if config.device_type == DeviceType.NEOSTIM_THREE_PHASE:
             visible |= {self.tab_neostim}
             visible -= {self.tab_vibrate, self.tab_details}
 
         for tab in all_tabs:
             set_visible(tab, tab in visible)
+
+        for widget in all_widgets:
+            widget.setVisible(widget in visible_widgets)
+            widget.setEnabled(widget in visible_widgets)
 
         # set safety limits
         self.tab_carrier.set_safety_limits(config.min_frequency, config.max_frequency)
@@ -437,6 +464,7 @@ class Window(QMainWindow, Ui_MainWindow):
             self.tab_threephase.phase_widget_calibration.set_background(foc=True)
 
         self.refresh_pattern_combobox()
+        self.foc_device_stats.reset_utilization()
 
     def pattern_selection_changed(self, index):
         pattern = self.comboBox_patternSelect.currentData()
@@ -505,6 +533,11 @@ class Window(QMainWindow, Ui_MainWindow):
                 output_device.new_imu_sensor_data.connect(self.page_sensors.new_imu_sensor_data)
                 output_device.new_pressure_sensor_data.connect(self.page_sensors.new_pressure_sensor_data)
                 algorithm.sensor_node = self.page_sensors
+
+                output_device.new_battery_data.connect(self.battery_bar.setValue)
+                output_device.new_device_volume_data.connect(self.device_volume_display.display)
+                output_device.new_utilization_data.connect(self.foc_device_stats.update_utilization)
+                output_device.new_resistance_data.connect(self.foc_device_stats.update_resistance)
 
 
         elif device.device_type == DeviceType.NEOSTIM_THREE_PHASE:

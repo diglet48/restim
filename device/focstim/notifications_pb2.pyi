@@ -59,8 +59,8 @@ class NotificationCurrents(_message.Message):
     def __init__(self, rms_a: _Optional[float]=..., rms_b: _Optional[float]=..., rms_c: _Optional[float]=..., rms_d: _Optional[float]=..., peak_a: _Optional[float]=..., peak_b: _Optional[float]=..., peak_c: _Optional[float]=..., peak_d: _Optional[float]=..., output_power: _Optional[float]=..., output_power_skin: _Optional[float]=..., peak_cmd: _Optional[float]=...) -> None:
         ...
 
-class NotificationModelEstimation(_message.Message):
-    __slots__ = ('resistance_a', 'reluctance_a', 'resistance_b', 'reluctance_b', 'resistance_c', 'reluctance_c', 'resistance_d', 'reluctance_d', 'constant')
+class NotificationOutputResistance(_message.Message):
+    __slots__ = ('resistance_a', 'reluctance_a', 'resistance_b', 'reluctance_b', 'resistance_c', 'reluctance_c', 'resistance_d', 'reluctance_d')
     RESISTANCE_A_FIELD_NUMBER: _ClassVar[int]
     RELUCTANCE_A_FIELD_NUMBER: _ClassVar[int]
     RESISTANCE_B_FIELD_NUMBER: _ClassVar[int]
@@ -69,7 +69,6 @@ class NotificationModelEstimation(_message.Message):
     RELUCTANCE_C_FIELD_NUMBER: _ClassVar[int]
     RESISTANCE_D_FIELD_NUMBER: _ClassVar[int]
     RELUCTANCE_D_FIELD_NUMBER: _ClassVar[int]
-    CONSTANT_FIELD_NUMBER: _ClassVar[int]
     resistance_a: float
     reluctance_a: float
     resistance_b: float
@@ -78,9 +77,30 @@ class NotificationModelEstimation(_message.Message):
     reluctance_c: float
     resistance_d: float
     reluctance_d: float
-    constant: float
 
-    def __init__(self, resistance_a: _Optional[float]=..., reluctance_a: _Optional[float]=..., resistance_b: _Optional[float]=..., reluctance_b: _Optional[float]=..., resistance_c: _Optional[float]=..., reluctance_c: _Optional[float]=..., resistance_d: _Optional[float]=..., reluctance_d: _Optional[float]=..., constant: _Optional[float]=...) -> None:
+    def __init__(self, resistance_a: _Optional[float]=..., reluctance_a: _Optional[float]=..., resistance_b: _Optional[float]=..., reluctance_b: _Optional[float]=..., resistance_c: _Optional[float]=..., reluctance_c: _Optional[float]=..., resistance_d: _Optional[float]=..., reluctance_d: _Optional[float]=...) -> None:
+        ...
+
+class NotificationSkinResistance(_message.Message):
+    __slots__ = ('resistance_a', 'reluctance_a', 'resistance_b', 'reluctance_b', 'resistance_c', 'reluctance_c', 'resistance_d', 'reluctance_d')
+    RESISTANCE_A_FIELD_NUMBER: _ClassVar[int]
+    RELUCTANCE_A_FIELD_NUMBER: _ClassVar[int]
+    RESISTANCE_B_FIELD_NUMBER: _ClassVar[int]
+    RELUCTANCE_B_FIELD_NUMBER: _ClassVar[int]
+    RESISTANCE_C_FIELD_NUMBER: _ClassVar[int]
+    RELUCTANCE_C_FIELD_NUMBER: _ClassVar[int]
+    RESISTANCE_D_FIELD_NUMBER: _ClassVar[int]
+    RELUCTANCE_D_FIELD_NUMBER: _ClassVar[int]
+    resistance_a: float
+    reluctance_a: float
+    resistance_b: float
+    reluctance_b: float
+    resistance_c: float
+    reluctance_c: float
+    resistance_d: float
+    reluctance_d: float
+
+    def __init__(self, resistance_a: _Optional[float]=..., reluctance_a: _Optional[float]=..., resistance_b: _Optional[float]=..., reluctance_b: _Optional[float]=..., resistance_c: _Optional[float]=..., reluctance_c: _Optional[float]=..., resistance_d: _Optional[float]=..., reluctance_d: _Optional[float]=...) -> None:
         ...
 
 class SystemStatsESC1(_message.Message):
@@ -128,13 +148,17 @@ class NotificationSystemStats(_message.Message):
         ...
 
 class NotificationSignalStats(_message.Message):
-    __slots__ = ('actual_pulse_frequency', 'v_drive')
+    __slots__ = ('actual_pulse_frequency', 'v_drive', 'transformer_utilization', 'voltage_utilization')
     ACTUAL_PULSE_FREQUENCY_FIELD_NUMBER: _ClassVar[int]
     V_DRIVE_FIELD_NUMBER: _ClassVar[int]
+    TRANSFORMER_UTILIZATION_FIELD_NUMBER: _ClassVar[int]
+    VOLTAGE_UTILIZATION_FIELD_NUMBER: _ClassVar[int]
     actual_pulse_frequency: float
     v_drive: float
+    transformer_utilization: float
+    voltage_utilization: float
 
-    def __init__(self, actual_pulse_frequency: _Optional[float]=..., v_drive: _Optional[float]=...) -> None:
+    def __init__(self, actual_pulse_frequency: _Optional[float]=..., v_drive: _Optional[float]=..., transformer_utilization: _Optional[float]=..., voltage_utilization: _Optional[float]=...) -> None:
         ...
 
 class NotificationBattery(_message.Message):
