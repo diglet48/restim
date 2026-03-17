@@ -39,7 +39,7 @@ class NonPersistentSetting:
 
 
 pulse_carrier_frequency = Setting('carrier/pulse_carrier_frequency', 700, float)
-pulse_frequency = Setting('carrier/pulse_frequency', 50, float)
+pulse_frequency = Setting('carrier/pulse_frequency', 70, float)
 pulse_width = Setting('carrier/pulse_width', 5, float)
 pulse_interval_random = Setting('carrier/pulse_interval_random', 10, float)
 pulse_rise_time = Setting('carrier/pulse_rise_time', 10, float)
