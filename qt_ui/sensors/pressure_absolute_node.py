@@ -7,6 +7,7 @@ import numpy as np
 
 from qt_ui.sensors import styles
 from stim_math.sensors.pressure import PressureData
+from qt_ui import settings
 
 from qt_ui.sensors.sensor_node_interface import SensorNodeInterface
 
@@ -71,6 +72,7 @@ class PressureAbsoluteSensorNode(QWidget, SensorNodeInterface):
         self.x = []
         self.y = []
 
+        self.load_settings()
         self.update_lines()
 
     def new_pressure_sensor_data(self, data: PressureData):
@@ -110,3 +112,13 @@ class PressureAbsoluteSensorNode(QWidget, SensorNodeInterface):
         high = low + self.spinbox_range.value()
         self.low_marker.setValue(low)
         self.high_marker.setValue(high)
+
+    def save_settings(self):
+        settings.sensor_pressure_absolute_threshold.set(self.spinbox_threshold.value())
+        settings.sensor_pressure_absolute_range.set(self.spinbox_range.value())
+        settings.sensor_pressure_absolute_volume.set(self.spinbox_volume.value())
+
+    def load_settings(self):
+        self.spinbox_threshold.setValue(settings.sensor_pressure_absolute_threshold.get())
+        self.spinbox_range.setValue(settings.sensor_pressure_absolute_range.get())
+        self.spinbox_volume.setValue(settings.sensor_pressure_absolute_volume.get())

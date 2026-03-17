@@ -8,6 +8,7 @@ import numpy as np
 from qt_ui.sensors import styles
 from stim_math.sensors.pressure import PressureData
 from stim_math.sensors.eom import EOMController
+from qt_ui import settings
 
 from qt_ui.sensors.sensor_node_interface import SensorNodeInterface
 
@@ -77,6 +78,7 @@ class PressureDepletionSensorNode(QWidget, SensorNodeInterface):
         self.y_pressure = []
         self.y_arousal = []
 
+        self.load_settings()
         self.update_lines()
 
     def new_pressure_sensor_data(self, data: PressureData):
@@ -119,3 +121,12 @@ class PressureDepletionSensorNode(QWidget, SensorNodeInterface):
     def update_lines(self, *args, **kwargs):
         self.arousal_threshold_marker.setValue(self.spinbox_arousal_threshold.value())
 
+    def save_settings(self):
+        settings.sensor_pressure_depletion_threshold.set(self.spinbox_arousal_threshold.value())
+        settings.sensor_pressure_depletion_ramp_time.set(self.spinbox_ramp_time.value())
+        settings.sensor_pressure_depletion_start_volume.set(self.spinbox_start_volume.value())
+
+    def load_settings(self):
+        self.spinbox_arousal_threshold.setValue(settings.sensor_pressure_depletion_threshold.get())
+        self.spinbox_ramp_time.setValue(settings.sensor_pressure_depletion_ramp_time.get())
+        self.spinbox_start_volume.setValue(settings.sensor_pressure_depletion_start_volume.get())

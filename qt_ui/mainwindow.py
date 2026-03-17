@@ -658,6 +658,7 @@ class Window(QMainWindow, Ui_MainWindow):
         self.tab_pulse_settings.save_settings()
         self.tab_volume.save_settings()
         self.page_media.save_settings()
+        self.page_sensors.save_settings()
 
     def closeEvent(self, event):
         logger.warning('Shutting down')

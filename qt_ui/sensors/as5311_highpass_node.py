@@ -7,6 +7,7 @@ import numpy as np
 
 from qt_ui.sensors import styles
 from qt_ui.sensors.sensor_node_interface import SensorNodeInterface
+from qt_ui import settings
 from stim_math.sensors.as5311 import AS5311Data
 from stim_math.sensors.filters import HighPass
 
@@ -85,6 +86,7 @@ class AS5311HighPassNode(QWidget, SensorNodeInterface):
         self.y = []
         self.y_filtered = []
 
+        self.load_settings()
         self.update_lines()
 
     def new_as5311_sensor_data(self, data: AS5311Data):
@@ -133,3 +135,14 @@ class AS5311HighPassNode(QWidget, SensorNodeInterface):
         self.low_marker.setValue(low)
         self.high_marker.setValue(high)
 
+    def save_settings(self):
+        settings.sensor_as5311_highpass_threshold.set(self.spinbox_threshold.value())
+        settings.sensor_as5311_highpass_range.set(self.spinbox_range.value())
+        settings.sensor_as5311_highpass_volume.set(self.spinbox_volume.value())
+        settings.sensor_as5311_highpass_absolute.set(self.checkbox.isChecked())
+
+    def load_settings(self):
+        self.spinbox_threshold.setValue(settings.sensor_as5311_highpass_threshold.get())
+        self.spinbox_range.setValue(settings.sensor_as5311_highpass_range.get())
+        self.spinbox_volume.setValue(settings.sensor_as5311_highpass_volume.get())
+        self.checkbox.setChecked(settings.sensor_as5311_highpass_absolute.get())

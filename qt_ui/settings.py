@@ -167,6 +167,43 @@ focstim_ip = Setting("focstim/wifi_ip", '', str)
 
 neostim_serial_port = Setting("neostim/serial_port", '', str)
 
+sensor_as5311_absolute_threshold = Setting('sensor_as5311_absolute/threshold', .006, float)
+sensor_as5311_absolute_range = Setting('sensor_as5311_absolute/range', .001, float)
+sensor_as5311_absolute_volume = Setting('sensor_as5311_absolute/volume', -5, float)
+sensor_as5311_absolute_decay = Setting('sensor_as5311_absolute/decay', 4.0, float)
+
+sensor_as5311_highpass_threshold = Setting('sensor_as5311_highpass/threshold', .0001, float)
+sensor_as5311_highpass_range = Setting('sensor_as5311_highpass/range', .001, float)
+sensor_as5311_highpass_volume = Setting('sensor_as5311_highpass/volume', 5, float)
+sensor_as5311_highpass_absolute = Setting('sensor_as5311_highpass/absolute', False, bool)
+
+sensor_as5311_velocity_threshold = Setting('sensor_as5311_velocity/threshold', .006, float)
+sensor_as5311_velocity_range = Setting('sensor_as5311_velocity/range', .001, float)
+sensor_as5311_velocity_volume = Setting('sensor_as5311_velocity/volume', 5, float)
+sensor_as5311_velocity_decay = Setting('sensor_as5311_velocity/decay', 0.5, float)
+sensor_as5311_velocity_absolute = Setting('sensor_as5311_velocity/absolute', False, bool)
+
+sensor_imu_velocity_threshold = Setting('sensor_imu_velocity/threshold', 10, float)
+sensor_imu_velocity_range = Setting('sensor_imu_velocity/range', 30, float)
+sensor_imu_velocity_volume = Setting('sensor_imu_velocity/volume', 5, float)
+sensor_imu_velocity_decay = Setting('sensor_imu_velocity/decay', 0.5, float)
+sensor_imu_velocity_absolute = Setting('sensor_imu_velocity/absolute', False, bool)
+
+sensor_imu_hipthrust_position = Setting('sensor_imu_hipthrust/position', .020, float)
+sensor_imu_hipthrust_alpha = Setting('sensor_imu_hipthrust/alpha', 0.2, float)
+sensor_imu_hipthrust_position_volume = Setting('sensor_imu_hipthrust/position_volume', 0, float)
+sensor_imu_hipthrust_velocity = Setting('sensor_imu_hipthrust/velocity', .2, float)
+sensor_imu_hipthrust_velocity_volume = Setting('sensor_imu_hipthrust/velocity_volume', 0, float)
+
+sensor_pressure_depletion_threshold = Setting('sensor_pressure_depletion/threshold', 1300, float)
+sensor_pressure_depletion_ramp_time = Setting('sensor_pressure_depletion/ramp_time', 30, float)
+sensor_pressure_depletion_start_volume = Setting('sensor_pressure_depletion/start_volume', 70, float)
+
+sensor_pressure_absolute_threshold = Setting('sensor_pressure_absolute/threshold', 100000, float)
+sensor_pressure_absolute_range = Setting('sensor_pressure_absolute/range', 10000, float)
+sensor_pressure_absolute_volume = Setting('sensor_pressure_absolute/volume', 0, float)
+
+
 # Pattern preferences - we'll store this as a JSON string and convert to dict
 import json
 

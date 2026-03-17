@@ -181,6 +181,11 @@ class SensorsWidget(QWidget, Ui_SensorsWidget):
                 if node.is_node_enabled():
                     node.process(parameters)
 
+    def save_settings(self):
+        for category_label, nodes in self.structure.items():
+            for node in nodes:
+                node.save_settings()
+
     new_as5311_sensor_data = Signal(AS5311Data)
     new_imu_sensor_data = Signal(IMUData)
     new_pressure_sensor_data = Signal(PressureData)

@@ -8,6 +8,7 @@ from PySide6.QtCore import Qt
 
 from qt_ui.sensors.sensor_node_interface import SensorNodeInterface
 from qt_ui.sensors import styles
+from qt_ui import settings
 
 from stim_math.sensors.imu import IMUData
 
@@ -33,7 +34,7 @@ class IMUVelocityNode(QtWidgets.QWidget, SensorNodeInterface):
         self.spinbox_range = pg.SpinBox(None, 0.0, compactHeight=False, suffix='deg/s', int=True, bounds=[0, None])
         self.spinbox_volume = pg.SpinBox(None, 0.0, compactHeight=False, suffix='%', step=0.1)
         self.checkbox = QCheckBox()
-        self.spinbox_decay = pg.SpinBox(None, 50, compactHeight=False, suffix='samples', step=1, bounds=[1, 1000])
+        self.spinbox_decay = pg.SpinBox(None, 1.0, compactHeight=False, suffix='s', siPrefix=True, dec=True, minStep=.01, bounds=[0, None])
 
         self.spinbox_threshold.valueChanged.connect(self.update_lines)
         self.spinbox_range.valueChanged.connect(self.update_lines)
@@ -72,20 +73,27 @@ class IMUVelocityNode(QtWidgets.QWidget, SensorNodeInterface):
 
         # setup algorithm variables
         self.value = 0
+        self.last_update = time.time()
 
         # setup graph variables
         self.x = []
         self.y = []
 
+        self.load_settings()
         self.update_lines()
 
     def new_imu_sensor_data(self, data: IMUData):
         if not self.is_node_enabled():
             return
 
+        now = time.time()
+        dt = now - self.last_update
+        alpha = np.exp(-dt / self.spinbox_decay.value()) if self.spinbox_decay.value() > 0 else 1
+        self.last_update = now
+
         new_value = np.abs(data.gyr_x) + np.abs(data.gyr_y) + np.abs(data.gyr_z)
         new_value = new_value / 1000 # convert to degrees-per-second
-        self.value = self.value + (new_value - self.value) / self.spinbox_decay.value()
+        self.value += (new_value - self.value) * (1 - alpha)
 
         self.x.append(time.time())
         self.y.append(self.value)
@@ -118,3 +126,17 @@ class IMUVelocityNode(QtWidgets.QWidget, SensorNodeInterface):
         high = low + self.spinbox_range.value()
         self.low_marker.setValue(low)
         self.high_marker.setValue(high)
+
+    def save_settings(self):
+        settings.sensor_imu_velocity_threshold.set(self.spinbox_threshold.value())
+        settings.sensor_imu_velocity_range.set(self.spinbox_range.value())
+        settings.sensor_imu_velocity_volume.set(self.spinbox_volume.value())
+        settings.sensor_imu_velocity_decay.set(self.spinbox_decay.value())
+        settings.sensor_imu_velocity_decay.set(self.spinbox_decay.value())
+
+    def load_settings(self):
+        self.spinbox_threshold.setValue(settings.sensor_imu_velocity_threshold.get())
+        self.spinbox_range.setValue(settings.sensor_imu_velocity_range.get())
+        self.spinbox_volume.setValue(settings.sensor_imu_velocity_volume.get())
+        self.spinbox_decay.setValue(settings.sensor_imu_velocity_decay.get())
+        self.spinbox_decay.setValue(settings.sensor_imu_velocity_decay.get())

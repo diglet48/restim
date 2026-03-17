@@ -8,6 +8,7 @@ from PySide6.QtWidgets import QVBoxLayout, QGroupBox, QFormLayout
 from device.focstim.proto_device import LSM6DSOX_SAMPLERATE_HZ
 from qt_ui.sensors import styles
 from qt_ui.sensors.sensor_node_interface import SensorNodeInterface
+from qt_ui import settings
 
 from stim_math.sensors.imu import IMUData, IMUForwardPositionFilter
 
@@ -37,12 +38,14 @@ class IMUHipThrustNode(QtWidgets.QWidget, SensorNodeInterface):
 
         self.spinbox_position = pg.SpinBox(None, 0.0, compactHeight=False, suffix='m', siPrefix=True, dec=True, minStep=1e-4)
         self.spinbox_alpha = pg.SpinBox(None, 0.0, compactHeight=False, suffix='', dec=True, minStep=0.01)
+        self.spinbox_position_volume = pg.SpinBox(None, 0.0, compactHeight=False, suffix='%', dec=True, minStep=0.1)
 
         self.spinbox_velocity = pg.SpinBox(None, 0.0, compactHeight=False, suffix='m/s', siPrefix=True, dec=True, minStep=1e-3)
         self.spinbox_volume = pg.SpinBox(None, 0.0, compactHeight=False, suffix='%', dec=True, minStep=0.1)
 
         self.formLayout.addRow('position amplitude', self.spinbox_position)
         self.formLayout.addRow('alpha amplitude', self.spinbox_alpha)
+        self.formLayout.addRow('volume amplitude', self.spinbox_position_volume)
         self.formLayout2.addRow('velocity amplitude', self.spinbox_velocity)
         self.formLayout2.addRow('volume amplitude', self.spinbox_volume)
 
@@ -79,6 +82,8 @@ class IMUHipThrustNode(QtWidgets.QWidget, SensorNodeInterface):
         self.y_pos = []
         self.y_velo = []
 
+        self.load_settings()
+
     def new_imu_sensor_data(self, data: IMUData):
         if not self.is_node_enabled():
             return
@@ -105,6 +110,20 @@ class IMUHipThrustNode(QtWidgets.QWidget, SensorNodeInterface):
                 yp = [1, 1 + self.spinbox_volume.value() / 100]
             adjustment = np.clip(np.interp(np.abs(self.filter.last_velocity()), xp, yp), 0, 1)
             parameters['volume'] *= adjustment
+
+            if self.spinbox_position.value() and self.spinbox_position_volume.value():
+                xp = [-self.spinbox_position.value(), self.spinbox_position.value()]
+                if self.spinbox_position_volume.value() >= 0:
+                    yp = [1 - 2 * self.spinbox_position_volume.value() / 100, 1]
+                else:
+                    yp = [1, 1 + 2 * self.spinbox_position_volume.value() / 100]
+                if xp[0] > xp[1]:
+                    xp = xp[::-1]
+                    yp = xp[::-1]
+                adjustment = np.clip(np.interp(self.filter.last_position(), xp, yp), 0, 1)
+                print(xp, yp, adjustment)
+                parameters['volume'] *= adjustment
+
         if 'alpha' in parameters:
             if self.spinbox_alpha.value() and self.spinbox_position.value():
                 diff = self.filter.last_position() / self.spinbox_position.value()
@@ -126,3 +145,17 @@ class IMUHipThrustNode(QtWidgets.QWidget, SensorNodeInterface):
 
         y2 = np.array(self.y_velo)
         self.velocity_plot_item.setData(x=x, y=y2)
+
+    def save_settings(self):
+        settings.sensor_imu_hipthrust_position.set(self.spinbox_position.value())
+        settings.sensor_imu_hipthrust_alpha.set(self.spinbox_alpha.value())
+        settings.sensor_imu_hipthrust_position_volume.set(self.spinbox_position_volume.value())
+        settings.sensor_imu_hipthrust_velocity.set(self.spinbox_velocity.value())
+        settings.sensor_imu_hipthrust_velocity_volume.set(self.spinbox_volume.value())
+
+    def load_settings(self):
+        self.spinbox_position.setValue(settings.sensor_imu_hipthrust_position.get())
+        self.spinbox_alpha.setValue(settings.sensor_imu_hipthrust_alpha.get())
+        self.spinbox_position_volume.setValue(settings.sensor_imu_hipthrust_position_volume.get())
+        self.spinbox_velocity.setValue(settings.sensor_imu_hipthrust_velocity.get())
+        self.spinbox_volume.setValue(settings.sensor_imu_hipthrust_velocity_volume.get())

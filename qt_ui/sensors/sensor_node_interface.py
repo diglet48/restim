@@ -34,3 +34,8 @@ class SensorNodeInterface:
         """
         pass
 
+    def save_settings(self):
+        """
+        called before application shutdown
+        """
+        pass

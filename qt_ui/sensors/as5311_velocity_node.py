@@ -7,6 +7,7 @@ import numpy as np
 
 from qt_ui.sensors import styles
 from stim_math.sensors.as5311 import AS5311Data
+from qt_ui import settings
 
 from qt_ui.sensors.sensor_node_interface import SensorNodeInterface
 
@@ -32,7 +33,7 @@ class AS5311VelocitySensorNode(QWidget, SensorNodeInterface):
         self.spinbox_range = pg.SpinBox(None, 0.0, compactHeight=False, suffix='m', siPrefix=True, dec=True, minStep=1e-6, bounds=[0, None])
         self.spinbox_volume = pg.SpinBox(None, 0.0, compactHeight=False, suffix='%', step=0.1)
         self.checkbox = QCheckBox()
-        self.spinbox_decay = pg.SpinBox(None, 50, compactHeight=False, suffix='samples', step=1, bounds=[1, 1000], int=True)
+        self.spinbox_decay = pg.SpinBox(None, 1.0, compactHeight=False, suffix='s', siPrefix=True, dec=True, minStep=.1, bounds=[0, None])
 
         self.spinbox_threshold.valueChanged.connect(self.update_lines)
         self.spinbox_range.valueChanged.connect(self.update_lines)
@@ -81,24 +82,30 @@ class AS5311VelocitySensorNode(QWidget, SensorNodeInterface):
         # setup algorithm variables
         self.last_position = 0
         self.velocity = 0
+        self.last_update = time.time()
 
         # setup plot variables
         self.x = []
         self.y = []
         self.y_filtered = []
 
+        self.load_settings()
         self.update_lines()
 
     def new_as5311_sensor_data(self, data: AS5311Data):
         if not self.is_node_enabled():
             return
 
-        # arbitrary assume 50hz samplerate
-        velo = (data.x - self.last_position) * 50
+        now = time.time()
+        dt = now - self.last_update
+        alpha = np.exp(-dt / self.spinbox_decay.value()) if self.spinbox_decay.value() > 0 else 1
+        self.last_update = now
+
+        velo = (data.x - self.last_position) / max(.001, dt)
         self.last_position = data.x
         if self.checkbox.isChecked():
             velo = np.abs(velo)
-        self.velocity += (velo - self.velocity) * (1 / self.spinbox_decay.value())
+        self.velocity += (velo - self.velocity) * (1 - alpha)
 
         self.x.append(time.time())
         self.y.append(data.x)
@@ -137,3 +144,17 @@ class AS5311VelocitySensorNode(QWidget, SensorNodeInterface):
         high = low + self.spinbox_range.value()
         self.low_marker.setValue(low)
         self.high_marker.setValue(high)
+
+    def save_settings(self):
+        settings.sensor_as5311_velocity_threshold.set(self.spinbox_threshold.value())
+        settings.sensor_as5311_velocity_range.set(self.spinbox_range.value())
+        settings.sensor_as5311_velocity_volume.set(self.spinbox_volume.value())
+        settings.sensor_as5311_velocity_decay.set(self.spinbox_decay.value())
+        settings.sensor_as5311_velocity_decay.set(self.spinbox_decay.value())
+
+    def load_settings(self):
+        self.spinbox_threshold.setValue(settings.sensor_as5311_velocity_threshold.get())
+        self.spinbox_range.setValue(settings.sensor_as5311_velocity_range.get())
+        self.spinbox_volume.setValue(settings.sensor_as5311_velocity_volume.get())
+        self.spinbox_decay.setValue(settings.sensor_as5311_velocity_decay.get())
+        self.spinbox_decay.setValue(settings.sensor_as5311_velocity_decay.get())

@@ -7,6 +7,7 @@ import numpy as np
 
 from qt_ui.sensors import styles
 from stim_math.sensors.as5311 import AS5311Data
+from qt_ui import settings
 
 from qt_ui.sensors.sensor_node_interface import SensorNodeInterface
 
@@ -30,7 +31,7 @@ class AS5311AbsoluteSensorNode(QWidget, SensorNodeInterface):
         self.spinbox_threshold = pg.SpinBox(None, 0.0, compactHeight=False, suffix='m', siPrefix=True, dec=True, minStep=1e-6)
         self.spinbox_range = pg.SpinBox(None, 0.0, compactHeight=False, suffix='m', siPrefix=True, dec=True, minStep=1e-6, bounds=[0, None])
         self.spinbox_volume = pg.SpinBox(None, 0.0, compactHeight=False, suffix='%', step=0.1)
-        self.spinbox_decay = pg.SpinBox(None, 1, compactHeight=False, suffix='samples', int=True, bounds=(1, 10000))
+        self.spinbox_decay = pg.SpinBox(None, 1.0, compactHeight=False, suffix='s', siPrefix=True, dec=True, minStep=.1, bounds=[0, None])
 
         self.spinbox_threshold.valueChanged.connect(self.update_lines)
         self.spinbox_range.valueChanged.connect(self.update_lines)
@@ -72,21 +73,28 @@ class AS5311AbsoluteSensorNode(QWidget, SensorNodeInterface):
         # setup algorithm variables
         self.position = 0
         self.decayed_position = 0
+        self.last_update = time.time()
 
         # setup plot variables
         self.x = []
         self.y = []
         self.y_decay = []
 
+        self.load_settings()
         self.update_lines()
 
     def new_as5311_sensor_data(self, data: AS5311Data):
         if not self.is_node_enabled():
             return
 
+        now = time.time()
+        dt = now - self.last_update
+        alpha = np.exp(-dt / self.spinbox_decay.value()) if self.spinbox_decay.value() > 0 else 1
+        self.last_update = now
+
         self.position = data.x
         self.decayed_position = max(self.decayed_position, self.position)
-        self.decayed_position = self.decayed_position - (self.decayed_position - self.position) / self.spinbox_decay.value()
+        self.decayed_position += (self.position - self.decayed_position) * (1 - alpha)
 
         self.x.append(time.time())
         self.y.append(data.x)
@@ -126,3 +134,14 @@ class AS5311AbsoluteSensorNode(QWidget, SensorNodeInterface):
         self.low_marker.setValue(low)
         self.high_marker.setValue(high)
 
+    def save_settings(self):
+        settings.sensor_as5311_absolute_threshold.set(self.spinbox_threshold.value())
+        settings.sensor_as5311_absolute_range.set(self.spinbox_range.value())
+        settings.sensor_as5311_absolute_volume.set(self.spinbox_volume.value())
+        settings.sensor_as5311_absolute_decay.set(self.spinbox_decay.value())
+
+    def load_settings(self):
+        self.spinbox_threshold.setValue(settings.sensor_as5311_absolute_threshold.get())
+        self.spinbox_range.setValue(settings.sensor_as5311_absolute_range.get())
+        self.spinbox_volume.setValue(settings.sensor_as5311_absolute_volume.get())
+        self.spinbox_decay.setValue(settings.sensor_as5311_absolute_decay.get())
