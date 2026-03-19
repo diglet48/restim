@@ -2,6 +2,7 @@ import functools
 import logging
 
 import google.protobuf.text_format
+from PySide6.QtGui import QCursor
 from PySide6.QtSerialPort import QSerialPortInfo
 from PySide6.QtWidgets import QDialog, QAbstractButton, QDialogButtonBox, QAbstractItemView, QHeaderView, QComboBox, QTableWidgetItem, QCheckBox, QApplication
 from PySide6.QtCore import Qt, Signal, QTimer
@@ -30,6 +31,12 @@ class PreferencesDialog(QDialog, Ui_PreferencesDialog):
         self._cache_patterns_data()
 
         self.loadSettings()
+
+        # websocket url
+        self.label_websocket_url.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+        self.label_websocket_url.setCursor(QCursor(Qt.CursorShape.IBeamCursor))
+        self.websocket_port.valueChanged.connect(self.refresh_websocket_url)
+        self.refresh_websocket_url()
 
         self.audio_api.currentIndexChanged.connect(self.repopulate_audio_devices)
         self.audio_output_device.currentIndexChanged.connect(self.refresh_audio_device_info)
@@ -97,6 +104,9 @@ class PreferencesDialog(QDialog, Ui_PreferencesDialog):
             self.saveSettings()
         if role == QDialogButtonBox.RejectRole:
             self.reject()
+
+    def refresh_websocket_url(self):
+        self.label_websocket_url.setText(f"ws://localhost:{self.websocket_port.value()}/tcode")
 
     def loadSettings(self):
         # network settings

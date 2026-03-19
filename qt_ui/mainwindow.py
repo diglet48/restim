@@ -180,6 +180,10 @@ class Window(QMainWindow, Ui_MainWindow):
         self.websocket_server = net.websocketserver.WebSocketServer(self)
         self.websocket_server.new_tcode_command.connect(self.tcode_command_router.route_command)
 
+        self.websocket_server.incoming_as5311_data.connect(self.page_sensors.new_as5311_sensor_data_from_network)
+        self.websocket_server.incoming_imu_data.connect(self.page_sensors.new_imu_sensor_data_from_network)
+        self.websocket_server.incoming_pressure_data.connect(self.page_sensors.new_pressure_sensor_data_from_network)
+
         self.tcpudp_server = net.tcpudpserver.TcpUdpServer(self)
         self.tcpudp_server.new_tcode_command.connect(self.tcode_command_router.route_command)
 
@@ -529,10 +533,14 @@ class Window(QMainWindow, Ui_MainWindow):
                 self.tab_volume.set_play_state(self.playstate)
                 self.refresh_play_button_icon()
 
-                output_device.new_as5311_sensor_data.connect(self.page_sensors.new_as5311_sensor_data)
-                output_device.new_imu_sensor_data.connect(self.page_sensors.new_imu_sensor_data)
-                output_device.new_pressure_sensor_data.connect(self.page_sensors.new_pressure_sensor_data)
+                output_device.new_as5311_sensor_data.connect(self.page_sensors.new_as5311_sensor_data_from_device)
+                output_device.new_imu_sensor_data.connect(self.page_sensors.new_imu_sensor_data_from_device)
+                output_device.new_pressure_sensor_data.connect(self.page_sensors.new_pressure_sensor_data_from_device)
                 algorithm.sensor_node = self.page_sensors
+
+                output_device.new_as5311_sensor_data.connect(self.websocket_server.transmit_as5311_data)
+                output_device.new_imu_sensor_data.connect(self.websocket_server.transmit_imu_data)
+                output_device.new_pressure_sensor_data.connect(self.websocket_server.transmit_pressure_data)
 
                 output_device.new_battery_data.connect(self.battery_bar.setValue)
                 output_device.new_device_volume_data.connect(self.device_volume_display.display)

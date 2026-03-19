@@ -17,7 +17,7 @@
    <item>
     <widget class="QTabWidget" name="tabWidget">
      <property name="currentIndex">
-      <number>2</number>
+      <number>0</number>
      </property>
      <widget class="QWidget" name="tab_network">
       <attribute name="title">
@@ -58,6 +58,20 @@
            <widget class="QSpinBox" name="websocket_port">
             <property name="maximum">
              <number>65535</number>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="0">
+           <widget class="QLabel" name="label_28">
+            <property name="text">
+             <string>T-Code url</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="1">
+           <widget class="QLabel" name="label_websocket_url">
+            <property name="text">
+             <string>TextLabel</string>
             </property>
            </widget>
           </item>

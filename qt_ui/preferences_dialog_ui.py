@@ -3,7 +3,7 @@
 ################################################################################
 ## Form generated from reading UI file 'preferencesdialog.ui'
 ##
-## Created by: Qt User Interface Compiler version 6.9.0
+## Created by: Qt User Interface Compiler version 6.9.3
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
@@ -64,6 +64,16 @@ class Ui_PreferencesDialog(object):
         self.websocket_port.setMaximum(65535)
 
         self.formLayout_4.setWidget(0, QFormLayout.ItemRole.FieldRole, self.websocket_port)
+
+        self.label_28 = QLabel(self.gb_websocket_server)
+        self.label_28.setObjectName(u"label_28")
+
+        self.formLayout_4.setWidget(2, QFormLayout.ItemRole.LabelRole, self.label_28)
+
+        self.label_websocket_url = QLabel(self.gb_websocket_server)
+        self.label_websocket_url.setObjectName(u"label_websocket_url")
+
+        self.formLayout_4.setWidget(2, QFormLayout.ItemRole.FieldRole, self.label_websocket_url)
 
 
         self.verticalLayout_2.addWidget(self.gb_websocket_server)
@@ -314,11 +324,6 @@ class Ui_PreferencesDialog(object):
         self.groupBox_10.setObjectName(u"groupBox_10")
         self.gridLayout_7 = QGridLayout(self.groupBox_10)
         self.gridLayout_7.setObjectName(u"gridLayout_7")
-        self.label_22 = QLabel(self.groupBox_10)
-        self.label_22.setObjectName(u"label_22")
-
-        self.gridLayout_7.addWidget(self.label_22, 3, 0, 1, 1)
-
         self.focstim_ssid = QLineEdit(self.groupBox_10)
         self.focstim_ssid.setObjectName(u"focstim_ssid")
 
@@ -334,11 +339,6 @@ class Ui_PreferencesDialog(object):
 
         self.gridLayout_7.addWidget(self.label_21, 1, 0, 1, 1)
 
-        self.focstim_read_ip = QToolButton(self.groupBox_10)
-        self.focstim_read_ip.setObjectName(u"focstim_read_ip")
-
-        self.gridLayout_7.addWidget(self.focstim_read_ip, 3, 2, 1, 1)
-
         self.focstim_password = QLineEdit(self.groupBox_10)
         self.focstim_password.setObjectName(u"focstim_password")
 
@@ -352,7 +352,17 @@ class Ui_PreferencesDialog(object):
         self.focstim_ip = QLineEdit(self.groupBox_10)
         self.focstim_ip.setObjectName(u"focstim_ip")
 
-        self.gridLayout_7.addWidget(self.focstim_ip, 3, 1, 1, 1)
+        self.gridLayout_7.addWidget(self.focstim_ip, 4, 1, 1, 1)
+
+        self.label_22 = QLabel(self.groupBox_10)
+        self.label_22.setObjectName(u"label_22")
+
+        self.gridLayout_7.addWidget(self.label_22, 4, 0, 1, 1)
+
+        self.focstim_read_ip = QToolButton(self.groupBox_10)
+        self.focstim_read_ip.setObjectName(u"focstim_read_ip")
+
+        self.gridLayout_7.addWidget(self.focstim_read_ip, 4, 2, 1, 1)
 
 
         self.verticalLayout_5.addWidget(self.groupBox_10)
@@ -361,15 +371,15 @@ class Ui_PreferencesDialog(object):
         self.groupBox_9.setObjectName(u"groupBox_9")
         self.formLayout_8 = QFormLayout(self.groupBox_9)
         self.formLayout_8.setObjectName(u"formLayout_8")
-        self.label_18 = QLabel(self.groupBox_9)
-        self.label_18.setObjectName(u"label_18")
+        self.label_15 = QLabel(self.groupBox_9)
+        self.label_15.setObjectName(u"label_15")
 
-        self.formLayout_8.setWidget(2, QFormLayout.ItemRole.LabelRole, self.label_18)
+        self.formLayout_8.setWidget(0, QFormLayout.ItemRole.LabelRole, self.label_15)
 
-        self.focstim_dump_notifications = QCheckBox(self.groupBox_9)
-        self.focstim_dump_notifications.setObjectName(u"focstim_dump_notifications")
+        self.focstim_use_teleplot = QCheckBox(self.groupBox_9)
+        self.focstim_use_teleplot.setObjectName(u"focstim_use_teleplot")
 
-        self.formLayout_8.setWidget(2, QFormLayout.ItemRole.FieldRole, self.focstim_dump_notifications)
+        self.formLayout_8.setWidget(0, QFormLayout.ItemRole.FieldRole, self.focstim_use_teleplot)
 
         self.label_16 = QLabel(self.groupBox_9)
         self.label_16.setObjectName(u"label_16")
@@ -381,15 +391,15 @@ class Ui_PreferencesDialog(object):
 
         self.formLayout_8.setWidget(1, QFormLayout.ItemRole.FieldRole, self.focstim_teleplot_prefix)
 
-        self.label_15 = QLabel(self.groupBox_9)
-        self.label_15.setObjectName(u"label_15")
+        self.label_18 = QLabel(self.groupBox_9)
+        self.label_18.setObjectName(u"label_18")
 
-        self.formLayout_8.setWidget(0, QFormLayout.ItemRole.LabelRole, self.label_15)
+        self.formLayout_8.setWidget(2, QFormLayout.ItemRole.LabelRole, self.label_18)
 
-        self.focstim_use_teleplot = QCheckBox(self.groupBox_9)
-        self.focstim_use_teleplot.setObjectName(u"focstim_use_teleplot")
+        self.focstim_dump_notifications = QCheckBox(self.groupBox_9)
+        self.focstim_dump_notifications.setObjectName(u"focstim_dump_notifications")
 
-        self.formLayout_8.setWidget(0, QFormLayout.ItemRole.FieldRole, self.focstim_use_teleplot)
+        self.formLayout_8.setWidget(2, QFormLayout.ItemRole.FieldRole, self.focstim_dump_notifications)
 
 
         self.verticalLayout_5.addWidget(self.groupBox_9)
@@ -690,9 +700,7 @@ class Ui_PreferencesDialog(object):
         QWidget.setTabOrder(self.focstim_refresh_serial_devices, self.focstim_ssid)
         QWidget.setTabOrder(self.focstim_ssid, self.focstim_password)
         QWidget.setTabOrder(self.focstim_password, self.focstim_sync)
-        QWidget.setTabOrder(self.focstim_sync, self.focstim_ip)
-        QWidget.setTabOrder(self.focstim_ip, self.focstim_read_ip)
-        QWidget.setTabOrder(self.focstim_read_ip, self.focstim_use_teleplot)
+        QWidget.setTabOrder(self.focstim_sync, self.focstim_use_teleplot)
         QWidget.setTabOrder(self.focstim_use_teleplot, self.focstim_teleplot_prefix)
         QWidget.setTabOrder(self.focstim_teleplot_prefix, self.focstim_dump_notifications)
         QWidget.setTabOrder(self.focstim_dump_notifications, self.tcp_port)
@@ -736,7 +744,7 @@ class Ui_PreferencesDialog(object):
 
         self.retranslateUi(PreferencesDialog)
 
-        self.tabWidget.setCurrentIndex(2)
+        self.tabWidget.setCurrentIndex(0)
 
 
         QMetaObject.connectSlotsByName(PreferencesDialog)
@@ -748,6 +756,8 @@ class Ui_PreferencesDialog(object):
         self.label.setText(QCoreApplication.translate("PreferencesDialog", u"Port", None))
         self.label_6.setText(QCoreApplication.translate("PreferencesDialog", u"Localhost only", None))
         self.websocket_localhost_only.setText("")
+        self.label_28.setText(QCoreApplication.translate("PreferencesDialog", u"T-Code url", None))
+        self.label_websocket_url.setText(QCoreApplication.translate("PreferencesDialog", u"TextLabel", None))
         self.gb_tcp_server.setTitle(QCoreApplication.translate("PreferencesDialog", u"TCP server", None))
         self.label_3.setText(QCoreApplication.translate("PreferencesDialog", u"Port", None))
         self.label_10.setText(QCoreApplication.translate("PreferencesDialog", u"Localhost only", None))
@@ -794,20 +804,20 @@ class Ui_PreferencesDialog(object):
         self.label_14.setText(QCoreApplication.translate("PreferencesDialog", u"Serial port", None))
         self.focstim_refresh_serial_devices.setText(QCoreApplication.translate("PreferencesDialog", u"Refresh", None))
         self.groupBox_10.setTitle(QCoreApplication.translate("PreferencesDialog", u"Network", None))
-        self.label_22.setText(QCoreApplication.translate("PreferencesDialog", u"IP", None))
-        self.focstim_sync.setText(QCoreApplication.translate("PreferencesDialog", u"Sync with device", None))
+        self.focstim_sync.setText(QCoreApplication.translate("PreferencesDialog", u"Upload ssid/password", None))
         self.label_21.setText(QCoreApplication.translate("PreferencesDialog", u"Password", None))
-        self.focstim_read_ip.setText(QCoreApplication.translate("PreferencesDialog", u"Read from device", None))
         self.label_20.setText(QCoreApplication.translate("PreferencesDialog", u"SSID", None))
+        self.label_22.setText(QCoreApplication.translate("PreferencesDialog", u"IP", None))
+        self.focstim_read_ip.setText(QCoreApplication.translate("PreferencesDialog", u"Read from device", None))
         self.groupBox_9.setTitle(QCoreApplication.translate("PreferencesDialog", u"Advanced", None))
-        self.label_18.setText(QCoreApplication.translate("PreferencesDialog", u"Dump notifications to file", None))
-        self.focstim_dump_notifications.setText("")
+        self.label_15.setText(QCoreApplication.translate("PreferencesDialog", u"Use teleplot", None))
+        self.focstim_use_teleplot.setText("")
 #if QT_CONFIG(tooltip)
         self.label_16.setToolTip(QCoreApplication.translate("PreferencesDialog", u"Useful if you have multiple FOC-Stim boxes", None))
 #endif // QT_CONFIG(tooltip)
         self.label_16.setText(QCoreApplication.translate("PreferencesDialog", u"teleplot prefix (?)", None))
-        self.label_15.setText(QCoreApplication.translate("PreferencesDialog", u"Use teleplot", None))
-        self.focstim_use_teleplot.setText("")
+        self.label_18.setText(QCoreApplication.translate("PreferencesDialog", u"Dump notifications to file", None))
+        self.focstim_dump_notifications.setText("")
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_foc), QCoreApplication.translate("PreferencesDialog", u"FOC-Stim", None))
         self.groupBox_4.setTitle(QCoreApplication.translate("PreferencesDialog", u"NeoStim", None))
         self.neostim_refresh_serial_devices.setText(QCoreApplication.translate("PreferencesDialog", u"Refresh", None))

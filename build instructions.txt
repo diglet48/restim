@@ -22,6 +22,7 @@
 ./venv/Scripts/pyside6-uic.exe  -o ./qt_ui/focstim_flash_dialog_ui.py ./designer/focstimflashdialog.ui
 ./venv/Scripts/pyside6-uic.exe  -o ./qt_ui/about_dialog_ui.py ./designer/aboutdialog.ui
 ./venv/Scripts/pyside6-uic.exe  -o ./qt_ui/widgets/focstim_device_stats_widget_ui.py ./designer/focstimdevicestatswidget.ui
+./venv/Scripts/pyside6-uic.exe  -o ./qt_ui/sensors/sensor_category_ui.py ./designer/sensorcategory.ui
 
 ./venv/Scripts/pyside6-uic.exe  -o ./qt_ui/device_wizard/type_select_ui.py ./designer/device_wizard/type_select.ui
 ./venv/Scripts/pyside6-uic.exe  -o ./qt_ui/device_wizard/waveform_select_ui.py ./designer/device_wizard/waveform_select.ui

@@ -27,6 +27,8 @@ from qt_ui.sensors.imu_hip_thrust_node import IMUHipThrustNode
 from qt_ui.sensors.imu_velocity_node import IMUVelocityNode
 from qt_ui.sensors.pressure_absolute_node import PressureAbsoluteSensorNode
 from qt_ui.sensors.pressure_depletion_node import PressureDepletionSensorNode
+from qt_ui.sensors.sensor_category import SensorCategory, SensorCategoryPressure, SensorCategoryAS5311, \
+    SensorCategoryIMU
 from qt_ui.sensors.sensor_node_interface import SensorNodeInterface
 from qt_ui.sensors_widget_ui import Ui_SensorsWidget
 
@@ -34,26 +36,6 @@ from qt_ui.sensors_widget_ui import Ui_SensorsWidget
 from stim_math.sensors.as5311 import AS5311Data
 from stim_math.sensors.imu import IMUData
 from stim_math.sensors.pressure import PressureData
-
-
-class Category:
-    pass
-
-
-# TODO: subclass from widget to display.. stuff
-class CategoryIMU(Category):
-    TITLE = "IMU"
-    DESCRIPTION = "Requires FOC-Stim V4.2"
-
-
-class CategoryAS5311(Category):
-    TITLE = "AS5311"
-    DESCRIPTION = "Requires FOC-Stim V4 with optional AS5311 sensor module"
-
-class CategoryPressure(Category):
-    TITLE = "Pressure"
-    DESCRIPTION = "Requires FOC-Stim V4 with optional sparkfun micropressure sensor module"
-
 
 
 class SensorsWidget(QWidget, Ui_SensorsWidget):
@@ -75,18 +57,28 @@ class SensorsWidget(QWidget, Ui_SensorsWidget):
         larger_font = QFont()
         larger_font.setPointSize(12)
 
+        category_imu = SensorCategoryIMU()
+        self.new_imu_sensor_data_from_device.connect(category_imu.sensor_data_from_device)
+        self.new_imu_sensor_data_from_network.connect(category_imu.sensor_data_from_network)
+        category_as5311 = SensorCategoryAS5311()
+        self.new_as5311_sensor_data_from_device.connect(category_as5311.sensor_data_from_device)
+        self.new_as5311_sensor_data_from_network.connect(category_as5311.sensor_data_from_network)
+        category_pressure = SensorCategoryPressure()
+        self.new_pressure_sensor_data_from_device.connect(category_pressure.sensor_data_from_device)
+        self.new_pressure_sensor_data_from_network.connect(category_pressure.sensor_data_from_network)
+
         self.structure = {
-            CategoryIMU() : [
+            category_imu : [
                 IMUHipThrustNode(),
                 IMUVelocityNode(),
             ],
-            CategoryAS5311(): [
+            category_as5311: [
                 AS5311AbsoluteSensorNode(),
                 AS5311HighPassNode(),
                 AS5311VelocitySensorNode(),
                 # AS5311EdgingNode(),
             ],
-            CategoryPressure(): [
+            category_pressure: [
                 PressureAbsoluteSensorNode(),
                 PressureDepletionSensorNode(),
             ]
@@ -94,14 +86,16 @@ class SensorsWidget(QWidget, Ui_SensorsWidget):
 
         self.treeWidget.clear()
         for category_class, nodes in self.structure.items():
+            category_class: SensorCategory
             category_item = QTreeWidgetItem()
             category_item.setData(0, Qt.ItemDataRole.UserRole, category_class)
             category_item.setData(0, Qt.ItemDataRole.DisplayRole, category_class.TITLE)
             category_item.setFont(0, larger_font)
             self.treeWidget.addTopLevelItem(category_item)
-            # TODO: add category class to stacked widget
+            self.stackedWidget.addWidget(category_class)
 
             for node_class in nodes:
+                node_class: SensorNodeInterface
                 node_item = QTreeWidgetItem()
                 node_item.setData(0, Qt.ItemDataRole.UserRole, node_class)
                 node_item.setData(0, Qt.ItemDataRole.DisplayRole, node_class.TITLE)
@@ -109,17 +103,17 @@ class SensorsWidget(QWidget, Ui_SensorsWidget):
                 self.stackedWidget.addWidget(node_class)
 
                 try:
-                    self.new_as5311_sensor_data.connect(node_class.new_as5311_sensor_data)
+                    category_as5311.new_sensor_data.connect(node_class.new_as5311_sensor_data)
                 except AttributeError:
                     pass
 
                 try:
-                    self.new_imu_sensor_data.connect(node_class.new_imu_sensor_data)
+                    category_imu.new_sensor_data.connect(node_class.new_imu_sensor_data)
                 except AttributeError:
                     pass
 
                 try:
-                    self.new_pressure_sensor_data.connect(node_class.new_pressure_sensor_data)
+                    category_pressure.new_sensor_data.connect(node_class.new_pressure_sensor_data)
                 except AttributeError:
                     pass
 
@@ -135,13 +129,19 @@ class SensorsWidget(QWidget, Ui_SensorsWidget):
         # to those of the currently selected tree item.
         index = self.treeWidget.currentIndex()
         widget = index.siblingAtColumn(0).data(Qt.ItemDataRole.UserRole)
-        if isinstance(widget, QWidget) and self.stackedWidget.indexOf(widget) != -1:
-            # switch to the corresponding widget
-            self.stackedWidget.setCurrentWidget(widget)
-            self.checkBox.setChecked(widget.is_node_enabled())
+        if isinstance(widget, QWidget):
+            if isinstance(widget, SensorCategory):
+                self.stackedWidget.setCurrentWidget(widget)
+                self.checkBox.setEnabled(False)
+            else:
+                # switch to the corresponding widget
+                self.stackedWidget.setCurrentWidget(widget)
+                self.checkBox.setChecked(widget.is_node_enabled())
+                self.checkBox.setEnabled(True)
         else:
             self.stackedWidget.setCurrentWidget(self.page_empty)
             self.checkBox.setChecked(False)
+            self.checkBox.setEnabled(False)
 
         try:
             self.textBrowser.setText(widget.DESCRIPTION)
@@ -183,9 +183,13 @@ class SensorsWidget(QWidget, Ui_SensorsWidget):
 
     def save_settings(self):
         for category_label, nodes in self.structure.items():
+            category_label.save_settings()
             for node in nodes:
                 node.save_settings()
 
-    new_as5311_sensor_data = Signal(AS5311Data)
-    new_imu_sensor_data = Signal(IMUData)
-    new_pressure_sensor_data = Signal(PressureData)
+    new_as5311_sensor_data_from_device = Signal(AS5311Data)
+    new_as5311_sensor_data_from_network = Signal(AS5311Data)
+    new_imu_sensor_data_from_device = Signal(IMUData)
+    new_imu_sensor_data_from_network = Signal(IMUData)
+    new_pressure_sensor_data_from_device = Signal(PressureData)
+    new_pressure_sensor_data_from_network = Signal(PressureData)
