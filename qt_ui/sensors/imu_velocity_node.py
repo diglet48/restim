@@ -92,7 +92,7 @@ class IMUVelocityNode(QtWidgets.QWidget, SensorNodeInterface):
         self.last_update = now
 
         new_value = np.abs(data.gyr_x) + np.abs(data.gyr_y) + np.abs(data.gyr_z)
-        new_value = new_value / 1000 # convert to degrees-per-second
+        new_value = new_value / np.pi * 180 # convert to degrees-per-second
         self.value += (new_value - self.value) * (1 - alpha)
 
         self.x.append(time.time())

@@ -269,8 +269,10 @@ class FOCStimProtoDevice(QObject, OutputDevice):
             s = google.protobuf.text_format.MessageToString(response.response_lsm6dsox_start, as_one_line=True,
                                                             print_unknown_fields=True)
             logger.info(s)
-            self.acc_sensitivity = response.response_lsm6dsox_start.acc_sensitivity
-            self.gyr_sensitivity = response.response_lsm6dsox_start.gyr_sensitivity
+            mili_g_to_acc = 0.001 * 9.80
+            mili_dps_to_rads = 1 / 360 / 1000 * (2 * np.pi)
+            self.acc_sensitivity = response.response_lsm6dsox_start.acc_sensitivity * mili_g_to_acc
+            self.gyr_sensitivity = response.response_lsm6dsox_start.gyr_sensitivity * mili_dps_to_rads
             self.start_signal_generation()
 
         fut = self.api.request_lsm6dsox_start(LSM6DSOX_SAMPLERATE_HZ, LSM6DSOX_ACC_FULLSCALE, LSM6DSOX_GYR_FULLSCALE)

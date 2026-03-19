@@ -14,10 +14,10 @@ GRAVITY_MAGNITUDE = 9.80
 @dataclass
 class IMUData:
     samplerate: float
-    acc_x: float    # acceleration in mili-g
+    acc_x: float    # acceleration in m/s^2
     acc_y: float
     acc_z: float
-    gyr_x: float    # angular rotation in mili-degrees-per-second
+    gyr_x: float    # angular rotation in rad/s
     gyr_y: float
     gyr_z: float
 
@@ -67,10 +67,6 @@ class IMUForwardPositionFilter:
         #                        [-7.18050029e-03, -1.13429312e-03, 1.00070187e+00]])
         # acc = (acc_matrix @ (acc - acc_offsets).T).T
 
-
-        mdps_to_rads = 1 / 360 / 1000 * (2 * np.pi)
-        gyr = gyr * mdps_to_rads
-        acc = acc / 1000 * GRAVITY_MAGNITUDE
         dt = 1 / data.samplerate
 
         # initial conditions
