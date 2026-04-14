@@ -12,7 +12,7 @@ a = Analysis(
     binaries=[],
     datas=added_files,
     hiddenimports=[],
-    hookspath=['pyinstaller-hooks',
+    hookspath=['pyinstaller-hooks'],
     hooksconfig={},
     runtime_hooks=[],
     excludes=[],
@@ -68,6 +68,5 @@ app = BUNDLE(
         'CFBundleName': 'Restim',
         'CFBundleDisplayName': 'Restim'
     },
-
 )
 
