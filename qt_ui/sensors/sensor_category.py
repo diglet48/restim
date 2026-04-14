@@ -70,6 +70,8 @@ class SensorCategory(QWidget, Ui_SensorCategory):
             self.new_sensor_data.emit(data)
 
     def url_changed(self):
+        if self.websocket:
+            self.websocket.deleteLater()
         self.websocket = None
         self.handler = None
         self.refresh_label()

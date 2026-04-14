@@ -153,6 +153,9 @@ udp_localhost_only = Setting("network/udp-localhost-only", False, bool)
 serial_enabled = Setting("network/serial-enabled", False, bool)
 serial_port = Setting("network/serial-port", "COM20", str)
 serial_auto_expand = Setting("network/serial-auto-expand", True, bool)
+rest_enabled = Setting("network/rest-enabled", True, bool)
+rest_port = Setting("network/rest-port", 12348, int)
+rest_localhost_only = Setting("network/rest-localhost-only", False, bool)
 
 
 focstim_serial_port = Setting("focstim/serial_port", '', str)

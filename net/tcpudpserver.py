@@ -26,7 +26,7 @@ class TcpUdpServer(QtCore.QObject):
         localhost_only = settings.tcp_localhost_only.get()
 
         self.tcp_server = QtNetwork.QTcpServer()
-        address = QHostAddress.LocalHost if localhost_only else QHostAddress.Any
+        address = QHostAddress.SpecialAddress.LocalHost if localhost_only else QHostAddress.SpecialAddress.Any
         if enabled:
             b = self.tcp_server.listen(address, port)
             if b:

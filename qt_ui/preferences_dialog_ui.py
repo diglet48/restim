@@ -30,7 +30,7 @@ class Ui_PreferencesDialog(object):
     def setupUi(self, PreferencesDialog):
         if not PreferencesDialog.objectName():
             PreferencesDialog.setObjectName(u"PreferencesDialog")
-        PreferencesDialog.resize(685, 627)
+        PreferencesDialog.resize(685, 749)
         self.verticalLayout = QVBoxLayout(PreferencesDialog)
         self.verticalLayout.setObjectName(u"verticalLayout")
         self.tabWidget = QTabWidget(PreferencesDialog)
@@ -192,6 +192,45 @@ class Ui_PreferencesDialog(object):
 
 
         self.verticalLayout_2.addWidget(self.gb_buttplug_wsdm)
+
+        self.gb_rest = QGroupBox(self.tab_network)
+        self.gb_rest.setObjectName(u"gb_rest")
+        self.gb_rest.setCheckable(True)
+        self.formLayout_9 = QFormLayout(self.gb_rest)
+        self.formLayout_9.setObjectName(u"formLayout_9")
+        self.label_29 = QLabel(self.gb_rest)
+        self.label_29.setObjectName(u"label_29")
+
+        self.formLayout_9.setWidget(0, QFormLayout.ItemRole.LabelRole, self.label_29)
+
+        self.rest_port = QSpinBox(self.gb_rest)
+        self.rest_port.setObjectName(u"rest_port")
+        self.rest_port.setMaximum(65535)
+
+        self.formLayout_9.setWidget(0, QFormLayout.ItemRole.FieldRole, self.rest_port)
+
+        self.label_30 = QLabel(self.gb_rest)
+        self.label_30.setObjectName(u"label_30")
+
+        self.formLayout_9.setWidget(1, QFormLayout.ItemRole.LabelRole, self.label_30)
+
+        self.rest_localhost_only = QCheckBox(self.gb_rest)
+        self.rest_localhost_only.setObjectName(u"rest_localhost_only")
+
+        self.formLayout_9.setWidget(1, QFormLayout.ItemRole.FieldRole, self.rest_localhost_only)
+
+        self.label_35 = QLabel(self.gb_rest)
+        self.label_35.setObjectName(u"label_35")
+
+        self.formLayout_9.setWidget(2, QFormLayout.ItemRole.LabelRole, self.label_35)
+
+        self.label_rest_url = QLabel(self.gb_rest)
+        self.label_rest_url.setObjectName(u"label_rest_url")
+
+        self.formLayout_9.setWidget(2, QFormLayout.ItemRole.FieldRole, self.label_rest_url)
+
+
+        self.verticalLayout_2.addWidget(self.gb_rest)
 
         self.label_12 = QLabel(self.tab_network)
         self.label_12.setObjectName(u"label_12")
@@ -774,6 +813,12 @@ class Ui_PreferencesDialog(object):
         self.label_25.setText(QCoreApplication.translate("PreferencesDialog", u"address", None))
         self.label_26.setText(QCoreApplication.translate("PreferencesDialog", u"generate beta axis", None))
         self.buttplug_wsdm_auto_expand.setText("")
+        self.gb_rest.setTitle(QCoreApplication.translate("PreferencesDialog", u"REST API", None))
+        self.label_29.setText(QCoreApplication.translate("PreferencesDialog", u"Port", None))
+        self.label_30.setText(QCoreApplication.translate("PreferencesDialog", u"Localhost only", None))
+        self.rest_localhost_only.setText("")
+        self.label_35.setText(QCoreApplication.translate("PreferencesDialog", u"REST API url", None))
+        self.label_rest_url.setText(QCoreApplication.translate("PreferencesDialog", u"TextLabel", None))
         self.label_12.setText(QCoreApplication.translate("PreferencesDialog", u"Changes require restart", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_network), QCoreApplication.translate("PreferencesDialog", u"Network", None))
         self.groupBox.setTitle(QCoreApplication.translate("PreferencesDialog", u"Audio", None))

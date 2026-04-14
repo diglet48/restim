@@ -1,3 +1,4 @@
+import json
 import os
 import sys
 from enum import Enum
@@ -5,6 +6,7 @@ from enum import Enum
 from PySide6 import QtGui
 from PySide6.QtCore import QTimer
 from PySide6.QtGui import QIcon
+from PySide6.QtHttpServer import QHttpServerRequest
 from PySide6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QSizePolicy, QFrame, QStyleFactory, QVBoxLayout, QHBoxLayout, QLCDNumber
 )
@@ -19,6 +21,7 @@ import qt_ui.patterns.fourphase_patterns
 from device.audio.audio_stim_device import AudioStimDevice
 import net.websocketserver
 import net.tcpudpserver
+import net.http_server
 import qt_ui.funscript_conversion_dialog
 import qt_ui.simfile_conversion_dialog
 import qt_ui.focstim_flash_dialog
@@ -82,6 +85,7 @@ class Window(QMainWindow, Ui_MainWindow):
         self.device_volume_display.setToolTip("Device volume\r\nAdjust with knob on device")
         self.device_volume_display.setFixedHeight(30)
         self.device_volume_display.display(0)
+        self.last_device_volume = None
 
         self.frame = QWidget()
         frame_layout = QVBoxLayout(self.toolBar)
@@ -183,6 +187,11 @@ class Window(QMainWindow, Ui_MainWindow):
         self.websocket_server.incoming_as5311_data.connect(self.page_sensors.new_as5311_sensor_data_from_network)
         self.websocket_server.incoming_imu_data.connect(self.page_sensors.new_imu_sensor_data_from_network)
         self.websocket_server.incoming_pressure_data.connect(self.page_sensors.new_pressure_sensor_data_from_network)
+
+        self.http_server = net.http_server.HttpServer(self)
+        self.http_server.route('/v1/status', self.api_status)
+        self.http_server.add_action('start', self.api_start)
+        self.http_server.add_action('stop', self.api_stop)
 
         self.tcpudp_server = net.tcpudpserver.TcpUdpServer(self)
         self.tcpudp_server.new_tcode_command.connect(self.tcode_command_router.route_command)
@@ -296,6 +305,10 @@ class Window(QMainWindow, Ui_MainWindow):
         # self.actionDevice.triggered.connect(show_device)
         # self.actionLog.triggered.connect(show_log)
         self.actionStart.triggered.connect(self.signal_start_stop)
+
+    def update_device_volume(self, value):
+        self.last_device_volume = value
+        self.device_volume_display.display(int(round(value * 100)))
 
     def media_connection_status_changed(self, status: MediaConnectionState):
         """
@@ -532,6 +545,7 @@ class Window(QMainWindow, Ui_MainWindow):
                 self.playstate = PlayState.PLAYING
                 self.tab_volume.set_play_state(self.playstate)
                 self.refresh_play_button_icon()
+                self.output_device.disconnected.connect(self.signal_stop)
 
                 output_device.new_as5311_sensor_data.connect(self.page_sensors.new_as5311_sensor_data_from_device)
                 output_device.new_imu_sensor_data.connect(self.page_sensors.new_imu_sensor_data_from_device)
@@ -543,7 +557,7 @@ class Window(QMainWindow, Ui_MainWindow):
                 output_device.new_pressure_sensor_data.connect(self.websocket_server.transmit_pressure_data)
 
                 output_device.new_battery_data.connect(self.battery_bar.setValue)
-                output_device.new_device_volume_data.connect(self.device_volume_display.display)
+                output_device.new_device_volume_data.connect(self.update_device_volume)
                 output_device.new_utilization_data.connect(self.foc_device_stats.update_utilization)
                 output_device.new_resistance_data.connect(self.foc_device_stats.update_resistance)
 
@@ -674,6 +688,26 @@ class Window(QMainWindow, Ui_MainWindow):
             self.output_device.stop()
         self.save_settings()
         event.accept()
+
+    def api_status(self, request: QHttpServerRequest):
+        params = {
+            "playing": self.playstate == PlayState.PLAYING,
+            "volume": {
+                "ui": self.doubleSpinBox_volume.value() / 100,
+            },
+        }
+        if self.last_device_volume is not None:
+            params["volume"]["device"] = self.last_device_volume
+        return json.dumps(params)
+
+    def api_start(self, request: QHttpServerRequest):
+        if self.output_device is None:
+            self.signal_start()
+        return "{}"
+
+    def api_stop(self, request: QHttpServerRequest):
+        self.signal_stop()
+        return "{}"
 
 
 def run():

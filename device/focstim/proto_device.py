@@ -168,7 +168,9 @@ class FOCStimProtoDevice(QObject, OutputDevice):
                 self.api.request_stop_signal()
                 self.api.cancel_outstanding_requests()
                 self.transport.flush()
-        self.transport.close()
+            self.transport.close()
+            self.disconnected.emit()
+
         if self.notification_log:
             self.notification_log.close()
             self.notification_log = None
@@ -389,7 +391,7 @@ class FOCStimProtoDevice(QObject, OutputDevice):
             self.teleplot.write_metrics(
                 pot=notif.volume
             )
-        self.new_device_volume_data.emit(int(np.round(notif.volume * 100)))
+        self.new_device_volume_data.emit(notif.volume)
 
     def handle_notification_currents(self, notif: NotificationCurrents):
         # print(notif)
@@ -528,10 +530,13 @@ class FOCStimProtoDevice(QObject, OutputDevice):
                 **{notif.id: notif.value}
             )
 
+    disconnected = Signal()
+
     new_imu_sensor_data = Signal(IMUData)
     new_as5311_sensor_data = Signal(AS5311Data)
     new_pressure_sensor_data = Signal(PressureData)
     new_battery_data = Signal(float)  # TODO: more battery stats
-    new_device_volume_data = Signal(int)
+    new_device_volume_data = Signal(float)
     new_resistance_data = Signal(complex, complex, complex, complex)
     new_utilization_data = Signal(float, float) # transformer, voltage
+

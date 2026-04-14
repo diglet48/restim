@@ -131,3 +131,7 @@ dmypy.json
 # sound files
 .wav
 .mp3
+
+# Local development files
+experiments/
+trace/

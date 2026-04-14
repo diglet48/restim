@@ -27,7 +27,7 @@ class WebSocketServer(QtCore.QObject):
         localhost_only = settings.websocket_localhost_only.get()
 
         if not enabled:
-            logger.info("Not starting websocket server because disabled in settings.")
+            logger.info("Websocket server not enabled.")
             return
 
         address = QHostAddress.SpecialAddress.LocalHost if localhost_only else QHostAddress.SpecialAddress.Any
