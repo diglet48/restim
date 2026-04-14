@@ -90,7 +90,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
          <number>0</number>
         </property>
         <property name="maximum">
-         <double>150.000000000000000</double>
+         <double>200.000000000000000</double>
         </property>
        </widget>
       </item>
