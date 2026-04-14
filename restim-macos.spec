@@ -3,17 +3,16 @@
 block_cipher = None
 
 added_files = [
-    ('resources/phase diagram bg.svg', 'resources/'),
     ('resources/favicon.png', 'resources/')
 ]
 
 a = Analysis(
     ['restim.py'],
-    pathex=[],
+    pathex=['.'],
     binaries=[],
     datas=added_files,
     hiddenimports=[],
-    hookspath=[],
+    hookspath=['pyinstaller-hooks',
     hooksconfig={},
     runtime_hooks=[],
     excludes=[],
@@ -65,7 +64,10 @@ app = BUNDLE(
     icon='resources/favicon.png',
     bundle_identifier=None,
     info_plist={
-        'NSHighResolutionCapable': 'True'
+        'NSHighResolutionCapable': 'True',
+        'CFBundleName': 'Restim',
+        'CFBundleDisplayName': 'Restim'
     },
+
 )
 

@@ -1,0 +1,57 @@
+name: Build macOS app
+
+on:
+  push:
+    tags:
+      - 'v*'            # e.g. v1.2.3 → publishes to GitHub Release
+    branches:
+      - master          # also build on main pushes (artifacts only)
+  workflow_dispatch:    # and on manual trigger from the Actions tab
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-14      # Apple Silicon runner
+            arch: arm64
+          - os: macos-13      # Intel runner
+            arch: x86_64
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Build .app
+        run: |
+          chmod +x ./build-mac.sh
+          ./build-mac.sh --no-install
+
+      - name: Package as DMG
+        run: |
+          STAGING="dmg-staging"
+          mkdir -p "$STAGING"
+          cp -R dist/Restim.app "$STAGING/"
+          ln -s /Applications "$STAGING/Applications"
+          hdiutil create \
+            -volname "Restim" \
+            -srcfolder "$STAGING" \
+            -ov -format UDZO \
+            "Restim-${{ matrix.arch }}.dmg"
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Restim-${{ matrix.arch }}
+          path: Restim-${{ matrix.arch }}.dmg
+          retention-days: 30
+
+      - name: Attach to GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: Restim-${{ matrix.arch }}.dmg
