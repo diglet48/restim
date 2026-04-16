@@ -55,3 +55,4 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: Restim-${{ matrix.arch }}.dmg
+          draft: true
