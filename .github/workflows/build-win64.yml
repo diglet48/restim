@@ -11,6 +11,8 @@ on:
 jobs:
   pyinstaller-build:
     runs-on: windows-latest
+    permissions:
+      contents: write
     steps:
       - name: Create Executable
         uses: sayyid5416/pyinstaller@v1
