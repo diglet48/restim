@@ -19,7 +19,7 @@ Refer to the [wiki](https://github.com/diglet48/restim/wiki) for help.
 ## Installation
 
 ### Windows
-download the latest release package: https://github.com/diglet48/restim/releases
+download the latest release package: [Releases][releases]
 
 ### Linux 
 make sure python 3.10 or newer is installed on your system.  
