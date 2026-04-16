@@ -4,10 +4,9 @@ import numpy as np
 
 from PySide6 import QtCore, QtWidgets
 from qt_ui import settings
-from qt_ui.axis_controller import AxisController
+from qt_ui.axis_controller import AxisController, PercentAxisController
 
 from qt_ui.four_phase_settings_widget_ui import Ui_FourPhaseSettingsWidget
-
 
 from stim_math.audio_gen.params import FourphaseCalibrationParams
 from stim_math.audio_gen.params import ThreephasePositionTransformParams
@@ -20,18 +19,18 @@ class FourPhaseSettingsWidget(QtWidgets.QWidget, Ui_FourPhaseSettingsWidget):
 
         # create axis
         self.calibrate_params = FourphaseCalibrationParams(
-            center=create_constant_axis(settings.fourphase_calibration_center.get()),
             a=create_constant_axis(settings.fourphase_calibration_a.get()),
             b=create_constant_axis(settings.fourphase_calibration_b.get()),
             c=create_constant_axis(settings.fourphase_calibration_c.get()),
             d=create_constant_axis(settings.fourphase_calibration_d.get()),
+            center_reduction=create_constant_axis(settings.fourphase_calibration_center_reduction.get()),
         )
 
         self.a_power.setValue(self.calibrate_params.a.last_value())
         self.b_power.setValue(self.calibrate_params.b.last_value())
         self.c_power.setValue(self.calibrate_params.c.last_value())
         self.d_power.setValue(self.calibrate_params.d.last_value())
-        self.center_power.setValue(self.calibrate_params.center.last_value())
+        self.center_reduction.setValue(self.calibrate_params.center_reduction.last_value() * 100)
 
         self.a_controller = AxisController(self.a_power)
         self.a_controller.link_axis(self.calibrate_params.a)
@@ -45,12 +44,19 @@ class FourPhaseSettingsWidget(QtWidgets.QWidget, Ui_FourPhaseSettingsWidget):
         self.d_controller = AxisController(self.d_power)
         self.d_controller.link_axis(self.calibrate_params.d)
 
-        # self.center_controller = AxisController(self.center_power)
-        # self.center_controller.link_axis(self.calibrate_params.center)
+        self.center_reduction_controller = PercentAxisController(self.center_reduction)
+        self.center_reduction_controller.link_axis(self.calibrate_params.center_reduction)
+
+        self.center_reduction_reset.clicked.connect(self.reset_center_reduction)
 
     def save_settings(self):
         settings.fourphase_calibration_a.set(self.a_controller.last_user_entered_value)
         settings.fourphase_calibration_b.set(self.b_controller.last_user_entered_value)
         settings.fourphase_calibration_c.set(self.c_controller.last_user_entered_value)
         settings.fourphase_calibration_d.set(self.d_controller.last_user_entered_value)
-        # settings.fourphase_calibration_center.set(self.center_controller.last_user_entered_value)
+        settings.fourphase_calibration_center_reduction.set(self.center_reduction_controller.last_user_entered_value)
+
+    def reset_center_reduction(self):
+        self.center_reduction.setValue(
+            settings.fourphase_calibration_center_reduction.default_value * 100
+        )

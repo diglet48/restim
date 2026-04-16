@@ -3,7 +3,7 @@
 ################################################################################
 ## Form generated from reading UI file 'fourphasesettingswidget.ui'
 ##
-## Created by: Qt User Interface Compiler version 6.9.0
+## Created by: Qt User Interface Compiler version 6.9.3
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
@@ -15,9 +15,10 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QFont, QFontDatabase, QGradient, QIcon,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
-from PySide6.QtWidgets import (QApplication, QDoubleSpinBox, QFormLayout, QGroupBox,
-    QLabel, QSizePolicy, QSpacerItem, QVBoxLayout,
-    QWidget)
+from PySide6.QtWidgets import (QApplication, QDoubleSpinBox, QFormLayout, QFrame,
+    QGroupBox, QHBoxLayout, QLabel, QSizePolicy,
+    QSpacerItem, QToolButton, QVBoxLayout, QWidget)
+import restim_rc
 
 class Ui_FourPhaseSettingsWidget(object):
     def setupUi(self, FourPhaseSettingsWidget):
@@ -49,16 +50,6 @@ class Ui_FourPhaseSettingsWidget(object):
 
         self.formLayout.setWidget(1, QFormLayout.ItemRole.LabelRole, self.label_2)
 
-        self.label_3 = QLabel(self.groupBox)
-        self.label_3.setObjectName(u"label_3")
-
-        self.formLayout.setWidget(2, QFormLayout.ItemRole.LabelRole, self.label_3)
-
-        self.label_4 = QLabel(self.groupBox)
-        self.label_4.setObjectName(u"label_4")
-
-        self.formLayout.setWidget(3, QFormLayout.ItemRole.LabelRole, self.label_4)
-
         self.b_power = QDoubleSpinBox(self.groupBox)
         self.b_power.setObjectName(u"b_power")
         self.b_power.setKeyboardTracking(False)
@@ -67,6 +58,11 @@ class Ui_FourPhaseSettingsWidget(object):
         self.b_power.setSingleStep(0.100000000000000)
 
         self.formLayout.setWidget(1, QFormLayout.ItemRole.FieldRole, self.b_power)
+
+        self.label_3 = QLabel(self.groupBox)
+        self.label_3.setObjectName(u"label_3")
+
+        self.formLayout.setWidget(2, QFormLayout.ItemRole.LabelRole, self.label_3)
 
         self.c_power = QDoubleSpinBox(self.groupBox)
         self.c_power.setObjectName(u"c_power")
@@ -77,6 +73,11 @@ class Ui_FourPhaseSettingsWidget(object):
 
         self.formLayout.setWidget(2, QFormLayout.ItemRole.FieldRole, self.c_power)
 
+        self.label_4 = QLabel(self.groupBox)
+        self.label_4.setObjectName(u"label_4")
+
+        self.formLayout.setWidget(3, QFormLayout.ItemRole.LabelRole, self.label_4)
+
         self.d_power = QDoubleSpinBox(self.groupBox)
         self.d_power.setObjectName(u"d_power")
         self.d_power.setKeyboardTracking(False)
@@ -86,20 +87,43 @@ class Ui_FourPhaseSettingsWidget(object):
 
         self.formLayout.setWidget(3, QFormLayout.ItemRole.FieldRole, self.d_power)
 
-        self.label_5 = QLabel(self.groupBox)
-        self.label_5.setObjectName(u"label_5")
+        self.line = QFrame(self.groupBox)
+        self.line.setObjectName(u"line")
+        self.line.setFrameShape(QFrame.Shape.HLine)
+        self.line.setFrameShadow(QFrame.Shadow.Sunken)
 
-        self.formLayout.setWidget(4, QFormLayout.ItemRole.LabelRole, self.label_5)
+        self.formLayout.setWidget(4, QFormLayout.ItemRole.SpanningRole, self.line)
 
-        self.center_power = QDoubleSpinBox(self.groupBox)
-        self.center_power.setObjectName(u"center_power")
-        self.center_power.setEnabled(False)
-        self.center_power.setKeyboardTracking(False)
-        self.center_power.setMinimum(-10.000000000000000)
-        self.center_power.setMaximum(10.000000000000000)
-        self.center_power.setSingleStep(0.100000000000000)
+        self.label_6 = QLabel(self.groupBox)
+        self.label_6.setObjectName(u"label_6")
 
-        self.formLayout.setWidget(4, QFormLayout.ItemRole.FieldRole, self.center_power)
+        self.formLayout.setWidget(5, QFormLayout.ItemRole.LabelRole, self.label_6)
+
+        self.widget = QWidget(self.groupBox)
+        self.widget.setObjectName(u"widget")
+        self.horizontalLayout = QHBoxLayout(self.widget)
+        self.horizontalLayout.setObjectName(u"horizontalLayout")
+        self.horizontalLayout.setContentsMargins(0, 0, 0, 0)
+        self.center_reduction = QDoubleSpinBox(self.widget)
+        self.center_reduction.setObjectName(u"center_reduction")
+        self.center_reduction.setDecimals(1)
+        self.center_reduction.setMinimum(0.000000000000000)
+        self.center_reduction.setMaximum(20.000000000000000)
+        self.center_reduction.setSingleStep(0.100000000000000)
+        self.center_reduction.setValue(10.000000000000000)
+
+        self.horizontalLayout.addWidget(self.center_reduction)
+
+        self.center_reduction_reset = QToolButton(self.widget)
+        self.center_reduction_reset.setObjectName(u"center_reduction_reset")
+        icon = QIcon()
+        icon.addFile(u":/restim/arrow-round_poly.svg", QSize(), QIcon.Mode.Normal, QIcon.State.Off)
+        self.center_reduction_reset.setIcon(icon)
+
+        self.horizontalLayout.addWidget(self.center_reduction_reset)
+
+
+        self.formLayout.setWidget(5, QFormLayout.ItemRole.FieldRole, self.widget)
 
 
         self.verticalLayout.addWidget(self.groupBox)
@@ -121,6 +145,8 @@ class Ui_FourPhaseSettingsWidget(object):
         self.label_2.setText(QCoreApplication.translate("FourPhaseSettingsWidget", u"B power [dB]", None))
         self.label_3.setText(QCoreApplication.translate("FourPhaseSettingsWidget", u"C power [dB]", None))
         self.label_4.setText(QCoreApplication.translate("FourPhaseSettingsWidget", u"D power [dB]", None))
-        self.label_5.setText(QCoreApplication.translate("FourPhaseSettingsWidget", u"Center power [dB]", None))
+        self.label_6.setText(QCoreApplication.translate("FourPhaseSettingsWidget", u"Center reduction", None))
+        self.center_reduction.setSuffix(QCoreApplication.translate("FourPhaseSettingsWidget", u"%", None))
+        self.center_reduction_reset.setText("")
     # retranslateUi
 

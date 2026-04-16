@@ -23,11 +23,11 @@ class ThreephaseCalibrationParams:
 
 @dataclass
 class FourphaseCalibrationParams:
-    center: AbstractAxis   # float
     a: AbstractAxis        # float
     b: AbstractAxis        # float
     c: AbstractAxis        # float
     d: AbstractAxis        # float
+    center_reduction: AbstractAxis   # float
 
 @dataclass
 class ThreephasePositionTransformParams:

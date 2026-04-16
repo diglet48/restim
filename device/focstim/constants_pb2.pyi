@@ -23,6 +23,7 @@ class AxisType(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
     AXIS_CALIBRATION_4_B: _ClassVar[AxisType]
     AXIS_CALIBRATION_4_C: _ClassVar[AxisType]
     AXIS_CALIBRATION_4_D: _ClassVar[AxisType]
+    AXIS_CALIBRATION_4_REDUCTION_IN_CENTER: _ClassVar[AxisType]
     AXIS_ELECTRODE_1_POWER: _ClassVar[AxisType]
     AXIS_ELECTRODE_2_POWER: _ClassVar[AxisType]
     AXIS_ELECTRODE_3_POWER: _ClassVar[AxisType]
@@ -78,6 +79,7 @@ AXIS_CALIBRATION_4_A: AxisType
 AXIS_CALIBRATION_4_B: AxisType
 AXIS_CALIBRATION_4_C: AxisType
 AXIS_CALIBRATION_4_D: AxisType
+AXIS_CALIBRATION_4_REDUCTION_IN_CENTER: AxisType
 AXIS_ELECTRODE_1_POWER: AxisType
 AXIS_ELECTRODE_2_POWER: AxisType
 AXIS_ELECTRODE_3_POWER: AxisType
