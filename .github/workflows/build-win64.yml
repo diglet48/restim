@@ -1,5 +1,12 @@
+name: Build Windows (64-bit) app
+
 on:
-  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'            # e.g. v1.2.3 → publishes to GitHub Release
+    branches:
+      - master          # also build on main pushes (artifacts only)
+  workflow_dispatch:    # and on manual trigger from the Actions tab
 
 jobs:
   pyinstaller-build:
@@ -8,10 +15,16 @@ jobs:
       - name: Create Executable
         uses: sayyid5416/pyinstaller@v1
         with:
-          python_ver: '3.11'
+          python_ver: '3.12'
           python_arch: 'x64'
           spec: 'restim.spec'
           requirements: 'requirements.txt'
           upload_exe_with_name: 'restim.exe'
 
-          
+      - name: Attach to GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/restim.exe
+
+
