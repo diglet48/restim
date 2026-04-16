@@ -16,13 +16,13 @@ jobs:
         include:
           - os: macos-15      # Apple Silicon runner
             arch: arm64
-          - os: macos-15      # Intel runner
+          - os: macos-15-intel  # Intel runner
             arch: x86_64
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: '3.12'
 
@@ -44,7 +44,7 @@ jobs:
             "Restim-${{ matrix.arch }}.dmg"
 
       - name: Upload build artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: Restim-${{ matrix.arch }}
           path: Restim-${{ matrix.arch }}.dmg
