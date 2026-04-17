@@ -133,6 +133,7 @@ class FOCStimProtoDevice(QObject, OutputDevice):
         # self.transport.setRequestToSend(False)
         # self.transport.setDataTerminalReady(False)
         self.transport.setSettingsRestoredOnClose(False)
+        self.transport.errorOccurred.connect(self.on_serial_error)
         if success:
             def delayed_start():
                 # read all buffered data and discard it.
@@ -321,6 +322,14 @@ class FOCStimProtoDevice(QObject, OutputDevice):
     def on_connection_error(self):
         logger.error(f"connection error: {self.transport.errorString()}")
         self.stop()
+
+    def on_serial_error(self, error):
+        if error == QSerialPort.SerialPortError.NoError:
+            return
+        logger.error(f"serial port error: {error}, {self.transport.errorString()}")
+        self.transport.errorOccurred.disconnect(self.on_serial_error)
+        if self.transport.isOpen():
+            self.stop()
 
     def generic_timeout(self, id):
         if self.transport.isOpen():
