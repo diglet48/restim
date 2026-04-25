@@ -174,11 +174,27 @@ class FourphaseMotionGenerator(QtCore.QObject):
         # add the coordinates from the mouse event to the axes
         if self.pattern == self.mouse_pattern and not self.any_scripts_loaded():
             self.mouse_pattern.mouse_event(a, b, c, d)
-            self.intensity_a.add(a)
-            self.intensity_b.add(b)
-            self.intensity_c.add(c)
-            self.intensity_d.add(d)
             self.position_updated.emit(a, b, c, d)  # ???
+
+    def mouse_event_e1(self, p):
+        if self.pattern == self.mouse_pattern and not self.any_scripts_loaded():
+            self.mouse_pattern.mouse_event_e1(p)
+            self.intensity_a.add(p)
+
+    def mouse_event_e2(self, p):
+        if self.pattern == self.mouse_pattern and not self.any_scripts_loaded():
+            self.mouse_pattern.mouse_event_e2(p)
+            self.intensity_b.add(p)
+
+    def mouse_event_e3(self, p):
+        if self.pattern == self.mouse_pattern and not self.any_scripts_loaded():
+            self.mouse_pattern.mouse_event_e3(p)
+            self.intensity_c.add(p)
+
+    def mouse_event_e4(self, p):
+        if self.pattern == self.mouse_pattern and not self.any_scripts_loaded():
+            self.mouse_pattern.mouse_event_e4(p)
+            self.intensity_d.add(p)
 
     def refreshSettings(self):
         self.timer.setInterval(int(1000 // np.clip(qt_ui.settings.display_fps.get(), 1.0, 500.0)))

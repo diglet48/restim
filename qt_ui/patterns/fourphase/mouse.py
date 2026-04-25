@@ -21,7 +21,7 @@ class MousePattern(FourphasePattern):
         self.d = 1
 
     def name(self):
-        return "mouse (TODO)"
+        return "mouse"
 
     def mouse_event(self, a, b, c, d):
         self.intensity_a.add(a)
@@ -31,6 +31,22 @@ class MousePattern(FourphasePattern):
         self.a = a
         self.b = b
         self.c = c
+        self.d = d
+
+    def mouse_event_e1(self, a):
+        self.intensity_a.add(a)
+        self.a = a
+
+    def mouse_event_e2(self, b):
+        self.intensity_b.add(b)
+        self.b = b
+
+    def mouse_event_e3(self, c):
+        self.intensity_c.add(c)
+        self.c = c
+
+    def mouse_event_e4(self, d):
+        self.intensity_d.add(d)
         self.d = d
 
     def update(self, dt: float):

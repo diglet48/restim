@@ -129,8 +129,6 @@ class ThreephaseMotionGenerator(QtCore.QObject):
     def mouse_event(self, a, b):
         if self.pattern == self.mouse_pattern and not self.any_scripts_loaded():
             self.mouse_pattern.mouse_event(a, b)
-            self.alpha.add(a)
-            self.beta.add(b)
             self.position_updated.emit(a, b)
 
     def refreshSettings(self):

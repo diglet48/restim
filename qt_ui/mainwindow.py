@@ -160,7 +160,11 @@ class Window(QMainWindow, Ui_MainWindow):
         # fourphase view
         self.motion_4 = qt_ui.patterns.fourphase_patterns.FourphaseMotionGenerator(
             self, self.intensity_a, self.intensity_b, self.intensity_c, self.intensity_d)
-        self.graphicsView_fourphase.mousePositionChanged.connect(self.motion_4.mouse_event)
+        self.graphicsView_fourphase.mouse_update_all.connect(self.motion_4.mouse_event)
+        self.graphicsView_fourphase.mouse_update_e1.connect(self.motion_4.mouse_event_e1)
+        self.graphicsView_fourphase.mouse_update_e2.connect(self.motion_4.mouse_event_e2)
+        self.graphicsView_fourphase.mouse_update_e3.connect(self.motion_4.mouse_event_e3)
+        self.graphicsView_fourphase.mouse_update_e4.connect(self.motion_4.mouse_event_e4)
         self.motion_4.position_updated.connect(self.graphicsView_fourphase.set_electrode_intensities)
         self.graphicsView_fourphase.set_sensor_widget(self.page_sensors)
 
