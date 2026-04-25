@@ -133,6 +133,7 @@ class FOCStimProtoDevice(QObject, OutputDevice):
         # self.transport.setRequestToSend(False)
         # self.transport.setDataTerminalReady(False)
         self.transport.setSettingsRestoredOnClose(False)
+        self.transport.errorOccurred.connect(self.on_connection_error)
         if success:
             def delayed_start():
                 # read all buffered data and discard it.
