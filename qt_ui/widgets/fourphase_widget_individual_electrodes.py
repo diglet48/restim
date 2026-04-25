@@ -1,16 +1,10 @@
-import sys
-import time
-
-from PySide6 import QtCore
-from PySide6.QtWidgets import QApplication, QGraphicsScene, QGraphicsView, QGraphicsEllipseItem, QGraphicsRectItem, \
-    QGraphicsPolygonItem, QGraphicsSceneHoverEvent, QGraphicsSceneMouseEvent, QGraphicsObject
-from PySide6.QtCore import QPointF, QRectF, QTimer, Signal, QObject
-from PySide6.QtGui import QColor, QTransform, QPen, Qt, QPainter, QFont, QMouseEvent, QPolygonF
-
 import numpy as np
+from PySide6.QtCore import QPointF, Signal, QObject
+from PySide6.QtGui import QColor, QTransform, Qt, QPainter, QFont, QPolygonF
+from PySide6.QtWidgets import QGraphicsScene, QGraphicsView, QGraphicsEllipseItem, QGraphicsRectItem, \
+    QGraphicsPolygonItem, QGraphicsSceneMouseEvent
 
 from stim_math.transforms_4 import constrain_4p_amplitudes
-
 
 ## SSBU colors.
 COLOR_A = QColor.fromRgb(0xFE, 0x2E, 0x2E)   # red
