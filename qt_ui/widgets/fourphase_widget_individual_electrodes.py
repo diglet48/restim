@@ -122,7 +122,6 @@ class Triangle:
         self.center = triangle_center(index)
         self.basis = triangle_basis(index)
         self.color_index = triangle_color_index(index)
-        print(index, self.color_index)
         color = COLORS[self.color_index]
 
         poly = QPolygonF()
