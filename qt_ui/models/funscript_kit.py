@@ -31,10 +31,10 @@ defaults = {
     AxisEnum.VIBRATION_2_HIGH_LOW_BIAS: ('vib2_up_down_bias', '', 0, 1, True, True),
     AxisEnum.VIBRATION_2_RANDOM: ('vib2_random', '', 0, 1, True, True),
 
-    AxisEnum.INTENSITY_A: ('e1', '', 0, 1, True, True),
-    AxisEnum.INTENSITY_B: ('e2', '', 0, 1, True, True),
-    AxisEnum.INTENSITY_C: ('e3', '', 0, 1, True, True),
-    AxisEnum.INTENSITY_D: ('e4', '', 0, 1, True, True),
+    AxisEnum.INTENSITY_A: ('e1', 'E1', 0, 1, True, True),
+    AxisEnum.INTENSITY_B: ('e2', 'E2', 0, 1, True, True),
+    AxisEnum.INTENSITY_C: ('e3', 'E3', 0, 1, True, True),
+    AxisEnum.INTENSITY_D: ('e4', 'E4', 0, 1, True, True),
 }
 
 @dataclass
