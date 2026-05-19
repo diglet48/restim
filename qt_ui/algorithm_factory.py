@@ -414,6 +414,10 @@ class AlgorithmFactory:
     def get_axis_neostim_debug(self):
         return self.mainwindow.tab_neostim.axis_debug
 
+    def get_axis_sensor_suppression(self):
+        return self.get_axis_from_script_mapping(AxisEnum.SENSOR_SUPPRESSION) or \
+               self.mainwindow.sensor_suppression
+
     def get_axis_from_script_mapping(self, axis: AxisEnum) -> AbstractAxis | None:
         if not self.load_funscripts:
             return None

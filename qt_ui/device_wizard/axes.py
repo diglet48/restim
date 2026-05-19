@@ -36,6 +36,7 @@ class AxisEnum(Enum):
     INTENSITY_C = 62
     INTENSITY_D = 63
 
+    SENSOR_SUPPRESSION = 70
 
     def display_name(self) -> str:
         try:
@@ -69,6 +70,8 @@ class AxisEnum(Enum):
                 AxisEnum.INTENSITY_B: 'intensity B',
                 AxisEnum.INTENSITY_C: 'intensity C',
                 AxisEnum.INTENSITY_D: 'intensity D',
+
+                AxisEnum.SENSOR_SUPPRESSION: 'sensor suppression',
             }[self]
         except KeyError:
             return f'unknown {self.value}'
@@ -103,6 +106,8 @@ class AxisEnum(Enum):
             AxisEnum.INTENSITY_B: 'INTENSITY_B',
             AxisEnum.INTENSITY_C: 'INTENSITY_C',
             AxisEnum.INTENSITY_D: 'INTENSITY_D',
+
+            AxisEnum.SENSOR_SUPPRESSION: 'SENSOR_SUPPRESSION',
         }[self]
 
 
@@ -136,5 +141,7 @@ all_axis = [
     AxisEnum.INTENSITY_B,
     AxisEnum.INTENSITY_C,
     AxisEnum.INTENSITY_D,
+
+    AxisEnum.SENSOR_SUPPRESSION,
 ]
 

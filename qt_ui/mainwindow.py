@@ -116,6 +116,8 @@ class Window(QMainWindow, Ui_MainWindow):
         self.intensity_c = create_temporal_axis(0.0)
         self.intensity_d = create_temporal_axis(0.0)
 
+        self.sensor_suppression = create_temporal_axis(0.0)
+
         self.tcode_command_router = TCodeCommandRouter(
             self.alpha,
             self.beta,
@@ -146,6 +148,8 @@ class Window(QMainWindow, Ui_MainWindow):
             self.intensity_b,
             self.intensity_c,
             self.intensity_d,
+
+            self.sensor_suppression,
 
             # TODO: neostim
         )
@@ -395,6 +399,9 @@ class Window(QMainWindow, Ui_MainWindow):
 
         # neostim tab
         # TODO
+
+        # sensors tab
+        self.page_sensors.set_sensor_suppression_axis(algorithm_factory.get_axis_sensor_suppression())
 
         if all((not self.page_media.is_internal(),
                 self.page_media.has_media_file_loaded(),

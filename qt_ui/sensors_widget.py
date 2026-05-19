@@ -1,8 +1,10 @@
 import functools
 import os
 import pathlib
+import time
 
-from PySide6.QtCore import Qt, Signal
+import numpy as np
+from PySide6.QtCore import Qt, Signal, QTimer
 from pyqtgraph import GraphicsLayoutWidget
 
 from funscript.collect_funscripts import Resource
@@ -121,6 +123,14 @@ class SensorsWidget(QWidget, Ui_SensorsWidget):
         self.treeWidget.itemSelectionChanged.connect(self.index_changed)
         self.checkBox.clicked.connect(self.checkbox_clicked)
 
+        self.axis_sensor_suppression = None
+        self._last_suppression = 0.0
+
+        self._suppression_display_timer = QTimer()
+        self._suppression_display_timer.setInterval(200)
+        self._suppression_display_timer.timeout.connect(self._refresh_suppression_display)
+        self._suppression_display_timer.start()
+
         self.index_changed()
         self.refresh_labels()
 
@@ -175,11 +185,33 @@ class SensorsWidget(QWidget, Ui_SensorsWidget):
 
         self.refresh_labels()
 
+    def set_sensor_suppression_axis(self, axis):
+        self.axis_sensor_suppression = axis
+
+    def _refresh_suppression_display(self):
+        suppression = self._last_suppression
+        for category_label, nodes in self.structure.items():
+            for node in nodes:
+                node.update_suppression_display(suppression)
+
     def process(self, parameters):
+        suppression = 0.0
+        if self.axis_sensor_suppression is not None:
+            suppression = float(np.clip(self.axis_sensor_suppression.interpolate(time.time()), 0, 1))
+        self._last_suppression = suppression
+
         for category_label, nodes in self.structure.items():
             for node in nodes:
                 if node.is_node_enabled():
-                    node.process(parameters)
+                    if suppression > 0 and 'volume' in parameters:
+                        volume_before = parameters['volume']
+                        node.process(parameters)
+                        if volume_before > 0:
+                            adjustment = parameters['volume'] / volume_before
+                            suppressed_adjustment = adjustment + (1 - adjustment) * suppression
+                            parameters['volume'] = volume_before * suppressed_adjustment
+                    else:
+                        node.process(parameters)
 
     def save_settings(self):
         for category_label, nodes in self.structure.items():
