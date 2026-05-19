@@ -3,7 +3,7 @@ import time
 import numpy as np
 from PySide6 import QtWidgets
 import pyqtgraph as pg
-from PySide6.QtWidgets import QVBoxLayout, QGroupBox, QFormLayout
+from PySide6.QtWidgets import QVBoxLayout, QGroupBox, QFormLayout, QLabel
 
 from device.focstim.proto_device import LSM6DSOX_SAMPLERATE_HZ
 from qt_ui.sensors import styles
@@ -39,15 +39,21 @@ class IMUHipThrustNode(QtWidgets.QWidget, SensorNodeInterface):
         self.spinbox_position = pg.SpinBox(None, 0.0, compactHeight=False, suffix='m', siPrefix=True, dec=True, minStep=1e-4)
         self.spinbox_alpha = pg.SpinBox(None, 0.0, compactHeight=False, suffix='', dec=True, minStep=0.01)
         self.spinbox_position_volume = pg.SpinBox(None, 0.0, compactHeight=False, suffix='%', dec=True, minStep=0.1)
+        self.label_position_suppressed_value = QLabel('0.0%')
 
         self.spinbox_velocity = pg.SpinBox(None, 0.0, compactHeight=False, suffix='m/s', siPrefix=True, dec=True, minStep=1e-3)
         self.spinbox_volume = pg.SpinBox(None, 0.0, compactHeight=False, suffix='%', dec=True, minStep=0.1)
+        self.label_suppression = QLabel('0%')
+        self.label_suppressed_value = QLabel('0.0%')
 
         self.formLayout.addRow('position amplitude', self.spinbox_position)
         self.formLayout.addRow('alpha amplitude', self.spinbox_alpha)
         self.formLayout.addRow('volume amplitude', self.spinbox_position_volume)
+        self.formLayout.addRow('suppressed value', self.label_position_suppressed_value)
         self.formLayout2.addRow('velocity amplitude', self.spinbox_velocity)
         self.formLayout2.addRow('volume amplitude', self.spinbox_volume)
+        self.formLayout2.addRow('suppression', self.label_suppression)
+        self.formLayout2.addRow('suppressed value', self.label_suppressed_value)
 
         self.graph = pg.GraphicsLayoutWidget()
         self.verticalLayout.addWidget(self.graph)
@@ -145,6 +151,11 @@ class IMUHipThrustNode(QtWidgets.QWidget, SensorNodeInterface):
 
         y2 = np.array(self.y_velo)
         self.velocity_plot_item.setData(x=x, y=y2)
+
+    def update_suppression_display(self, suppression: float):
+        self.label_suppression.setText(f'{suppression * 100:.0f}%')
+        self.label_suppressed_value.setText(f'{self.spinbox_volume.value() * (1 - suppression):.1f}%')
+        self.label_position_suppressed_value.setText(f'{self.spinbox_position_volume.value() * (1 - suppression):.1f}%')
 
     def save_settings(self):
         settings.sensor_imu_hipthrust_position.set(self.spinbox_position.value())

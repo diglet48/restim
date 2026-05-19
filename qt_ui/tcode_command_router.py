@@ -51,6 +51,8 @@ class TCodeCommandRouter:
                  intensity_b: AbstractAxis,
                  intensity_c: AbstractAxis,
                  intensity_d: AbstractAxis,
+
+                 sensor_suppression: AbstractAxis,
                  ):
         self.alpha = alpha
         self.beta = beta
@@ -76,6 +78,8 @@ class TCodeCommandRouter:
         self.intensity_b = intensity_b
         self.intensity_c = intensity_c
         self.intensity_d = intensity_d
+
+        self.sensor_suppression = sensor_suppression
 
         self.mapping = {}
         self.reload_kit()
@@ -110,6 +114,8 @@ class TCodeCommandRouter:
             AxisEnum.INTENSITY_B: self.intensity_b,
             AxisEnum.INTENSITY_C: self.intensity_c,
             AxisEnum.INTENSITY_D: self.intensity_d,
+
+            AxisEnum.SENSOR_SUPPRESSION: self.sensor_suppression,
         }
 
         kit = FunscriptKitModel.load_from_settings()
