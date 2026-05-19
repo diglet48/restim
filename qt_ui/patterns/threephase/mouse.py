@@ -3,6 +3,9 @@ Mouse Pattern
 """
 from qt_ui.patterns.threephase.base import ThreephasePattern, register_pattern
 from stim_math.axis import AbstractAxis
+from PySide6.QtCore import Qt
+import time
+import numpy as np
 
 @register_pattern(category="manual")
 class MousePattern(ThreephasePattern):
@@ -15,16 +18,64 @@ class MousePattern(ThreephasePattern):
         self.beta = beta
         self.x = 0.00001
         self.y = 0
-    def mouse_event(self, x, y):
-        if self.alpha is not None:
-            self.alpha.add(x)
-        if self.beta is not None:
-            self.beta.add(y)
-        self.x = x
-        self.y = y
+
+        self.is_drawing = False
+        self.drawn_coordinates = []
+        self.drawn_timestamps = []
+        self.progress = 0
+
+    def mouse_event(self, x, y, buttons, modifiers):
+        dirty = False
+
+        if self.is_drawing:
+            if not buttons & Qt.MouseButton.LeftButton:
+                # stop drawing
+                self.is_drawing = False
+                self.progress = 0
+                dirty = True
+        else:
+            if buttons & Qt.MouseButton.LeftButton:
+                # start drawing
+                self.is_drawing = True
+                self.drawn_coordinates = []
+                self.drawn_timestamps = []
+
+        if self.is_drawing and buttons & Qt.MouseButton.LeftButton:
+            self.drawn_coordinates.append((x, y))
+            self.drawn_timestamps.append(time.time())
+            self.x = x
+            self.y = y
+            if self.alpha is not None:
+                self.alpha.add(x)
+            if self.beta is not None:
+                self.beta.add(y)
+            dirty = True
+
+        return dirty
+
     def update(self, dt: float):
-        return self.x * self.amplitude, self.y * self.amplitude
-    def last_position_is_mouse_position(self):
-        if self.alpha is not None and self.beta is not None:
-            return (self.x, self.y) == (self.alpha.last_value(), self.beta.last_value())
-        return False
+        if self.is_drawing:
+            return self.x, self.y
+        if len(self.drawn_coordinates) <= 1:
+            return self.x, self.y
+
+        self.progress += dt
+        self.progress = self.progress % (self.drawn_timestamps[-1] - self.drawn_timestamps[0])
+        t = self.drawn_timestamps[0] + self.progress
+        x = np.interp(t, self.drawn_timestamps, np.array(self.drawn_coordinates)[:, 0])
+        y = np.interp(t, self.drawn_timestamps, np.array(self.drawn_coordinates)[:, 1])
+        return x, y
+
+    def use_lag_compensation(self):
+        if self.is_drawing:
+            return False
+        if len(self.drawn_coordinates) <= 1:
+            return False
+        return True
+
+    def path(self):
+        return self.drawn_coordinates
+
+    def clear_path(self):
+        self.drawn_coordinates = []
+        self.drawn_timestamps = []

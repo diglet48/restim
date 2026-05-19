@@ -84,6 +84,8 @@ class ThreephaseMotionGenerator(QtCore.QObject):
             self.pattern = self.mouse_pattern
         elif pattern in self.patterns:
             self.pattern = pattern
+            self.mouse_pattern.clear_path()
+            self.path_updated.emit(self.mouse_pattern.path())
 
     def set_scripts(self, alpha, beta):
         self.script_alpha = alpha if isinstance(alpha, WriteProtectedAxis) else None
@@ -101,12 +103,16 @@ class ThreephaseMotionGenerator(QtCore.QObject):
 
         if not self.any_scripts_loaded():
             if isinstance(self.pattern, MousePattern):
-                if self.pattern.last_position_is_mouse_position():
-                    a = self.alpha.last_value()
-                    b = self.beta.last_value()
-                else:
+                a, b = self.pattern.update(dt * self.velocity)
+                self.alpha.add(a)
+                self.beta.add(b)
+
+                if self.pattern.use_lag_compensation():
                     a = self.alpha.interpolate(time.time() - self.latency)
                     b = self.beta.interpolate(time.time() - self.latency)
+                else:
+                    a = self.alpha.last_value()
+                    b = self.beta.last_value()
                 self.position_updated.emit(a, b)
             else:
                 a, b = self.pattern.update(dt * self.velocity)
@@ -126,10 +132,11 @@ class ThreephaseMotionGenerator(QtCore.QObject):
                 b = self.beta.interpolate(time.time() - self.latency)
             self.position_updated.emit(a, b)
 
-    def mouse_event(self, a, b):
+    def mouse_event(self, a, b, buttons: QtCore.Qt.MouseButtons, modifiers: QtCore.Qt.KeyboardModifier):
         if self.pattern == self.mouse_pattern and not self.any_scripts_loaded():
-            self.mouse_pattern.mouse_event(a, b)
-            self.position_updated.emit(a, b)
+            dirty = self.mouse_pattern.mouse_event(a, b, buttons, modifiers)
+            if dirty:
+                self.path_updated.emit(self.mouse_pattern.path())
 
     def refreshSettings(self):
         self.timer.setInterval(int(1000 // np.clip(qt_ui.settings.display_fps.get(), 1.0, 500.0)))
@@ -137,3 +144,4 @@ class ThreephaseMotionGenerator(QtCore.QObject):
         self.refresh_patterns()
 
     position_updated = QtCore.Signal(float, float)  # a, b
+    path_updated = QtCore.Signal(list)

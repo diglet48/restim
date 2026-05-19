@@ -52,8 +52,9 @@ class MousePattern(FourphasePattern):
     def update(self, dt: float):
         return self.a, self.b, self.c, self.d
 
-    def last_position_is_mouse_position(self):
+    def use_lag_compensation(self):
         pos = (self.a, self.b, self.c, self.d)
         axis = (self.intensity_a.last_value(), self.intensity_b.last_value(),
                 self.intensity_c.last_value(), self.intensity_d.last_value())
-        return pos == axis
+        return pos != axis
+

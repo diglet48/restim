@@ -155,6 +155,7 @@ class Window(QMainWindow, Ui_MainWindow):
         self.graphicsView_threephase.set_transform_params(self.tab_threephase.transform_params)
         self.graphicsView_threephase.mousePositionChanged.connect(self.motion_3.mouse_event)
         self.motion_3.position_updated.connect(self.graphicsView_threephase.set_cursor_position_ab)
+        self.motion_3.path_updated.connect(self.graphicsView_threephase.set_path)
         self.graphicsView_threephase.set_sensor_widget(self.page_sensors)
 
         # fourphase view
