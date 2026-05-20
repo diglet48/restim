@@ -19,6 +19,7 @@ class MousePattern(ThreephasePattern):
         self.x = 0.00001
         self.y = 0
 
+        self.last_position_is_mouse_position = False
         self.is_drawing = False
         self.drawn_coordinates = []
         self.drawn_timestamps = []
@@ -40,7 +41,7 @@ class MousePattern(ThreephasePattern):
                 self.drawn_coordinates = []
                 self.drawn_timestamps = []
 
-        if self.is_drawing and buttons & Qt.MouseButton.LeftButton:
+        if buttons & Qt.MouseButton.LeftButton:
             self.drawn_coordinates.append((x, y))
             self.drawn_timestamps.append(time.time())
             self.x = x
@@ -49,6 +50,7 @@ class MousePattern(ThreephasePattern):
                 self.alpha.add(x)
             if self.beta is not None:
                 self.beta.add(y)
+            self.last_position_is_mouse_position = True
             dirty = True
 
         return dirty
@@ -66,9 +68,16 @@ class MousePattern(ThreephasePattern):
         y = np.interp(t, self.drawn_timestamps, np.array(self.drawn_coordinates)[:, 1])
         return x, y
 
-    def use_lag_compensation(self):
+    def has_tcode_updates(self):
+        if self.last_position_is_mouse_position:
+            p = (self.x, self.y)
+            q = (self.alpha.last_value(), self.beta.last_value())
+            self.last_position_is_mouse_position = p == q
+        return not self.last_position_is_mouse_position
+
+    def has_pattern(self):
         if self.is_drawing:
-            return False
+            return True
         if len(self.drawn_coordinates) <= 1:
             return False
         return True
