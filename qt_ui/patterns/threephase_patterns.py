@@ -103,17 +103,22 @@ class ThreephaseMotionGenerator(QtCore.QObject):
 
         if not self.any_scripts_loaded():
             if isinstance(self.pattern, MousePattern):
-                a, b = self.pattern.update(dt * self.velocity)
-                self.alpha.add(a)
-                self.beta.add(b)
-
-                if self.pattern.use_lag_compensation():
-                    a = self.alpha.interpolate(time.time() - self.latency)
-                    b = self.beta.interpolate(time.time() - self.latency)
+                if self.mouse_pattern.has_pattern():
+                    a, b = self.pattern.update(dt * self.velocity)
+                    self.alpha.add(a)
+                    self.beta.add(b)
+                    if not self.mouse_pattern.is_drawing:
+                        a = self.alpha.interpolate(time.time() - self.latency)
+                        b = self.beta.interpolate(time.time() - self.latency)
                 else:
-                    a = self.alpha.last_value()
-                    b = self.beta.last_value()
+                    if self.mouse_pattern.has_tcode_updates():
+                        a = self.alpha.interpolate(time.time() - self.latency)
+                        b = self.beta.interpolate(time.time() - self.latency)
+                    else:
+                        a = self.alpha.last_value()
+                        b = self.beta.last_value()
                 self.position_updated.emit(a, b)
+
             else:
                 a, b = self.pattern.update(dt * self.velocity)
                 self.alpha.add(a)
