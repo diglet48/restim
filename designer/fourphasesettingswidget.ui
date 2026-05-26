@@ -28,7 +28,7 @@
        </widget>
       </item>
       <item row="0" column="1">
-       <widget class="QDoubleSpinBox" name="a_power">
+       <widget class="SpinBoxWithProgressIndicator" name="a_power">
         <property name="keyboardTracking">
          <bool>false</bool>
         </property>
@@ -51,7 +51,7 @@
        </widget>
       </item>
       <item row="1" column="1">
-       <widget class="QDoubleSpinBox" name="b_power">
+       <widget class="SpinBoxWithProgressIndicator" name="b_power">
         <property name="keyboardTracking">
          <bool>false</bool>
         </property>
@@ -74,7 +74,7 @@
        </widget>
       </item>
       <item row="2" column="1">
-       <widget class="QDoubleSpinBox" name="c_power">
+       <widget class="SpinBoxWithProgressIndicator" name="c_power">
         <property name="keyboardTracking">
          <bool>false</bool>
         </property>
@@ -97,7 +97,7 @@
        </widget>
       </item>
       <item row="3" column="1">
-       <widget class="QDoubleSpinBox" name="d_power">
+       <widget class="SpinBoxWithProgressIndicator" name="d_power">
         <property name="keyboardTracking">
          <bool>false</bool>
         </property>
@@ -142,9 +142,9 @@
           <number>0</number>
          </property>
          <item>
-          <widget class="QDoubleSpinBox" name="center_reduction">
+          <widget class="SpinBoxWithProgressIndicator" name="center_reduction">
            <property name="suffix">
-            <string>%</string>
+            <string> %</string>
            </property>
            <property name="decimals">
             <number>1</number>
@@ -195,6 +195,13 @@
    </item>
   </layout>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>SpinBoxWithProgressIndicator</class>
+   <extends>QDoubleSpinBox</extends>
+   <header>qt_ui/widgets/spinbox_with_progress_indicator.h</header>
+  </customwidget>
+ </customwidgets>
  <resources>
   <include location="../resources/restim.qrc"/>
  </resources>
