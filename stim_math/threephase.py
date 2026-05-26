@@ -186,7 +186,7 @@ class ThreePhaseHardwareCalibration:
     into (alpha, beta), and then scaling before transforming back to (L, R)
 
     method:
-    [alpha, beta, 0] = P^-1 @ ab_transform^-1 @ [L, R, 0]
+    [alpha, beta, 0] = ab_transform^-1 @ P^-1 @ [L, R, 0]
     [alpha, beta, 0] = inverse_hardware_transform @ [alpha, beta, 0]
     [L, R, 0] = P @ ab_transform @ [alpha, beta, 0]
     """
