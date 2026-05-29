@@ -395,26 +395,12 @@ class ThreephaseWidgetCalibration(ThreephaseWidgetBase):
 
     def mouse_event(self, alpha, beta, buttons: QtCore.Qt.MouseButtons, modifiers: QtCore.Qt.KeyboardModifier):
         if buttons & QtCore.Qt.MouseButton.LeftButton:
-            pass
-        else:
-            return
+            norm = (alpha ** 2 + beta ** 2) ** .5
+            if norm > 0:
+                alpha /= norm
+                beta /= norm
 
-        norm = (alpha ** 2 + beta ** 2) ** .5
-        if norm > 0:
-            alpha /= norm
-            beta /= norm
-
-        old_neutral = self.neutral.last_value()
-        old_right = self.right.last_value()
-
-        neutral_adj = alpha * 0.1
-        right_adj = -beta * 0.1
-
-        neutral = old_neutral + neutral_adj
-        right = old_right + right_adj
-
-        self.calibrationParametersChanged.emit(neutral, right)
-        self.refresh()
+            self.clicked.emit(alpha, beta)
 
     def refresh(self):
         a = self.neutral.last_value()
@@ -437,4 +423,4 @@ class ThreephaseWidgetCalibration(ThreephaseWidgetBase):
         x, y = ab_to_item_pos(a, b)
         self.path.setSource(QtCore.QPointF(x, y))
 
-    calibrationParametersChanged = QtCore.Signal(float, float)
+    clicked = QtCore.Signal(float, float)

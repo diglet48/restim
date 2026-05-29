@@ -83,7 +83,7 @@ vibration_2_random = Setting('vibration/vibration_2_random', 0, float)
 
 threephase_calibration_neutral = Setting('hw_calibration/neutral', 0.0, float)
 threephase_calibration_right = Setting('hw_calibration/right', 0.0, float)
-threephase_calibration_center = Setting('hw_calibration/center', -0.7, float)
+threephase_calibration_center = Setting('hw_calibration/center', -0.604, float)
 
 threephase_transform_combobox_selection = Setting('threephase_transform/combobox_selection', 0, int)
 threephase_transform_enabled = Setting('threephase_transform/enabled', False, bool)
@@ -96,7 +96,6 @@ threephase_transform_limit_right = Setting('threephase_transform/limit_right', 1
 threephase_map_to_edge_start = Setting('threephase_transform/map_to_edge_start', 0.0, float)
 threephase_map_to_edge_length = Setting('threephase_transform/map_to_edge_length', 200, float)
 threephase_map_to_edge_invert = Setting('threephase_transform/map_to_edge_invert', False, bool)
-threephase_exponent = NonPersistentSetting(0.0)
 
 fourphase_calibration_a = Setting('calibration_four/a', 0.0, float)
 fourphase_calibration_b = Setting('calibration_four/b', 0.0, float)

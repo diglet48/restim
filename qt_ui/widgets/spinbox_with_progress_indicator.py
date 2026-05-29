@@ -6,13 +6,13 @@ import numpy as np
 
 
 class SpinBoxWithProgressIndicator(QDoubleSpinBox):
-    def __init__(self, parent=None):
-        super().__init__(parent)
+    def __init__(self, parent=None, **kwargs):
+        super().__init__(parent, **kwargs)
 
         # self.indicator_brush = Qt.BrushStyle.NoBrush
         self.indicator_brush = QBrush(QColor.fromRgb(100, 100, 100, 200))
         self.indicator_height = 4
-        self.indicator_range = (0, 100)
+        self.indicator_range = (self.minimum(), self.maximum())
 
     def setIndicatorRange(self, lo, hi):
         self.indicator_range = (lo, hi)

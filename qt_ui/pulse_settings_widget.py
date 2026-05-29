@@ -17,6 +17,7 @@ from stim_math.axis import create_constant_axis
 
 from qt_ui import settings
 from qt_ui.axis_controller import AxisController, PercentAxisController
+from qt_ui.widgets.spinbox_with_progress_indicator import SpinBoxWithProgressIndicator
 
 
 
@@ -96,8 +97,8 @@ class PulseSettingsWidget(QtWidgets.QWidget):
         gbc = QtWidgets.QGroupBox("Carrier", self)
         gbc_l = QtWidgets.QFormLayout(gbc)
         gbc_l.setObjectName("FormLayout carrier groupbox")
-        carrier_slider = QtWidgets.QDoubleSpinBox(minimum=0,
-                                                  maximum=9999999)
+        carrier_slider = SpinBoxWithProgressIndicator(minimum=0, maximum=9999999)
+        carrier_slider.setIndicatorRange(0, 2000)
         carrier_slider.setSingleStep(10.0)
         carrier_slider.setValue(settings.pulse_carrier_frequency.get())
         carrier_slider_label = QtWidgets.QLabel("carrier frequency [Hz]")
@@ -110,31 +111,34 @@ class PulseSettingsWidget(QtWidgets.QWidget):
         gb_l = QtWidgets.QFormLayout(gb)
         gb_l.setObjectName("FormLayout pulse settings")
 
-        pulse_freq_slider = QtWidgets.QDoubleSpinBox(minimum=stim_math.limits.PulseFrequency.min,
-                                                     maximum=stim_math.limits.PulseFrequency.max)
+        pulse_freq_slider = SpinBoxWithProgressIndicator(minimum=stim_math.limits.PulseFrequency.min,
+                                                         maximum=stim_math.limits.PulseFrequency.max)
+        pulse_freq_slider.setIndicatorRange(0, 100)
         pulse_freq_slider.setSingleStep(1.0)
         pulse_freq_slider.setValue(settings.pulse_frequency.get())
         pulse_freq_slider.setKeyboardTracking(False)
         pulse_freq_slider_label = QtWidgets.QLabel("pulse frequency [Hz]")
         gb_l.addRow(pulse_freq_slider_label, pulse_freq_slider)
 
-        pulse_width_slider = QtWidgets.QDoubleSpinBox(minimum=stim_math.limits.PulseWidth.min,
-                                                       maximum=stim_math.limits.PulseWidth.max)
+        pulse_width_slider = SpinBoxWithProgressIndicator(minimum=stim_math.limits.PulseWidth.min,
+                                                          maximum=stim_math.limits.PulseWidth.max)
+        pulse_width_slider.setIndicatorRange(0, 20)
         pulse_width_slider.setSingleStep(0.1)
         pulse_width_slider.setValue(settings.pulse_width.get())
         pulse_width_slider.setKeyboardTracking(False)
         pulse_width_label = QtWidgets.QLabel("pulse width [carrier cycles]")
         gb_l.addRow(pulse_width_label, pulse_width_slider)
 
-        pulse_interval_random_slider = QtWidgets.QDoubleSpinBox(minimum=0, maximum=100)
+        pulse_interval_random_slider = SpinBoxWithProgressIndicator(minimum=0, maximum=100)
         pulse_interval_random_slider.setSingleStep(1)
         pulse_interval_random_slider.setValue(settings.pulse_interval_random.get())
         pulse_interval_random_slider.setKeyboardTracking(False)
         pulse_interval_random_label = QtWidgets.QLabel("pulse interval random [%]")
         gb_l.addRow(pulse_interval_random_label, pulse_interval_random_slider)
 
-        pulse_rise_time_slider = QtWidgets.QDoubleSpinBox(minimum=stim_math.limits.PulseRiseTime.min,
-                                                          maximum=stim_math.limits.PulseRiseTime.max)
+        pulse_rise_time_slider = SpinBoxWithProgressIndicator(minimum=stim_math.limits.PulseRiseTime.min,
+                                                              maximum=stim_math.limits.PulseRiseTime.max)
+        pulse_rise_time_slider.setIndicatorRange(0, 10)
         pulse_rise_time_slider.setSingleStep(0.1)
         pulse_rise_time_slider.setValue(settings.pulse_rise_time.get())
         pulse_rise_time_slider.setKeyboardTracking(False)

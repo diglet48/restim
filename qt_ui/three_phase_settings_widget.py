@@ -1,8 +1,10 @@
 from __future__ import unicode_literals
 import numpy as np
-
+from enum import Enum
 
 from PySide6 import QtCore, QtWidgets
+from PySide6.QtGui import QColor
+
 from qt_ui import settings
 
 from qt_ui.three_phase_settings_widget_ui import Ui_ThreePhaseSettingsWidget
@@ -11,6 +13,7 @@ from qt_ui.three_phase_settings_widget_ui import Ui_ThreePhaseSettingsWidget
 from stim_math.audio_gen.params import ThreephaseCalibrationParams
 from stim_math.audio_gen.params import ThreephasePositionTransformParams
 from stim_math.axis import create_temporal_axis, create_constant_axis
+from stim_math.threephase import intensity_ratio_to_ud_lr, ud_lr_to_intensity_ratio
 
 SETTING_CALIBRATION_NEUTRAL = 'hw_calibration/neutral'
 SETTING_CALIBRATION_RIGHT = 'hw_calibration/right'
@@ -26,6 +29,22 @@ SETTING_TRANSFORM_LIMIT_RIGHT = 'threephase_transform/limit_right'
 
 SETTING_THREEPHASE_EXPONENT = 'threephase_transform/exponent'
 
+COLOR_A = QColor.fromRgb(0xFE, 0x2E, 0x2E, 200)  # red
+COLOR_B = QColor.fromRgb(0x54, 0x63, 0xFF, 200)  # blue
+COLOR_C = QColor.fromRgb(0xFF, 0xC7, 0x17, 200)  # yellow
+
+
+class Interface(Enum):
+    Classic = 0
+    Modern = 1
+
+def center_calib_to_reduction(calib):
+    power = 10 ** (calib / 10)
+    return (1 - power) * 100
+
+def center_reduction_to_calib(reduction):
+    power = 1 - reduction / 100
+    return np.log10(power) * 10
 
 class ThreePhaseSettingsWidget(QtWidgets.QWidget, Ui_ThreePhaseSettingsWidget):
     def __init__(self):
@@ -53,21 +72,20 @@ class ThreePhaseSettingsWidget(QtWidgets.QWidget, Ui_ThreePhaseSettingsWidget):
             map_to_edge_start=create_temporal_axis(0.0),
             map_to_edge_length=create_temporal_axis(0.0),
             map_to_edge_invert=create_temporal_axis(0.0),
-
-            exponent=create_temporal_axis(0.0),
         )
         self.phase_widget_calibration.set_axis(
             self.calibrate_params.neutral,
             self.calibrate_params.right
         )
 
-        self.combobox_type.setCurrentIndex(settings.threephase_transform_combobox_selection.get())
 
+        # load settings, classic interface
         self.neutral.setValue(settings.threephase_calibration_neutral.get())
         self.right.setValue(settings.threephase_calibration_right.get())
-        self.center.setValue(settings.threephase_calibration_center.get())
+        self.center_reduction.setValue(center_calib_to_reduction(settings.threephase_calibration_center.get()))
 
-
+        # load settings, adjust limits
+        self.combobox_type.setCurrentIndex(settings.threephase_transform_combobox_selection.get())
         self.groupBox_2.setChecked(settings.threephase_transform_enabled.get())
         self.rotation.setValue(settings.threephase_transform_rotate.get())
         self.mirror.setChecked(settings.threephase_transform_mirror.get())
@@ -80,41 +98,85 @@ class ThreePhaseSettingsWidget(QtWidgets.QWidget, Ui_ThreePhaseSettingsWidget):
         self.mapToEdge_length.setValue(settings.threephase_map_to_edge_length.get())
         self.mapToEdge_invert.setChecked(settings.threephase_map_to_edge_invert.get())
 
-        self.groupBox_3.setVisible(False)
-        self.exponent.setValue(settings.threephase_exponent.get())
+        self.comboBox_interface.addItem("Classic", Interface.Classic)
+        self.comboBox_interface.addItem("Modern", Interface.Modern)
+        self.comboBox_interface.currentIndexChanged.connect(self.reload_calibration_interface)
+        self.comboBox_interface.setCurrentIndex(1)
 
-        self.settings_changed()
 
         # connect edit boxes signals/slots
-        self.neutral.valueChanged.connect(self.settings_changed)
-        self.right.valueChanged.connect(self.settings_changed)
-        self.center.valueChanged.connect(self.settings_changed)
+        self.neutral.valueChanged.connect(self.classic_calibration_params_changed)
+        self.right.valueChanged.connect(self.classic_calibration_params_changed)
 
-        self.groupBox_2.clicked.connect(self.settings_changed)
-        self.combobox_type.currentIndexChanged.connect(self.settings_changed)
-        self.rotation.valueChanged.connect(self.settings_changed)
-        self.mirror.stateChanged.connect(self.settings_changed)
-        self.limit_top.valueChanged.connect(self.settings_changed)
-        self.limit_bottom.valueChanged.connect(self.settings_changed)
-        self.limit_right.valueChanged.connect(self.settings_changed)
-        self.limit_left.valueChanged.connect(self.settings_changed)
-        self.mapToEdge_start.valueChanged.connect(self.settings_changed)
-        self.mapToEdge_length.valueChanged.connect(self.settings_changed)
-        self.mapToEdge_invert.toggled.connect(self.settings_changed)
+        self.a_power.valueChanged.connect(self.modern_calibration_params_changed)
+        self.b_power.valueChanged.connect(self.modern_calibration_params_changed)
+        self.c_power.valueChanged.connect(self.modern_calibration_params_changed)
 
-        self.exponent.valueChanged.connect(self.settings_changed)
+        self.center_reduction.valueChanged.connect(self.center_reduction_changed)
+
+        self.a_power.valueChanged.connect(self.refresh_indicator_range)
+        self.b_power.valueChanged.connect(self.refresh_indicator_range)
+        self.c_power.valueChanged.connect(self.refresh_indicator_range)
+
+        self.groupBox_2.clicked.connect(self.adjust_limits_changed)
+        self.combobox_type.currentIndexChanged.connect(self.adjust_limits_changed)
+        self.rotation.valueChanged.connect(self.adjust_limits_changed)
+        self.mirror.stateChanged.connect(self.adjust_limits_changed)
+        self.limit_top.valueChanged.connect(self.adjust_limits_changed)
+        self.limit_bottom.valueChanged.connect(self.adjust_limits_changed)
+        self.limit_right.valueChanged.connect(self.adjust_limits_changed)
+        self.limit_left.valueChanged.connect(self.adjust_limits_changed)
+        self.mapToEdge_start.valueChanged.connect(self.adjust_limits_changed)
+        self.mapToEdge_length.valueChanged.connect(self.adjust_limits_changed)
+        self.mapToEdge_invert.toggled.connect(self.adjust_limits_changed)
 
         # connect clicks on calibration diagram
-        self.phase_widget_calibration.calibrationParametersChanged.connect(self.calibration_phase_diagram_changed)
+        self.phase_widget_calibration.clicked.connect(self.clicked_on_calibration_widget)
 
         # connect buttons signals/slots
         self.reset_defaults_button.clicked.connect(self.reset_defaults)
+        self.center_reduction_reset.clicked.connect(self.reset_center_reduction)
+
+        self.center_reduction.setIndicatorRange(0, 20)
+        self.a_power.setIndicatorColor(COLOR_A)
+        self.b_power.setIndicatorColor(COLOR_B)
+        self.c_power.setIndicatorColor(COLOR_C)
 
         self.phase_widget_calibration.refresh()
+        self.reload_calibration_interface()
+        self.classic_calibration_params_changed()
+        self.modern_calibration_params_changed()
+        self.center_reduction_changed()
 
-    threePhaseTransformChanged = QtCore.Signal()
+    def reload_calibration_interface(self):
+        if self.comboBox_interface.currentData() == Interface.Classic:
+            self.stackedWidget_2.setCurrentIndex(0)
+        else:
+            self.stackedWidget_2.setCurrentIndex(1)
 
-    def settings_changed(self):
+            # convert ud/lr to a/b/c and fill into the interface
+            a, b, c = ud_lr_to_intensity_ratio(
+                self.neutral.value(),
+                self.right.value()
+            )
+            a = np.log10(a) * 10
+            b = np.log10(b) * 10
+            c = np.log10(c) * 10
+
+            self.a_power.blockSignals(True)
+            self.b_power.blockSignals(True)
+            self.c_power.blockSignals(True)
+            self.a_power.setValue(a)
+            self.b_power.setValue(b)
+            self.c_power.setValue(c)
+            self.a_power.blockSignals(False)
+            self.b_power.blockSignals(False)
+            self.c_power.blockSignals(False)
+            self.modern_calibration_params_changed()
+            self.refresh_indicator_range()
+
+
+    def adjust_limits_changed(self):
         # update ui
         self.stackedWidget.setCurrentIndex(self.combobox_type.currentIndex())
 
@@ -141,10 +203,6 @@ class ThreePhaseSettingsWidget(QtWidgets.QWidget, Ui_ThreePhaseSettingsWidget):
             self.limit_left.blockSignals(False)
             self.limit_right.blockSignals(False)
 
-        self.calibrate_params.neutral.add(self.neutral.value())
-        self.calibrate_params.right.add(self.right.value())
-        self.calibrate_params.center.add(self.center.value())
-
         self.transform_params.transform_enabled.add(self.groupBox_2.isChecked() and self.combobox_type.currentIndex() == 0)
         self.transform_params.transform_rotation_degrees.add(self.rotation.value())
         self.transform_params.transform_mirror.add(self.mirror.isChecked())
@@ -158,7 +216,53 @@ class ThreePhaseSettingsWidget(QtWidgets.QWidget, Ui_ThreePhaseSettingsWidget):
         self.transform_params.map_to_edge_length.add(self.mapToEdge_length.value())
         self.transform_params.map_to_edge_invert.add(self.mapToEdge_invert.isChecked())
 
-        self.transform_params.exponent.add(self.exponent.value())
+    def classic_calibration_params_changed(self):
+        if self.comboBox_interface.currentData() != Interface.Classic:
+            return
+
+        self.calibrate_params.neutral.add(self.neutral.value())
+        self.calibrate_params.right.add(self.right.value())
+        self.phase_widget_calibration.refresh()
+
+    def modern_calibration_params_changed(self):
+        if self.comboBox_interface.currentData() != Interface.Modern:
+            return
+
+        a = self.a_power.value()
+        b = self.b_power.value()
+        c = self.c_power.value()
+        a = 10**(a/10)
+        b = 10**(b/10)
+        c = 10**(c/10)
+        # maximum = np.max([a, b, c])
+        # a = a - maximum# + 100
+        # b = b - maximum# + 100
+        # c = c - maximum# + 100
+
+        ud, lr = intensity_ratio_to_ud_lr(a, b, c)
+        self.neutral.setValue(ud)
+        self.right.setValue(lr)
+
+        self.calibrate_params.neutral.add(self.neutral.value())
+        self.calibrate_params.right.add(self.right.value())
+        self.phase_widget_calibration.refresh()
+
+    def center_reduction_changed(self):
+        self.calibrate_params.center.add(center_reduction_to_calib(self.center_reduction.value()))
+        print('center calib:', self.calibrate_params.center.last_value())
+
+    def refresh_indicator_range(self):
+        values = np.array([
+            self.a_power.value(),
+            self.b_power.value(),
+            self.c_power.value(),
+        ])
+        hi = np.max(values)
+        lo = hi - 3
+
+        self.a_power.setIndicatorRange(lo, hi)
+        self.b_power.setIndicatorRange(lo, hi)
+        self.c_power.setIndicatorRange(lo, hi)
 
     def reset_defaults(self):
         self.rotation.setValue(0)
@@ -167,18 +271,60 @@ class ThreePhaseSettingsWidget(QtWidgets.QWidget, Ui_ThreePhaseSettingsWidget):
         self.limit_bottom.setValue(-1)
         self.limit_left.setValue(-1)
         self.limit_right.setValue(1)
-        self.settings_changed()
+        self.classic_calibration_params_changed()
 
-    def calibration_phase_diagram_changed(self, neutral, right):
-        self.neutral.setValue(neutral)
-        self.right.setValue(right)
+    def clicked_on_calibration_widget(self, neutral, right):
+        if self.comboBox_interface.currentData() == Interface.Classic:
+            self.neutral.setValue(self.neutral.value() + neutral * 0.1)
+            self.right.setValue(self.right.value() - right * 0.1)
+            self.phase_widget_calibration.refresh()
+        else:
+            vecs = np.array([
+                [1, 0],
+                [0.5, np.sqrt(3)/2],
+                [-0.5, np.sqrt(3)/2],
+                [-1, 0],
+                [-0.5, -np.sqrt(3)/2],
+                [0.5, -np.sqrt(3)/2],
+            ])
+            deltas = np.array([
+                [1, 0, 0],
+                [1, 1, 0],
+                [0, 1, 0],
+                [0, 1, 1],
+                [0, 0, 1],
+                [1, 0, 1],
+            ]) * 0.1
+            delta = deltas[np.argmax(np.dot(vecs, (neutral, right)))]
+
+            values = np.array([self.a_power.value(), self.b_power.value(), self.c_power.value()])
+            values += delta
+            a, b, c = values - np.max(values) # + 100
+
+            self.a_power.blockSignals(True)
+            self.b_power.blockSignals(True)
+            self.c_power.blockSignals(True)
+            self.a_power.setValue(a)
+            self.b_power.setValue(b)
+            self.c_power.setValue(c)
+            self.a_power.blockSignals(False)
+            self.b_power.blockSignals(False)
+            self.c_power.blockSignals(False)
+            self.modern_calibration_params_changed()
+            self.refresh_indicator_range()
+
+    def reset_center_reduction(self):
+        self.center_reduction.setValue(center_calib_to_reduction(settings.threephase_calibration_center.default_value))
+
+    def settings_changed(self):
+        pass
 
     def save_settings(self):
         settings.threephase_transform_combobox_selection.set(self.combobox_type.currentIndex())
 
         settings.threephase_calibration_neutral.set(self.neutral.value())
         settings.threephase_calibration_right.set(self.right.value())
-        settings.threephase_calibration_center.set(self.center.value())
+        settings.threephase_calibration_center.set(float(center_reduction_to_calib(self.center_reduction.value())))
 
         settings.threephase_transform_enabled.set(self.groupBox_2.isChecked())
         settings.threephase_transform_rotate.set(self.rotation.value())
@@ -191,6 +337,3 @@ class ThreePhaseSettingsWidget(QtWidgets.QWidget, Ui_ThreePhaseSettingsWidget):
         settings.threephase_map_to_edge_start.set(self.mapToEdge_start.value())
         settings.threephase_map_to_edge_length.set(self.mapToEdge_length.value())
         settings.threephase_map_to_edge_invert.set(self.mapToEdge_invert.isChecked())
-
-        settings.threephase_exponent.set(self.exponent.value())
-
