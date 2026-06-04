@@ -186,8 +186,30 @@ class Window(QMainWindow, Ui_MainWindow):
 
         self.output_device = None
 
+        # The Internal media source reports PLAYING only while something has been
+        # driving the output recently (see net/media_source/internal.py). Hook
+        # every drive source to its notify_activity so the carrier unmutes:
+        # external TCode (below) and the built-in pattern generator (further
+        # down). page_media + its media_sync list are created during setupUi.
+        _internal_source = next(
+            (s for s in self.page_media.media_sync if s.is_internal()),
+            None,
+        )
+
+        # The internal Live-Control pattern generator counts as activity too, so
+        # selecting Internal + Start drives output without any external T-code
+        # source (e.g. to calibrate electrodes). Only mark activity when the
+        # generated position actually CHANGES, so the mute guard still silences a
+        # static / at-rest pattern (its original anti-drone purpose).
+        self._internal_source = _internal_source
+        self._last_pattern_pos = None
+        self.motion_3.position_updated.connect(self._note_pattern_activity)
+        self.motion_4.position_updated.connect(self._note_pattern_activity)
+
         self.websocket_server = net.websocketserver.WebSocketServer(self)
         self.websocket_server.new_tcode_command.connect(self.tcode_command_router.route_command)
+        if _internal_source is not None:
+            self.websocket_server.new_tcode_command.connect(_internal_source.notify_activity)
 
         self.websocket_server.incoming_as5311_data.connect(self.page_sensors.new_as5311_sensor_data_from_network)
         self.websocket_server.incoming_imu_data.connect(self.page_sensors.new_imu_sensor_data_from_network)
@@ -200,12 +222,18 @@ class Window(QMainWindow, Ui_MainWindow):
 
         self.tcpudp_server = net.tcpudpserver.TcpUdpServer(self)
         self.tcpudp_server.new_tcode_command.connect(self.tcode_command_router.route_command)
+        if _internal_source is not None:
+            self.tcpudp_server.new_tcode_command.connect(_internal_source.notify_activity)
 
         self.serial_proxy = net.serialproxy.SerialProxy(self)
         self.serial_proxy.new_tcode_command.connect(self.tcode_command_router.route_command)
+        if _internal_source is not None:
+            self.serial_proxy.new_tcode_command.connect(_internal_source.notify_activity)
 
         self.buttplug_wsdm_client = net.buttplug_wsdm_client.ButtplugWsdmClient(self)
         self.buttplug_wsdm_client.new_tcode_command.connect(self.tcode_command_router.route_command)
+        if _internal_source is not None:
+            self.buttplug_wsdm_client.new_tcode_command.connect(_internal_source.notify_activity)
 
         self.tab_volume.set_monitor_axis([
             self.alpha,
@@ -487,6 +515,18 @@ class Window(QMainWindow, Ui_MainWindow):
 
         self.refresh_pattern_combobox()
         self.foc_device_stats.reset_utilization()
+
+    def _note_pattern_activity(self, *position):
+        """Mark internal-source activity when the pattern generator's output
+        position changes — keeps the carrier unmuted while a pattern is moving,
+        without an external T-code source. A static position marks no activity,
+        so the mute guard still silences an at-rest pattern."""
+        key = tuple(round(float(v), 4) for v in position)
+        if key != self._last_pattern_pos:
+            self._last_pattern_pos = key
+            src = getattr(self, "_internal_source", None)
+            if src is not None:
+                src.notify_activity()
 
     def pattern_selection_changed(self, index):
         pattern = self.comboBox_patternSelect.currentData()
