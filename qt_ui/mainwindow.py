@@ -731,6 +731,9 @@ def run():
     sys.excepthook = excepthook
 
     app = QApplication(sys.argv)
+    wayland_app_id = os.environ.get("RESTIM_APP_ID","restim")
+    app.setDesktopFileName(wayland_app_id)
+    app.setApplicationName(wayland_app_id)
     win = Window()
     win.show()
     sys.exit(app.exec())
