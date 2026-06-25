@@ -179,6 +179,141 @@ def scale_in_arbitrary_direction(a, b, scale):
                      [s * a * b, 1 + s * b**2, 0],
                      [0, 0, 1]])
 
+def inverse_scale_in_arbitrary_direction(matrix):
+    s = matrix[0, 0] + matrix[1, 1] - 2
+    scale = s + 1
+    if s == 0:
+        return 0, 0, 1
+    a = np.abs((matrix[0, 0] - 1) / s) ** .5
+    b = np.abs((matrix[1, 1] - 1) / s) ** .5
+    if matrix[0, 1] <= 0:
+        b = -b
+    return a, b, scale
+
+
+def calibration_matrix_from_ud_lr(up_down, left_right):
+    """
+    Calculate calibration matrix from up-down, left-right (in dB) format.
+    The largest eigenvector of the result is 1
+    """
+    if (up_down, left_right) == (0, 0):
+        return np.eye(3)
+
+    theta = np.arctan2(left_right, up_down) / 2
+    norm = np.sqrt(up_down ** 2 + left_right ** 2)
+    ratio = 10 ** (norm / 10)
+    return scale_in_arbitrary_direction(np.sin(-theta), np.cos(theta), 1/ratio)
+
+
+def calibration_matrix_from_electrode_intensities(a, b, c):
+    """
+    Calculate calibration matrix from electrode intensities (in ratio) format.
+    The largest eigenvector of the result is 1
+    """
+    def split_point(m, a, b):
+        m_normalized = 1
+        if np.abs(m) > .001:
+            m_normalized = m / np.abs(m)
+
+        # handle special case c == 0. Note that if c==0 then a==b, therefore solution is trivial.
+        c = max(0.0001, np.abs(m))
+        rational = (a * a - b * b + c * c) / (2 * c)
+        imaginary = np.sqrt(max(a * a - rational * rational, 0))
+
+        p = (rational + 1j * imaginary) * m_normalized
+        q = m - p
+        return p, q
+
+    assert a > 0
+    assert b > 0
+    assert c > 0
+
+    # clamp max = 1
+    maximum = np.max([a, b, c])
+    a /= maximum
+    b /= maximum
+    c /= maximum
+    max_index = np.argmax([a, b, c])
+
+    # check for valid input. Must have min(a, b, c) + mid(a, b, c) >= max(a, b, c)
+    if max_index == 0:
+        if b + c < a:
+            offset = (a - (b + c)) / 2
+            b += offset
+            c += offset
+    if max_index == 1:
+        if a + c < b:
+            offset = (b - (a + c)) / 2
+            a += offset
+            c += offset
+    if max_index == 2:
+        if a + b < c:
+            offset = (c - (a + b)) / 2
+            a += offset
+            b += offset
+
+    ab = np.array([
+        [1, 0],
+        [-0.5, -np.sqrt(3) / 2],
+        [-0.5, np.sqrt(3) / 2],
+    ])
+    complex_b, complex_c = split_point(-a, b, c)
+    ab2 = np.array([
+        [a, 0],
+        [np.real(complex_b), np.imag(complex_b)],
+        [np.real(complex_c), np.imag(complex_c)],
+    ])
+
+    calib, resid, rank, singular = np.linalg.lstsq(ab[:, :2], ab2[:, :2])
+
+    # rotate so matrix[0, 1] equals matrix[1, 0]
+    q = np.arctan2(calib[0, 1] - calib[1, 0], calib[0, 0] + calib[1, 1])
+    rot = np.array([[np.cos(q), -np.sin(q)], [np.sin(q), np.cos(q)]])
+    calib = calib @ rot
+
+    # scale so largest eigenvector is equal to 1
+    largest_eigenvalue = np.max(np.linalg.eigvals(calib[:2, :2]))
+    calib /= largest_eigenvalue
+    return calib
+
+def calibration_matrix_to_ud_lr(calib):
+    """
+    Must have calib[0, 1] == calib[1, 0] and
+    max(eigval(calib)) == 1
+    """
+    a, b, scale = inverse_scale_in_arbitrary_direction(calib)
+    ratio = 1 / np.clip(scale, .001, None)
+    theta = -np.arctan2(a, -b)
+    norm = np.log10(ratio) * 10
+    theta = theta * 2
+    ud = np.cos(theta) * norm
+    lr = -np.sin(theta) * norm
+    return ud, lr
+
+
+def intensity_ratio_to_ud_lr(a, b, c):
+    calib = calibration_matrix_from_electrode_intensities(a, b, c)
+    return calibration_matrix_to_ud_lr(calib)
+
+def ud_lr_to_intensity_ratio(ud, lr):
+    """
+    Compute the electrode intensities from up-down and left-right
+    calibration format. Normalized to 1
+    :param ud:
+    :param lr:
+    :return:
+    """
+    hw = ThreePhaseHardwareCalibration(ud, lr)
+    calib = hw.generate_transform_in_ab()
+    ab = np.array([
+        [1, 0, 0],
+        [-0.5, np.sqrt(3) / 2, 0],
+        [-0.5, -np.sqrt(3) / 2, 1],
+    ])
+    z = ab[:, :2] @ calib[:2, :2]
+    intensities = np.linalg.norm(z[:, :2], axis=1)
+    intensities /= np.max(intensities)
+    return intensities
 
 class ThreePhaseHardwareCalibration:
     """
@@ -186,7 +321,7 @@ class ThreePhaseHardwareCalibration:
     into (alpha, beta), and then scaling before transforming back to (L, R)
 
     method:
-    [alpha, beta, 0] = P^-1 @ ab_transform^-1 @ [L, R, 0]
+    [alpha, beta, 0] = ab_transform^-1 @ P^-1 @ [L, R, 0]
     [alpha, beta, 0] = inverse_hardware_transform @ [alpha, beta, 0]
     [L, R, 0] = P @ ab_transform @ [alpha, beta, 0]
     """
@@ -202,11 +337,6 @@ class ThreePhaseHardwareCalibration:
         norm = np.sqrt(self.up_down ** 2 + self.left_right ** 2)
         ratio = 10 ** (norm / 10)
         return scale_in_arbitrary_direction(np.sin(-theta), np.cos(theta), 1/ratio)
-
-    def contour_in_ab(self, theta):
-        transform = self.generate_transform_in_ab()
-        alpha, beta, _ = transform @ [np.cos(theta), np.sin(theta), np.zeros_like(theta)]
-        return alpha, beta
 
     def scaling_contant(self, transform_in_ab):
         """

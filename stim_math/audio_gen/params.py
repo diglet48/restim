@@ -44,8 +44,6 @@ class ThreephasePositionTransformParams:
     map_to_edge_length: AbstractAxis            # float
     map_to_edge_invert: AbstractAxis            # bool
 
-    exponent: AbstractAxis # TODO: remove?
-
 
 @dataclass
 class VibrationParams:

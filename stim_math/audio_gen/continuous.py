@@ -52,10 +52,6 @@ class ThreePhaseAlgorithm(AudioGenerationAlgorithm):
         center_calib = threephase.ThreePhaseCenterCalibration(self.params.calibrate.center.last_value())
         volume *= center_calib.get_scale(alpha, beta)
 
-        # exponent transform
-        # transform = ThreePhaseExponentAdjustment(self.params.threephase_exponent.last_value())
-        # volume *= transform.get_scale(alpha, beta)
-
         # hardware calibration
         hw = threephase.ThreePhaseHardwareCalibration(self.params.calibrate.neutral.last_value(),
                                                       self.params.calibrate.right.last_value())
