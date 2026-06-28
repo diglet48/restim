@@ -272,7 +272,7 @@ def calibration_matrix_from_electrode_intensities(a, b, c):
     calib = calib @ rot
 
     # scale so largest eigenvector is equal to 1
-    largest_eigenvalue = np.max(np.linalg.eigvals(calib[:2, :2]))
+    largest_eigenvalue = np.max(np.real(np.linalg.eigvals(calib[:2, :2])))
     calib /= largest_eigenvalue
     return calib
 
