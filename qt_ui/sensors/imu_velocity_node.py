@@ -35,6 +35,8 @@ class IMUVelocityNode(QtWidgets.QWidget, SensorNodeInterface):
         self.spinbox_volume = pg.SpinBox(None, 0.0, compactHeight=False, suffix='%', step=0.1)
         self.checkbox = QCheckBox()
         self.spinbox_decay = pg.SpinBox(None, 1.0, compactHeight=False, suffix='s', siPrefix=True, dec=True, minStep=.01, bounds=[0, None])
+        self.label_suppression = QLabel('0%')
+        self.label_suppressed_value = QLabel('0.0%')
 
         self.spinbox_threshold.valueChanged.connect(self.update_lines)
         self.spinbox_range.valueChanged.connect(self.update_lines)
@@ -46,6 +48,8 @@ class IMUVelocityNode(QtWidgets.QWidget, SensorNodeInterface):
             "positive: increase volume when moving\r\n"
             "negative: decrease volume when moving")
         self.formLayout.addRow(label, self.spinbox_volume)
+        self.formLayout.addRow('suppression', self.label_suppression)
+        self.formLayout.addRow('suppressed value', self.label_suppressed_value)
         self.formLayout.addRow('decay', self.spinbox_decay)
 
         self.graph = pg.GraphicsLayoutWidget()
@@ -126,6 +130,10 @@ class IMUVelocityNode(QtWidgets.QWidget, SensorNodeInterface):
         high = low + self.spinbox_range.value()
         self.low_marker.setValue(low)
         self.high_marker.setValue(high)
+
+    def update_suppression_display(self, suppression: float):
+        self.label_suppression.setText(f'{suppression * 100:.0f}%')
+        self.label_suppressed_value.setText(f'{self.spinbox_volume.value() * (1 - suppression):.1f}%')
 
     def save_settings(self):
         settings.sensor_imu_velocity_threshold.set(self.spinbox_threshold.value())

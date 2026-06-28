@@ -34,6 +34,13 @@ class SensorNodeInterface:
         """
         pass
 
+    def update_suppression_display(self, suppression: float):
+        """
+        Called periodically from the UI thread to update suppression display labels.
+        :param suppression: current sensor_suppression axis value, clamped to [0, 1]
+        """
+        pass
+
     def save_settings(self):
         """
         called before application shutdown

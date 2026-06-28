@@ -31,6 +31,8 @@ class PressureAbsoluteSensorNode(QWidget, SensorNodeInterface):
         self.spinbox_threshold = pg.SpinBox(None, 100000, compactHeight=False, suffix='Pa', siPrefix=True, dec=True, minStep=100)
         self.spinbox_range = pg.SpinBox(None, 10000, compactHeight=False, suffix='Pa', siPrefix=True, dec=True, minStep=100, bounds=[0, None])
         self.spinbox_volume = pg.SpinBox(None, 0.0, compactHeight=False, suffix='%', step=0.1)
+        self.label_suppression = QLabel('0%')
+        self.label_suppressed_value = QLabel('0.0%')
 
         self.spinbox_threshold.valueChanged.connect(self.update_lines)
         self.spinbox_range.valueChanged.connect(self.update_lines)
@@ -42,6 +44,8 @@ class PressureAbsoluteSensorNode(QWidget, SensorNodeInterface):
             "positive: increase volume when clenching\r\n"
             "negative: decrease volume when clenching")
         self.formLayout.addRow(label, self.spinbox_volume)
+        self.formLayout.addRow('suppression', self.label_suppression)
+        self.formLayout.addRow('suppressed value', self.label_suppressed_value)
 
         self.graph = pg.GraphicsLayoutWidget()
         self.verticalLayout.addWidget(self.graph)
@@ -112,6 +116,10 @@ class PressureAbsoluteSensorNode(QWidget, SensorNodeInterface):
         high = low + self.spinbox_range.value()
         self.low_marker.setValue(low)
         self.high_marker.setValue(high)
+
+    def update_suppression_display(self, suppression: float):
+        self.label_suppression.setText(f'{suppression * 100:.0f}%')
+        self.label_suppressed_value.setText(f'{self.spinbox_volume.value() * (1 - suppression):.1f}%')
 
     def save_settings(self):
         settings.sensor_pressure_absolute_threshold.set(self.spinbox_threshold.value())

@@ -35,6 +35,8 @@ defaults = {
     AxisEnum.INTENSITY_B: ('e2', 'E2', 0, 1, True, True),
     AxisEnum.INTENSITY_C: ('e3', 'E3', 0, 1, True, True),
     AxisEnum.INTENSITY_D: ('e4', 'E4', 0, 1, True, True),
+
+    AxisEnum.SENSOR_SUPPRESSION: ('sensor_suppression', 'S1', 0, 1, True, True),
 }
 
 @dataclass
