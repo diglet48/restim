@@ -131,6 +131,14 @@ file_dialog_last_dir = Setting('file_dialog_last_dir', '', str)
 
 funscript_conversion_random_direction_change_probability = Setting('funscript/random_direction_change_probability', 0.1, float)
 
+# External HereSphere funscript-resolution API (disabled by default: when off,
+# restim behaves exactly like upstream and makes no network calls).
+heresphere_api_enabled = Setting('funscript/heresphere_api_enabled', False, bool)
+heresphere_api_url = Setting('funscript/heresphere_api_url', '', str)
+heresphere_api_timeout = Setting('funscript/heresphere_api_timeout', 2.0, float)
+# list of "server_prefix=>local_prefix" strings applied to server-side paths
+heresphere_api_path_mappings = Setting('funscript/heresphere_api_path_mappings', [], list)
+
 simfile_conversion_atk_sus_rel_index = Setting('simfile/atk_sus_rel_index', 1, int)
 simfile_conversion_output_debug_scripts = Setting('simfile/output_debug_scripts', False, bool)
 

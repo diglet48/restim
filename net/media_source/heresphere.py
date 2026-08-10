@@ -18,7 +18,9 @@ def parse_reply(reply: dict):
         connectionState=MediaConnectionState.CONNECTED_AND_PLAYING if reply['playerState'] == 0 else MediaConnectionState.CONNECTED_AND_PAUSED,
         playbackRate=reply['playbackSpeed'],
         claimed_media_position=reply['currentTime'],
-        filePath=reply['path']
+        # Some HereSphere servers report the media path in 'resource' rather
+        # than 'path'. Prefer 'resource', fall back to 'path'.
+        filePath=reply.get('resource') or reply.get('path')
     )
 
 
