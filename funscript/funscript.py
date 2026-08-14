@@ -67,3 +67,14 @@ class Funscript:
         with open(path, 'w') as f:
             json.dump(js, f)
 
+    def save_to_cache(self, filename):
+        """Serialize this funscript into the shared cache/ directory under `filename`."""
+        self.save_to_path(cache_dir() / filename)
+
+
+def cache_dir() -> pathlib.Path:
+    """Directory holding auto-generated derived funscripts (alpha/beta, e1-e4)."""
+    path = pathlib.Path(__file__).parent.parent.absolute() / 'cache'
+    path.mkdir(parents=True, exist_ok=True)
+    return path
+

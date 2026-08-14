@@ -1,4 +1,5 @@
 import functools
+import logging
 import os
 import pathlib
 
@@ -8,6 +9,9 @@ from funscript.collect_funscripts import Resource
 from net.media_source.vlc import VLC
 from net.media_source.kodi import Kodi
 from qt_ui.additional_search_paths_dialog import AdditionalSearchPathsDialog
+from qt_ui.heresphere_api_dialog import HeresphereApiDialog
+from PySide6.QtGui import QShortcut, QKeySequence
+from funscript import heresphere_api
 from qt_ui.device_wizard.axes import AxisEnum
 
 from PySide6 import QtCore, QtWidgets
@@ -26,6 +30,8 @@ from qt_ui.widgets.table_view_with_combobox import ComboBoxDelegate, ButtonDeleg
 from qt_ui.models import funscript_kit, additional_search_paths
 from qt_ui.models.funscript_kit import FunscriptKitItem
 from qt_ui import settings
+
+logger = logging.getLogger('restim.media_settings')
 
 
 class _MediaSettingsWidget(type(QtWidgets.QWidget), type(Ui_MediaSettingsWidget)):
@@ -95,6 +101,18 @@ class MediaSettingsWidget(QtWidgets.QWidget, Ui_MediaSettingsWidget, metaclass=_
 
         self.add_funscript_button.clicked.connect(self.open_add_funscripts_dialog)
         self.additional_search_paths_button.clicked.connect(self.open_search_paths_dialog)
+        self.heresphere_api_button = QtWidgets.QPushButton("HereSphere API…")
+        self.horizontalLayout_2.addWidget(self.heresphere_api_button)
+        self.heresphere_api_button.clicked.connect(self.open_heresphere_api_dialog)
+
+        # HereSphere: a scene may expose several funscripts -> selector (hidden if <=1)
+        self.ft_funscript_combo = QtWidgets.QComboBox()
+        self.ft_funscript_combo.setToolTip("HereSphere funscript (Ctrl+F to cycle)")
+        self.ft_funscript_combo.setVisible(False)
+        self.horizontalLayout_2.addWidget(self.ft_funscript_combo)
+        self.ft_funscript_combo.currentIndexChanged.connect(self._on_ft_funscript_selected)
+        self._ft_next_shortcut = QShortcut(QKeySequence("Ctrl+F"), self)
+        self._ft_next_shortcut.activated.connect(self._select_next_heresphere_funscript)
         self.reload_scripts_button.clicked.connect(self.reload_scripts)
         self.media_index_changed()
 
@@ -125,6 +143,13 @@ class MediaSettingsWidget(QtWidgets.QWidget, Ui_MediaSettingsWidget, metaclass=_
         dlg = AdditionalSearchPathsDialog()
         if dlg.exec():
             # Attempt to re-load funscripts
+            self.detect_resources_for_media_file(self.loaded_media_path)
+
+    def open_heresphere_api_dialog(self):
+        self.dialogOpened.emit()  # trigger stop audio
+        dlg = HeresphereApiDialog(self)
+        if dlg.exec():
+            # config may have changed -> re-detect funscripts for current media
             self.detect_resources_for_media_file(self.loaded_media_path)
 
     def reload_scripts(self):
@@ -181,28 +206,62 @@ class MediaSettingsWidget(QtWidgets.QWidget, Ui_MediaSettingsWidget, metaclass=_
     def detect_resources_for_media_file(self, new_path):
         self.loaded_media_path = new_path
 
-        dirty = False
-        if not new_path:
-            # path is empty string.
+        # Wrapped so a broken funscript / unreachable path logs an error instead
+        # of crashing the app. try/finally keeps the Qt model out of a stuck
+        # "reset" state even if detection raises.
+        import time
+        _t = {}
+        try:
             self.model.beginResetModel()
-            dirty |= self.model.clear_auto_detected_funscripts()
-            self.model.endResetModel()
-            self.treeView.expandAll()
-        else:
-            # path is something
-            dirname = os.path.dirname(new_path)
-            basename = os.path.basename(new_path)
-            extra_paths = settings.additional_search_paths.get()
-            search_paths = [dirname] + extra_paths
+            try:
+                self.model.clear_auto_detected_funscripts()
+                if new_path:
+                    dirname = os.path.dirname(new_path)
+                    basename = os.path.basename(new_path)
+                    search_paths = [dirname] + settings.additional_search_paths.get()
+                    _t0 = time.perf_counter()
+                    self.model.detect_funscripts_from_path(search_paths, basename)
+                    _t['detect'] = time.perf_counter() - _t0
+            finally:
+                self.model.endResetModel()
 
-            self.model.beginResetModel()
-            dirty |= self.model.clear_auto_detected_funscripts()
-            dirty |= self.model.detect_funscripts_from_path(search_paths, basename)
-            self.model.endResetModel()
+            _t1 = time.perf_counter()
             self.treeView.expandAll()
+            _t['expandAll'] = time.perf_counter() - _t1
+            _t2 = time.perf_counter()
+            self.model.auto_link_funscripts(funscript_kit.FunscriptKitModel.load_from_settings())
+            _t['auto_link'] = time.perf_counter() - _t2
+            if _t:
+                logger.debug('[perf] detect_resources %s -> %s', os.path.basename(new_path or ''),
+                             ', '.join(f'{k}={v:.2f}s' for k, v in _t.items()))
+        except Exception:
+            logger.exception('failed to detect funscripts for %s', new_path)
 
-        self.model.auto_link_funscripts(funscript_kit.FunscriptKitModel.load_from_settings())
+        self._refresh_heresphere_funscript_selector()
         self.funscriptMappingChanged.emit()
+
+    def _refresh_heresphere_funscript_selector(self):
+        """Show/populate the HereSphere funscript combo when the scene has >1."""
+        count = heresphere_api.available_count()
+        combo = self.ft_funscript_combo
+        combo.blockSignals(True)
+        combo.clear()
+        if count > 1:
+            for i, name in enumerate(heresphere_api.funscript_names()):
+                combo.addItem(f'{i + 1}/{count} — {name}')
+            combo.setCurrentIndex(heresphere_api.current_index())
+            combo.setVisible(True)
+        else:
+            combo.setVisible(False)
+        combo.blockSignals(False)
+
+    def _on_ft_funscript_selected(self, index):
+        if index >= 0 and heresphere_api.select(index):
+            self.detect_resources_for_media_file(self.loaded_media_path)
+
+    def _select_next_heresphere_funscript(self):
+        if heresphere_api.select_next():
+            self.detect_resources_for_media_file(self.loaded_media_path)
 
     def has_media_file_loaded(self):
         return bool(self.loaded_media_path)

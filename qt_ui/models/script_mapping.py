@@ -14,6 +14,7 @@ from qt_ui.models.tree_item import TreeItem
 from qt_ui.models.funscript_kit import FunscriptKitModel
 from funscript.funscript import Funscript
 import funscript.collect_funscripts
+from funscript import derived_axes
 
 logger = logging.getLogger('restim.script_mapping')
 
@@ -255,9 +256,48 @@ class ScriptMappingModel(QAbstractItemModel):
 
         resources = funscript.collect_funscripts.collect_funscripts(search_directories, media_file)
         for res in resources:
-            dirty |= True
-            self.add_funscript_resource_auto(FunscriptTreeItem(res))
+            dirty = True
+            item = FunscriptTreeItem(res)
+            try:
+                # A typed funscript (alpha/beta/e1...) maps directly; an untyped
+                # 1D funscript is expanded into derived positional/intensity axes.
+                if item.funscript_type == '':
+                    self._add_derived_funscripts(res, item)
+                else:
+                    self.add_funscript_resource_auto(item)
+            except Exception:
+                logger.exception('failed to process funscript %s', res.name())
+                self.add_funscript_resource_auto(item)
         return dirty
+
+    def _add_derived_funscripts(self, res, item: FunscriptTreeItem) -> None:
+        """Expand a 1D funscript into device axes (alpha/beta or e1..e4)."""
+        # generate_derived_axes may run the funscript-tools subprocess synchronously
+        # (seconds on first run of a script); show a wait cursor as feedback.
+        import time
+        from PySide6.QtWidgets import QApplication
+        QApplication.setOverrideCursor(Qt.WaitCursor)
+        t0 = time.perf_counter()
+        try:
+            axes = derived_axes.generate_derived_axes(item.script, res.name())
+        finally:
+            QApplication.restoreOverrideCursor()
+        t1 = time.perf_counter()
+        if not axes:
+            # conversion failed or empty -> fall back to the raw resource
+            self.add_funscript_resource_auto(item)
+            return
+        for axis_enum, script in axes.items():
+            derived = FunscriptTreeItem(res)
+            derived.axis = axis_enum
+            derived.script = script
+            derived.file_name = f'{axis_enum.name}_{res.name()}'
+            derived.is_removable = False
+            derived.first_of_its_kind = False
+            self.add_funscript_resource_auto(derived)
+        t2 = time.perf_counter()
+        logger.debug('[perf] %s: generate_derived_axes=%.2fs, add %d items=%.2fs',
+                     res.name(), t1 - t0, len(axes), t2 - t1)
 
     def clear_auto_detected_funscripts(self):
         if self._funscripts_auto.childCount():
@@ -284,4 +324,9 @@ class ScriptMappingModel(QAbstractItemModel):
                         item.axis = kit_item.axis
                         logger.info(f'auto-linking `{item.file_name}` to {kit_item.axis.display_name()}.')
                         return
+        # Derived axes (funscript-tools / 1D->2D) come pre-assigned with an explicit
+        # axis but an empty funscript_type; don't report them as a linking failure.
+        if item.axis != AxisEnum.NONE:
+            logger.debug(f'auto-linking `{item.file_name}` skipped (axis already set)')
+            return
         logger.info(f'auto-linking `{item.file_name}` failed')

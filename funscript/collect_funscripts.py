@@ -33,8 +33,19 @@ class Resource:
         return case_insensitive_compare(self.path.suffix, '.funscript')
 
     def funscript_type(self):
+        # Only treat the second-to-last suffix as an axis type if it is a known
+        # one. This keeps "My.Video.2.funscript" (parasitic ".2") detected as an
+        # untyped 1D funscript so it can be expanded into derived axes.
         try:
-            return self.path.suffixes[-2][1:].lower()
+            suffixes = self.path.suffixes
+            if len(suffixes) < 2:
+                return ''
+            ext = suffixes[-2][1:].lower()
+            allowed = {'alpha', 'beta', 'gamma', 'volume', 'frequency',
+                       'e1', 'e2', 'e3', 'e4'}
+            if ext in allowed or ext.startswith(('pulse_', 'vib1_', 'vib2_')):
+                return ext
+            return ''
         except IndexError:
             return ''
 
@@ -72,6 +83,13 @@ def collect_funscripts(
     collected_files = []
 
     media_prefix, _, media_extension = split_funscript_path(media)
+
+    # Try external HereSphere API resolution first (disabled by default).
+    # Lazy import breaks the collect_funscripts <-> heresphere_api cycle.
+    from funscript import heresphere_api
+    api_paths = heresphere_api.resolve(media)
+    if api_paths:
+        return [Resource(path) for path in api_paths]
 
     while dir_stack and len(collected_files) == 0:
         try:
