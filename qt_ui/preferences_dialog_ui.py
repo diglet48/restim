@@ -634,6 +634,18 @@ class Ui_PreferencesDialog(object):
         self.tab_display.setObjectName(u"tab_display")
         self.verticalLayout_4 = QVBoxLayout(self.tab_display)
         self.verticalLayout_4.setObjectName(u"verticalLayout_4")
+        self.groupBox_general = QGroupBox(self.tab_display)
+        self.groupBox_general.setObjectName(u"groupBox_general")
+        self.verticalLayout_general = QVBoxLayout(self.groupBox_general)
+        self.verticalLayout_general.setObjectName(u"verticalLayout_general")
+        self.prevent_system_sleep_when_active = QCheckBox(self.groupBox_general)
+        self.prevent_system_sleep_when_active.setObjectName(u"prevent_system_sleep_when_active")
+
+        self.verticalLayout_general.addWidget(self.prevent_system_sleep_when_active)
+
+
+        self.verticalLayout_4.addWidget(self.groupBox_general)
+
         self.groupBox_5 = QGroupBox(self.tab_display)
         self.groupBox_5.setObjectName(u"groupBox_5")
         self.groupBox_5.setEnabled(True)
@@ -908,6 +920,8 @@ class Ui_PreferencesDialog(object):
         self.label_36.setText(QCoreApplication.translate("PreferencesDialog", u"address:port", None))
         self.ofs_reload.setText(QCoreApplication.translate("PreferencesDialog", u"...", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_media_settings), QCoreApplication.translate("PreferencesDialog", u"Media sync", None))
+        self.groupBox_general.setTitle(QCoreApplication.translate("PreferencesDialog", u"General", None))
+        self.prevent_system_sleep_when_active.setText(QCoreApplication.translate("PreferencesDialog", u"Prevent system sleep while active", None))
         self.groupBox_5.setTitle(QCoreApplication.translate("PreferencesDialog", u"Phase", None))
         self.label_2.setText(QCoreApplication.translate("PreferencesDialog", u"max fps", None))
         self.label_5.setText(QCoreApplication.translate("PreferencesDialog", u"display latency [ms]", None))
