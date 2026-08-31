@@ -857,6 +857,22 @@
       </attribute>
       <layout class="QVBoxLayout" name="verticalLayout_4">
        <item>
+        <widget class="QGroupBox" name="groupBox_general">
+         <property name="title">
+          <string>General</string>
+         </property>
+         <layout class="QVBoxLayout" name="verticalLayout_general">
+          <item>
+           <widget class="QCheckBox" name="prevent_system_sleep_when_active">
+            <property name="text">
+             <string>Prevent system sleep while active</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
         <widget class="QGroupBox" name="groupBox_5">
          <property name="enabled">
           <bool>true</bool>
