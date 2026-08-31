@@ -184,6 +184,7 @@ class PreferencesDialog(QDialog, Ui_PreferencesDialog):
         self.kodi_address.setText(qt_ui.settings.media_sync_kodi_address.get())
 
         # display settings
+        self.prevent_system_sleep_when_active.setChecked(qt_ui.settings.prevent_system_sleep_when_active.get())
         self.display_fps.setValue(int(qt_ui.settings.display_fps.get()))
         self.display_latency_ms.setValue(qt_ui.settings.display_latency.get())
 
@@ -351,6 +352,7 @@ class PreferencesDialog(QDialog, Ui_PreferencesDialog):
         qt_ui.settings.media_sync_kodi_address.set(self.kodi_address.text())
 
         # display
+        qt_ui.settings.prevent_system_sleep_when_active.set(self.prevent_system_sleep_when_active.isChecked())
         qt_ui.settings.display_fps.set(self.display_fps.value())
         qt_ui.settings.display_latency.set(self.display_latency_ms.value())
 
