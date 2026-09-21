@@ -8,6 +8,7 @@ from stim_math.pulse_frequency_calibration import PulseFrequencyCalibration
 from stim_math.tau_calibration import TauCalibration
 from stim_math.threephase_position import ThreePhasePosition
 from stim_math.axis import AbstractMediaSync
+from stim_math.threephase import ud_lr_to_intensity_ratio
 import stim_math.burst_gap
 from device.focstim.constants_pb2 import AxisType
 from stim_math import limits
@@ -78,6 +79,12 @@ class FOCStimThreephaseAlgorithm(RemoteGenerationAlgorithm):
         if not self.media.is_playing():
             volume *= 0
 
+
+        calib = ud_lr_to_intensity_ratio(self.params.calibrate.neutral.interpolate(t), self.params.calibrate.right.interpolate(t))
+        calib = 10 * np.log10(calib)    # convert ratio to db
+        calib_a, calib_b, calib_c = calib
+        center_reduction =  1 - 10 ** (self.params.calibrate.center.interpolate(t) / 10) # convert db to percent reduction
+
         return {
             AxisType.AXIS_POSITION_ALPHA: alpha,
             AxisType.AXIS_POSITION_BETA: beta,
@@ -87,7 +94,8 @@ class FOCStimThreephaseAlgorithm(RemoteGenerationAlgorithm):
             AxisType.AXIS_PULSE_WIDTH_IN_CYCLES: pulse_width,
             AxisType.AXIS_PULSE_RISE_TIME_CYCLES: self.params.pulse_rise_time.interpolate(t),
             AxisType.AXIS_PULSE_INTERVAL_RANDOM_PERCENT: self.params.pulse_interval_random.interpolate(t),
-            AxisType.AXIS_CALIBRATION_3_CENTER: self.params.calibrate.center.interpolate(t),
-            AxisType.AXIS_CALIBRATION_3_UP: self.params.calibrate.neutral.interpolate(t),
-            AxisType.AXIS_CALIBRATION_3_LEFT: self.params.calibrate.right.interpolate(t),
+            AxisType.AXIS_CALIBRATION_3_A: calib_a,
+            AxisType.AXIS_CALIBRATION_3_B: calib_b,
+            AxisType.AXIS_CALIBRATION_3_C: calib_c,
+            AxisType.AXIS_CALIBRATION_3_REDUCTION_IN_CENTER: center_reduction,
         }

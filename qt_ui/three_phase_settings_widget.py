@@ -249,7 +249,6 @@ class ThreePhaseSettingsWidget(QtWidgets.QWidget, Ui_ThreePhaseSettingsWidget):
 
     def center_reduction_changed(self):
         self.calibrate_params.center.add(center_reduction_to_calib(self.center_reduction.value()))
-        print('center calib:', self.calibrate_params.center.last_value())
 
     def refresh_indicator_range(self):
         values = np.array([

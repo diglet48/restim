@@ -35,8 +35,8 @@ logger = logging.getLogger('restim.focstim')
 teleplot_addr = "127.0.0.1"
 teleplot_port = 47269
 
-FOCSTIM_VERSION_MAJOR = 1
-FOCSTIM_VERSION_MINIMUM_MINOR = 1
+FOCSTIM_VERSION_MAJOR = 2
+FOCSTIM_VERSION_MINIMUM_MINOR = 0
 FOCSTIM_VERSION_BRANCH = "main"
 
 TIMEOUT_SETUP = 2000    # ms
