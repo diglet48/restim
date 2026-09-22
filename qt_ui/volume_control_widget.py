@@ -4,6 +4,7 @@ import time
 import numpy as np
 import math
 from PySide6 import QtCore, QtWidgets
+from PySide6.QtCore import Signal
 from PySide6.QtWidgets import QDoubleSpinBox
 
 from qt_ui.axis_controller import AxisController
@@ -225,6 +226,7 @@ class VolumeControlWidget(QtWidgets.QWidget, Ui_VolumeControlForm):
 
     def burst_gap_changed(self):
         self.axis_burst_gap_enable.add(self.checkbox_burst_gap_enable.isChecked())
+        self.burst_gap_enable_changed.emit(self.checkbox_burst_gap_enable.isChecked())
 
     def refreshSettings(self):
         self.latency = settings.display_latency.get() / 1000.0
@@ -240,4 +242,4 @@ class VolumeControlWidget(QtWidgets.QWidget, Ui_VolumeControlForm):
         settings.pulse_frequency_calibration_enable.set(self.checkBox_pulse_frequency_enable.isChecked())
         settings.burst_gap_enable.set(self.checkbox_burst_gap_enable.isChecked())
 
-
+    burst_gap_enable_changed = Signal(bool)

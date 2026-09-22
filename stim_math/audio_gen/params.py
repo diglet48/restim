@@ -87,6 +87,7 @@ class ThreephasePulsebasedAlgorithmParams:
     pulse_width: AbstractAxis       # carrier cycles
     pulse_interval_random: AbstractAxis
     pulse_rise_time: AbstractAxis
+    enable_burst_gap: AbstractAxis
 
 
 @dataclass
@@ -97,6 +98,7 @@ class ThreephaseABTestAlgorithmParams:
     vibration_1: VibrationParams
     vibration_2: VibrationParams
     volume: VolumeParams
+    enable_burst_gap: AbstractAxis
     a_volume: AbstractAxis
     a_train_duration: AbstractAxis # s
     a_carrier_frequency: AbstractAxis  # Hz

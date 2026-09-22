@@ -256,7 +256,7 @@
       <item row="2" column="0">
        <widget class="QLabel" name="label_9">
         <property name="toolTip">
-         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Available on FOC-Stim only.&lt;/p&gt;&lt;p&gt;Interprent the pulse frequency axis as burst gap.&lt;/p&gt;&lt;p&gt;This makes the subjective frequency of the signal less dependent on the carrier frequency and pulse width.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Available for FOC-Stim and audio.&lt;/p&gt;&lt;p&gt;Interprent the pulse frequency axis as burst gap.&lt;/p&gt;&lt;p&gt;This makes the subjective frequency of the signal less dependent on the carrier frequency and pulse width.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
         </property>
         <property name="text">
          <string>Use burst gap instead of pulse freqeuency (?)</string>

@@ -53,15 +53,24 @@ class FOCStimThreephaseAlgorithm(RemoteGenerationAlgorithm):
         carrier_calibration = TauCalibration.derating_factor(maximum_frequency, carrier_frequency, tau)
         volume *= np.clip(carrier_calibration, 0, 1)
 
-        pulse_frequency = self.params.pulse_frequency.interpolate(t)
-        pulse_width = self.params.pulse_width.interpolate(t)
+        pulse_frequency = np.clip(self.params.pulse_frequency.interpolate(t),
+                                  limits.PulseFrequency.min, limits.PulseFrequency.max)
+        pulse_width = np.clip(self.params.pulse_width.interpolate(t),
+                              limits.PulseWidth.min, limits.PulseWidth.max)
+
+        # convert burst freq to pulse freq (if applicable) and limit gap to 5ms
+        pulse_width_in_s = np.clip(pulse_width / carrier_frequency, None, limits.PulseDuration.max)
         if self.params.enable_burst_gap.last_value():
-            pulse_frequency = stim_math.burst_gap.burst_gap_frequency_to_pulse_frequency(carrier_frequency, pulse_frequency, pulse_width)
+            pause_width_in_s = np.clip(1 / pulse_frequency,
+                                       limits.InterPulseIntervalDuration.min, limits.InterPulseIntervalDuration.max)
+        else:
+            pause_width_in_s = np.clip(1 / pulse_frequency - pulse_width_in_s,
+                                       limits.InterPulseIntervalDuration.min, limits.InterPulseIntervalDuration.max)
+        pulse_frequency = 1 / (pulse_width_in_s + pause_width_in_s)
 
         if self.params.enable_pulse_frequency_adjustment.last_value():
             pulse_frequency_calibration = PulseFrequencyCalibration.scale(pulse_frequency)
             volume *= np.clip(pulse_frequency_calibration, 0, 1)
-
 
         alpha = self.position_params.position_params.alpha.interpolate(t)
         beta = self.position_params.position_params.beta.interpolate(t)

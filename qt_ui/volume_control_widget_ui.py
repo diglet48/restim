@@ -232,7 +232,7 @@ class Ui_VolumeControlForm(object):
         self.label_8.setText(QCoreApplication.translate("VolumeControlForm", u"Normalize intensity for pulse frequency (?)", None))
         self.checkBox_pulse_frequency_enable.setText(QCoreApplication.translate("VolumeControlForm", u"Enable", None))
 #if QT_CONFIG(tooltip)
-        self.label_9.setToolTip(QCoreApplication.translate("VolumeControlForm", u"<html><head/><body><p>Available on FOC-Stim only.</p><p>Interprent the pulse frequency axis as burst gap.</p><p>This makes the subjective frequency of the signal less dependent on the carrier frequency and pulse width.</p></body></html>", None))
+        self.label_9.setToolTip(QCoreApplication.translate("VolumeControlForm", u"<html><head/><body><p>Available for FOC-Stim and audio.</p><p>Interprent the pulse frequency axis as burst gap.</p><p>This makes the subjective frequency of the signal less dependent on the carrier frequency and pulse width.</p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
         self.label_9.setText(QCoreApplication.translate("VolumeControlForm", u"Use burst gap instead of pulse freqeuency (?)", None))
         self.checkbox_burst_gap_enable.setText(QCoreApplication.translate("VolumeControlForm", u"Enable", None))

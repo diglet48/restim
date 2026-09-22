@@ -100,10 +100,10 @@ class Window(QMainWindow, Ui_MainWindow):
         line.setFrameShadow(QFrame.Shadow.Sunken)
         self.toolBar.insertWidget(self.actionStart, line)
 
-
-
         self.doubleSpinBox_volume.setValue(qt_ui.settings.volume_default_level.get())
         self.tab_volume.link_volume_controls(self.doubleSpinBox_volume, self.progressBar_volume)
+        self.tab_volume.burst_gap_enable_changed.connect(self.tab_pulse_settings.burst_gap_enable_changed)
+        self.tab_volume.burst_gap_changed() # trigger update
 
         # default alpha/beta axis. Used by:
         # pattern generator
