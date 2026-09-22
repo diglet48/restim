@@ -135,7 +135,7 @@ simfile_conversion_atk_sus_rel_index = Setting('simfile/atk_sus_rel_index', 1, i
 simfile_conversion_output_debug_scripts = Setting('simfile/output_debug_scripts', False, bool)
 
 display_fps = Setting('display/fps', 60, float)
-display_latency = Setting('display/latency', 200, float)
+display_latency = Setting('display/latency', 50, float)
 
 buttplug_wsdm_enabled = Setting("network/buttplug-wsdm-enabled", False, bool)
 buttplug_wsdm_address = Setting("network/buttplug-wsdm-address", "ws://127.0.0.1:54817", str)
