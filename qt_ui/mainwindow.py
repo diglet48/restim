@@ -370,6 +370,10 @@ class Window(QMainWindow, Ui_MainWindow):
         self.tab_volume.set_monitor_axis([
             algorithm_factory.get_axis_alpha(),
             algorithm_factory.get_axis_beta(),
+            self.intensity_a,
+            self.intensity_b,
+            self.intensity_c,
+            self.intensity_d,
         ])
         self.tab_volume.axis_funscript_volume = algorithm_factory.get_axis_volume_api()
 
