@@ -17,6 +17,13 @@ class AbstractAxis(ABC):
     def add(self, value):
         pass
 
+    @abstractmethod
+    def is_funscript(self) -> bool:
+        """
+        True if the axis has a funscript backing, meaning it cannot be modified.
+        """
+        pass
+
 
 class AbstractMediaSync(ABC):
     @abstractmethod
@@ -120,6 +127,9 @@ class StairStepInterpolator(Interpolator):
 
 
 class Axis(AbstractAxis):
+    """
+    General signal generation parameter with history, can be changed by UI controls or T-Code
+    """
     def __init__(self, timeline, interpolator: Interpolator, timestamp_mapper: AbstractTimestampMapper):
         self.timeline = timeline
         self.interpolator = interpolator
@@ -134,16 +144,28 @@ class Axis(AbstractAxis):
     def last_value(self):
         return self.timeline.y()[-1]
 
+    def is_funscript(self) -> bool:
+        return False
+
 
 class WriteProtectedAxis(Axis):
+    """
+    Precomputed signal generation parameter. Cannot be modified after creation
+    """
     def __init__(self, timeline, interpolator: Interpolator, timestamp_mapper: AbstractTimestampMapper):
         super(WriteProtectedAxis, self).__init__(timeline, interpolator, timestamp_mapper)
 
     def add(self, value, interval=0.0):
         pass
 
+    def is_funscript(self) -> bool:
+        return True
+
 
 class ConstantAxis(AbstractAxis):
+    """
+    General signal generation parameter without history, can be changed by UI controls or T-Code
+    """
     def __init__(self, init_value):
         self.value = init_value
 
@@ -157,6 +179,9 @@ class ConstantAxis(AbstractAxis):
 
     def last_value(self):
         return self.value
+
+    def is_funscript(self) -> bool:
+        return False
 
 
 def create_temporal_axis(init_value, interpolation='linear'):
@@ -173,7 +198,7 @@ def create_constant_axis(init_value):
     return ConstantAxis(init_value)
 
 
-def create_precomputed_axis(x, y, timestamp_mapper: AbstractTimestampMapper, interpolation='linear'):
+def create_precomputed_axis(x, y, timestamp_mapper: AbstractTimestampMapper):
     return WriteProtectedAxis(
         Timeline(x, y),
         LinearInterpolator(),

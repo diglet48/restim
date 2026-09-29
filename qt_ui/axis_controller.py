@@ -5,7 +5,8 @@ from PySide6 import QtCore, QtWidgets
 
 from stim_math.axis import AbstractAxis, WriteProtectedAxis
 
-
+# provides a link between the user interface control
+# and the stim parameter (or funscript) axis
 class AxisController(QtCore.QObject):
     def __init__(self, control: QtWidgets.QDoubleSpinBox):
         super(AxisController, self).__init__()
@@ -36,7 +37,7 @@ class AxisController(QtCore.QObject):
         return self.control.value()
 
     def link_axis(self, axis):
-        if isinstance(axis, WriteProtectedAxis):    # HACK: is funcript axis?
+        if axis.is_funscript():
             self.link_to_funscript(axis)
         else:
             self.link_to_internal_axis(axis)
@@ -90,7 +91,7 @@ class GroupboxAxisController(QtCore.QObject):
             self.modified_by_user.emit()
 
     def link_axis(self, axis):
-        if isinstance(axis, WriteProtectedAxis):    # HACK: is funcript axis?
+        if axis.is_funscript():
             self.link_to_funscript(axis)
         else:
             self.link_to_internal_axis(axis)

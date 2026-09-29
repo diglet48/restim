@@ -11,7 +11,7 @@ from qt_ui.axis_controller import AxisController
 from qt_ui.volume_control_widget_ui import Ui_VolumeControlForm
 from qt_ui.widgets.volume_widget import VolumeWidget
 from stim_math.audio_gen.params import VolumeParams
-from stim_math.axis import create_temporal_axis, AbstractAxis, create_constant_axis, WriteProtectedAxis
+from stim_math.axis import create_temporal_axis, AbstractAxis, create_constant_axis
 from qt_ui import settings
 
 update_interval_seconds = 0.1
@@ -99,7 +99,7 @@ class VolumeControlWidget(QtWidgets.QWidget, Ui_VolumeControlForm):
             # when not playing, fake the display so the user sees the volume after the start ramp
             inactivity_volume = self.inactivity_multiplier
 
-        if issubclass(self.axis_funscript_volume.__class__, WriteProtectedAxis):
+        if self.axis_funscript_volume.is_funscript():
             api_volume = self.axis_funscript_volume.interpolate(time.time() - self.latency)
         else:
             api_volume = self.axis_api_volume.interpolate(time.time() - self.latency)

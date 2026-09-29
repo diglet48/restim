@@ -3,7 +3,7 @@ import logging
 import numpy as np
 from PySide6 import QtCore
 import qt_ui.settings
-from stim_math.axis import AbstractAxis, WriteProtectedAxis
+from stim_math.axis import AbstractAxis
 from qt_ui.patterns.threephase.base import get_registered_patterns
 from qt_ui.patterns.threephase.mouse import MousePattern
 from qt_ui.services.pattern_service import PatternControlService
@@ -88,8 +88,8 @@ class ThreephaseMotionGenerator(QtCore.QObject):
             self.path_updated.emit(self.mouse_pattern.path())
 
     def set_scripts(self, alpha, beta):
-        self.script_alpha = alpha if isinstance(alpha, WriteProtectedAxis) else None
-        self.script_beta = beta if isinstance(beta, WriteProtectedAxis) else None
+        self.script_alpha = alpha if alpha.is_funscript() else None
+        self.script_beta = beta if beta.is_funscript() else None
 
     def any_scripts_loaded(self):
         return (self.script_alpha, self.script_beta) != (None, None)
