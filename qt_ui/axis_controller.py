@@ -8,7 +8,7 @@ from stim_math.axis import AbstractAxis
 # provides a link between the user interface control
 # and the stim parameter (or funscript) axis
 class AxisController(QtCore.QObject):
-    def __init__(self, control: QtWidgets.QDoubleSpinBox):
+    def __init__(self, control: QtWidgets.QDoubleSpinBox, axis: AbstractAxis = None):
         super(AxisController, self).__init__()
         self.control = control
         self.axis = None
@@ -31,6 +31,9 @@ class AxisController(QtCore.QObject):
 
         self.last_user_entered_value = self.get_control_value()
         self.tcode_update_connection = None
+
+        if axis:
+            self.link_axis(axis)
 
     def reload_display_value(self):
         if self.axis is None:
@@ -84,8 +87,8 @@ class AxisController(QtCore.QObject):
 
 
 class PercentAxisController(AxisController):
-    def __init__(self, control):
-        super(PercentAxisController, self).__init__(control)
+    def __init__(self, control, axis: AbstractAxis = None):
+        super(PercentAxisController, self).__init__(control, axis)
 
     def set_control_value(self, value):
         self.control.setValue(value * 100)
@@ -95,8 +98,8 @@ class PercentAxisController(AxisController):
 
 
 class GroupboxAxisController(AxisController):
-    def __init__(self, control: QtWidgets.QGroupBox):
-        super(GroupboxAxisController, self).__init__(control)
+    def __init__(self, control: QtWidgets.QGroupBox, axis: AbstractAxis = None):
+        super(GroupboxAxisController, self).__init__(control, axis)
         # TODO: did not test if funscript/tcode control works, because it's not used anywhere yet
 
     def set_control_value(self, value):

@@ -39,20 +39,11 @@ class FourPhaseSettingsWidget(QtWidgets.QWidget, Ui_FourPhaseSettingsWidget):
         self.d_power.setValue(self.calibrate_params.d.last_value())
         self.center_reduction.setValue(self.calibrate_params.center_reduction.last_value() * 100)
 
-        self.a_controller = AxisController(self.a_power)
-        self.a_controller.link_axis(self.calibrate_params.a)
-
-        self.b_controller = AxisController(self.b_power)
-        self.b_controller.link_axis(self.calibrate_params.b)
-
-        self.c_controller = AxisController(self.c_power)
-        self.c_controller.link_axis(self.calibrate_params.c)
-
-        self.d_controller = AxisController(self.d_power)
-        self.d_controller.link_axis(self.calibrate_params.d)
-
-        self.center_reduction_controller = PercentAxisController(self.center_reduction)
-        self.center_reduction_controller.link_axis(self.calibrate_params.center_reduction)
+        self.a_controller = AxisController(self.a_power, self.calibrate_params.a)
+        self.b_controller = AxisController(self.b_power, self.calibrate_params.b)
+        self.c_controller = AxisController(self.c_power, self.calibrate_params.c)
+        self.d_controller = AxisController(self.d_power, self.calibrate_params.d)
+        self.center_reduction_controller = PercentAxisController(self.center_reduction, self.calibrate_params.center_reduction)
 
         self.center_reduction_reset.clicked.connect(self.reset_center_reduction)
 

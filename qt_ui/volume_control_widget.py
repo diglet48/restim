@@ -67,8 +67,7 @@ class VolumeControlWidget(QtWidgets.QWidget, Ui_VolumeControlForm):
         self.doubleSpinBox_ramp_target.valueChanged.connect(self.refresh_message)
         self.doubleSpinBox_ramp_rate.valueChanged.connect(self.refresh_message)
 
-        self.tau_controller = AxisController(self.doubleSpinBox_tau)
-        self.tau_controller.link_axis(self.axis_tau)
+        self.tau_controller = AxisController(self.doubleSpinBox_tau, self.axis_tau)
 
         self.checkBox_pulse_frequency_enable.setChecked(self.axis_pulse_frequency_adjustment_enable.last_value())
         self.checkBox_pulse_frequency_enable.stateChanged.connect(self.pulse_frequency_calibration_changed)

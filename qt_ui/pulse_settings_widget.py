@@ -168,21 +168,11 @@ class PulseSettingsWidget(QtWidgets.QWidget):
         self.pulse_interval_random = pulse_interval_random_slider
         self.pulse_rise_time = pulse_rise_time_slider
 
-
-        self.carrier_controller = AxisController(self.carrier)
-        self.carrier_controller.link_axis(self.axis_carrier_frequency)
-
-        self.pulse_frequency_controller = AxisController(self.pulse_freq_slider)
-        self.pulse_frequency_controller.link_axis(self.axis_pulse_frequency)
-
-        self.pulse_width_controller = AxisController(self.pulse_width_slider)
-        self.pulse_width_controller.link_axis(self.axis_pulse_width)
-
-        self.pulse_interval_random_controller = PercentAxisController(self.pulse_interval_random)
-        self.pulse_interval_random_controller.link_axis(self.axis_pulse_interval_random)
-
-        self.pulse_rise_time_controller = AxisController(self.pulse_rise_time)
-        self.pulse_rise_time_controller.link_axis(self.axis_pulse_rise_time)
+        self.carrier_controller = AxisController(self.carrier, self.axis_carrier_frequency)
+        self.pulse_frequency_controller = AxisController(self.pulse_freq_slider, self.axis_pulse_frequency)
+        self.pulse_width_controller = AxisController(self.pulse_width_slider, self.axis_pulse_width)
+        self.pulse_interval_random_controller = PercentAxisController(self.pulse_interval_random, self.axis_pulse_interval_random)
+        self.pulse_rise_time_controller = AxisController(self.pulse_rise_time, self.axis_pulse_rise_time)
 
         self.carrier_controller.modified_by_user.connect(self.settings_changed)
         self.pulse_width_controller.modified_by_user.connect(self.settings_changed)
