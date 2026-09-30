@@ -3,7 +3,7 @@ import time
 
 from PySide6 import QtCore, QtWidgets
 
-from stim_math.axis import AbstractAxis, WriteProtectedAxis
+from stim_math.axis import AbstractAxis
 
 # provides a link between the user interface control
 # and the stim parameter (or funscript) axis
@@ -11,54 +11,74 @@ class AxisController(QtCore.QObject):
     def __init__(self, control: QtWidgets.QDoubleSpinBox):
         super(AxisController, self).__init__()
         self.control = control
-        self.timer = QtCore.QTimer()
-        self.timer.setInterval(100)
-        self.script_axis: AbstractAxis = None
-        self.internal_axis: AbstractAxis = None
-        self.timer.timeout.connect(self.timeout)
-        self.control.valueChanged.connect(self.value_changed)
-        self.last_user_entered_value = self.get_control_value()
+        self.axis = None
+        self.reload_timer = QtCore.QTimer()
+        self.reload_timer.setInterval(100)
+        self.reload_timer.timeout.connect(self.reload_display_value)
+        self.reload_timer.start()
 
-    def timeout(self):
-        if self.script_axis:
-            self.set_control_value(self.script_axis.interpolate(time.time()))
+        self.tcode_idle_timer = QtCore.QTimer()
+        self.tcode_idle_timer.setInterval(2000)
+        self.tcode_idle_timer.timeout.connect(self.tcode_idle)
+        self.tcode_idle_timer.setSingleShot(True)
+
+        try:
+            # QSpinbox-like
+            self.control.valueChanged.connect(self.value_changed)
+        except AttributeError:
+            # QGroupBox
+            self.control.toggled.connect(self.value_changed)
+
+        self.last_user_entered_value = self.get_control_value()
+        self.tcode_update_connection = None
+
+    def reload_display_value(self):
+        if self.axis is None:
+            return
+
+        if self.axis.is_funscript() or self.tcode_idle_timer.isActive():
+            # display the live funscript value
+            self.set_control_value(self.axis.interpolate(time.time()))
+
+    def tcode_update(self):
+        self.tcode_idle_timer.start()
+        self.control.setEnabled(False)
+
+    def tcode_idle(self):
+        if not self.axis.is_funscript():
+            self.control.setEnabled(True)
 
     def value_changed(self):
-        # TODO: what happens on tcode control?
-        if not self.script_axis:    # if: not funscript control
-            self.internal_axis.add(self.get_control_value())
-            self.last_user_entered_value = self.get_control_value()
-            self.modified_by_user.emit()
+        if self.axis is None:
+            return
+        if self.tcode_idle_timer.isActive():
+            return
+        if self.axis.is_funscript():
+            return
+
+        # control modified by user in UI
+        val = self.get_control_value()
+        self.axis.add(val)
+        self.last_user_entered_value = val
+        self.modified_by_user.emit()
+
+    def link_axis(self, axis):
+        self.axis = axis
+        if axis.is_funscript():
+            self.control.setEnabled(False)
+        else:
+            self.control.setEnabled(True)
+            self.set_control_value(self.axis.interpolate(time.time()))
+            if self.tcode_update_connection:
+                self.disconnect(self.tcode_update_connection)
+                self.tcode_update_connection = None
+            self.tcode_update_connection = axis.notify_tcode_update.connect(self.tcode_update)
 
     def set_control_value(self, value):
         self.control.setValue(value)
 
     def get_control_value(self):
         return self.control.value()
-
-    def link_axis(self, axis):
-        if axis.is_funscript():
-            self.link_to_funscript(axis)
-        else:
-            self.link_to_internal_axis(axis)
-
-    def link_to_funscript(self, script_axis):
-        """
-        Behavior: the control gets disables. Periodically, the value shown in the control updates.
-        """
-        self.control.setEnabled(False)
-        self.script_axis = script_axis
-        self.timer.start()
-
-    def link_to_internal_axis(self, internal_axis):
-        """
-        Behavior: control enabled. Whenever user modifies the control, value is inserted in axis.
-        """
-        self.timer.stop()
-        self.script_axis = None
-        self.internal_axis = internal_axis
-        self.set_control_value(self.internal_axis.interpolate(time.time()))
-        self.control.setEnabled(True)
 
     modified_by_user = QtCore.Signal()
 
@@ -74,44 +94,15 @@ class PercentAxisController(AxisController):
         return self.control.value() / 100
 
 
-class GroupboxAxisController(QtCore.QObject):
+class GroupboxAxisController(AxisController):
     def __init__(self, control: QtWidgets.QGroupBox):
-        super(GroupboxAxisController, self).__init__()
-        self.control = control
-        self.script_axis: AbstractAxis = None
-        self.internal_axis: AbstractAxis = None
-        self.control.toggled.connect(self.value_changed)
-        self.last_user_entered_value = self.control.isChecked()
+        super(GroupboxAxisController, self).__init__(control)
+        # TODO: did not test if funscript/tcode control works, because it's not used anywhere yet
 
-    def value_changed(self):
-        # TODO: what happens on tcode control?
-        if self.internal_axis is not None:    # if: not funscript control
-            self.internal_axis.add(self.control.isChecked())
-            self.last_user_entered_value = self.control.isChecked()
-            self.modified_by_user.emit()
+    def set_control_value(self, value):
+        self.control.setChecked(value > 0.5)
 
-    def link_axis(self, axis):
-        if axis.is_funscript():
-            self.link_to_funscript(axis)
-        else:
-            self.link_to_internal_axis(axis)
-
-    def link_to_funscript(self, script_axis):
-        """
-        Behavior: the control gets disables. Periodically, the value shown in the control updates.
-        """
-        self.internal_axis = None
-        self.control.setCheckable(False)
-        self.script_axis = script_axis
-
-    def link_to_internal_axis(self, internal_axis):
-        """
-        Behavior: control enabled. Whenever user modifies the control, value is inserted in axis.
-        """
-        self.script_axis = None
-        self.internal_axis = None
-        self.control.setCheckable(True)
-        self.control.setChecked(self.last_user_entered_value)
-        self.internal_axis = internal_axis
+    def get_control_value(self):
+        return self.control.isChecked()
 
     modified_by_user = QtCore.Signal()

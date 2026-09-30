@@ -140,5 +140,6 @@ class TCodeCommandRouter:
         try:
             route = self.mapping[cmd.axis_identifier]
             route.axis.add(route.remap(cmd.value), cmd.interval / 1000.0)
+            route.axis.notify_tcode_update.emit()
         except KeyError:
             pass

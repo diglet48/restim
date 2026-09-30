@@ -2,9 +2,11 @@ from abc import ABC, abstractmethod
 import time
 import numpy as np
 import collections.abc
+from PySide6.QtCore import QObject, Signal
 
 
-class AbstractAxis(ABC):
+
+class AbstractAxis(QObject):
     @abstractmethod
     def interpolate(self, timestamp):
         pass
@@ -23,6 +25,8 @@ class AbstractAxis(ABC):
         True if the axis has a funscript backing, meaning it cannot be modified.
         """
         pass
+
+    notify_tcode_update = Signal()
 
 
 class AbstractMediaSync(ABC):
@@ -130,7 +134,8 @@ class Axis(AbstractAxis):
     """
     General signal generation parameter with history, can be changed by UI controls or T-Code
     """
-    def __init__(self, timeline, interpolator: Interpolator, timestamp_mapper: AbstractTimestampMapper):
+    def __init__(self, timeline, interpolator: Interpolator, timestamp_mapper: AbstractTimestampMapper, /):
+        super().__init__()
         self.timeline = timeline
         self.interpolator = interpolator
         self.timestamp_mapper = timestamp_mapper
@@ -167,6 +172,7 @@ class ConstantAxis(AbstractAxis):
     General signal generation parameter without history, can be changed by UI controls or T-Code
     """
     def __init__(self, init_value):
+        super().__init__()
         self.value = init_value
 
     def add(self, value, interval=0.0):
