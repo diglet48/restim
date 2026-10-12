@@ -27,3 +27,7 @@ class HighPass:
         out = self.b[0] * data + self.zi
         self.zi = self.b[1] * data - self.a[1] * out
         return out[0]
+
+    def shift_input(self, delta):
+        # future inputs will read `delta` lower, adjust the state so the output stays continuous
+        self.zi = self.zi + self.b[0] * delta

@@ -65,6 +65,8 @@ class SensorsWidget(QWidget, Ui_SensorsWidget):
         category_as5311 = SensorCategoryAS5311()
         self.new_as5311_sensor_data_from_device.connect(category_as5311.sensor_data_from_device)
         self.new_as5311_sensor_data_from_network.connect(category_as5311.sensor_data_from_network)
+        category_as5311.device_data_calibrated.connect(self.as5311_device_data_calibrated)
+        self.category_as5311 = category_as5311
         category_pressure = SensorCategoryPressure()
         self.new_pressure_sensor_data_from_device.connect(category_pressure.sensor_data_from_device)
         self.new_pressure_sensor_data_from_network.connect(category_pressure.sensor_data_from_network)
@@ -106,6 +108,16 @@ class SensorsWidget(QWidget, Ui_SensorsWidget):
 
                 try:
                     category_as5311.new_sensor_data.connect(node_class.new_as5311_sensor_data)
+                except AttributeError:
+                    pass
+
+                try:
+                    category_as5311.offset_changed.connect(node_class.as5311_offset_changed)
+                except AttributeError:
+                    pass
+
+                try:
+                    node_class.zero_requested.connect(category_as5311.calibrate_zero)
                 except AttributeError:
                     pass
 
@@ -190,9 +202,14 @@ class SensorsWidget(QWidget, Ui_SensorsWidget):
 
     def _refresh_suppression_display(self):
         suppression = self._last_suppression
+        zero_available = self.category_as5311.can_calibrate_zero()
         for category_label, nodes in self.structure.items():
             for node in nodes:
                 node.update_suppression_display(suppression)
+                try:
+                    node.set_zero_calibration_available(zero_available)
+                except AttributeError:
+                    pass
 
     def process(self, parameters):
         suppression = 0.0
@@ -221,6 +238,8 @@ class SensorsWidget(QWidget, Ui_SensorsWidget):
 
     new_as5311_sensor_data_from_device = Signal(AS5311Data)
     new_as5311_sensor_data_from_network = Signal(AS5311Data)
+    # device data with the zero offset applied, for sharing over websocket
+    as5311_device_data_calibrated = Signal(AS5311Data)
     new_imu_sensor_data_from_device = Signal(IMUData)
     new_imu_sensor_data_from_network = Signal(IMUData)
     new_pressure_sensor_data_from_device = Signal(PressureData)
