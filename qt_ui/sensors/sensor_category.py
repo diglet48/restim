@@ -1,3 +1,7 @@
+import collections
+import time
+
+import numpy as np
 from PySide6 import QtNetwork
 from PySide6.QtGui import QCursor
 from PySide6.QtWidgets import QWidget, QButtonGroup
@@ -7,6 +11,7 @@ from PySide6.QtWebSockets import QWebSocket
 from net.websocket_as5311 import WebsocketAS5311Handler
 from net.websocket_imu import WebsocketIMUHandler
 from net.websocket_pressure import WebsocketPressureHandler
+from stim_math.sensors.as5311 import AS5311Data
 from qt_ui import settings
 from qt_ui.sensors.sensor_category_ui import Ui_SensorCategory
 
@@ -136,8 +141,44 @@ class SensorCategoryAS5311(SensorCategory):
     DESCRIPTION = "Requires FOC-Stim V4 with optional AS5311 sensor module"
     URL_FORMAT_STRING = "ws://localhost:{port}/sensors/as5311"
 
+    # the position is averaged over this many seconds when calibrating to 0
+    ZERO_AVERAGING_WINDOW = 0.5
+
     def __init__(self):
         super().__init__()
+        # The AS5311 does not read the magnet strip the same way every time the device boots,
+        # so the zero point is set per session and not saved to settings.
+        self.offset = 0.0
+        self.recent_device_samples = collections.deque()   # (timestamp, raw position)
+
+    def sensor_data_from_device(self, data: AS5311Data):
+        now = time.time()
+        self.recent_device_samples.append((now, data.x))
+        while self.recent_device_samples[0][0] < now - self.ZERO_AVERAGING_WINDOW:
+            self.recent_device_samples.popleft()
+
+        data = AS5311Data(data.x - self.offset)
+        self.device_data_calibrated.emit(data)
+        super().sensor_data_from_device(data)
+
+    def can_calibrate_zero(self):
+        return (self.radio_device.isChecked() and
+                len(self.recent_device_samples) > 0 and
+                self.recent_device_samples[-1][0] >= time.time() - self.ZERO_AVERAGING_WINDOW)
+
+    def calibrate_zero(self):
+        """Make the current device position read as 0."""
+        if not self.can_calibrate_zero():
+            return
+        new_offset = float(np.mean([x for t, x in self.recent_device_samples]))
+        delta = new_offset - self.offset
+        self.offset = new_offset
+        self.offset_changed.emit(delta)
+
+    # device data with the offset applied, regardless of the selected source
+    device_data_calibrated = Signal(AS5311Data)
+    # emitted when the offset changes; positions read `delta` lower than before
+    offset_changed = Signal(float)
 
     def create_handler(self, websocket):
         handler = WebsocketAS5311Handler(websocket)

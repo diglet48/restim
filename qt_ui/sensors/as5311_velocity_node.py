@@ -123,6 +123,12 @@ class AS5311VelocitySensorNode(QWidget, SensorNodeInterface):
 
         self.update_graph_data()
 
+    def as5311_offset_changed(self, delta):
+        self.last_position -= delta
+        self.y = [y - delta for y in self.y]
+        if len(self.x):
+            self.update_graph_data()
+
     def process(self, parameters):
         if 'volume' in parameters:
             low = self.spinbox_threshold.value()
