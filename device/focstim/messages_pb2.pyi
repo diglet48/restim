@@ -28,13 +28,15 @@ class RequestFirmwareVersion(_message.Message):
         ...
 
 class ResponseFirmwareVersion(_message.Message):
-    __slots__ = ('board', 'stm32_firmware_version_2')
+    __slots__ = ('board', 'stm32_firmware_version_2', 'esp32_firmware_version')
     BOARD_FIELD_NUMBER: _ClassVar[int]
     STM32_FIRMWARE_VERSION_2_FIELD_NUMBER: _ClassVar[int]
+    ESP32_FIRMWARE_VERSION_FIELD_NUMBER: _ClassVar[int]
     board: _constants_pb2.BoardIdentifier
     stm32_firmware_version_2: FirmwareVersion
+    esp32_firmware_version: FirmwareVersion
 
-    def __init__(self, board: _Optional[_Union[_constants_pb2.BoardIdentifier, str]]=..., stm32_firmware_version_2: _Optional[_Union[FirmwareVersion, _Mapping]]=...) -> None:
+    def __init__(self, board: _Optional[_Union[_constants_pb2.BoardIdentifier, str]]=..., stm32_firmware_version_2: _Optional[_Union[FirmwareVersion, _Mapping]]=..., esp32_firmware_version: _Optional[_Union[FirmwareVersion, _Mapping]]=...) -> None:
         ...
 
 class RequestCapabilitiesGet(_message.Message):
