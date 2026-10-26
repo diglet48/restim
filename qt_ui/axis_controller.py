@@ -103,7 +103,7 @@ class GroupboxAxisController(AxisController):
         # TODO: did not test if funscript/tcode control works, because it's not used anywhere yet
 
     def set_control_value(self, value):
-        self.control.setChecked(value > 0.5)
+        self.control.setChecked(bool(value > 0.5))
 
     def get_control_value(self):
         return self.control.isChecked()

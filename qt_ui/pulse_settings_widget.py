@@ -199,12 +199,7 @@ class PulseSettingsWidget(QtWidgets.QWidget):
 
         duty_cycle = pulse_width_in_s / (pulse_width_in_s + pause_width_in_s)
         rise_time = self.pulse_rise_time.value()
-        if duty_cycle <= 1:
-            self.details_info.setStyleSheet('')
-            self.details_info.setText(f'{duty_cycle:.0%}')
-        else:
-            self.details_info.setStyleSheet('color: red')
-            self.details_info.setText(f'{1:.0%}')
+        self.details_info.setText(f'on: {pulse_width_in_s * 1000:3.1f}ms / off: {pause_width_in_s * 1000:3.1f}ms / duty: {duty_cycle:.0%}')
 
         self.mpl_canvas.updateParams(carrier_freq, pulse_freq, pulse_width, self.pulse_interval_random.value() / 100, rise_time)
 
