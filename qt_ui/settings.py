@@ -140,6 +140,8 @@ display_latency = Setting('display/latency', 50, float)
 
 prevent_system_sleep_when_active = Setting('general/prevent_system_sleep_when_active', True, bool)
 
+prevent_system_sleep_when_active = Setting('general/prevent_system_sleep_when_active', True, bool)
+
 buttplug_wsdm_enabled = Setting("network/buttplug-wsdm-enabled", False, bool)
 buttplug_wsdm_address = Setting("network/buttplug-wsdm-address", "ws://127.0.0.1:54817", str)
 buttplug_wsdm_auto_expand = Setting("network/buttplug-wsdm-auto-expand", True, bool)
