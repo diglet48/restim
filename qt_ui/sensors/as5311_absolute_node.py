@@ -1,6 +1,7 @@
 import time
 
-from PySide6.QtWidgets import QWidget,QFormLayout, QVBoxLayout, QGroupBox, QLabel
+from PySide6.QtCore import Signal
+from PySide6.QtWidgets import QWidget, QFormLayout, QVBoxLayout, QGroupBox, QLabel, QHBoxLayout, QPushButton
 
 import pyqtgraph as pg
 import numpy as np
@@ -38,7 +39,15 @@ class AS5311AbsoluteSensorNode(QWidget, SensorNodeInterface):
         self.spinbox_threshold.valueChanged.connect(self.update_lines)
         self.spinbox_range.valueChanged.connect(self.update_lines)
 
-        self.formLayout.addRow('threshold', self.spinbox_threshold)
+        self.button_zero = QPushButton('→ 0')
+        self.button_zero.setToolTip('Calibrate current position to 0')
+        self.button_zero.setEnabled(False)
+        self.button_zero.clicked.connect(self.zero_requested)
+        threshold_layout = QHBoxLayout()
+        threshold_layout.addWidget(self.spinbox_threshold, 1)
+        threshold_layout.addWidget(self.button_zero)
+
+        self.formLayout.addRow('threshold', threshold_layout)
         self.formLayout.addRow('threshold range', self.spinbox_range)
         label = QLabel('volume change (?)')
         label.setToolTip(
@@ -112,6 +121,17 @@ class AS5311AbsoluteSensorNode(QWidget, SensorNodeInterface):
 
         self.update_graph_data()
 
+    def as5311_offset_changed(self, delta):
+        self.position -= delta
+        self.decayed_position -= delta
+        self.y = [y - delta for y in self.y]
+        self.y_decay = [y - delta for y in self.y_decay]
+        if len(self.x):
+            self.update_graph_data()
+
+    def set_zero_calibration_available(self, available: bool):
+        self.button_zero.setEnabled(available)
+
     def process(self, parameters):
         if 'volume' in parameters:
             low = self.spinbox_threshold.value()
@@ -153,3 +173,5 @@ class AS5311AbsoluteSensorNode(QWidget, SensorNodeInterface):
         self.spinbox_range.setValue(settings.sensor_as5311_absolute_range.get())
         self.spinbox_volume.setValue(settings.sensor_as5311_absolute_volume.get())
         self.spinbox_decay.setValue(settings.sensor_as5311_absolute_decay.get())
+
+    zero_requested = Signal()
