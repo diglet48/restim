@@ -174,41 +174,18 @@ class VibrationSettingsWidget(QtWidgets.QWidget):
         self.vib2_high_low_slider = bias2_high_low_slider
         self.vib2_random_slider = random2_slider
 
-        self.vib1_enabled_controller = GroupboxAxisController(self.vib1_gb)
-        self.vib1_enabled_controller.link_axis(self.vibration_1.enabled)
-
-        self.vib1_freq_controller = AxisController(self.vib1_freq_slider)
-        self.vib1_freq_controller.link_axis(self.vibration_1.frequency)
-
-        self.vib1_strength_controller = PercentAxisController(self.vib1_strength_slider)
-        self.vib1_strength_controller.link_axis(self.vibration_1.strength)
-
-        self.vib1_left_right_bias_controller = PercentAxisController(self.vib1_left_right_slider)
-        self.vib1_left_right_bias_controller.link_axis(self.vibration_1.left_right_bias)
-
-        self.vib1_high_low_bias_controller = PercentAxisController(self.vib1_high_low_slider)
-        self.vib1_high_low_bias_controller.link_axis(self.vibration_1.high_low_bias)
-
-        self.vib1_random_controller = PercentAxisController(self.vig1_random_slider)
-        self.vib1_random_controller.link_axis(self.vibration_1.random)
-
-        self.vib2_enabled_controller = GroupboxAxisController(self.vib2_gb)
-        self.vib2_enabled_controller.link_axis(self.vibration_2.enabled)
-
-        self.vib2_freq_controller = AxisController(self.vib2_freq_slider)
-        self.vib2_freq_controller.link_axis(self.vibration_2.frequency)
-
-        self.vib2_strength_controller = PercentAxisController(self.vib2_strength_slider)
-        self.vib2_strength_controller.link_axis(self.vibration_2.strength)
-
-        self.vib2_left_right_bias_controller = PercentAxisController(self.vib2_left_right_slider)
-        self.vib2_left_right_bias_controller.link_axis(self.vibration_2.left_right_bias)
-
-        self.vib2_high_low_bias_controller = PercentAxisController(self.vib2_high_low_slider)
-        self.vib2_high_low_bias_controller.link_axis(self.vibration_2.high_low_bias)
-
-        self.vib2_random_controller = PercentAxisController(self.vib2_random_slider)
-        self.vib2_random_controller.link_axis(self.vibration_2.random)
+        self.vib1_enabled_controller = GroupboxAxisController(self.vib1_gb, self.vibration_1.enabled)
+        self.vib1_freq_controller = AxisController(self.vib1_freq_slider, self.vibration_1.frequency)
+        self.vib1_strength_controller = PercentAxisController(self.vib1_strength_slider, self.vibration_1.strength)
+        self.vib1_left_right_bias_controller = PercentAxisController(self.vib1_left_right_slider, self.vibration_1.left_right_bias)
+        self.vib1_high_low_bias_controller = PercentAxisController(self.vib1_high_low_slider, self.vibration_1.high_low_bias)
+        self.vib1_random_controller = PercentAxisController(self.vig1_random_slider, self.vibration_1.random)
+        self.vib2_enabled_controller = GroupboxAxisController(self.vib2_gb, self.vibration_2.enabled)
+        self.vib2_freq_controller = AxisController(self.vib2_freq_slider, self.vibration_2.frequency)
+        self.vib2_strength_controller = PercentAxisController(self.vib2_strength_slider, self.vibration_2.strength)
+        self.vib2_left_right_bias_controller = PercentAxisController(self.vib2_left_right_slider, self.vibration_2.left_right_bias)
+        self.vib2_high_low_bias_controller = PercentAxisController(self.vib2_high_low_slider, self.vibration_2.high_low_bias)
+        self.vib2_random_controller = PercentAxisController(self.vib2_random_slider, self.vibration_2.random)
 
         gb1.toggled.connect(self.settings_changed)
         gb2.toggled.connect(self.settings_changed)

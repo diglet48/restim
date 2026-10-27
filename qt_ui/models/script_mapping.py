@@ -45,7 +45,7 @@ class FunscriptTreeItem(TreeItem):
 
         # self.resource = resource
         self.file_name = resource.name()
-        self.funscript_type = resource.funscript_type()
+        self.funscript_type = resource.funscript_type() # 'alpha', 'carrier_frequency', ...
         self.axis = qt_ui.device_wizard.axes.AxisEnum.NONE
         self.is_removable = False
         self.first_of_its_kind = False

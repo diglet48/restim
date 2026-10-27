@@ -129,8 +129,13 @@ class DefaultThreePhasePulseBasedAlgorithm(ThreePhasePulseBasedAlgorithmBase):
         pulse_freq = np.clip(pulse_freq, limits.PulseFrequency.min, limits.PulseFrequency.max)
         pulse_rise_time = self.params.pulse_rise_time.interpolate(system_time_estimate)
         pulse_rise_time = np.clip(pulse_rise_time, limits.PulseRiseTime.min, limits.PulseRiseTime.max)
+        pulse_frequency_is_burst_gap = self.params.enable_burst_gap.interpolate(system_time_estimate)
 
-        pause_duration = np.clip(1 / pulse_freq - pulse_width / pulse_carrier_freq, 0, None)
+        if pulse_frequency_is_burst_gap:
+            pause_duration = 1 / pulse_freq
+        else:
+            pause_duration = 1 / pulse_freq - pulse_width / pulse_carrier_freq
+        pause_duration = np.clip(pause_duration, limits.InterPulseIntervalDuration.min, limits.InterPulseIntervalDuration.max)
 
         random = self.params.pulse_interval_random.interpolate(system_time_estimate)
         pause_duration = pause_duration * np.random.uniform(1 - random, 1 + random)
@@ -155,15 +160,10 @@ class DefaultThreePhasePulseBasedAlgorithm(ThreePhasePulseBasedAlgorithmBase):
         return pulse
 
     def polarity(self):
-        if self.last_pulse_polarity == 1:
-            self.last_pulse_polarity = -1
-            return -1
-        else:
-            self.last_pulse_polarity = 1
-            return 1
+        return 1
 
     def phase_offset(self):
-        self.last_pulse_start_angle = (self.last_pulse_start_angle + (np.pi * 2 * 19 / 97)) % (2 * np.pi)  # ~1/5
+        self.last_pulse_start_angle = (self.last_pulse_start_angle + (np.pi * 2 * 9 / 557)) % (2 * np.pi)  # ~1/60
         return self.last_pulse_start_angle
 
 
@@ -214,8 +214,13 @@ class ABTestThreePhasePulseBasedAlgorithm(ThreePhasePulseBasedAlgorithmBase):
         pulse_freq = np.clip(pulse_freq, limits.PulseFrequency.min, limits.PulseFrequency.max)
         pulse_rise_time = self.pulse_rise_time(system_time_estimate)
         pulse_rise_time = np.clip(pulse_rise_time, limits.PulseRiseTime.min, limits.PulseRiseTime.max)
+        pulse_frequency_is_burst_gap = self.params.enable_burst_gap.interpolate(system_time_estimate)
 
-        pause_duration = np.clip(1 / pulse_freq - pulse_width / pulse_carrier_freq, 0, None)
+        if pulse_frequency_is_burst_gap:
+            pause_duration = 1 / pulse_freq
+        else:
+            pause_duration = 1 / pulse_freq - pulse_width / pulse_carrier_freq
+        pause_duration = np.clip(pause_duration, limits.InterPulseIntervalDuration.min, limits.InterPulseIntervalDuration.max)
 
         random = self.pulse_interval_random(system_time_estimate)
         pause_duration = pause_duration * np.random.uniform(1 - random, 1 + random)
@@ -241,15 +246,10 @@ class ABTestThreePhasePulseBasedAlgorithm(ThreePhasePulseBasedAlgorithmBase):
         return pulse
 
     def polarity(self):
-        if self.last_pulse_polarity == 1:
-            self.last_pulse_polarity = -1
-            return -1
-        else:
-            self.last_pulse_polarity = 1
-            return 1
+        return 1
 
     def phase_offset(self):
-        self.last_pulse_start_angle = (self.last_pulse_start_angle + (np.pi * 2 * 19 / 97)) % (2 * np.pi)  # ~1/5
+        self.last_pulse_start_angle = (self.last_pulse_start_angle + (np.pi * 2 * 9 / 557)) % (2 * np.pi)  # ~1/60
         return self.last_pulse_start_angle
 
     def ab_volume(self, time):

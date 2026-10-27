@@ -3,7 +3,7 @@ import logging
 import numpy as np
 from PySide6 import QtCore
 import qt_ui.settings
-from stim_math.axis import AbstractAxis, WriteProtectedAxis
+from stim_math.axis import AbstractAxis
 from qt_ui.patterns.fourphase.mouse import MousePattern
 from qt_ui.patterns.fourphase.orbit import OrbitPattern
 from qt_ui.patterns.fourphase.sequence import SequencePattern
@@ -111,10 +111,10 @@ class FourphaseMotionGenerator(QtCore.QObject):
             self.pattern = pattern
 
     def set_scripts(self, intensity_a, intensity_b, intensity_c, intensity_d):
-        self.script_a = intensity_a if isinstance(intensity_a, WriteProtectedAxis) else None
-        self.script_b = intensity_b if isinstance(intensity_b, WriteProtectedAxis) else None
-        self.script_c = intensity_c if isinstance(intensity_c, WriteProtectedAxis) else None
-        self.script_d = intensity_d if isinstance(intensity_d, WriteProtectedAxis) else None
+        self.script_a = intensity_a if intensity_a.is_funscript() else None
+        self.script_b = intensity_b if intensity_b.is_funscript() else None
+        self.script_c = intensity_c if intensity_c.is_funscript() else None
+        self.script_d = intensity_d if intensity_d.is_funscript() else None
 
     def any_scripts_loaded(self):
         return (self.script_a, self.script_b, self.script_c, self.script_d) != (None, None, None, None)

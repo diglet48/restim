@@ -106,6 +106,7 @@ class AlgorithmFactory:
                 pulse_width=self.get_axis_pulse_width(),
                 pulse_interval_random=self.get_axis_pulse_interval_random(),
                 pulse_rise_time=self.get_axis_pulse_rise_time(),
+                enable_burst_gap=self.get_axis_enable_burst_gap(),
             ),
             safety_limits=SafetyParams(
                 device.min_frequency,
@@ -132,6 +133,7 @@ class AlgorithmFactory:
                     inactivity=self.get_axis_volume_inactivity(),
                     external=self.get_axis_volume_external(),
                 ),
+                enable_burst_gap=self.get_axis_enable_burst_gap(),
                 a_volume=self.mainwindow.tab_a_b_testing.axis_a_volume,
                 a_train_duration=self.mainwindow.tab_a_b_testing.axis_a_train_duration,
                 a_carrier_frequency=self.mainwindow.tab_a_b_testing.axis_a_carrier_frequency,

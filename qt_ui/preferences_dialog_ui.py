@@ -602,6 +602,29 @@ class Ui_PreferencesDialog(object):
 
         self.verticalLayout_6.addWidget(self.groupBox_2)
 
+        self.groupBox_12 = QGroupBox(self.tab_media_settings)
+        self.groupBox_12.setObjectName(u"groupBox_12")
+        self.gridLayout_8 = QGridLayout(self.groupBox_12)
+        self.gridLayout_8.setObjectName(u"gridLayout_8")
+        self.label_36 = QLabel(self.groupBox_12)
+        self.label_36.setObjectName(u"label_36")
+
+        self.gridLayout_8.addWidget(self.label_36, 0, 0, 1, 1)
+
+        self.ofs_address = QLineEdit(self.groupBox_12)
+        self.ofs_address.setObjectName(u"ofs_address")
+
+        self.gridLayout_8.addWidget(self.ofs_address, 0, 1, 1, 1)
+
+        self.ofs_reload = QToolButton(self.groupBox_12)
+        self.ofs_reload.setObjectName(u"ofs_reload")
+        self.ofs_reload.setIcon(icon)
+
+        self.gridLayout_8.addWidget(self.ofs_reload, 0, 2, 1, 1)
+
+
+        self.verticalLayout_6.addWidget(self.groupBox_12)
+
         self.verticalSpacer_6 = QSpacerItem(20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
 
         self.verticalLayout_6.addItem(self.verticalSpacer_6)
@@ -611,6 +634,18 @@ class Ui_PreferencesDialog(object):
         self.tab_display.setObjectName(u"tab_display")
         self.verticalLayout_4 = QVBoxLayout(self.tab_display)
         self.verticalLayout_4.setObjectName(u"verticalLayout_4")
+        self.groupBox_general = QGroupBox(self.tab_display)
+        self.groupBox_general.setObjectName(u"groupBox_general")
+        self.verticalLayout_general = QVBoxLayout(self.groupBox_general)
+        self.verticalLayout_general.setObjectName(u"verticalLayout_general")
+        self.prevent_system_sleep_when_active = QCheckBox(self.groupBox_general)
+        self.prevent_system_sleep_when_active.setObjectName(u"prevent_system_sleep_when_active")
+
+        self.verticalLayout_general.addWidget(self.prevent_system_sleep_when_active)
+
+
+        self.verticalLayout_4.addWidget(self.groupBox_general)
+
         self.groupBox_5 = QGroupBox(self.tab_display)
         self.groupBox_5.setObjectName(u"groupBox_5")
         self.groupBox_5.setEnabled(True)
@@ -881,7 +916,12 @@ class Ui_PreferencesDialog(object):
         self.groupBox_2.setTitle(QCoreApplication.translate("PreferencesDialog", u"Kodi", None))
         self.label_13.setText(QCoreApplication.translate("PreferencesDialog", u"address:port", None))
         self.kodi_reload.setText(QCoreApplication.translate("PreferencesDialog", u"...", None))
+        self.groupBox_12.setTitle(QCoreApplication.translate("PreferencesDialog", u"OFS", None))
+        self.label_36.setText(QCoreApplication.translate("PreferencesDialog", u"address:port", None))
+        self.ofs_reload.setText(QCoreApplication.translate("PreferencesDialog", u"...", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_media_settings), QCoreApplication.translate("PreferencesDialog", u"Media sync", None))
+        self.groupBox_general.setTitle(QCoreApplication.translate("PreferencesDialog", u"General", None))
+        self.prevent_system_sleep_when_active.setText(QCoreApplication.translate("PreferencesDialog", u"Prevent system sleep while active", None))
         self.groupBox_5.setTitle(QCoreApplication.translate("PreferencesDialog", u"Phase", None))
         self.label_2.setText(QCoreApplication.translate("PreferencesDialog", u"max fps", None))
         self.label_5.setText(QCoreApplication.translate("PreferencesDialog", u"display latency [ms]", None))

@@ -29,26 +29,12 @@ class NeoStimSettingsWidget(QtWidgets.QWidget, Ui_NeoStimSettingsWidget):
         self.axis_duty_cycle_at_max_power = create_temporal_axis(self.duty_cycle_at_max_power.value() / 100)
         self.axis_debug = create_constant_axis(self.get_debug_params())
 
-
-        self.voltage_controller = AxisController(self.voltage)
-        self.voltage_controller.link_axis(self.axis_voltage)
-
-        self.carrier_frequency_controller = AxisController(self.carrier_frequency)
-        self.carrier_frequency_controller.link_axis(self.axis_carrier_frequency)
-
-        self.inversion_time_controller = AxisController(self.inversion_time)
-        self.inversion_time_controller.link_axis(self.axis_inversion_time)
-
-        self.switch_time_controller = AxisController(self.switch_time)
-        self.switch_time_controller.link_axis(self.axis_switch_time)
-
-        self.pulse_frequency_controller = AxisController(self.pulse_frequency)
-        self.pulse_frequency_controller.link_axis(self.axis_pulse_frequency)
-
-        self.duty_cycle_at_max_power_controller = PercentAxisController(self.duty_cycle_at_max_power)
-        self.duty_cycle_at_max_power_controller.link_axis(self.axis_duty_cycle_at_max_power)
-
-
+        self.voltage_controller = AxisController(self.voltage, self.axis_voltage)
+        self.carrier_frequency_controller = AxisController(self.carrier_frequency, self.axis_carrier_frequency)
+        self.inversion_time_controller = AxisController(self.inversion_time, self.axis_inversion_time)
+        self.switch_time_controller = AxisController(self.switch_time, self.axis_switch_time)
+        self.pulse_frequency_controller = AxisController(self.pulse_frequency, self.axis_pulse_frequency)
+        self.duty_cycle_at_max_power_controller = PercentAxisController(self.duty_cycle_at_max_power, self.axis_duty_cycle_at_max_power)
 
         self.voltage_controller.modified_by_user.connect(self.settings_changed)
         self.carrier_frequency_controller.modified_by_user.connect(self.settings_changed)

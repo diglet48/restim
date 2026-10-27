@@ -118,6 +118,7 @@ media_sync_vlc_address = Setting('media_sync/vlc_address', 'http://127.0.0.1:808
 media_sync_vlc_username = Setting('media_sync/vlc_username', '', str)
 media_sync_vlc_password = Setting('media_sync/vlc_password', '1234', str)
 media_sync_kodi_address = Setting('media_sync/kodi_address', 'ws://127.0.0.1:9090', str)
+media_sync_ofs_address = Setting('media_sync/ofs_address', 'ws://127.0.0.1:8081/ofs', str)
 media_sync_stop_audio_automatically = Setting('media_sync/stop_audio_automatically', True, bool)
 media_sync_time_offset_ms = Setting('media_sync/time_offset_ms', 0, int)
 
@@ -135,7 +136,9 @@ simfile_conversion_atk_sus_rel_index = Setting('simfile/atk_sus_rel_index', 1, i
 simfile_conversion_output_debug_scripts = Setting('simfile/output_debug_scripts', False, bool)
 
 display_fps = Setting('display/fps', 60, float)
-display_latency = Setting('display/latency', 200, float)
+display_latency = Setting('display/latency', 50, float)
+
+prevent_system_sleep_when_active = Setting('general/prevent_system_sleep_when_active', True, bool)
 
 buttplug_wsdm_enabled = Setting("network/buttplug-wsdm-enabled", False, bool)
 buttplug_wsdm_address = Setting("network/buttplug-wsdm-address", "ws://127.0.0.1:54817", str)

@@ -4,13 +4,14 @@ import time
 import numpy as np
 import math
 from PySide6 import QtCore, QtWidgets
+from PySide6.QtCore import Signal
 from PySide6.QtWidgets import QDoubleSpinBox
 
 from qt_ui.axis_controller import AxisController
 from qt_ui.volume_control_widget_ui import Ui_VolumeControlForm
 from qt_ui.widgets.volume_widget import VolumeWidget
 from stim_math.audio_gen.params import VolumeParams
-from stim_math.axis import create_temporal_axis, AbstractAxis, create_constant_axis, WriteProtectedAxis
+from stim_math.axis import create_temporal_axis, AbstractAxis, create_constant_axis
 from qt_ui import settings
 
 update_interval_seconds = 0.1
@@ -66,8 +67,7 @@ class VolumeControlWidget(QtWidgets.QWidget, Ui_VolumeControlForm):
         self.doubleSpinBox_ramp_target.valueChanged.connect(self.refresh_message)
         self.doubleSpinBox_ramp_rate.valueChanged.connect(self.refresh_message)
 
-        self.tau_controller = AxisController(self.doubleSpinBox_tau)
-        self.tau_controller.link_axis(self.axis_tau)
+        self.tau_controller = AxisController(self.doubleSpinBox_tau, self.axis_tau)
 
         self.checkBox_pulse_frequency_enable.setChecked(self.axis_pulse_frequency_adjustment_enable.last_value())
         self.checkBox_pulse_frequency_enable.stateChanged.connect(self.pulse_frequency_calibration_changed)
@@ -98,7 +98,7 @@ class VolumeControlWidget(QtWidgets.QWidget, Ui_VolumeControlForm):
             # when not playing, fake the display so the user sees the volume after the start ramp
             inactivity_volume = self.inactivity_multiplier
 
-        if issubclass(self.axis_funscript_volume.__class__, WriteProtectedAxis):
+        if self.axis_funscript_volume.is_funscript():
             api_volume = self.axis_funscript_volume.interpolate(time.time() - self.latency)
         else:
             api_volume = self.axis_api_volume.interpolate(time.time() - self.latency)
@@ -225,6 +225,7 @@ class VolumeControlWidget(QtWidgets.QWidget, Ui_VolumeControlForm):
 
     def burst_gap_changed(self):
         self.axis_burst_gap_enable.add(self.checkbox_burst_gap_enable.isChecked())
+        self.burst_gap_enable_changed.emit(self.checkbox_burst_gap_enable.isChecked())
 
     def refreshSettings(self):
         self.latency = settings.display_latency.get() / 1000.0
@@ -240,4 +241,4 @@ class VolumeControlWidget(QtWidgets.QWidget, Ui_VolumeControlForm):
         settings.pulse_frequency_calibration_enable.set(self.checkBox_pulse_frequency_enable.isChecked())
         settings.burst_gap_enable.set(self.checkbox_burst_gap_enable.isChecked())
 
-
+    burst_gap_enable_changed = Signal(bool)

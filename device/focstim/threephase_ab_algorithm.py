@@ -88,6 +88,19 @@ class FOCStimThreephaseABTestAlgorithm(RemoteGenerationAlgorithm):
             pulse_interval_random = self.params.b_pulse_interval_random.interpolate(t)
             pulse_rise_time = self.params.b_pulse_rise_time.interpolate(t)
 
+        pulse_frequency = np.clip(pulse_frequency, limits.PulseFrequency.min, limits.PulseFrequency.max)
+        pulse_width = np.clip(pulse_width.interpolate(t), limits.PulseWidth.min, limits.PulseWidth.max)
+
+        # convert burst freq to pulse freq (if applicable) and limit gap to 5ms
+        pulse_width_in_s = np.clip(pulse_width / carrier_frequency, None, limits.PulseDuration.max)
+        if self.params.enable_burst_gap.last_value():
+            pause_width_in_s = np.clip(1 / pulse_frequency,
+                                       limits.InterPulseIntervalDuration.min, limits.InterPulseIntervalDuration.max)
+        else:
+            pause_width_in_s = np.clip(1 / pulse_frequency - pulse_width_in_s,
+                                       limits.InterPulseIntervalDuration.min, limits.InterPulseIntervalDuration.max)
+        pulse_frequency = 1 / (pulse_width_in_s + pause_width_in_s)
+
         carrier_calibration = TauCalibration.derating_factor(maximum_frequency, carrier_frequency, tau)
         volume *= np.clip(carrier_calibration, 0, 1)
 

@@ -323,7 +323,7 @@ class FourphaseWidgetIndividualElectrodes(QGraphicsView):
             y = 0.5 + 3.0
 
             font = QFont()
-            font.setPointSizeF(3)
+            font.setPointSizeF(30)
             item = self.scene().addText(text, font)
             item.setDefaultTextColor(color)
             item.setX(x)
@@ -332,7 +332,7 @@ class FourphaseWidgetIndividualElectrodes(QGraphicsView):
             # funny transformation because font sizes below 1 don't work
             t = QTransform()
             rect = item.boundingRect()
-            t.scale(0.1, 0.1)
+            t.scale(0.01, 0.01)
             t.translate(rect.width() * -0.5, rect.height() * -0.5)
             item.setTransform(t)
 

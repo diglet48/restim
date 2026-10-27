@@ -34,8 +34,7 @@ class CarrierSettingsWidget(QtWidgets.QWidget):
 
         self.carrier = carrier_slider
 
-        self.carrier_controller = AxisController(carrier_slider)
-        self.carrier_controller.link_axis(self.axis_carrier)
+        self.carrier_controller = AxisController(carrier_slider, self.axis_carrier)
 
     def set_safety_limits(self, min_carrier, max_carrier):
         self.carrier.setRange(min_carrier, max_carrier)

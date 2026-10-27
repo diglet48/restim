@@ -29,6 +29,7 @@ import qt_ui.funscript_decomposition_dialog
 import qt_ui.preferences_dialog
 import qt_ui.about_dialog
 import qt_ui.settings
+from qt_ui.services.sleep_inhibitor import SleepInhibitor
 import net.serialproxy
 import net.buttplug_wsdm_client
 from qt_ui import resources
@@ -61,9 +62,9 @@ class Window(QMainWindow, Ui_MainWindow):
         super().__init__(parent)
         self.setupUi(self)
 
-        self.playstate = PlayState.STOPPED
-        self.tab_volume.set_play_state(self.playstate)
-        self.refresh_play_button_icon()
+        self.sleep_inhibitor = SleepInhibitor()
+
+        self._set_playstate(PlayState.STOPPED)
 
         # set the first tab as active tab, in case we forgot to set it in designer
         self.tabWidget.setCurrentIndex(0)
@@ -100,10 +101,10 @@ class Window(QMainWindow, Ui_MainWindow):
         line.setFrameShadow(QFrame.Shadow.Sunken)
         self.toolBar.insertWidget(self.actionStart, line)
 
-
-
         self.doubleSpinBox_volume.setValue(qt_ui.settings.volume_default_level.get())
         self.tab_volume.link_volume_controls(self.doubleSpinBox_volume, self.progressBar_volume)
+        self.tab_volume.burst_gap_enable_changed.connect(self.tab_pulse_settings.burst_gap_enable_changed)
+        self.tab_volume.burst_gap_changed() # trigger update
 
         # default alpha/beta axis. Used by:
         # pattern generator
@@ -371,6 +372,10 @@ class Window(QMainWindow, Ui_MainWindow):
         self.tab_volume.set_monitor_axis([
             algorithm_factory.get_axis_alpha(),
             algorithm_factory.get_axis_beta(),
+            self.intensity_a,
+            self.intensity_b,
+            self.intensity_c,
+            self.intensity_d,
         ])
         self.tab_volume.axis_funscript_volume = algorithm_factory.get_axis_volume_api()
 
@@ -542,9 +547,7 @@ class Window(QMainWindow, Ui_MainWindow):
             output_device.start(api_name, output_device_name, latency, algorithm, mapping_parameters)
             if output_device.is_connected_and_running():
                 self.output_device = output_device
-                self.playstate = PlayState.PLAYING
-                self.tab_volume.set_play_state(self.playstate)
-                self.refresh_play_button_icon()
+                self._set_playstate(PlayState.PLAYING)
         elif device.device_type in (DeviceType.FOCSTIM_THREE_PHASE, DeviceType.FOCSTIM_FOUR_PHASE):
             output_device = FOCStimProtoDevice()
             use_teleplot = qt_ui.settings.focstim_use_teleplot.get()
@@ -559,9 +562,7 @@ class Window(QMainWindow, Ui_MainWindow):
 
             if output_device.is_connected_and_running():
                 self.output_device = output_device
-                self.playstate = PlayState.PLAYING
-                self.tab_volume.set_play_state(self.playstate)
-                self.refresh_play_button_icon()
+                self._set_playstate(PlayState.PLAYING)
                 self.output_device.disconnected.connect(self.signal_stop)
 
                 output_device.new_as5311_sensor_data.connect(self.page_sensors.new_as5311_sensor_data_from_device)
@@ -584,9 +585,7 @@ class Window(QMainWindow, Ui_MainWindow):
             output_device.start(serial_port_name, algorithm)
             if output_device.is_connected_and_running():
                 self.output_device = output_device
-                self.playstate = PlayState.PLAYING
-                self.tab_volume.set_play_state(self.playstate)
-                self.refresh_play_button_icon()
+                self._set_playstate(PlayState.PLAYING)
         else:
             raise RuntimeError("Unknown device type")
 
@@ -594,9 +593,7 @@ class Window(QMainWindow, Ui_MainWindow):
         if self.output_device is not None:
             self.output_device.stop()
             self.output_device = None
-        self.playstate = new_playstate
-        self.tab_volume.set_play_state(self.playstate)
-        self.refresh_play_button_icon()
+        self._set_playstate(new_playstate)
 
     def autostart_timeout(self):
         print('autostart timeout')
@@ -611,6 +608,16 @@ class Window(QMainWindow, Ui_MainWindow):
         else:
             self.actionStart.setIcon(QtGui.QIcon(":/restim/play_poly.svg"))
             self.actionStart.setText("Start")
+
+    def _set_playstate(self, new_playstate: PlayState):
+        self.playstate = new_playstate
+        self.tab_volume.set_play_state(self.playstate)
+        self.refresh_play_button_icon()
+
+        if self.playstate == PlayState.PLAYING and qt_ui.settings.prevent_system_sleep_when_active.get():
+            self.sleep_inhibitor.start()
+        else:
+            self.sleep_inhibitor.stop()
 
     def open_setup_wizard(self):
         self.signal_stop(PlayState.STOPPED)
@@ -702,6 +709,7 @@ class Window(QMainWindow, Ui_MainWindow):
         logger.warning('Shutting down')
         if self.output_device is not None:
             self.output_device.stop()
+        self.sleep_inhibitor.stop()
         self.save_settings()
         event.accept()
 
